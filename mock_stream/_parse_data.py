@@ -37,7 +37,7 @@ def get_alert_data(candid):
     """Return the contents of an avro file published by ZTF
 
     Args:
-        candid (int): The id number of a ZTF alert
+        candid (int): Unique ZTF identifier for the subtraction candidate
 
     Returns:
         The file contents as a dictionary
@@ -81,8 +81,8 @@ def _plot_cutout(packet, fig=None, subplot=None, **kwargs):
             if subplot is None:
                 subplot = (1, 1, 1)
 
-            ffig = aplpy.FITSFigure(hdul[0], figure=fig, subplot=subplot,
-                                    **kwargs)
+            ffig = aplpy.FITSFigure(
+                hdul[0], figure=fig, subplot=subplot, **kwargs)
             ffig.show_grayscale(stretch='arcsinh')
 
     return ffig

@@ -3,7 +3,7 @@
 read -p "Enter kafka directory: " path
 
 # Check if directory exists
-if [ ! -e "$path" ]
+if [[ ! -e "$path" ]]
 then
   echo "Given directory does not exist"
 fi
