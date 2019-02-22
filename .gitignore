@@ -1,3 +1,6 @@
+# ZTF alert data
+data_access/data
+
 # OS files
 *.DS_Store
 .AppleDouble

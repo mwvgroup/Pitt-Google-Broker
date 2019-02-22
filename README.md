@@ -1,17 +1,31 @@
-This project explores the construction of a general purpose LSST broker.
+# Pitt LSST Broker
 
+This project explores the construction of an LSST broker.
+
+
+## Action Items
+
+- [ ] Formalize design intentions - what would an Pitt - LSST broker look like?
+- [ ] Download ZTF alert data for use in development and testing
+- [ ] Setup a rudementary Kafka server
+
+
+## Table of Contents
+
+- [Links and Resources](#links-and-resources)
+    + [General:](#general-)
+    + [LSST documents:](#lsst-documents-)
+    + [ZTF](#ztf)
 
 
 ## Links and Resources
 
-General:
+#### General:
 
 - Online LSST forum for DM: [community.lsst.org/](https://community.lsst.org/)
 - LSST-DESC Broker Workshop talks [drive.google.com/...](https://drive.google.com/drive/folders/1sjYXbdwTID3VnzZNAkcjLbjRfpwNaO_n?usp=sharing) 
 
-
-
-Key LSST documents:
+#### LSST documents:
 
 - Plans and Policies for Alert Distribution (how will community brokers be chosen?): [ls.st/LDM-612](https://ls.st/LDM-612)
 - Data Products Definition Document LSE-163 (what will LSST alerts look like?): [ls.st/dpdd](https://ls.st/dpdd)
@@ -21,9 +35,7 @@ Key LSST documents:
 - Prototype Schemas: [github.com/lsst-dm/sample-avro-alert](https://github.com/lsst-dm/sample-avro-alert)
 - Kafka-based Alert Stream: [github.com/lsst-dm/alert_stream](https://github.com/lsst-dm/alert_stream)
 
-
-
-ZTF
+#### ZTF
 
 - Sample Alert Packets: [ztf.uw.edu/alerts/public/](https://ztf.uw.edu/alerts/public/)
 - Alert Packet Tools: [zwicky.tf/4t5](https://zwicky.tf/4t5)

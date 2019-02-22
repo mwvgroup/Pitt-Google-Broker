@@ -4,13 +4,15 @@
 """This module downloads sample ZTF alerts."""
 
 import os
+import tarfile
 
 import numpy as np
 import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
-import tarfile
 
+FILE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(FILE_DIR, 'data')
 ZTF_URL = "https://ztf.uw.edu/alerts/public/"
 
 
@@ -29,6 +31,8 @@ def _get_file_list():
         dataset = [td.get_text() for td in row.find_all("td")]
         file_name = dataset[1]
         file_size = dataset[3]
+
+        # Skip alerts that are empty
         if file_size.strip() != '44':
             file_list.append(file_name)
 
@@ -45,7 +49,7 @@ def _download_file(url, out_path):
         out_path (str): The path where the downloaded file should be written
     """
 
-    out_dir = os.path.basename(out_path)
+    out_dir = os.path.dirname(out_path)
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
@@ -76,30 +80,31 @@ def _download_file(url, out_path):
         os.remove(out_path)
 
 
-def download_data(local_dir, max_files=float('inf')):
+def download_data(max_downloads=10):
     """Downloads data files from a given url and unzip if it is a .tar.gz
 
-    If check_local_names is provided, check if <out_dir>/<check_local_name[i]>
-    exists first and don't download the file if it does.
+    Does not skip data that is already downloaded. Skips published alerts that
+    are empty.
 
     Args:
-        local_dir (str): Directory to save files into
-        max_files (int): Maximum number of files to download (optional)
+        max_downloads (int): Number of daily releases to download (default = 10)
     """
 
     file_list = _get_file_list()
+    num_downloads = min(max_downloads, len(file_list))
     for i, file_name in enumerate(file_list):
-        if i >= max_files:
+        if i >= max_downloads:
             break
 
-        out_path = os.path.join(local_dir, file_name)
-        print(f'Downloading ({i + 1}/{len(file_list)}): {file_name}')
+        out_path = os.path.join(DATA_DIR, file_name)
+        print(f'Downloading ({i + 1}/{num_downloads}): {file_name}')
 
         if os.path.exists(out_path):
             print('File already exists')
             continue
 
         try:
+            # Todo: check for local data
             url = requests.compat.urljoin(ZTF_URL, file_name)
             _download_file(url, out_path)
 
@@ -107,5 +112,7 @@ def download_data(local_dir, max_files=float('inf')):
             os.remove(out_path)
 
 
-if __name__ == '__main__':
-    download_data('./data')
+def get_number_local_alerts():
+    """Return the number of locally available alerts"""
+
+    return len(os.listdir(DATA_DIR))
