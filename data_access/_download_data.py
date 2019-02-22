@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(FILE_DIR, 'data')
-ALERT_LOG = os.path.join(FILE_DIR, 'alerts.txt')
+ALERT_LOG = os.path.join(FILE_DIR, 'alert_log.txt')
 ZTF_URL = "https://ztf.uw.edu/alerts/public/"
 
 
@@ -104,14 +104,14 @@ def _download_file(url, out_path):
         os.remove(out_path)
 
 
-def download_data(max_downloads=10):
+def download_data(max_downloads=1):
     """Downloads data files from a given url and unzip if it is a .tar.gz
 
     Does not skip data that is already downloaded. Skips published alerts that
     are empty.
 
     Args:
-        max_downloads (int): Number of daily releases to download (default = 10)
+        max_downloads (int): Number of daily releases to download (default = 1)
     """
 
     file_list = _get_remote_file_list()
