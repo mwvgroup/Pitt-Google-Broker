@@ -1,6 +1,6 @@
 # Pitt LSST Broker
 
-This project explores the construction of an LSST broker.
+This project explores the construction of an LSST broker. I'll be updating code and notes here for the duration of the DESC broker workshop and DESC collaboration meeting.
 
 - [Action Items](#action-items)
 - [ZTF Data Access](#ztf-data-access)
@@ -14,7 +14,7 @@ This project explores the construction of an LSST broker.
 ## Action Items
 
 - [ ] Formalize design intentions - what would a Pitt LSST broker look like?
-- [ ] Download ZTF alert data for use in development and testing
+- [x] Download ZTF alert data for use in development and testing
 - [ ] Setup a rudimentary Kafka server for testing
 
 
