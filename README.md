@@ -14,7 +14,7 @@ This project explores the construction of an LSST broker.
 ## Action Items
 
 - [ ] Formalize design intentions - what would a Pitt LSST broker look like?
-- [ ] Download ZTF alert data for use in development and testing
+- [x] Download ZTF alert data for use in development and testing
 - [ ] Setup a rudimentary Kafka server for testing
 
 
