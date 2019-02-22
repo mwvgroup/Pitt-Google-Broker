@@ -2,6 +2,7 @@ aplpy
 astropy
 beautifulsoup4
 fastavro
+kafka-python
 matplotlib
 numpy
 requests

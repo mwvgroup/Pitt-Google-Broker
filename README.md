@@ -26,33 +26,33 @@ This project will eventually connect to the ZTF. However, the live ZTF stream is
 ```python
 # Download data from ZTF. By default only download 1 day
 # Note: Daily releases can be as large as several G
-from data_access import download_data
+from mock_stream import download_data
 download_data()
 
 # Retrieve the number of daily releases that have been downloaded
-from data_access import number_local_releases
+from mock_stream import number_local_releases
 print(number_local_releases())
 
 # Retrieve the number of alerts that have been downloaded
 # from all combined daily releases.
-from data_access import get_number_local_alerts
+from mock_stream import get_number_local_alerts
 print(get_number_local_alerts())
 
 # Iterate through local alert data
-from data_access import iter_alerts
+from mock_stream import iter_alerts
 for alert in iter_alerts():
     alert_id = alert['candid']
     print(alert_id)
     break
 
 # Get alert data for a specific id
-from data_access import get_alert_data
+from mock_stream import get_alert_data
 alert_data = get_alert_data(alert_id)
 print(alert_data)
 
 # Plot stamp images for alert data
 from matplotlib import pyplot as plt
-from data_access import plot_stamps
+from mock_stream import plot_stamps
 fig = plot_stamps(alert_data)
 plt.show()
 
