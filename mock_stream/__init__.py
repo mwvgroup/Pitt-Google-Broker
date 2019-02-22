@@ -4,7 +4,6 @@
 """This module downloads and provides access to sample ZTF alerts."""
 
 import warnings as _warnings
-import json as _json
 
 from ._download_data import download_data
 from ._download_data import get_number_local_alerts
@@ -19,17 +18,15 @@ if number_local_releases() == 0:
     _warnings.warn('No local ZTF data available. Run `download_data()`.')
 
 
-def prime_alerts(max_alerts=10, servers=['localhost:9092']):
+def prime_alerts(max_alerts=100, servers=['localhost:9092']):
     """Load locally available ZTF alerts into the Kafka stream
 
     Args:
-        max_alerts (int): Number of maximum alerts to load (Default = 10)
+        max_alerts (int): Number of maximum alerts to load (Default = 100)
         servers   (list): List of Kafka servers to connect to.
     """
 
-    _value_serializer = lambda v: _json.dumps(v).encode('utf-8')
-    producer = _KafkaProducer(bootstrap_servers=servers,
-                              compression_type='gzip')
+    producer = _KafkaProducer(bootstrap_servers=servers)
 
     for i, alert in enumerate(iter_alerts(raw=True)):
         if i >= max_alerts:
@@ -37,5 +34,6 @@ def prime_alerts(max_alerts=10, servers=['localhost:9092']):
 
         producer.send('Demo-Topic', alert)
 
+# To create a consumer:
 # from kafka import KafkaConsumer
-# consumer = KafkaConsumer('Demo-Topic', bootstrap_servers=['localhost:9092'])
+# consumer = KafkaConsumer('Demo-Topic', bootstrap_servers=['localhost:9092'], auto_offset_reset='smallest')
