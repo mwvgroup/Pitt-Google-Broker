@@ -117,7 +117,7 @@ def download_data(max_downloads=1):
     file_list = _get_remote_file_list()
     num_downloads = min(max_downloads, len(file_list))
     for i, file_name in enumerate(file_list):
-        if i + 1 >= max_downloads:
+        if i + 1 > max_downloads:
             break
 
         # Skip download if data was already downloaded
