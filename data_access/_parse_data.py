@@ -19,7 +19,7 @@ FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(FILE_DIR, 'data')
 
 
-def _open_alert(path):
+def _parse_alert_file(path):
     """Return the contents of an avro file published by ZTF
 
     Args:
@@ -33,12 +33,30 @@ def _open_alert(path):
         return next(fastavro.reader(f))
 
 
+def get_alert_data(candid):
+    """Return the contents of an avro file published by ZTF
+
+    Args:
+        candid (int): The id number of a ZTF alert
+
+    Returns:
+        The file contents as a dictionary
+    """
+
+    path = os.path.join(DATA_DIR, f'{candid}.avro')
+    try:
+        return _parse_alert_file(path)
+
+    except FileNotFoundError:
+        raise ValueError(f'Data for candid "{candid}" not locally available.')
+
+
 def iter_alerts():
     """Iterate over all locally available alert data"""
 
     path_pattern = os.path.join(DATA_DIR, '*.avro')
     for file_path in glob(path_pattern):
-        yield _open_alert(file_path)
+        yield _parse_alert_file(file_path)
 
 
 def _plot_cutout(packet, fig=None, subplot=None, **kwargs):
