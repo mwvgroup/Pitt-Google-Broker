@@ -5,23 +5,23 @@ This project explores the construction of an LSST broker.
 - [Action Items](#action-items)
 - [ZTF Data Access](#ztf-data-access)
 - [Links and Resources](#links-and-resources)
-    + [General](#general)
-    + [LSST documents](#lsst-documents)
-    + [ZTF](#ztf)
+  - [General](#general)
+  - [LSST documents](#lsst-documents)
+  - [ZTF](#ztf)
 
 
 
 ## Action Items
 
-- [ ] Formalize design intentions - what would an Pitt LSST broker look like?
+- [ ] Formalize design intentions - what would a Pitt LSST broker look like?
 - [ ] Download ZTF alert data for use in development and testing
-- [ ] Setup a rudementary Kafka server for testing
+- [ ] Setup a rudimentary Kafka server for testing
 
 
 
 ## ZTF Data Access
 
-This project will eventually connect to the ZTF. However, the live ZTF stream is still in beta and isn't publically availible. In the mean time we work with data from the [ZTF public alerts archive](https://ztf.uw.edu/alerts/public/). This has the same data but is realeased daily instead of as an alerts stream. Access is provided via the `data_access` package provided in this repo:
+This project will eventually connect to the ZTF. However, the live ZTF stream is still in beta and isn't publically available. In the meantime, we work with data from the [ZTF public alerts archive](https://ztf.uw.edu/alerts/public/). This has the same data but is released daily instead of as an alerts stream. Access is provided via the `data_access` package provided in this repo:
 
 ```python
 # Download data from ZTF. By default only download 1 day
