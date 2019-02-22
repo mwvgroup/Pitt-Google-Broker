@@ -23,7 +23,8 @@ def prime_alerts(max_alerts=100, servers=['localhost:9092']):
 
     Args:
         max_alerts (int): Number of maximum alerts to load (Default = 100)
-        servers   (list): List of Kafka servers to connect to.
+        servers   (list): List of Kafka servers to connect to
+                              (Default = ['localhost:9092']).
     """
 
     producer = _KafkaProducer(bootstrap_servers=servers)
