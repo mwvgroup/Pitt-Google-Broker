@@ -1,7 +1,16 @@
 #!/usr/bin/env python2.7
 # -*- coding: UTF-8 -*-
 
-"""This module downloads and provides access to sample ZTF alerts."""
+"""This module downloads and provides access to sample ZTF alerts.
+
+To create a consumer and populate the alert stream:
+
+  >>> from kafka import KafkaConsumer
+  >>> consumer = KafkaConsumer('Demo-Topic', bootstrap_servers=['localhost:9092'])
+  >>>
+  >>> from mock_stream import prime_alerts
+  >>> prime_alerts()
+"""
 
 import warnings as _warnings
 
@@ -34,7 +43,3 @@ def prime_alerts(max_alerts=100, servers=['localhost:9092']):
             break
 
         producer.send('Demo-Topic', alert)
-
-# To create a consumer:
-# from kafka import KafkaConsumer
-# consumer = KafkaConsumer('Demo-Topic', bootstrap_servers=['localhost:9092'], auto_offset_reset='smallest')
