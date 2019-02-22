@@ -1,0 +1,8 @@
+aplpy
+astropy
+beautifulsoup4
+fastavro
+matplotlib
+numpy
+requests
+tqdm
