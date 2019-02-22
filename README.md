@@ -5,10 +5,11 @@ This project explores the construction of an LSST broker. I'll be updating code 
 - [Action Items](#action-items)
 - [Installation Instructions](#installation-instructions)
 - [ZTF Data Access](#ztf-data-access)
+- [Running a Kafka Stream](#running-a-kafka-stream)
 - [Links and Resources](#links-and-resources)
-  - [General](#general)
-  - [LSST documents](#lsst-documents)
-  - [ZTF](#ztf)
+    + [General](#general)
+    + [LSST documents](#lsst-documents)
+    + [ZTF](#ztf)
 
 
 
@@ -110,14 +111,14 @@ The resulting Kafka stream has one topic called `Demo-Topic`. To subscribe a con
 
 ## Links and Resources
 
-#### General:
+#### General
 
 - Online LSST forum for data managment (DM): [community.lsst.org/](https://community.lsst.org/)
 - LSST-DESC Broker Workshop talks [drive.google.com/...](https://drive.google.com/drive/folders/1sjYXbdwTID3VnzZNAkcjLbjRfpwNaO_n?usp=sharing) 
 
 
 
-#### LSST documents:
+#### LSST Documents
 
 - Plans and Policies for alert distribution (how will community brokers be chosen?): [ls.st/LDM-612](https://ls.st/LDM-612)
 - Call for letters ofiIntent for community alert brokers (how do I apply to be a community broker?): [ls.st/LDM-682](https://ls.st/LDM-682)
