@@ -2,25 +2,26 @@
 
 This project explores the construction of an LSST broker.
 
+- [Action Items](#action-items)
+- [ZTF Data Access](#ztf-data-access)
+- [Links and Resources](#links-and-resources)
+    + [General](#general)
+    + [LSST documents](#lsst-documents)
+    + [ZTF](#ztf)
+
+
 
 ## Action Items
 
-- [ ] Formalize design intentions - what would an Pitt - LSST broker look like?
+- [ ] Formalize design intentions - what would an Pitt LSST broker look like?
 - [ ] Download ZTF alert data for use in development and testing
-- [ ] Setup a rudementary Kafka server
+- [ ] Setup a rudementary Kafka server for testing
 
 
-## Table of Contents
-
-- [ZTF Data Access](#ztf-data-access)
-- [Links and Resources](#links-and-resources)
-    + [General:](#general-)
-    + [LSST documents:](#lsst-documents-)
-    + [ZTF](#ztf)
 
 ## ZTF Data Access
 
-This project will eventually connect to the ZTF. However, the live ZTF stream is still in beta and isn't publically availible. In the mean time we work with data from the ZTF public alerts archive. This has the same data but is realeased daily instead of as an alerts stream. Access is provided via the `data_access` package provided in this repo:
+This project will eventually connect to the ZTF. However, the live ZTF stream is still in beta and isn't publically availible. In the mean time we work with data from the [ZTF public alerts archive](https://ztf.uw.edu/alerts/public/). This has the same data but is realeased daily instead of as an alerts stream. Access is provided via the `data_access` package provided in this repo:
 
 ```python
 # Download data from ZTF. By default only download 1 day
@@ -57,12 +58,16 @@ plt.show()
 
 ```
 
+
+
 ## Links and Resources
 
 #### General:
 
 - Online LSST forum for data managment (DM): [community.lsst.org/](https://community.lsst.org/)
 - LSST-DESC Broker Workshop talks [drive.google.com/...](https://drive.google.com/drive/folders/1sjYXbdwTID3VnzZNAkcjLbjRfpwNaO_n?usp=sharing) 
+
+
 
 #### LSST documents:
 
@@ -72,6 +77,8 @@ plt.show()
 - Data Products Definition Document (DPDD) (What data will LSST deliver?): [ls.st/dpdd](https://ls.st/dpdd)
 - Prototype schemas: [github.com/lsst-dm/sample-avro-alert](https://github.com/lsst-dm/sample-avro-alert)
 - Kafka-based alert stream: [github.com/lsst-dm/alert_stream](https://github.com/lsst-dm/alert_stream)
+
+
 
 #### ZTF
 

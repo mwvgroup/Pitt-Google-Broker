@@ -150,4 +150,9 @@ def number_local_releases():
     """Return the number of ZTF daily alert releases that have been downloaded
     """
 
-    return len(_get_local_alerts_list())
+    local_alerts = _get_local_alerts_list()
+    try:
+        return len(local_alerts)
+
+    except TypeError:
+        return 1
