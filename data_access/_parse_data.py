@@ -100,8 +100,7 @@ def plot_stamps(packet):
 
     fig = plt.figure(figsize=(12, 4))
     for i, cutout in enumerate(['Science', 'Template', 'Difference']):
-        stamp = packet['cutout{}'.format(cutout)]['stampData']
-        ffig = _plot_cutout(stamp, fig=fig, subplot=(1, 3, i + 1))
+        ffig = _plot_cutout(packet, fig=fig, subplot=(1, 3, i + 1))
         ffig.set_title(cutout)
 
     return fig

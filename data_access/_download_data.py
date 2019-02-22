@@ -150,4 +150,4 @@ def number_local_releases():
     """Return the number of ZTF daily alert releases that have been downloaded
     """
 
-    return len(_get_local_alerts_list)
+    return len(_get_local_alerts_list())
