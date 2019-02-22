@@ -1,6 +1,6 @@
 # Pitt LSST Broker
 
-This project explores the construction of an LSST broker.
+This project explores the construction of an LSST broker. I'll be updating code and notes here for the duration of the DESC broker workshop and DESC collaboration meeting.
 
 - [Action Items](#action-items)
 - [ZTF Data Access](#ztf-data-access)
