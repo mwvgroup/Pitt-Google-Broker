@@ -3,6 +3,7 @@
 This project explores the construction of an LSST broker. I'll be updating code and notes here for the duration of the DESC broker workshop and DESC collaboration meeting.
 
 - [Action Items](#action-items)
+- [Installation Instructions](#installation-instructions)
 - [ZTF Data Access](#ztf-data-access)
 - [Links and Resources](#links-and-resources)
   - [General](#general)
@@ -16,6 +17,22 @@ This project explores the construction of an LSST broker. I'll be updating code 
 - [ ] Formalize design intentions - what would a Pitt LSST broker look like?
 - [x] Download ZTF alert data for use in development and testing
 - [ ] Setup a rudimentary Kafka server for testing
+
+
+
+## Installation Instructions
+
+Although this project is python based, Apache Kafka is written in Scala. This means we will have to install both Python and Java packages. Note that this project relies on Python 3.7. It is recommended to install python dependencies in a dedicated environment:
+
+```bash
+> conda create -n pitt_broker python=3.7 anaconda
+> conda activate pitt_broker
+> pip install -r requirements.txt
+```
+
+Detailed Java installation instructions can be found [here](https://www.java.com/en/download/help/download_options.xml#mac)
+
+Apache Kafka and Zookeeper download instructions can be found [here](https://www.tutorialspoint.com/apache_kafka/apache_kafka_installation_steps.htm)
 
 
 
