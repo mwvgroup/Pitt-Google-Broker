@@ -1,6 +1,6 @@
 # ZTF alert data
-data_access/data
-data_access/alert_log.txt
+mock_stream/data
+mock_stream/alert_log.txt
 
 # OS files
 *.DS_Store
