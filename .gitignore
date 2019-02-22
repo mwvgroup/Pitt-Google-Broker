@@ -1,5 +1,6 @@
 # ZTF alert data
 data_access/data
+data_access/alerts.txt
 
 # OS files
 *.DS_Store

@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 # -*- coding: UTF-8 -*-
 
-"""This module downloads sample ZTF alerts."""
+"""This module downloads sample ZTF alerts archive."""
 
 import os
 import tarfile
@@ -13,24 +13,48 @@ from tqdm import tqdm
 
 FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(FILE_DIR, 'data')
+ALERT_LOG = os.path.join(FILE_DIR, 'alerts.txt')
 ZTF_URL = "https://ztf.uw.edu/alerts/public/"
 
 
-def _get_file_list():
-    """Get a list of published ZTF alerts from the ZTF Alert Archive"""
+def _get_local_alerts_list():
+    """Return a list of ZTF alert files that have already been downloaded
 
+    Files will have already been unzipped into DATA_DIR
+
+    Returns:
+        A list of ZTF alert file names
+    """
+
+    if not os.path.exists(ALERT_LOG):
+        return []
+
+    else:
+        return np.loadtxt(ALERT_LOG, dtype='str')
+
+
+def _get_remote_file_list():
+    """Get a list of published ZTF alerts from the ZTF Alert Archive
+
+    returns:
+        A list of file names for alerts published on the ZTF archive
+    """
+
+    # Get html table from page source
     page_source = str(requests.get(ZTF_URL).content)
     soup = BeautifulSoup(page_source, features='lxml')
     soup_table = soup.find("table", attrs={"id": "indexlist"})
 
-    # Get table rows - Ignore first, heading row and second empty row
+    # Get table rows with data - Ignore first header row. The second and last
+    # rows are empty so are also ignored
     data_rows = soup_table.find_all("tr")[2:-1]
 
+    # Create list of alert file names
     file_list = []
     for row in data_rows:
-        dataset = [td.get_text() for td in row.find_all("td")]
-        file_name = dataset[1]
-        file_size = dataset[3]
+        row_data = [td.get_text() for td in row.find_all("td")]
+        file_name = row_data[1]
+        file_size = row_data[3]
 
         # Skip alerts that are empty
         if file_size.strip() != '44':
@@ -90,29 +114,40 @@ def download_data(max_downloads=10):
         max_downloads (int): Number of daily releases to download (default = 10)
     """
 
-    file_list = _get_file_list()
+    file_list = _get_remote_file_list()
     num_downloads = min(max_downloads, len(file_list))
     for i, file_name in enumerate(file_list):
-        if i >= max_downloads:
+        if i + 1 >= max_downloads:
             break
+
+        # Skip download if data was already downloaded
+        if file_name in _get_local_alerts_list():
+            print(f'Already Downloaded ({i + 1}/{num_downloads}): {file_name}')
+            continue
 
         out_path = os.path.join(DATA_DIR, file_name)
         print(f'Downloading ({i + 1}/{num_downloads}): {file_name}')
 
-        if os.path.exists(out_path):
-            print('File already exists')
-            continue
-
         try:
-            # Todo: check for local data
             url = requests.compat.urljoin(ZTF_URL, file_name)
             _download_file(url, out_path)
 
+            with open(ALERT_LOG, 'a') as ofile:
+                ofile.write(file_name)
+
         except KeyboardInterrupt:
             os.remove(out_path)
+            return
 
 
 def get_number_local_alerts():
     """Return the number of locally available alerts"""
 
     return len(os.listdir(DATA_DIR))
+
+
+def number_local_releases():
+    """Return the number of ZTF daily alert releases that have been downloaded
+    """
+
+    return len(_get_local_alerts_list)
