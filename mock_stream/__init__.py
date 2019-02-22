@@ -28,18 +28,14 @@ def prime_alerts(max_alerts=10, servers=['localhost:9092']):
     """
 
     _value_serializer = lambda v: _json.dumps(v).encode('utf-8')
-    producer = _KafkaProducer(value_serializer=_value_serializer,
-                              bootstrap_servers=servers,
+    producer = _KafkaProducer(bootstrap_servers=servers,
                               compression_type='gzip')
 
-    for i, alert in enumerate(iter_alerts()):
+    for i, alert in enumerate(iter_alerts(raw=True)):
         if i >= max_alerts:
             break
 
-        del alert['cutoutScience']
-        del alert['cutoutTemplate']
-        del alert['cutoutDifference']
         producer.send('Demo-Topic', alert)
 
 # from kafka import KafkaConsumer
-# consumer = _KafkaConsumer('Demo-Topic', bootstrap_servers=['localhost:9092'])
+# consumer = KafkaConsumer('Demo-Topic', bootstrap_servers=['localhost:9092'])
