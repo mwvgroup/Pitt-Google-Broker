@@ -5,6 +5,7 @@ This project explores the construction of an LSST broker. I'll be updating code 
 - [Action Items](#action-items)
 - [Installation Instructions](#installation-instructions)
 - [ZTF Data Access](#ztf-data-access)
+- [Running a Kafka Stream](#running-a-kafka-stream)
 - [Links and Resources](#links-and-resources)
   - [General](#general)
   - [LSST documents](#lsst-documents)
@@ -16,7 +17,7 @@ This project explores the construction of an LSST broker. I'll be updating code 
 
 - [ ] Formalize design intentions - what would a Pitt LSST broker look like?
 - [x] Download ZTF alert data for use in development and testing
-- [ ] Setup a rudimentary Kafka server for testing
+- [x] Setup a rudimentary Kafka server for testing
 - [ ] Wrap dependencies in a docker
 
 
