@@ -17,7 +17,7 @@ This project explores the construction of an LSST broker. I'll be updating code 
 
 - [ ] Formalize design intentions - what would a Pitt LSST broker look like?
 - [x] Download ZTF alert data for use in development and testing
-- [ ] Setup a rudimentary Kafka server for testing
+- [x] Setup a rudimentary Kafka server for testing
 - [ ] Wrap dependencies in a docker
 
 
@@ -92,22 +92,26 @@ Enter kafka directory: <./kafka_directory>
 The resulting Kafka stream has one topic called `Demo-Topic`. To subscribe a consumer to this topic and populate kafka with a series of alerts:
 
 ```python
-# Create a consumer
->>> from kafka import KafkaConsumer
->>> consumer = KafkaConsumer('Demo-Topic', bootstrap_servers=['localhost:9092'])
-
 # Populate alert stream with up to 100 alerts.
 # Use max_alerts argument for more or less alerts.
->>> from mock_stream import prime_alerts
->>> prime_alerts()
+from mock_stream import prime_alerts
+prime_alerts()
+
+# At this point you can use the built in consumer object
+from mock_stream import consumer
+
+# You can also create your own consumer and point it to the
+# beginning of the stream
+from kafka import KafkaConsumer
+consumer = KafkaConsumer('Demo-Topic',
+                         bootstrap_servers=['localhost:9092'], 
+                         auto_offset_reset='earliest')
 
 # Iterate through alerts:
->>> for alert in consumer:
->>>     print(alert)
+for alert in consumer:
+    print(alert)
 
 ```
-
-
 
 ## Links and Resources
 
