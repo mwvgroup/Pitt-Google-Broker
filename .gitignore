@@ -1,9 +1,6 @@
 # ZTF alert data
 mock_stream/data
-mock_stream/alert_log.txt
-
-# Kafka
-kafka/
+mock_stream/alert_log.tx
 
 # OS files
 *.DS_Store
