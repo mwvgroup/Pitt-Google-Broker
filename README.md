@@ -108,7 +108,9 @@ consumer = KafkaConsumer(
 # Use max_alerts argument for more or less alerts.
 prime_alerts()
 
-# Iterate through alerts:
+# Iterate through alerts
+# Note that it takes a moment for Kafka to process alerts
+# and the consumer may not have access to them right away
 for alert in consumer:
     print(alert)
 
