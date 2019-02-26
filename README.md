@@ -21,7 +21,6 @@ This project explores the construction of an LSST broker. I'll be updating code 
 - [ ] Formalize design intentions - what would a Pitt LSST broker look like?
 
 
-
 ## Installation Instructions
 
 All Python dependencies are installable using `pip` and the `requirements.txt` file. To create a new conda environment and install dependencies, run:
