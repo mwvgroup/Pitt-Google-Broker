@@ -22,12 +22,11 @@ from ._parse_data import iter_alerts
 from ._parse_data import plot_stamps
 
 from kafka import KafkaProducer as _KafkaProducer
-from kafka import KafkaConsumer as _KafkaConsumer
 
 if number_local_releases() == 0:
     _warnings.warn('No local ZTF data available. Run `download_data()`.')
 
-consumer, producer = None, None  # Placeholder variables
+producer = None  # Placeholder variable
 
 
 def prime_alerts(max_alerts=100, servers=['localhost:9092']):
@@ -39,12 +38,11 @@ def prime_alerts(max_alerts=100, servers=['localhost:9092']):
                               (Default = ['localhost:9092']).
     """
 
-    global consumer, producer
-    consumer = _KafkaConsumer('Demo-Topic', bootstrap_servers=servers)
+    global producer
     producer = _KafkaProducer(bootstrap_servers=servers)
 
     for i, alert in enumerate(iter_alerts(raw=True)):
         if i >= max_alerts:
             break
 
-        producer.send('Demo-Topic', alert)
+        producer.send('ztf-stream', alert)
