@@ -15,63 +15,64 @@ This project explores the construction of an LSST broker. I'll be updating code 
 
 ## Action Items
 
-- [ ] Formalize design intentions - what would a Pitt LSST broker look like?
 - [x] Download ZTF alert data for use in development and testing
 - [x] Setup a rudimentary Kafka server for testing
-- [ ] Wrap dependencies in a docker
+- [x] Wrap dependencies in a docker
+- [ ] Formalize design intentions - what would a Pitt LSST broker look like?
 
 
 
 ## Installation Instructions
 
-Although this project is python based, Apache Kafka is written in Scala. This means we will have to install both Python and Java packages. Note that this project relies on Python 3.7. It is recommended to install python dependencies in a dedicated environment:
+All Python dependencies are installable using `pip` and the `requirements.txt` file. To create a new conda environment and install dependencies, run:
 
 ```bash
 > conda create -n pitt_broker python=3.7 anaconda
-> conda activate pitt_broker
+> conda activate pitt_broker  # Activate the new environment
 > pip install -r requirements.txt
+> conda deactivate  # Exit the environment
 ```
 
-Detailed Java installation instructions can be found [here](https://www.java.com/en/download/help/download_options.xml#mac)
-
-Apache Kafka and Zookeeper download instructions can be found [here](https://www.tutorialspoint.com/apache_kafka/apache_kafka_installation_steps.htm)
+This project also relies on dependencies that are not written in Python. These have been Dockerized for convenience, but you will need to download [Docker](https://docs.docker.com/install/) (scroll down to the *Supported platforms* section)
 
 
 
 ## ZTF Data Access
 
-This project will eventually connect to the ZTF. However, the live ZTF stream is still in beta and isn't publically available. In the meantime, we work with data from the [ZTF public alerts archive](https://ztf.uw.edu/alerts/public/). This has the same data but is released daily instead of as an alerts stream. Access is provided via the `data_access` package provided in this repo:
+This project will eventually connect to the Zwicky Transient Facility (*ZTF*) . However, the live ZTF stream is still in beta and isn't publically available. In the meantime, we work with data from the [ZTF public alerts archive](https://ztf.uw.edu/alerts/public/). This has the same data but is released daily instead of as an alerts stream. Access is provided via the `data_access` package provided in this repo:
 
 ```python
+from matplotlib import pyplot as plt
+
+from mock_stream import download_data
+from mock_stream import get_alert_data
+from mock_stream import get_number_local_alerts
+from mock_stream import iter_alerts
+from mock_stream import number_local_releases
+from mock_stream import plot_stamps
+
 # Download data from ZTF. By default only download 1 day
 # Note: Daily releases can be as large as several G
-from mock_stream import download_data
 download_data()
 
 # Retrieve the number of daily releases that have been downloaded
-from mock_stream import number_local_releases
 print(number_local_releases())
 
 # Retrieve the number of alerts that have been downloaded
 # from all combined daily releases.
-from mock_stream import get_number_local_alerts
 print(get_number_local_alerts())
 
 # Iterate through local alert data
-from mock_stream import iter_alerts
 for alert in iter_alerts():
     alert_id = alert['candid']
     print(alert_id)
     break
 
 # Get alert data for a specific id
-from mock_stream import get_alert_data
 alert_data = get_alert_data(alert_id)
 print(alert_data)
 
 # Plot stamp images for alert data
-from matplotlib import pyplot as plt
-from mock_stream import plot_stamps
 fig = plot_stamps(alert_data)
 plt.show()
 
@@ -81,31 +82,31 @@ plt.show()
 
 ## Running a Kafka Stream
 
-The `run_kafka.sh` script is provided to run a demo Kafka server. The resulting server is the same as that created in the Kafka Quick Start guide. The script will prompt you for the directory where Kafka is installed.
+For simplicity, we run a dockerized Kafka server. To initialize the server run.
 
 ```bash
-> bash run_kafka.sh
-Enter kafka directory: <./kafka_directory>
-
+> docker-compose up 
 ```
 
-The resulting Kafka stream has one topic called `Demo-Topic`. To subscribe a consumer to this topic and populate kafka with a series of alerts:
+If you are having problems with Kafka server, try adding the `--force-recreate` argument to avoid using a cached server image. You can also check the status of any docker images running on your machine by executing `docker stats` in a separate window. Note that the above command actually initializes two docker containers - one for Kafka, and one for Zookeeper which manages the Kafka server.
+
+
+
+The resulting Kafka stream has a single topic called `ztf-stream`. To subscribe a consumer to this topic and populate Kafka with a series of alerts:
 
 ```python
+from kafka import KafkaConsumer
+from mock_stream import prime_alerts
+
+# Create a consumer
+consumer = KafkaConsumer(
+    'Demo-Topic',
+    bootstrap_servers=['localhost:9092']\
+)
+
 # Populate alert stream with up to 100 alerts.
 # Use max_alerts argument for more or less alerts.
-from mock_stream import prime_alerts
 prime_alerts()
-
-# At this point you can use the built in consumer object
-from mock_stream import consumer
-
-# You can also create your own consumer and point it to the
-# beginning of the stream
-from kafka import KafkaConsumer
-consumer = KafkaConsumer('Demo-Topic',
-                         bootstrap_servers=['localhost:9092'], 
-                         auto_offset_reset='earliest')
 
 # Iterate through alerts:
 for alert in consumer:
