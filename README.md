@@ -1,6 +1,10 @@
 # Pitt LSST Broker
 
-This project explores the construction of an LSST broker. I'll be updating code and notes here for the duration of the DESC broker workshop and DESC collaboration meeting.
+Data from LSST will be distributed through three distinct avenues. The first is a real-time stream of alerts that provides information on transient targets within 60 seconds of observation. The second is a daily data release, which contains the same information as the 60-second alerts plus some additional information. The last data product will be a yearly data release.
+
+The 60-second alert stream will not be made available to the public (at least not in its entirety). Instead, LSST will rely on a small number of (~7) community developed *broker* systems to publically relay the information. This project explores the construction of an LSST broker using the alert stream from the Zwicky Transient Factory (ZTF) as a testing ground.
+
+
 
 - [Action Items](#action-items)
 - [Installation Instructions](#installation-instructions)
@@ -21,6 +25,7 @@ This project explores the construction of an LSST broker. I'll be updating code 
 - [ ] Formalize design intentions - what would a Pitt LSST broker look like?
 
 
+
 ## Installation Instructions
 
 All Python dependencies are installable using `pip` and the `requirements.txt` file. To create a new conda environment and install dependencies, run:
@@ -32,13 +37,13 @@ All Python dependencies are installable using `pip` and the `requirements.txt` f
 > conda deactivate  # Exit the environment
 ```
 
-This project also relies on dependencies that are not written in Python. These have been Dockerized for convenience and don't require any dedicated installation. However, you will need to download [Docker](https://docs.docker.com/install/) (Click the link and scroll down to the *Supported platforms* section)
+This project also relies on dependencies that are not written in Python. These have been Dockerized for convenience and don't require any dedicated installation. However, you will need to download [Docker](https://docs.docker.com/install/) (Click the link and scroll down to the *Supported platforms* section).
 
 
 
 ## ZTF Data Access
 
-This project will eventually connect to the Zwicky Transient Facility (*ZTF*) . However, the live ZTF stream is still in beta and isn't publically available. In the meantime, we work with data from the [ZTF public alerts archive](https://ztf.uw.edu/alerts/public/). This has the same data but is released daily instead of as an alerts stream. Access is provided via the `mock_stream` package located in this repo:
+This project will use ZTF data for testing and development. Although the live ZTF alert stream is still in beta and isn't publically available, all alerts are submitted at the end of the day to the [ZTF public alerts archive](https://ztf.uw.edu/alerts/public/). This repository provides the `mock_stream` module which is capable of automatically downloading, parsing, and plotting results from the public archive. The following example demonstrates each of these capabilities: 
 
 ```python
 from matplotlib import pyplot as plt
@@ -81,7 +86,7 @@ plt.show()
 
 ## Running a Kafka Stream
 
-For simplicity, we run a dockerized Kafka server. To initialize the server run.
+The `mock_stream` module also provides a simulated stream of ZTF alerts. Just like the real ZTF stream, alerts are streamed using a [Kafka server](https://kafka.apache.org/intro). LSST will eventually use the same type of server system. To initialize a local server for testing, run:
 
 ```bash
 > docker-compose up 
@@ -99,12 +104,12 @@ from mock_stream import prime_alerts
 
 # Create a consumer
 consumer = KafkaConsumer(
-    'Demo-Topic',
-    bootstrap_servers=['localhost:9092']\
+    'ztf-stream',
+    bootstrap_servers=['localhost:9092']
 )
 
 # Populate alert stream with up to 100 alerts.
-# Use max_alerts argument for more or less alerts.
+# Use max_alerts argument for more or fewer alerts.
 prime_alerts()
 
 # Iterate through alerts
@@ -114,6 +119,8 @@ for alert in consumer:
     print(alert)
 
 ```
+
+
 
 ## Links and Resources
 
