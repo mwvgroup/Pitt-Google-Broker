@@ -32,7 +32,7 @@ All Python dependencies are installable using `pip` and the `requirements.txt` f
 > conda deactivate  # Exit the environment
 ```
 
-This project also relies on dependencies that are not written in Python. These have been Dockerized for convenience, but you will need to download [Docker](https://docs.docker.com/install/) (scroll down to the *Supported platforms* section)
+This project also relies on dependencies that are not written in Python. These have been Dockerized for convenience and don't require any dedicated installation. However, you will need to download [Docker](https://docs.docker.com/install/) (Click the link and scroll down to the *Supported platforms* section)
 
 
 
