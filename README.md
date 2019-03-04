@@ -38,7 +38,7 @@ This project also relies on dependencies that are not written in Python. These h
 
 ## ZTF Data Access
 
-This project will eventually connect to the Zwicky Transient Facility (*ZTF*) . However, the live ZTF stream is still in beta and isn't publically available. In the meantime, we work with data from the [ZTF public alerts archive](https://ztf.uw.edu/alerts/public/). This has the same data but is released daily instead of as an alerts stream. Access is provided via the `data_access` package provided in this repo:
+This project will eventually connect to the Zwicky Transient Facility (*ZTF*) . However, the live ZTF stream is still in beta and isn't publically available. In the meantime, we work with data from the [ZTF public alerts archive](https://ztf.uw.edu/alerts/public/). This has the same data but is released daily instead of as an alerts stream. Access is provided via the `mock_stream` package located in this repo:
 
 ```python
 from matplotlib import pyplot as plt

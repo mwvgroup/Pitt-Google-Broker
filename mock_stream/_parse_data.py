@@ -64,7 +64,12 @@ def iter_alerts(raw=False):
     """
 
     path_pattern = os.path.join(DATA_DIR, '*.avro')
-    for file_path in glob(path_pattern):
+    file_list = glob(path_pattern)
+    if not file_list:
+        raise RuntimeError("No local alert data found. Please run"
+                           " 'mock_stream.download_data' first.")
+
+    for file_path in file_list:
         yield _parse_alert_file(file_path, raw)
 
 
