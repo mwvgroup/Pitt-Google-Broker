@@ -1,6 +1,6 @@
 # ZTF alert data
 mock_stream/data
-mock_stream/alert_log.tx
+mock_stream/alert_log.txt
 
 # OS files
 *.DS_Store

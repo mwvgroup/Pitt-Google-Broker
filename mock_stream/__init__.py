@@ -41,8 +41,12 @@ def prime_alerts(max_alerts=100, servers=['localhost:9092']):
     global producer
     producer = _KafkaProducer(bootstrap_servers=servers)
 
+    print('Staging messages...')
     for i, alert in enumerate(iter_alerts(raw=True)):
         if i >= max_alerts:
             break
 
         producer.send('ztf-stream', alert)
+
+    print('Waiting for messages to be delivered...')
+    producer.flush()
