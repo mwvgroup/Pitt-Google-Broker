@@ -2,9 +2,6 @@
 mock_stream/data
 mock_stream/alert_log.txt
 
-# Kafka
-kafka/
-
 # OS files
 *.DS_Store
 .AppleDouble

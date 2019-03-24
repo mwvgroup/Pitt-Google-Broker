@@ -26,6 +26,8 @@ from kafka import KafkaProducer as _KafkaProducer
 if number_local_releases() == 0:
     _warnings.warn('No local ZTF data available. Run `download_data()`.')
 
+producer = None  # Placeholder variable
+
 
 def prime_alerts(max_alerts=100, servers=['localhost:9092']):
     """Load locally available ZTF alerts into the Kafka stream
@@ -36,10 +38,15 @@ def prime_alerts(max_alerts=100, servers=['localhost:9092']):
                               (Default = ['localhost:9092']).
     """
 
+    global producer
     producer = _KafkaProducer(bootstrap_servers=servers)
 
+    print('Staging messages...')
     for i, alert in enumerate(iter_alerts(raw=True)):
         if i >= max_alerts:
             break
 
-        producer.send('Demo-Topic', alert)
+        producer.send('ztf-stream', alert)
+
+    print('Waiting for messages to be delivered...')
+    producer.flush()
