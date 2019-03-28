@@ -126,6 +126,7 @@ for alert in consumer:
 
 #### General
 
+- Project notes: [here]('./notes/README.md)
 - Online LSST forum for data managment (DM): [community.lsst.org/](https://community.lsst.org/)
 - LSST-DESC Broker Workshop talks [drive.google.com/...](https://drive.google.com/drive/folders/1sjYXbdwTID3VnzZNAkcjLbjRfpwNaO_n?usp=sharing) 
 
