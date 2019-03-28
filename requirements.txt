@@ -6,4 +6,6 @@ kafka-python
 matplotlib
 numpy
 requests
+sqlalchemy
+sqlalchemy_utils
 tqdm
