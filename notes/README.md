@@ -5,6 +5,7 @@ This directory contains various project documents and notes.
 ####  Document Summaries:
 
 - **competitive_product_survey/**: A summary of other brokers being developed
+- **DESC Broker Workshop:** Notes from the DESC broker workshop
 
 #### External Documents:
 
