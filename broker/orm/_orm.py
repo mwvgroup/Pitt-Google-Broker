@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-"""This module provides object relational mapper (ORM)
+"""This module provides an object relational mapper (ORM) for the broker
+backend.
 
 Included tables:
     SDSS: Object catalogue for SDSS
