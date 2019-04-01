@@ -8,6 +8,7 @@ The 60-second alert stream will not be made available to the public (at least no
 
 - [Action Items](#action-items)
 - [Installation Instructions](#installation-instructions)
+- [Broker ORM](#broker-orm)
 - [ZTF Data Access](#ztf-data-access)
 - [Running a Kafka Stream](#running-a-kafka-stream)
 - [Links and Resources](#links-and-resources)
@@ -22,11 +23,23 @@ The 60-second alert stream will not be made available to the public (at least no
 - [x] Download ZTF alert data for use in development and testing
 - [x] Setup a rudimentary Kafka server for testing
 - [x] Wrap dependencies in a docker
-- [ ] Formalize design intentions - what would a Pitt LSST broker look like?
+- [ ] Impliment a crossmatching algorithm
+- [ ] Connect to the official ZTF stream
 
 
 
 ## Installation Instructions
+
+This project relies on a PostgreSQL backend. An excellent tutorial on getting PostgreSQL running on you (Mac) machine can be found [here](https://www.codementor.io/engineerapart/getting-started-with-postgresql-on-mac-osx-are8jcopb), but the essential bash commands are:
+
+```bash
+/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+
+brew install postgresql
+pg_ctl -D /usr/local/var/postgres start && brew services start postgresql
+```
+
+
 
 All Python dependencies are installable using `pip` and the `requirements.txt` file. To create a new conda environment and install dependencies, run:
 
@@ -38,6 +51,21 @@ All Python dependencies are installable using `pip` and the `requirements.txt` f
 ```
 
 This project also relies on dependencies that are not written in Python. These have been Dockerized for convenience and don't require any dedicated installation. However, you will need to download [Docker](https://docs.docker.com/install/) (Click the link and scroll down to the *Supported platforms* section).
+
+
+
+## Broker ORM
+
+The `broker` package represents the current state of our work developing a broker system. It stores data using a PostgreSQL backend which can be accessed via a [SQLALchemy](https://www.sqlalchemy.org) based object relational mapper (ORM). The orm will automatically create a database on your machine called *pitt_broker*. To populate this database run
+
+```python
+from broker import orm
+
+# SDSS data is stored on the Pitt Bruno server
+orm.ingest_sdss('bruno/users/cnm37/Skyserver_3e5_stars_mags.csv')
+```
+
+Queries to the database can be submitted using the `orm.session` object. Documentation on SQLALchemy based queries is available [here](https://docs.sqlalchemy.org/en/latest/orm/tutorial.html#querying)
 
 
 
