@@ -111,7 +111,7 @@ class SDSS(_base):
     __tablename__ = 'sdss'
 
     # Meta data
-    id = Column(types.NUMERIC(19, 0), primary_key=True)
+    objid = Column(types.Integer, primary_key=True)
     run = Column(types.Integer)
     rerun = Column(types.Integer)
     ra = Column(types.Float)
