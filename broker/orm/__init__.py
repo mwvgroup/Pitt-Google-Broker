@@ -10,6 +10,7 @@ Examples:
 
     >>> from broker.orm import session, SDSS
     >>> session.query(SDSS).all()
+
     To backup data to a local SQLite file:
 
     >>>  from broker.orm import backup_to_sqlite

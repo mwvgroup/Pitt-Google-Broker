@@ -65,7 +65,16 @@ from broker import orm
 orm.ingest_sdss('bruno/users/cnm37/Skyserver_3e5_stars_mags.csv')
 ```
 
-Queries to the database can be submitted using the `orm.session` object. Documentation on SQLALchemy based queries is available [here](https://docs.sqlalchemy.org/en/latest/orm/tutorial.html#querying)
+Queries to the database can be submitted using the `orm.session` object. Documentation on SQLALchemy based queries is available [here](https://docs.sqlalchemy.org/en/latest/orm/tutorial.html#querying). Utility functions are also provided for backing up the database to SQLite format:
+
+```python
+# Backup data to a local SQLite file:
+orm.backup_to_sqlite('./backup.db')
+
+# Restore from a backup (via INSERT):
+orm.restore_from_sqlite('./backup.db')
+
+```
 
 
 
