@@ -11,15 +11,14 @@ import os
 from warnings import warn
 
 from sqlalchemy import Column, create_engine, types
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import create_database, database_exists
 
-_db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data.db')
-_db_url = f'sqlite:///{_db_path}'
-
 _base = declarative_base()
+_db_url = 'postgres://localhost/pitt_broker'
 engine = create_engine(_db_url)
 if not database_exists(engine.url):
     warn(f'No existing database found. Creating {_db_url}')
@@ -75,13 +74,44 @@ def restore_from_sqlite(path, force=False):
     session.commit()
 
 
+def upsert(table, values, index, conflict='ignore', skip_cols=()):
+    """Execute a bulk UPSERT statement
+
+    Args:
+        table (DeclarativeMeta): The ORM table to act on (eg. Supernova)
+        values     (list[dict]): Data to upsert
+        index    (list[Column]): Table column on which to catch conflicts
+        conflict          (str): Either 'ignore' or 'update (Default: 'ignore')
+        skip_cols (list[str]): List of columns not to update
+    """
+
+    insert_stmt = postgresql.insert(table.__table__).values(values)
+
+    if conflict == 'ignore':
+        ignore_stmt = insert_stmt.on_conflict_do_nothing(index_elements=index)
+        engine.execute(ignore_stmt)
+
+    elif conflict == 'update':
+        update_columns = {col.name: col for col in insert_stmt.excluded if
+                          col.name not in skip_cols}
+
+        update_stmt = insert_stmt.on_conflict_do_update(
+            index_elements=index,
+            set_=update_columns)
+
+        engine.execute(update_stmt)
+
+    else:
+        raise ValueError(f'Unknown action: {conflict}')
+
+
 class SDSS(_base):
     """Objects from the SDSS catalogue"""
 
     __tablename__ = 'sdss'
 
     # Meta data
-    id = Column(types.INTEGER, primary_key=True)
+    id = Column(types.NUMERIC(19, 0), primary_key=True)
     run = Column(types.Integer)
     rerun = Column(types.Integer)
     ra = Column(types.Float)
