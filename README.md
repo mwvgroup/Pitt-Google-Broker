@@ -56,7 +56,7 @@ This project also relies on dependencies that are not written in Python. These h
 
 ## Broker ORM
 
-The `broker` package represents the current state of our work developing a broker system. It stores data using a PostgreSQL backend which can be accessed via a [SQLALchemy](https://www.sqlalchemy.org) based object relational mapper (ORM). The orm will automatically create a database on your machine called *pitt_broker*. To populate this database run
+The `broker` package represents the current state of our work developing a broker system. It stores data using a PostgreSQL backend which can be accessed via a [SQLALchemy](https://www.sqlalchemy.org) based object relational mapper (ORM). The ORM will automatically create a database on your machine called *pitt_broker*. To populate this database run
 
 ```python
 from broker import orm
