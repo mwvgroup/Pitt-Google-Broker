@@ -18,8 +18,8 @@ Examples:
 
     To restore from a backup (via INSERT):
 
-    >>>  from broker.orm import restore_from_sqlite
-    >>>  restore_from_sqlite('./backup.db')
+    >>>  from broker.orm import insert_from_sqlite
+    >>>  insert_from_sqlite('./backup.db')
 
 """
 
@@ -27,5 +27,5 @@ from ._ingest_catalogs import ingest_sdss
 from ._orm import (SDSS,
                    backup_to_sqlite,
                    engine,
-                   restore_from_sqlite,
+                   insert_from_sqlite,
                    session)

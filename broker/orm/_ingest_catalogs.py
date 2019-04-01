@@ -8,11 +8,15 @@ import pandas as pd
 from ._orm import engine
 
 
-def ingest_sdss(input_path):
+def ingest_sdss(input_path, if_exists='append'):
     """Populate the sdss table with data from SDSS DR14
+
+    Default behavior is to append data if 'sdss' table already exists.
 
     Args:
         input_path (str): Path of file with SDSS data
+        if_exists  (str): Behavior if sdss table already exists
+            (‘fail’, ‘replace’, ‘append’)
     """
 
     input_df = pd.read_csv(input_path, index_col=0)
@@ -26,4 +30,4 @@ def ingest_sdss(input_path):
                         'Err_z': 'z_err'
                     })
 
-    input_df.to_sql('sdss', engine, if_exists='replace')
+    input_df.to_sql('sdss', engine, if_exists=if_exists)

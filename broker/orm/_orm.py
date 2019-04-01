@@ -48,12 +48,11 @@ def backup_to_sqlite(path):
     dump_session.commit()
 
 
-def restore_from_sqlite(path, force=False):
+def insert_from_sqlite(path):
     """Insert entries in the project database from an exported sqlite file
 
     Args:
-        path   (str): Path of a sqlite backup
-        force (bool): Attempt update even if db models match (default = False)
+        path (str): Path of a sqlite backup
     """
 
     db_path = os.path.abspath(path)
@@ -63,8 +62,8 @@ def restore_from_sqlite(path, force=False):
     backup_tables = backup_base.metadata.tables
 
     db_tables = _base.metadata.tables
-    if not (force or db_tables == backup_tables):
-        raise RuntimeError('Cannot auto update. Database models do not match.')
+    if db_tables != backup_tables:
+        warn('Database models do not match exactly. Proceeding anyways')
 
     for tbl_name, tbl in backup_tables.items():
         data = load_engine.execute(tbl.select()).fetchall()
@@ -111,7 +110,7 @@ class SDSS(_base):
     __tablename__ = 'sdss'
 
     # Meta data
-    objid = Column(types.Integer, primary_key=True)
+    objid = Column(types.BigInteger, primary_key=True)
     run = Column(types.Integer)
     rerun = Column(types.Integer)
     ra = Column(types.Float)
