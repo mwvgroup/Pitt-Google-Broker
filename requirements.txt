@@ -5,6 +5,7 @@ fastavro
 kafka-python
 matplotlib
 numpy
+psycopg2-binary
 requests
 sqlalchemy
 sqlalchemy_utils

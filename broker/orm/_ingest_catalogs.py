@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-"""Downloads and ingests data from external surveys."""
+"""Ingests data from external surveys."""
 
-from astropy.table import Table
+import pandas as pd
 from tqdm import tqdm
 
 from ._orm import SDSS, engine
@@ -16,11 +16,12 @@ def ingest_sdss(input_path):
         input_path (str): Path of file with SDSS data
     """
 
-    input_table = Table.read(input_path)
-    data_as_dict = []
-    for i, row in enumerate(tqdm(input_table)):
-        data_as_dict.append(dict(
-            id=row['objid']/1000000,
+    data_as_dicts = []
+    input_df = pd.read_csv(input_path, index_col=0)
+    generator = enumerate(input_df.iterrows())
+    for i, (index, row) in tqdm(generator, total=len(input_df.index)):
+        data_as_dicts.append(dict(
+            id=index,
             run=row['run'],
             rerun=row['rerun'],
             ra=row['ra'],
@@ -38,8 +39,9 @@ def ingest_sdss(input_path):
         ))
 
         if not (i + 1) % 1000:
-            engine.execute(SDSS.__table__.insert(), data_as_dict)
-            data_as_dict = []
+            engine.execute(SDSS.__table__.insert(), data_as_dicts)
+            data_as_dicts = []
+
     else:
-        if data_as_dict:
-            engine.execute(SDSS.__table__.insert(), data_as_dict)
+        if data_as_dicts:
+            engine.execute(SDSS.__table__.insert(), data_as_dicts)
