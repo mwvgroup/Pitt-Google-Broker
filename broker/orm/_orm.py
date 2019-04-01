@@ -35,7 +35,7 @@ def backup_to_sqlite(path):
     if os.path.exists(path):
         raise FileExistsError(f'File already exists: {path}')
 
-    db_path = os.path.abspath(path).lstrip('/')
+    db_path = os.path.abspath(path)
     dump_engine = create_engine(f'sqlite:///{db_path}')
     dump_session = sessionmaker(bind=dump_engine, autocommit=False)()
     _base.metadata.create_all(dump_engine)
@@ -56,7 +56,7 @@ def restore_from_sqlite(path, force=False):
         force (bool): Attempt update even if db models match (default = False)
     """
 
-    db_path = os.path.abspath(path).lstrip('/')
+    db_path = os.path.abspath(path)
     load_engine = create_engine(f'sqlite:///{db_path}')
     backup_base = automap_base()
     backup_base.prepare(engine, reflect=True)
