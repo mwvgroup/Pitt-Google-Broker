@@ -255,8 +255,8 @@ class ZTFCandidate(_base):
     alert_id = Column(types.Integer, ForeignKey('ztf_alerts.objectId'))
     parent = relationship("Parent", back_populates="candidates")
 
-def __repr__(self):
-    return f'<{self.__tablename__}(id={self.id})>'
+    def __repr__(self):
+        return f'<{self.__tablename__}(id={self.id})>'
 
 
 # Create database if it does not already exist and create connection
