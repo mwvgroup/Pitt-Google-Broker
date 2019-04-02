@@ -24,5 +24,6 @@ Examples:
 """
 
 from ._ingest_catalogs import populate_backend
-from ._orm import \
-    SDSS, backup_to_sqlite, engine, insert_from_sqlite, session, upsert
+from ._orm import engine, session, upsert
+from ._orm import backup_to_sqlite, insert_from_sqlite
+from ._orm import SDSS, ZTFAlert, ZTFCandidate
