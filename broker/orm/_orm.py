@@ -83,7 +83,7 @@ def upsert(table, values, index, conflict='ignore', skip_cols=()):
         table (DeclarativeMeta): The ORM table to act on (eg. Supernova)
         values     (list[dict]): Data to upsert
         index    (list[Column]): Table column on which to catch conflicts
-        conflict          (str): Either 'ignore' or 'update (Default: 'ignore')
+        conflict        (str): Either 'ignore' or 'update' (Default: 'ignore')
         skip_cols (list[str]): List of columns not to update
     """
 
@@ -135,10 +135,9 @@ class ZTFAlert(_base):
 
     __tablename__ = 'ztf_alerts'
 
-    objectId = Column(types.Integer, nullable=False)
-    candid = Column(types.Integer, nullable=False)
+    objectId = Column(types.Text, primary_key=True)
+    candid = Column(types.BigInteger, nullable=False)
     schemavsn = Column(types.Text, nullable=False)
-    publisher = Column(types.Text, nullable=False)
 
     candidates = relationship("ZTFCandidate", back_populates="alert")
 
@@ -149,26 +148,25 @@ class ZTFCandidate(_base):
     __tablename__ = 'ztf_candidate'
 
     # Meta data
-    id = Column(types.Integer, primary_key=True)
-    jd = Column(types.Float, nullable=False)
+    jd = Column(types.Float, primary_key=True)
     fid = Column(types.Integer, nullable=False)
-    pid = Column(types.Integer, nullable=False)
+    pid = Column(types.BigInteger, nullable=False)
     diffmaglim = Column(types.Float)
     pdiffimfilename = Column(types.Text)
     programpi = Column(types.Text)
     programid = Column(types.Integer, nullable=False)
-    candid = Column(types.Integer, nullable=False)
-    isdiffpos = Column(types.Text, nullable=False)
+    candid = Column(types.BigInteger)
+    isdiffpos = Column(types.Text)
     tblid = Column(types.Integer)
     nid = Column(types.Integer)
     rcid = Column(types.Integer)
     field = Column(types.Integer)
     xpos = Column(types.Float)
     ypos = Column(types.Float)
-    ra = Column(types.Float, nullable=False)
-    dec = Column(types.Float, nullable=False)
-    magpsf = Column(types.Float, nullable=False)
-    sigmapsf = Column(types.Float, nullable=False)
+    ra = Column(types.Float)
+    dec = Column(types.Float)
+    magpsf = Column(types.Float)
+    sigmapsf = Column(types.Float)
     chipsf = Column(types.Float)
     magap = Column(types.Float)
     sigmagap = Column(types.Float)
@@ -192,17 +190,17 @@ class ZTFCandidate(_base):
     nneg = Column(types.Integer)
     nbad = Column(types.Integer)
     rb = Column(types.Float)
-    rbversion = Column(types.Text, nullable=False)
+    rbversion = Column(types.Text)
     ssdistnr = Column(types.Float)
     ssmagnr = Column(types.Float)
     ssnamenr = Column(types.Text)
     sumrat = Column(types.Float)
     magapbig = Column(types.Float)
     sigmagapbig = Column(types.Float)
-    ranr = Column(types.Float, nullable=False)
-    decnr = Column(types.Float, nullable=False)
-    ndethist = Column(types.Integer, nullable=False)
-    ncovhist = Column(types.Integer, nullable=False)
+    ranr = Column(types.Float)
+    decnr = Column(types.Float)
+    ndethist = Column(types.Integer)
+    ncovhist = Column(types.Integer)
     jdstarthist = Column(types.Float)
     jdendhist = Column(types.Float)
     scorr = Column(types.Float)
@@ -228,18 +226,18 @@ class ZTFCandidate(_base):
     szmag3 = Column(types.Float)
     sgscore3 = Column(types.Float)
     distpsnr3 = Column(types.Float)
-    nmtchps = Column(types.Integer, nullable=False)
-    rfid = Column(types.Integer, nullable=False)
-    jdstartref = Column(types.Float, nullable=False)
-    jdendref = Column(types.Float, nullable=False)
-    nframesref = Column(types.Integer, nullable=False)
+    nmtchps = Column(types.Integer)
+    rfid = Column(types.Integer)
+    jdstartref = Column(types.Float)
+    jdendref = Column(types.Float)
+    nframesref = Column(types.Integer)
     dsnrms = Column(types.Float)
     ssnrms = Column(types.Float)
     dsdiff = Column(types.Float)
     magzpsci = Column(types.Float)
     magzpsciunc = Column(types.Float)
     magzpscirms = Column(types.Float)
-    nmatches = Column(types.Integer, nullable=False)
+    nmatches = Column(types.Integer)
     clrcoeff = Column(types.Float)
     clrcounc = Column(types.Float)
     zpclrcov = Column(types.Float)
@@ -252,11 +250,11 @@ class ZTFCandidate(_base):
     maggaiabright = Column(types.Float)
     exptime = Column(types.Float)
 
-    alert_id = Column(types.Integer, ForeignKey('ztf_alerts.objectId'))
-    parent = relationship("Parent", back_populates="candidates")
+    alert_id = Column(types.Text, ForeignKey('ztf_alerts.objectId'))
+    alert = relationship("ZTFAlert", back_populates="candidates")
 
     def __repr__(self):
-        return f'<{self.__tablename__}(id={self.id})>'
+        return f'<{self.__tablename__}(jd={self.jd})>'
 
 
 # Create database if it does not already exist and create connection

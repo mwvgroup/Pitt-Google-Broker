@@ -5,6 +5,7 @@ fastavro
 kafka-python
 matplotlib
 numpy
+pandas
 psycopg2-binary
 requests
 sqlalchemy

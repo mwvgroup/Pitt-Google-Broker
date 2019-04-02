@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3.7
 # -*- coding: UTF-8 -*-
 
 """This module downloads sample ZTF alerts archive."""
@@ -15,6 +15,7 @@ FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(FILE_DIR, 'data')
 ALERT_LOG = os.path.join(FILE_DIR, 'alert_log.txt')
 ZTF_URL = "https://ztf.uw.edu/alerts/public/"
+os.makedirs(DATA_DIR, exist_ok=True)
 
 
 def _get_local_alerts_list():
@@ -143,7 +144,8 @@ def download_data(max_downloads=1):
 def get_number_local_alerts():
     """Return the number of locally available alerts"""
 
-    return len(os.listdir(DATA_DIR))
+    path_pattern = os.path.join(DATA_DIR, '*.avro')
+    return len(glob(path_pattern))
 
 
 def number_local_releases():

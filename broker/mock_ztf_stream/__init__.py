@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3.7
 # -*- coding: UTF-8 -*-
 
 """This module downloads and provides access to sample ZTF alerts.
@@ -8,11 +8,9 @@ To create a consumer and populate the alert stream:
   >>> from kafka import KafkaConsumer
   >>> consumer = KafkaConsumer('Demo-Topic', bootstrap_servers=['localhost:9092'])
   >>>
-  >>> from mock_stream import prime_alerts
+  >>> from broker.mock_ztf_stream import prime_alerts
   >>> prime_alerts()
 """
-
-import warnings as _warnings
 
 from ._download_data import download_data
 from ._download_data import get_number_local_alerts
@@ -22,10 +20,6 @@ from ._parse_data import iter_alerts
 from ._parse_data import plot_stamps
 
 from kafka import KafkaProducer as _KafkaProducer
-
-if number_local_releases() == 0:
-    _warnings.warn('No local ZTF data available. Run `download_data()`.')
-
 producer = None  # Placeholder variable
 
 

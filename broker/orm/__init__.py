@@ -23,9 +23,6 @@ Examples:
 
 """
 
-from ._ingest_catalogs import ingest_sdss
-from ._orm import (SDSS,
-                   backup_to_sqlite,
-                   engine,
-                   insert_from_sqlite,
-                   session)
+from ._ingest_catalogs import populate_backend
+from ._orm import \
+    SDSS, backup_to_sqlite, engine, insert_from_sqlite, session, upsert
