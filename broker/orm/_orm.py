@@ -6,16 +6,18 @@ backend.
 
 Included tables:
     SDSS: Object catalogue for SDSS
+    ZTFAlert: Alert data from ZTF
+    ZTFCandidate: Object candidates from ZTF
 """
 
 import os
 from warnings import warn
 
-from sqlalchemy import Column, create_engine, types
+from sqlalchemy import Column, ForeignKey, create_engine, types
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy_utils import create_database, database_exists
 
 _base = declarative_base()
@@ -128,7 +130,7 @@ class SDSS(_base):
     z_err = Column(types.Float)
 
 
-class ZTFAlerts(_base):
+class ZTFAlert(_base):
     """Alerts from ZTF"""
 
     __tablename__ = 'ztf_alerts'
@@ -137,6 +139,8 @@ class ZTFAlerts(_base):
     candid = Column(types.Integer, nullable=False)
     schemavsn = Column(types.Text, nullable=False)
     publisher = Column(types.Text, nullable=False)
+
+    candidates = relationship("ZTFCandidate", back_populates="alert")
 
 
 class ZTFCandidate(_base):
@@ -248,6 +252,8 @@ class ZTFCandidate(_base):
     maggaiabright = Column(types.Float)
     exptime = Column(types.Float)
 
+    alert_id = Column(types.Integer, ForeignKey('ztf_alerts.objectId'))
+    parent = relationship("Parent", back_populates="candidates")
 
 def __repr__(self):
     return f'<{self.__tablename__}(id={self.id})>'
