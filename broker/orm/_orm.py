@@ -133,6 +133,17 @@ class ZTFAlerts(_base):
 
     __tablename__ = 'ztf_alerts'
 
+    objectId = Column(types.Integer, nullable=False)
+    schemavsn = Column(types.Text, nullable=False)
+    publisher = Column(types.Text, nullable=False)
+    candid = Column(types.Float, nullable=False)
+
+
+class ZTFCandidate(_base):
+    """Candidates identified by ZTF"""
+
+    __tablename__ = 'ztf_candidate'
+
     # Meta data
     id = Column(types.Integer, primary_key=True)
     jd = Column(types.Float, nullable=False)
@@ -141,7 +152,7 @@ class ZTFAlerts(_base):
     diffmaglim = Column(types.Float)
     pdiffimfilename = Column(types.Text)
     programpi = Column(types.Text)
-    programid = Column(types.Integer, nullable = False)
+    programid = Column(types.Integer, nullable=False)
     candid = Column(types.Float, nullable=False)
     isdiffpos = Column(types.Text, nullable=False)
     tblid = Column(types.Float)
