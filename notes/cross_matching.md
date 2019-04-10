@@ -5,6 +5,8 @@
 # Possible XM Tools
 <!-- fs -->
 
+- [ ] Start with [astroquery](https://astroquery.readthedocs.io/en/latest/)
+
 ## Summary of tools
 
 "Astronomical data fusion tool based on PostgreSQL" would be great, but I can't actually find the software.
@@ -14,9 +16,9 @@
 mcatCS is very new, in C++, supposedly fast. Probably not what we want to start with, but may want to consider for future implementation.
 
 Probably the best options (see below for details):
-- [ ] [The CDS cross-match service](http://cdsxmatch.u-strasbg.fr/) (web app)
-- [ ] "Pei (2011) and Pei et al. (2011)
-- [ ] [The Large Survey Database (LSD)](http://research.majuric.org/public/project/lsd/) (python)
+- [The CDS cross-match service](http://cdsxmatch.u-strasbg.fr/) (web app)
+- "Pei (2011) and Pei et al. (2011)
+- [The Large Survey Database (LSD)](http://research.majuric.org/public/project/lsd/) (python)
 
 
 ## Tools details
