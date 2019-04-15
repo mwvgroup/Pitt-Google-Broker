@@ -1,6 +1,7 @@
 # Questions
 
 - [ ] don't see any redshift info in alert_data['candidate']
+- [ ] easier way to change DATA_DIR (download_data.py, parse_data.py)
 
 
 # Notes and To Do
@@ -19,6 +20,11 @@ moving data dir to Korriban:
 ```python
 from matplotlib import pyplot as plt
 
+
+## Download and look at alerts
+<!-- fs -->
+```python
+from matplotlib import pyplot as plt
 from mock_stream import download_data
 from mock_stream import get_alert_data
 from mock_stream import get_number_local_alerts
@@ -44,7 +50,7 @@ for alert in iter_alerts():
     break
 
 # Get alert data for a specific id
-alert_id = 792268253815010015
+alert_id = 833156294815015029
 alert_data = get_alert_data(alert_id)
 RA, DEC = alert_data['candidate']['ra'], alert_data['candidate']['dec']
 # print(alert_data)
@@ -55,6 +61,7 @@ fig = plot_stamps(alert_data)
 plt.show()
 
 ```
+<!-- fe download and look at alerts -->
 
 <!-- fe -->
 

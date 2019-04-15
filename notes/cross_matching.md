@@ -1,11 +1,32 @@
 
 # To Do
+- [ ] Start with [astroquery](https://astroquery.readthedocs.io/en/latest/)
+
+
+# Astroquery
+<!-- fs -->
+[astroquery](https://astroquery.readthedocs.io/en/latest/)
+"Astroquery is a set of tools for querying astronomical web forms and databases... All astroquery modules are supposed to follow the same API. In its simplest form, the API involves queries based on coordinates or object names."
+
+## astroquery.xmatch
+[XMatch Getting started](https://astroquery.readthedocs.io/en/latest/xmatch/xmatch.html#module-astroquery.xmatch)
+[XMatchClass](https://astroquery.readthedocs.io/en/latest/api/astroquery.xmatch.XMatchClass.html#astroquery.xmatch.XMatchClass.query)
+XMatch uses the CDS xMatch service: [CDS xMatch service documentation](http://cdsxmatch.u-strasbg.fr/xmatch/doc/)
+
+## install:
+``` bash
+conda install -c astropy astroquery
+```
+
+<!-- fe Astroquery -->
+
 
 
 # Possible XM Tools
 <!-- fs -->
 
 - [ ] Start with [astroquery](https://astroquery.readthedocs.io/en/latest/)
+
 
 ## Summary of tools
 
