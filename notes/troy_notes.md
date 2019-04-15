@@ -15,10 +15,65 @@ moving data dir to Korriban:
 <!-- fe -->
 
 
+
+
 # Code
 <!-- fs -->
+
+## Astroquery
+<!-- fs -->
 ```python
-from matplotlib import pyplot as plt
+
+# Get RA and DEC from alerts and write to file:
+import pandas as pd
+def get_alerts_RA_DEC(fout=None):
+    """ Iterate through alerts and grab RA, DEC.
+        Write data to file with format compatible with astroquery.xmatch.query().
+
+        fout = string, path to save file.
+
+        Returns the alert data as a Pandas DataFrame.
+    """
+
+    data_list = []
+    for a, alert in enumerate(iter_alerts()):
+        alert_id = alert['candid']
+        alert_data = get_alert_data(alert_id)
+
+        dat = {}
+        dat['alert_id'] = alert_id
+        dat['ra'] = alert_data['candidate']['ra']
+        dat['dec'] = alert_data['candidate']['dec']
+        data_list.append(dat)
+
+        if a>1000: break
+
+    print('creating df')
+    df = pd.DataFrame(data_list)
+
+    if fout is not None:
+        print('writing df')
+        df.to_csv(fout, sep=',', columns=['alert_id','ra','dec'], header=True, index=False)
+    else:
+        return df
+
+    return None
+
+fradec = 'mock_stream/data/alerts_radec.csv'
+get_alerts_RA_DEC(fout=fradec)
+
+# Use Astroquery to query CDS xMatch service
+from astropy import units as u
+from astroquery.xmatch import
+table = XMatch.query(cat1=open(fradec), cat2='vizier:II/246/out', \
+                    max_distance=5 * u.arcsec, colRA1='ra', colDec1='dec')
+# with the current data, this matches 818 out of 1002 in fradec
+# table.columns gives ['angDist','alert_id','ra','dec','2MASS','RAJ2000','DEJ2000','errHalfMaj','errHalfMin','errPosAng','Jmag','Hmag','Kmag','e_Jmag','e_Hmag','e_Kmag','Qfl','Rfl','X','MeasureJD']
+
+```
+
+<!-- fe Astroquery -->
+
 
 
 ## Download and look at alerts
