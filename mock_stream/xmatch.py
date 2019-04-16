@@ -12,7 +12,7 @@ from astroquery import xmatch
 # xm.get_alerts_RA_DEC(fout=fradec)
 #
 # Query VizieR for cross matches:
-table = xm.get_xmatches(fcat1=fradec, cat2='vizier:II/246/out')
+# table = xm.get_xmatches(fcat1=fradec, cat2='vizier:II/246/out')
 #
 ##
 # Helpful links:
