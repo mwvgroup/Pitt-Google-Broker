@@ -3,7 +3,7 @@ from astropy import units as u
 from astroquery.xmatch import XMatch
 from mock_stream import _parse_data as psd
 
-##
+####
 # Example Usage:
 #
 # from mock_stream import xmatch as xm
@@ -15,10 +15,11 @@ from mock_stream import _parse_data as psd
 # Query VizieR for cross matches:
 # table = xm.get_xmatches(fcat1=fradec, cat2='vizier:II/246/out')
 #
-##
+####
 # Helpful links:
 # https://astroquery.readthedocs.io/en/latest/#using-astroquery
 # https://astroquery.readthedocs.io/en/latest/xmatch/xmatch.html#module-astroquery.xmatch
+####
 
 
 def get_xmatches(fcat1='mock_stream/data/alerts_radec.csv', cat2='vizier:II/246/out'):
@@ -31,6 +32,7 @@ def get_xmatches(fcat1='mock_stream/data/alerts_radec.csv', cat2='vizier:II/246/
                 'errHalfMaj','errHalfMin','errPosAng','Jmag','Hmag','Kmag',
                 'e_Jmag','e_Hmag','e_Kmag','Qfl','Rfl','X','MeasureJD']
     """
+
     table = XMatch.query(cat1=open(fcat1), cat2=cat2, \
                     max_distance=5 * u.arcsec, colRA1='ra', colDec1='dec')
 
@@ -51,18 +53,25 @@ def get_alerts_RA_DEC(fout=None, max_alerts=1000):
     """
 
     # Grab RA, DEC from each alert
-    data_list = []
-    for a, alert in enumerate(psd.iter_alerts()):
-        alert_id = alert['candid']
-        alert_data = psd.get_alert_data(alert_id)
+    data_list = [] # list containing alert data dicts
+    try:
+        for a, alert in enumerate(psd.iter_alerts()):
+            # Get the alert
+            alert_id = alert['candid']
+            alert_data = psd.get_alert_data(alert_id)
 
-        dat = {}
-        dat['alert_id'] = alert_id
-        dat['ra'] = alert_data['candidate']['ra']
-        dat['dec'] = alert_data['candidate']['dec']
-        data_list.append(dat)
+            # Save the data
+            dat = {}
+            dat['alert_id'] = alert_id
+            dat['ra'] = alert_data['candidate']['ra']
+            dat['dec'] = alert_data['candidate']['dec']
+            data_list.append(dat)
 
-        if (a>max_alerts) & (a>0): break
+            if (a>max_alerts) & (a>0): break
+
+    except RuntimeError as re:
+        print("No local alert data found. Please run 'mock_stream.download_data' first.")
+        raise re
 
     # Write to file or return as a DataFrame
     df = pd.DataFrame(data_list)
