@@ -1,18 +1,18 @@
 import pandas as pd
 from astropy import units as u
-from astroquery.xmatch import
+from astroquery import xmatch
 
 ##
 # Example Usage:
 #
-# import xmatch as xm
+# from mock_stream import xmatch as xm
 #
 # # Write a CSV file with RA, DEC:
 # fradec = 'mock_stream/data/alerts_radec.csv'
 # xm.get_alerts_RA_DEC(fout=fradec)
 #
-# # Query VizieR for cross matches:
-# table = xm.get_xmatches(fcat1=fradec, cat2='vizier:II/246/out')
+# Query VizieR for cross matches:
+table = xm.get_xmatches(fcat1=fradec, cat2='vizier:II/246/out')
 #
 ##
 # Helpful links:
