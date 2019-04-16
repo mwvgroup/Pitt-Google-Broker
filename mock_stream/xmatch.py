@@ -20,7 +20,7 @@ from astroquery import xmatch
 # https://astroquery.readthedocs.io/en/latest/xmatch/xmatch.html#module-astroquery.xmatch
 
 
-def get_xmatches(fcat1=fradec, cat2='vizier:II/246/out'):
+def get_xmatches(fcat1='mock_stream/data/alerts_radec.csv', cat2='vizier:II/246/out'):
     """ fcat1 = string. Path to csv file, as written by get_alerts_RA_DEC().
 
         cat2 = string. Passed through to XMatch.query().
