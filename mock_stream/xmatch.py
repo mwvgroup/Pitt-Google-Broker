@@ -1,6 +1,7 @@
 import pandas as pd
 from astropy import units as u
-from astroquery import xmatch
+from astroquery.xmatch import XMatch
+from mock_stream import _parse_data as psd
 
 ##
 # Example Usage:
@@ -51,9 +52,9 @@ def get_alerts_RA_DEC(fout=None, max_alerts=1000):
 
     # Grab RA, DEC from each alert
     data_list = []
-    for a, alert in enumerate(iter_alerts()):
+    for a, alert in enumerate(psd.iter_alerts()):
         alert_id = alert['candid']
-        alert_data = get_alert_data(alert_id)
+        alert_data = psd.get_alert_data(alert_id)
 
         dat = {}
         dat['alert_id'] = alert_id
