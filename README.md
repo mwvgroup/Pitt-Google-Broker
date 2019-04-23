@@ -8,7 +8,8 @@ The 60-second alert stream will not be made available to the public (at least no
 
 - [Action Items](#action-items)
 - [Installation Instructions](#installation-instructions)
-- [ZTF Data Access](#ztf-data-access)
+- [Broker ORM](#broker-orm)
+- [Downloading ZTF Data](#downloading-ztf-data)
 - [Running a Kafka Stream](#running-a-kafka-stream)
 - [Links and Resources](#links-and-resources)
     + [General](#general)
@@ -22,11 +23,23 @@ The 60-second alert stream will not be made available to the public (at least no
 - [x] Download ZTF alert data for use in development and testing
 - [x] Setup a rudimentary Kafka server for testing
 - [x] Wrap dependencies in a docker
-- [ ] Formalize design intentions - what would a Pitt LSST broker look like?
+- [ ] Impliment a crossmatching algorithm
+- [ ] Connect to the official ZTF stream
 
 
 
 ## Installation Instructions
+
+This project relies on a PostgreSQL backend. An excellent tutorial on getting PostgreSQL running on you (Mac) machine can be found [here](https://www.codementor.io/engineerapart/getting-started-with-postgresql-on-mac-osx-are8jcopb), but the essential bash commands are:
+
+```bash
+/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+
+brew install postgresql
+pg_ctl -D /usr/local/var/postgres start && brew services start postgresql
+```
+
+
 
 All Python dependencies are installable using `pip` and the `requirements.txt` file. To create a new conda environment and install dependencies, run:
 
@@ -37,11 +50,61 @@ All Python dependencies are installable using `pip` and the `requirements.txt` f
 > conda deactivate  # Exit the environment
 ```
 
+
+
 This project also relies on dependencies that are not written in Python. These have been Dockerized for convenience and don't require any dedicated installation. However, you will need to download [Docker](https://docs.docker.com/install/) (Click the link and scroll down to the *Supported platforms* section).
 
 
 
-## ZTF Data Access
+## Broker ORM
+
+The `broker` package represents the current state of our work developing a broker system. It stores data using a PostgreSQL backend which can be accessed via a [SQLALchemy](https://www.sqlalchemy.org) based object relational mapper (ORM). The ORM will automatically create a database on your machine called *pitt_broker*. Available tables include the SDSS stellar cataloge `orm.SDSS`, a table of ZTF objects `orm.Alert`, and a table of ZTF observations `orm.ZTFCandidate`. To populate this database run:
+
+```python
+from broker import orm
+
+orm.populate_backend()
+
+```
+
+ The above command will populate `orm.SDSS` with a subset of targets from the SDSS stellar catalogue using a copy of the data saved in this repository. The tables of ZTF data will populate with any ZTF data available on your local machine. If no data is available, then the last day of alerts is downloaded automatically. Mor information on this capability is provided in the **Downloading ZTF Data** section.
+
+
+
+Queries to the database can be submitted using the `orm.session` object. Documentation on SQLALchemy based queries is available [here](https://docs.sqlalchemy.org/en/latest/orm/tutorial.html#querying), but we provide a brief example:
+
+```python
+from orm import session, ZTFAlert, ZTFCandidate
+
+# Get an object observed by ZTF
+example_alert = session.query(ZTFAlert).first()
+
+# List of associated observations
+print(example_alert.candidates)
+
+# Get observations taked before a given Julian Date
+test_jd = 2458547.6707176
+obs = session.query(ZTFCandidate).filter(ZTFCandidate.jd <= testjd).first()
+print(obs)
+
+```
+
+
+
+Utility functions are also provided for backing up the database to SQLite format:
+
+```python
+# Backup data to a local SQLite file:
+orm.backup_to_sqlite('./backup.db')
+
+# Restore from a backup (via INSERT):
+orm.restore_from_sqlite('./backup.db')
+
+```
+
+
+
+## Downloading ZTF Data
 
 This project will use ZTF data for testing and development. Although the live ZTF alert stream is still in beta and isn't publically available, all alerts are submitted at the end of the day to the [ZTF public alerts archive](https://ztf.uw.edu/alerts/public/). This repository provides the `mock_stream` module which is capable of automatically downloading, parsing, and plotting results from the public archive. The following example demonstrates each of these capabilities: 
 
@@ -86,7 +149,7 @@ plt.show()
 
 ## Running a Kafka Stream
 
-The `mock_stream` module also provides a simulated stream of ZTF alerts. Just like the real ZTF stream, alerts are streamed using a [Kafka server](https://kafka.apache.org/intro). LSST will eventually use the same type of server system. To initialize a local server for testing, run:
+The `mock_stream` module provides a simulated stream of ZTF alerts. Just like the real ZTF stream, alerts are streamed using a [Kafka server](https://kafka.apache.org/intro). LSST will eventually use the same type of server system. To initialize a local server for testing, run:
 
 ```bash
 > docker-compose up 
