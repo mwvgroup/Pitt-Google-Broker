@@ -39,12 +39,13 @@ def get_xmatches(
             'e_Jmag','e_Hmag','e_Kmag','Qfl','Rfl','X','MeasureJD'
     """
 
-    table = XMatch.query(
-        cat1=open(fcat1),
-        cat2=cat2,
-        max_distance=5 * u.arcsec,
-        colRA1='ra',
-        colDec1='dec')
+    with open(fcat1) as ofile:
+        table = XMatch.query(
+            cat1=ofile,
+            cat2=cat2,
+            max_distance=5 * u.arcsec,
+            colRA1='ra',
+            colDec1='dec')
 
     return table
 
