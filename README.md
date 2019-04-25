@@ -23,7 +23,7 @@ The 60-second alert stream will not be made available to the public (at least no
 - [x] Download ZTF alert data for use in development and testing
 - [x] Setup a rudimentary Kafka server for testing
 - [x] Wrap dependencies in a docker
-- [ ] Impliment a crossmatching algorithm
+- [x] Implement a cross-matching algorithm
 - [ ] Connect to the official ZTF stream
 
 
