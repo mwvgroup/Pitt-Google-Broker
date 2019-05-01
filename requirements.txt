@@ -3,12 +3,11 @@ astropy>=3.1
 astroquery
 beautifulsoup4
 fastavro
-kafka-python
+google-api-python-client
+google-cloud-bigquery
+google-cloud-logging
 matplotlib
 numpy
 pandas
-psycopg2-binary
 requests
-sqlalchemy
-sqlalchemy_utils
 tqdm

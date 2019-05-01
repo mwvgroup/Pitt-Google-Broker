@@ -1,29 +1,59 @@
-#!/usr/bin/env python3
-# -*- coding: UTF-8 -*-
+import json
+from google.cloud import bigquery
 
-"""This module provides an object relational mapper (ORM) for the broker
-backend.
+client = bigquery.Client()
+data_set = client.create_dataset('ztf_alerts', exists_ok=True)
+_tables = ('alert', 'candidate')
 
-Examples:
 
-    To query the entire SDSS table:
+def setup(client, schema_path):
+    """Create any tables if they do not already exist
 
-    >>> from broker.orm import session, SDSS
-    >>> session.query(SDSS).all()
+    Args:
+        client   (Client): A Google BigQuery client
+        schema_path (Str): Path to a json file defining DB schema
+    """
 
-    To backup data to a local SQLite file:
+    with open(schema_path) as ofile:
+        db_schema = json.load(ofile)
 
-    >>>  from broker.orm import backup_to_sqlite
-    >>>  backup_to_sqlite('./backup.db')
+    for table_name in _tables:
+        table_id = f'{data_set.project}.{data_set.dataset_id}.{table_name}'
+        try:
+            client.get_table(table_id)
 
-    To restore from a backup (via INSERT):
+        except ValueError:
+            table_schema = db_schema['table_name']
+            table = bigquery.Table(table_id, schema=schema)
+            table = client.create_table(table)
 
-    >>>  from broker.orm import insert_from_sqlite
-    >>>  insert_from_sqlite('./backup.db')
 
-"""
+def export_schema(path):
+    """Export the current backend schema to file
 
-from ._ingest_catalogs import populate_backend
-from ._orm import engine, session, upsert
-from ._orm import backup_to_sqlite, insert_from_sqlite
-from ._orm import SDSS, ZTFAlert, ZTFCandidate
+    Args:
+        path (str): Path of output .json file
+    """
+
+    schema_json = {}
+    for table_name in _tables:
+        table = client.get_table(
+            f'{data_set.project}.{data_set.dataset_id}.{table_name}')
+        table_schema = []
+        for field in table.schema:
+            field_dict = {
+                'name': field.name,
+                'field_type': field.field_type,
+                'mode': field.mode,
+                'description': field.description
+            }
+
+            table_schema.append(field_dict)
+
+        schema_json[table_name] = table_schema
+
+    if not path.endswith('.json'):
+        path += '.json'
+
+    with open(path, 'w') as ofile:
+        json.dump(schema_json, ofile, indent=2, sort_keys=True)
