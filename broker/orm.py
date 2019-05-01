@@ -30,8 +30,8 @@ def setup(client, schema_path):
 
         except ValueError:
             table_schema = db_schema['table_name']
-            table = bigquery.Table(table_id, schema=schema)
-            table = client.create_table(table)
+            table = bigquery.Table(table_id, schema=table_schema)
+            client.create_table(table)
 
 
 def export_schema(path):
