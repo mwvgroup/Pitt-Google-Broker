@@ -1,7 +1,7 @@
 #!/usr/bin/env python3.7
 # -*- coding: UTF-8 -*-
 
-"""This module downloads sample ZTF alerts archive."""
+"""This module downloads sample ZTF alerts from the ZTF alerts archive."""
 
 import os
 import tarfile
