@@ -1,4 +1,10 @@
+#!/usr/bin/env python3.7
+# -*- coding: UTF-8 -*-
+
+"""This module provides a client for the BigQuery backend."""
+
 import json
+
 from google.cloud import bigquery
 
 client = bigquery.Client()
