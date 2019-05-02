@@ -3,20 +3,22 @@
 
 """This module downloads sample ZTF alerts from the ZTF alerts archive."""
 
-import os
 import tarfile
 from glob import glob
+from os import makedirs
+from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 import numpy as np
 import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 
-FILE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(FILE_DIR, 'data')
-ALERT_LOG = os.path.join(FILE_DIR, 'alert_log.txt')
+FILE_DIR = Path(__file__).resolve().parent
+DATA_DIR = FILE_DIR / 'data'
+ALERT_LOG = DATA_DIR / 'alert_log.txt'
 ZTF_URL = "https://ztf.uw.edu/alerts/public/"
-os.makedirs(DATA_DIR, exist_ok=True)
+makedirs(DATA_DIR, exist_ok=True)
 
 
 def _get_local_alerts_list():
@@ -28,7 +30,7 @@ def _get_local_alerts_list():
         A list of ZTF alert file names
     """
 
-    if not os.path.exists(ALERT_LOG):
+    if not ALERT_LOG.exists():
         return []
 
     else:
@@ -65,19 +67,17 @@ def _get_remote_file_list():
     return file_list
 
 
-def _download_file(url, out_path):
-    """Download a specified file to a given output path
-
-    Any top level .tar.gz archives will be automatically unzipped.
+def _download_alerts_file(url, out_path):
+    """Download a daily alerts file and unzip the contents
 
     Args:
         url      (str): URL of the file to download
         out_path (str): The path where the downloaded file should be written
     """
 
-    out_dir = os.path.dirname(out_path)
-    if not os.path.exists(out_dir):
-        os.makedirs(out_dir)
+    out_dir = Path(out_path).parent
+    if not out_dir.exists():
+        makedirs(out_dir)
 
     file_data = requests.get(url, stream=True)
 
@@ -94,23 +94,20 @@ def _download_file(url, out_path):
         unit_scale=True)
 
     # write data to file
-    with open(out_path, 'wb') as f:
+    with NamedTemporaryFile() as ofile:
         for data in data_iterable:
-            f.write(data)
+            ofile.write(data)
 
-    print('Unzipping file...')
-    if out_path.endswith(".tar.gz") or out_path.endswith(".tgz"):
-        with tarfile.open(out_path, "r:gz") as data:
+        tqdm.write('Unzipping alert data...')
+        with tarfile.open(ofile.name, "r:gz") as data:
             data.extractall(out_dir)
-
-        os.remove(out_path)
 
 
 def download_data(max_downloads=1):
-    """Downloads data files from a given url and unzip if it is a .tar.gz
+    """Download recent alert data from the ZTF alerts archive
 
-    Does not skip data that is already downloaded. Skips published alerts that
-    are empty.
+    Automatically skip published alerts that are empty. More recent releases
+    are downloaded first. Skip releases that are already downloaded.
 
     Args:
         max_downloads (int): Number of daily releases to download (default = 1)
@@ -124,32 +121,28 @@ def download_data(max_downloads=1):
 
         # Skip download if data was already downloaded
         if file_name in _get_local_alerts_list():
-            print(f'Already Downloaded ({i + 1}/{num_downloads}): {file_name}')
+            tqdm.write(
+                f'Already Downloaded ({i + 1}/{num_downloads}): {file_name}')
             continue
 
-        out_path = os.path.join(DATA_DIR, file_name)
-        print(f'Downloading ({i + 1}/{num_downloads}): {file_name}')
+        out_path = DATA_DIR / file_name
+        tqdm.write(f'Downloading ({i + 1}/{num_downloads}): {file_name}')
 
-        try:
-            url = requests.compat.urljoin(ZTF_URL, file_name)
-            _download_file(url, out_path)
+        url = requests.compat.urljoin(ZTF_URL, file_name)
+        _download_alerts_file(url, out_path)
 
-            with open(ALERT_LOG, 'a') as ofile:
-                ofile.write(file_name)
-
-        except KeyboardInterrupt:
-            os.remove(out_path)
-            return
+        with open(ALERT_LOG, 'a') as ofile:
+            ofile.write(file_name)
 
 
 def get_number_local_alerts():
     """Return the number of locally available alerts"""
 
-    path_pattern = os.path.join(DATA_DIR, '*.avro')
+    path_pattern = DATA_DIR / '*.avro'
     return len(glob(path_pattern))
 
 
-def number_local_releases():
+def get_number_local_releases():
     """Return the number of ZTF daily alert releases that have been downloaded
     """
 
