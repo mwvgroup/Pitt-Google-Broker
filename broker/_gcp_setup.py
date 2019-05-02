@@ -4,14 +4,20 @@
 """This script sets up your GCP environment for the `broker` package."""
 
 import json
+from pathlib import Path
 
 from google.cloud import bigquery, logging, storage
 
 _tables = ('alert', 'candidate')
+_schema_path = Path(__file__).resolve().parent / 'bq_schema.json'
 
 
-def setup_big_query(schema_path):
+def _setup_big_query(schema_path):
     """Create the necessary Big Query tables if they do not already exist
+
+    Creates:
+        Datasets: ztf_alerts
+        Tables  : alert, 'candidate'
 
     Args:
         schema_path (Str): Path to a json file defining DB schema
@@ -34,8 +40,13 @@ def setup_big_query(schema_path):
             bigquery_client.create_table(table)
 
 
-def setup_logging_sinks():
-    """Create sinks for exporting log entries to GCP"""
+def _setup_logging_sinks():
+    """Create sinks for exporting log entries to GCP
+
+    Creates:
+        Buckets: broker_logging_bucket
+        Sinks  : broker_logging_sink
+    """
 
     storage_client = storage.Client()
     logging_bucket_name = 'broker_logging_bucket'
@@ -62,6 +73,15 @@ def setup_logging_sinks():
         sink.create()
 
 
-if __name__ == '__main__':
-    setup_big_query('./bq_schema.json')
-    setup_logging_sinks()
+def setup_gcp():
+    """Setup a GCP environment
+
+    Creates:
+        Datasets: ztf_alerts
+        Tables  : alert, 'candidate'
+        Buckets : broker_logging_bucket
+        Sinks   : broker_logging_sink
+    """
+
+    _setup_big_query(_schema_path)
+    _setup_logging_sinks()
