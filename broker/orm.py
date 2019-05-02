@@ -9,40 +9,18 @@ from google.cloud import bigquery
 
 client = bigquery.Client()
 data_set = client.create_dataset('ztf_alerts', exists_ok=True)
-_tables = ('alert', 'candidate')
 
 
-def setup(client, schema_path):
-    """Create any tables if they do not already exist
-
-    Args:
-        client   (Client): A Google BigQuery client
-        schema_path (Str): Path to a json file defining DB schema
-    """
-
-    with open(schema_path) as ofile:
-        db_schema = json.load(ofile)
-
-    for table_name in _tables:
-        table_id = f'{data_set.project}.{data_set.dataset_id}.{table_name}'
-        try:
-            client.get_table(table_id)
-
-        except ValueError:
-            table_schema = db_schema['table_name']
-            table = bigquery.Table(table_id, schema=table_schema)
-            client.create_table(table)
-
-
-def export_schema(path):
+def export_schema(path, tables):
     """Export the current backend schema to file
 
     Args:
-        path (str): Path of output .json file
+        path         (str): Path of output .json file
+        tables (list[str]): Name of tables to export schemas for
     """
 
     schema_json = {}
-    for table_name in _tables:
+    for table_name in tables:
         table = client.get_table(
             f'{data_set.project}.{data_set.dataset_id}.{table_name}')
         table_schema = []
