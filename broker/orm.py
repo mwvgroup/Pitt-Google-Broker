@@ -5,19 +5,18 @@
 
 import json
 
-from google.cloud import bigquery
 
-client = bigquery.Client()
-data_set = client.create_dataset('ztf_alerts', exists_ok=True)
-
-
-def export_schema(path, tables):
+def export_schema(client, path, tables, data_set):
     """Export the current backend schema to file
 
     Args:
+        client    (Client): A BigQuery client
         path         (str): Path of output .json file
         tables (list[str]): Name of tables to export schemas for
+        data_set     (str): Name of the GCP data set
     """
+
+    data_set = client.get_dataset(data_set)
 
     schema_json = {}
     for table_name in tables:
