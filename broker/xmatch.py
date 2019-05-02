@@ -21,7 +21,7 @@ Example Usage:
 import pandas as pd
 from astropy import units as u
 from astroquery.xmatch import XMatch
-from .mock_ztf_stream import _parse_data as psd
+from .ztf_archive import _parse_data as psd
 
 
 def get_xmatches(
