@@ -170,7 +170,7 @@ def _parse_alert_vectorized(alert_list):
 
 
 def stream_ingest_alerts(client, num_alerts=10):
-    """Stream ZTF alerts into BigQuery
+    """Ingest ZTF alerts into BigQuery via streaming
 
     Args:
         client  (Client): A BigQuery client
@@ -194,26 +194,39 @@ def stream_ingest_alerts(client, num_alerts=10):
                 f'Failed to stream insert alert: {formatted_packet}')
 
 
-def batch_ingest_alerts(client=None):
+def batch_ingest_alerts(client=None, num_alerts=10):
+    """Ingest ZTF alerts into BigQuery via batch uploading
+
+    Args:
+        client  (Client): A BigQuery client
+        num_alerts (int): Maximum alerts to ingest at a time (Default: 10)
+    """
+
     # Configure batch loading
     job_config = bigquery.LoadJobConfig()
     job_config.source_format = bigquery.SourceFormat.AVRO
-    job_config.skip_leading_rows = 1
-    job_config.autodetect = True
 
-    table_ref = dataset_ref.table('alert')
-    for alert_packet in iter_alerts():
-        formatted_alert = _format_alert(alert_packet)
+    # Get tables to store data
+    dataset_ref = client.dataset('ztf_alerts')
+    alert_table_ref = dataset_ref.table('alert')
+    candidate_table_ref = dataset_ref.table('candidate')
 
-        with TemporaryFile() as source_file:
-            fastavro.writer(source_file, formatted_alert['alert'])
+    for alert_packet in iter_alerts(num_alerts):
+        formatted_alert = _parse_alert_vectorized(alert_packet)
 
-            # API request
-            job = client.load_table_from_file(
-                source_file,
-                table_ref,
-                location="US",
-                job_config=job_config,
-            )
+        for table_ref, data in zip(
+                (alert_table_ref, candidate_table_ref),
+                formatted_alert):
 
-        job.result()  # Wait for table load to complete.
+            with TemporaryFile() as source_file:
+                fastavro.writer(source_file, formatted_alert['alert'])
+
+                # API request
+                job = client.load_table_from_file(
+                    source_file,
+                    table_ref,
+                    location="US",
+                    job_config=job_config,
+                )
+
+                job.result()  # Wait for table load to complete.
