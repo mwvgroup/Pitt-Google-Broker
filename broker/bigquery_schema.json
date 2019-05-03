@@ -4,19 +4,19 @@
       "description": null,
       "field_type": "STRING",
       "mode": "REQUIRED",
-      "name": "object_id"
+      "name": "objectId"
     },
     {
       "description": null,
       "field_type": "INTEGER",
       "mode": "REQUIRED",
-      "name": "cand_id"
+      "name": "candId"
     },
     {
       "description": null,
       "field_type": "STRING",
       "mode": "REQUIRED",
-      "name": "schema_vsn"
+      "name": "schemaVSN"
     }
   ],
   "candidate": [

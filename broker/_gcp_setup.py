@@ -6,10 +6,11 @@
 import json
 from pathlib import Path
 
+from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, logging, storage
 
 _tables = ('alert', 'candidate')
-_schema_path = Path(__file__).resolve().parent / 'bq_schema.json'
+_schema_path = Path(__file__).resolve().parent / 'bigquery_schema.json'
 
 
 def _setup_big_query(schema_path):
@@ -17,7 +18,7 @@ def _setup_big_query(schema_path):
 
     Creates:
         Datasets: ztf_alerts
-        Tables  : alert, 'candidate'
+        Tables  : alert, candidate
 
     Args:
         schema_path (Str): Path to a json file defining DB schema
@@ -34,8 +35,8 @@ def _setup_big_query(schema_path):
         try:
             bigquery_client.get_table(table_id)
 
-        except ValueError:
-            table_schema = db_schema['table_name']
+        except NotFound:
+            table_schema = [bigquery.SchemaField(**kwargs) for kwargs in db_schema[table_name]]
             table = bigquery.Table(table_id, schema=table_schema)
             bigquery_client.create_table(table)
 
@@ -55,7 +56,7 @@ def _setup_logging_sinks():
     try:
         storage_client.get_bucket(logging_bucket_name)
 
-    except:
+    except NotFound:
         storage_client.create_bucket(logging_bucket_name)
 
     # Define logging sink
@@ -78,10 +79,14 @@ def setup_gcp():
 
     Creates:
         Datasets: ztf_alerts
-        Tables  : alert, 'candidate'
+        Tables  : alert, candidate
         Buckets : broker_logging_bucket
         Sinks   : broker_logging_sink
     """
 
     _setup_big_query(_schema_path)
     _setup_logging_sinks()
+
+
+if __name__ == '__main__':
+    setup_gcp()
