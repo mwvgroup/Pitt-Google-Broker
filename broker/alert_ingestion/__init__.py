@@ -5,4 +5,4 @@
 the project database.
 """
 
-from ._ingest_alerts import ingest_alerts
+from ._ingest_alerts import batch_ingest_alerts, stream_ingest_alerts

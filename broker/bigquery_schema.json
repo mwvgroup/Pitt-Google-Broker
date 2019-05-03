@@ -4,13 +4,13 @@
       "description": null,
       "field_type": "STRING",
       "mode": "REQUIRED",
-      "name": "objectId"
+      "name": "objectID"
     },
     {
       "description": null,
       "field_type": "INTEGER",
       "mode": "REQUIRED",
-      "name": "candId"
+      "name": "candID"
     },
     {
       "description": null,
