@@ -1,7 +1,18 @@
 #!/usr/bin/env python3.7
 # -*- coding: UTF-8 -*-
 
-"""This script sets up your GCP environment for the `broker` package."""
+"""This module sets up a GCP project for use with the `broker` package.
+
+Examples:
+>>> # Se a list of changes that will be made to your project
+>>> help(setup_gcp)
+>>>
+>>> # Setup your GCP project
+>>> setup_gcp()
+>>>
+>>> # Export a json copy of the GCP BigQuery schema used by this package
+>>> export_schema('./schema.json')
+"""
 
 import json
 from pathlib import Path
@@ -36,7 +47,8 @@ def _setup_big_query(schema_path):
             bigquery_client.get_table(table_id)
 
         except NotFound:
-            table_schema = [bigquery.SchemaField(**kwargs) for kwargs in db_schema[table_name]]
+            table_schema = [bigquery.SchemaField(**kwargs) for kwargs in
+                            db_schema[table_name]]
             table = bigquery.Table(table_id, schema=table_schema)
             bigquery_client.create_table(table)
 
@@ -88,5 +100,42 @@ def setup_gcp():
     _setup_logging_sinks()
 
 
-if __name__ == '__main__':
-    setup_gcp()
+def export_schema(path, client=None, tables=_tables, data_set='ZTF'):
+    """Export the current backend schema to file
+
+    By Default export the schema for all tables used by this package
+
+    Args:
+        path         (str): Path of output .json file
+        client    (Client): A BigQuery client (Optional)
+        tables (list[str]): Table names to export schemas for (Optional)
+        data_set     (str): Name of the GCP data set (Optional)
+    """
+
+    if client is None:
+        client = bigquery.Client()
+
+    data_set = client.get_dataset(data_set)
+
+    schema_json = {}
+    for table_name in tables:
+        table = client.get_table(
+            f'{data_set.project}.{data_set.dataset_id}.{table_name}')
+        table_schema = []
+        for field in table.schema:
+            field_dict = {
+                'name': field.name,
+                'field_type': field.field_type,
+                'mode': field.mode,
+                'description': field.description
+            }
+
+            table_schema.append(field_dict)
+
+        schema_json[table_name] = table_schema
+
+    if not path.endswith('.json'):
+        path += '.json'
+
+    with open(path, 'w') as ofile:
+        json.dump(schema_json, ofile, indent=2, sort_keys=True)
