@@ -7,14 +7,13 @@ import logging
 from tempfile import TemporaryFile
 
 import fastavro
+import numpy as np
 from google.cloud import bigquery, logging as gcp_logging
 
 from ..ztf_archive import iter_alerts
 
 # Connect to GCP
 logging_client = gcp_logging.Client()
-bq_client = bigquery.Client()
-dataset_ref = bq_client.dataset('ztf_alerts')
 
 # Configure logging
 handler = logging_client.get_default_handler()
@@ -26,7 +25,17 @@ log.setLevel(logging.INFO)
 log.addHandler(handler)
 
 
-def _format_alert_for_ingestion(alert_packet):
+def _parse_alert(alert_packet):
+    """Format a ZTF alert for ingestion into BigQuery tables
+
+    Args:
+        alert_packet (dict): A ztf alert packet
+
+    Returns:
+        A tuple representing a row in the `alert` table
+        A tuple representing a row in the `candidate` table
+    """
+
     schemavsn = alert_packet['schemavsn']
     if schemavsn == '3.2':
         alert_entry = (
@@ -34,108 +43,109 @@ def _format_alert_for_ingestion(alert_packet):
             alert_packet['candid'],
             schemavsn)
 
+        candidate_data = alert_packet['candidate']
         candidate_entry = (
-            alert_packet['jd'],
-            alert_packet['fid'],
-            alert_packet['pid'],
-            alert_packet['diffmaglim'],
-            alert_packet['pdiffimfilename'],
-            alert_packet['programpi'],
-            alert_packet['programid'],
-            alert_packet['candid'],
-            alert_packet['isdiffpos'],
-            alert_packet['tblid'],
-            alert_packet['nid'],
-            alert_packet['rcid'],
-            alert_packet['field'],
-            alert_packet['xpos'],
-            alert_packet['ypos'],
-            alert_packet['ra'],
-            alert_packet['dec'],
-            alert_packet['magpsf'],
-            alert_packet['sigmapsf'],
-            alert_packet['chipsf'],
-            alert_packet['magap'],
-            alert_packet['sigmagap'],
-            alert_packet['distnr'],
-            alert_packet['magnr'],
-            alert_packet['sigmagnr'],
-            alert_packet['chinr'],
-            alert_packet['sharpnr'],
-            alert_packet['sky'],
-            alert_packet['magdiff'],
-            alert_packet['fwhm'],
-            alert_packet['classtar'],
-            alert_packet['mindtoedge'],
-            alert_packet['magfromlim'],
-            alert_packet['seeratio'],
-            alert_packet['aimage'],
-            alert_packet['bimage'],
-            alert_packet['aimagerat'],
-            alert_packet['bimagerat'],
-            alert_packet['elong'],
-            alert_packet['nneg'],
-            alert_packet['nbad'],
-            alert_packet['rb'],
-            alert_packet['rbversion'],
-            alert_packet['ssdistnr'],
-            alert_packet['ssmagnr'],
-            alert_packet['ssnamenr'],
-            alert_packet['sumrat'],
-            alert_packet['magapbig'],
-            alert_packet['sigmagapbig'],
-            alert_packet['ranr'],
-            alert_packet['decnr'],
-            alert_packet['ndethist'],
-            alert_packet['ncovhist'],
-            alert_packet['jdstarthist'],
-            alert_packet['jdendhist'],
-            alert_packet['scorr'],
-            alert_packet['tooflag'],
-            alert_packet['objectidps1'],
-            alert_packet['sgmag1'],
-            alert_packet['srmag1'],
-            alert_packet['simag1'],
-            alert_packet['szmag1'],
-            alert_packet['sgscore1'],
-            alert_packet['distpsnr1'],
-            alert_packet['objectidps2'],
-            alert_packet['sgmag2'],
-            alert_packet['srmag2'],
-            alert_packet['simag2'],
-            alert_packet['szmag2'],
-            alert_packet['sgscore2'],
-            alert_packet['distpsnr2'],
-            alert_packet['objectidps3'],
-            alert_packet['sgmag3'],
-            alert_packet['srmag3'],
-            alert_packet['simag3'],
-            alert_packet['szmag3'],
-            alert_packet['sgscore3'],
-            alert_packet['distpsnr3'],
-            alert_packet['nmtchps'],
-            alert_packet['rfid'],
-            alert_packet['jdstartref'],
-            alert_packet['jdendref'],
-            alert_packet['nframesref'],
-            alert_packet['dsnrms'],
-            alert_packet['ssnrms'],
-            alert_packet['dsdiff'],
-            alert_packet['magzpsci'],
-            alert_packet['magzpsciunc'],
-            alert_packet['magzpscirms'],
-            alert_packet['nmatches'],
-            alert_packet['clrcoeff'],
-            alert_packet['clrcounc'],
-            alert_packet['zpclrcov'],
-            alert_packet['zpmed'],
-            alert_packet['clrmed'],
-            alert_packet['clrrms'],
-            alert_packet['neargaia'],
-            alert_packet['neargaiabright'],
-            alert_packet['maggaia'],
-            alert_packet['maggaiabright'],
-            alert_packet['exptime'])
+            candidate_data['jd'],
+            candidate_data['fid'],
+            candidate_data['pid'],
+            candidate_data['diffmaglim'],
+            candidate_data['pdiffimfilename'],
+            candidate_data['programpi'],
+            candidate_data['programid'],
+            candidate_data['candid'],
+            candidate_data['isdiffpos'],
+            candidate_data['tblid'],
+            candidate_data['nid'],
+            candidate_data['rcid'],
+            candidate_data['field'],
+            candidate_data['xpos'],
+            candidate_data['ypos'],
+            candidate_data['ra'],
+            candidate_data['dec'],
+            candidate_data['magpsf'],
+            candidate_data['sigmapsf'],
+            candidate_data['chipsf'],
+            candidate_data['magap'],
+            candidate_data['sigmagap'],
+            candidate_data['distnr'],
+            candidate_data['magnr'],
+            candidate_data['sigmagnr'],
+            candidate_data['chinr'],
+            candidate_data['sharpnr'],
+            candidate_data['sky'],
+            candidate_data['magdiff'],
+            candidate_data['fwhm'],
+            candidate_data['classtar'],
+            candidate_data['mindtoedge'],
+            candidate_data['magfromlim'],
+            candidate_data['seeratio'],
+            candidate_data['aimage'],
+            candidate_data['bimage'],
+            candidate_data['aimagerat'],
+            candidate_data['bimagerat'],
+            candidate_data['elong'],
+            candidate_data['nneg'],
+            candidate_data['nbad'],
+            candidate_data['rb'],
+            candidate_data['rbversion'],
+            candidate_data['ssdistnr'],
+            candidate_data['ssmagnr'],
+            candidate_data['ssnamenr'],
+            candidate_data['sumrat'],
+            candidate_data['magapbig'],
+            candidate_data['sigmagapbig'],
+            candidate_data['ranr'],
+            candidate_data['decnr'],
+            candidate_data['ndethist'],
+            candidate_data['ncovhist'],
+            candidate_data['jdstarthist'],
+            candidate_data['jdendhist'],
+            candidate_data['scorr'],
+            candidate_data['tooflag'],
+            candidate_data['objectidps1'],
+            candidate_data['sgmag1'],
+            candidate_data['srmag1'],
+            candidate_data['simag1'],
+            candidate_data['szmag1'],
+            candidate_data['sgscore1'],
+            candidate_data['distpsnr1'],
+            candidate_data['objectidps2'],
+            candidate_data['sgmag2'],
+            candidate_data['srmag2'],
+            candidate_data['simag2'],
+            candidate_data['szmag2'],
+            candidate_data['sgscore2'],
+            candidate_data['distpsnr2'],
+            candidate_data['objectidps3'],
+            candidate_data['sgmag3'],
+            candidate_data['srmag3'],
+            candidate_data['simag3'],
+            candidate_data['szmag3'],
+            candidate_data['sgscore3'],
+            candidate_data['distpsnr3'],
+            candidate_data['nmtchps'],
+            candidate_data['rfid'],
+            candidate_data['jdstartref'],
+            candidate_data['jdendref'],
+            candidate_data['nframesref'],
+            candidate_data['dsnrms'],
+            candidate_data['ssnrms'],
+            candidate_data['dsdiff'],
+            candidate_data['magzpsci'],
+            candidate_data['magzpsciunc'],
+            candidate_data['magzpscirms'],
+            candidate_data['nmatches'],
+            candidate_data['clrcoeff'],
+            candidate_data['clrcounc'],
+            candidate_data['zpclrcov'],
+            candidate_data['zpmed'],
+            candidate_data['clrmed'],
+            candidate_data['clrrms'],
+            candidate_data['neargaia'],
+            candidate_data['neargaiabright'],
+            candidate_data['maggaia'],
+            candidate_data['maggaiabright'],
+            candidate_data['exptime'])
 
     else:
         raise ValueError(f'Unexpected Schema Version: {schemavsn}')
@@ -143,18 +153,43 @@ def _format_alert_for_ingestion(alert_packet):
     return alert_entry, candidate_entry
 
 
-def stream_ingest_alerts(client=None):
-    """Stream individual alerts into BigQuery"""
+def _parse_alert_vectorized(alert_list):
+    """A vectorized version of _parse_alert
 
-    # Todo: Once connected to kafka, query / insert multiple alerts at once
-    alert_table = bq_client.get_table(dataset_ref.table('alert'))
-    candidate_table = bq_client.get_table(dataset_ref.table('candidate'))
-    for alert_packet in iter_alerts():
-        formatted_packet = _format_alert_for_ingestion(alert_packet)
-        alert_error = bq_client.insert_rows(alert_table, [formatted_packet[0]])
-        cand_error = bq_client.insert_rows(candidate_table, [formatted_packet[1]])
+    Args:
+        alert_list (dict or iterable[dict]): Collection of ZTF alerts
+    """
 
-        if alert_error or cand_error:
+    if isinstance(alert_list, dict):
+        parsed_alert = _parse_alert(alert_list)
+        return tuple([val] for val in parsed_alert)
+
+    else:
+        parsed_alerts = [_parse_alert(alert) for alert in alert_list]
+        return np.transpose(parsed_alerts)
+
+
+def stream_ingest_alerts(client, num_alerts=10):
+    """Stream ZTF alerts into BigQuery
+
+    Args:
+        client  (Client): A BigQuery client
+        num_alerts (int): Maximum alerts to ingest at a time (Default: 10)
+    """
+
+    # Get tables to store data
+    dataset_ref = client.dataset('ztf_alerts')
+    alert_table = client.get_table(dataset_ref.table('alert'))
+    candidate_table = client.get_table(dataset_ref.table('candidate'))
+
+    for alert_packet in iter_alerts(num_alerts):
+        formatted_packet = _parse_alert_vectorized(alert_packet)
+
+        alert_error = client.insert_rows(alert_table, formatted_packet[0])
+        candidate_error = client.insert_rows(
+            candidate_table, formatted_packet[1])
+
+        if alert_error or candidate_error:
             raise RuntimeError(
                 f'Failed to stream insert alert: {formatted_packet}')
 
@@ -168,7 +203,7 @@ def batch_ingest_alerts(client=None):
 
     table_ref = dataset_ref.table('alert')
     for alert_packet in iter_alerts():
-        formatted_alert = _format_alert_for_ingestion(alert_packet)
+        formatted_alert = _format_alert(alert_packet)
 
         with TemporaryFile() as source_file:
             fastavro.writer(source_file, formatted_alert['alert'])

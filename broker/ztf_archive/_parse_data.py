@@ -56,11 +56,15 @@ def get_alert_data(candid):
         raise ValueError(f'Data for candid "{candid}" not locally available.')
 
 
-def iter_alerts(raw=False):
+def iter_alerts(num_alerts=1, raw=False):
     """Iterate over all locally available alert data
 
     Args:
         raw (bool): Optionally return the file data as bytes (Default = False)
+
+    Yields:
+        If num_alerts is one, yield a ZTF alert as a dictionary
+        If num_alerts is greater than one, yield a list of dictionaries
     """
 
     path_pattern = os.path.join(DATA_DIR, '*.avro')
@@ -69,8 +73,24 @@ def iter_alerts(raw=False):
         raise RuntimeError("No local alert data found. Please run"
                            " 'mock_stream.download_data' first.")
 
-    for file_path in file_list:
-        yield _parse_alert_file(file_path, raw)
+    if num_alerts < 0 or not isinstance(num_alerts, int):
+        raise ValueError('num_alerts argument must be an integer >= 1')
+
+    if num_alerts == 1:
+        for file_path in file_list:
+            yield _parse_alert_file(file_path, raw)
+
+    else:
+        alerts_list = []
+        for file_path in file_list:
+            alerts_list.append(_parse_alert_file(file_path, raw))
+
+            if len(alerts_list) == num_alerts:
+                yield alerts_list
+                alerts_list = []
+
+        if alerts_list:
+            yield alerts_list
 
 
 def _plot_cutout(packet, fig=None, subplot=None, **kwargs):

@@ -40,7 +40,7 @@ def _get_local_alerts_list():
 def _get_remote_file_list():
     """Get a list of published ZTF alerts from the ZTF Alert Archive
 
-    returns:
+    Returns:
         A list of file names for alerts published on the ZTF archive
     """
 
