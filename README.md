@@ -2,15 +2,15 @@
 
 [![python](https://img.shields.io/badge/python-3.7-g.svg)]() 
 
-Data from the Large Synoptic Syrvey Telescope ([LSST](https://www.lsst.org)) will be distributed through three distinct avenues. The first is a real-time stream of alerts that provides information on transient targets within 60 seconds of observation. The second is a daily data release, which contains the same information as the 60-second alerts plus some additional information. The last data product will be a yearly data release.
+Data from the Large Synoptic Survey Telescope ([LSST](https://www.lsst.org)) will be distributed through three distinct avenues. The first is a real-time stream of alerts that provides information on transient targets within 60 seconds of observation. The second is a daily data release, which contains the same information as the 60-second alerts plus some additional information. The last data product will be a yearly data release.
 
 The 60-second alert stream will not be made available to the public (at least not in its entirety). Instead, LSST will rely on a small number of (~7) community developed *broker* systems to publically relay the information. This repo represents the construction of an LSST broker designed to run on the Google Cloud Platform ([GCP](https://cloud.google.com)) using alerts from the Zwicky Transient Factory ([ZTF](https://www.ztf.caltech.edu)) as a testing ground.
 
 
 
 - [Installation Instructions](#installation-instructions)
-    - [GCP Environment](#gcp-environment)
-    - [Local Environment](#local-environment)
+  - [GCP Environment](#gcp-environment)
+  - [Local Environment](#local-environment)
 - [Downloading ZTF Data](#downloading-ztf-data)
 - [Ingesting Data to GCP](#ingesting-data-to-gcp)
 - [Cross Matching Targets](#cross-matching-targets)
@@ -34,9 +34,9 @@ pip install -r requirements.txt
 conda deactivate  # Exit the environment
 ```
 
-Note that for older versions of `conda` you may have to use the depricated commands `source activate` to activate the environment. 
+Note that for older versions of `conda` you may have to use the deprecated commands `source activate` to activate the environment. 
 
-While still in the new environment, the next step is to set the GCP project ID as an enviromental variable. This can be achieved by running the following after replacing `YOUR_PROJECT_ID` with the appropriate value:
+While still in the new environment, the next step is to set the GCP project ID as an environmental variable. This can be achieved by running the following after replacing `YOUR_PROJECT_ID` with the appropriate value:
 
 ```bash
 # Go to the environment's home directory
@@ -53,11 +53,11 @@ echo 'export BROKER_PROJ_ID="YOUR_PROJECT_ID"' >> ./etc/conda/activate.d/env_var
 echo 'unset BROKER_PROJ_ID' >> ./etc/conda/deactivate.d/env_vars.sh
 ```
 
-Finally you can exit the environment by running `conda deactivate` (or `source deactivate` for older clients).
+Finally, you can exit the environment by running `conda deactivate` (or `source deactivate` for older clients).
 
 #### 3. Sinks and Datasets
 
-You will need to setup a handful of tools in GCP. Instead of doing this manually, the `broker` package provides a setup function for conveniance.
+You will need to set up a handful of tools in GCP. Instead of doing this manually, the `broker` package provides a setup function for convenience.
 
 ```python
 from broker.gcp_setup import setup_gcp
@@ -69,8 +69,6 @@ help(setup_gcp)
 setup_gcp()
 
 ```
-
-
 
 
 
@@ -114,10 +112,9 @@ plt.show()
 
 ## Ingesting Data to GCP
 
-The `alert_ingestion` module handels the insertion of ZTF alert data into BigQuery. Eventually this module will ingest data directly from the live ZTF stream, but for now it relies on the ZTF Alert Archive described in the previous section. Data can be ingested into BigQuery through multiple avenues (see [here](https://cloud.google.com/bigquery/docs/loading-data) for an overview on options and procing models), but the `alert_ingestion` module only provides options to *stream* or *bulk insert* methods.
+The `alert_ingestion` module handles the insertion of ZTF alert data into BigQuery. Eventually this module will ingest data directly from the live ZTF stream, but for now, it relies on the ZTF Alert Archive described in the previous section. Data can be ingested into BigQuery through multiple avenues (see [here](https://cloud.google.com/bigquery/docs/loading-data) for an overview of options and pricing models), but the `alert_ingestion` module only provides options to *stream* or *bulk insert* methods.
 
 ```python
-
 from broker import alert_ingestion
 
 # To ingest alerts via the BigQuery streaming interface
