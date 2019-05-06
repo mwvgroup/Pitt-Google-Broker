@@ -55,6 +55,8 @@ def _parse_alert(alert_packet):
 def parse_alerts(alert_list):
     """Map ZTF alert to the data model used by the BigQuery backend
 
+    Alert data WILL NOT be temporarily written to disk.
+
     Args:
         alert_list (iterable[dict]): Iterable of ZTF alert packets
 
@@ -73,13 +75,13 @@ def parse_alerts(alert_list):
 
 
 def stream_ingest_alerts(num_alerts=10):
-    """Ingest ZTF alerts into BigQuery via streaming
+    """Ingest ZTF alerts into BigQuery via the streaming interface
 
     Args:
         num_alerts (int): Maximum alerts to ingest at a time (Default: 10)
     """
 
-    project_id = os.environ['broker_proj_id']
+    project_id = os.environ['BROKER_PROJ_ID']
     for alert_packets in iter_alerts(num_alerts):
         alert_df, candidate_df = parse_alerts(alert_packets)
 
@@ -87,13 +89,16 @@ def stream_ingest_alerts(num_alerts=10):
         candidate_df.to_gbq('candidate', project_id, if_exists='append')
 
 
-def batch_ingest_alerts(client=None, num_alerts=10):
-    """Ingest ZTF alerts into BigQuery via batch uploading
+def batch_ingest_alerts(num_alerts=10):
+    """Ingest ZTF alerts into BigQuery via the batch upload interface
+
+    Alert data WILL be temporarily written to disk.
 
     Args:
-        client  (Client): A BigQuery client
         num_alerts (int): Maximum alerts to ingest at a time (Default: 10)
     """
+
+    client = bigquery.Client(os.environ['BROKER_PROJ_ID'])
 
     # Configure batch loading
     job_config = bigquery.LoadJobConfig()
@@ -110,7 +115,6 @@ def batch_ingest_alerts(client=None, num_alerts=10):
         for table_ref, data in zip(
                 (alert_table_ref, candidate_table_ref),
                 (alert_df, candidate_df)):
-
             with NamedTemporaryFile() as source_file:
                 pdx.to_avro(source_file.name, data)
 
