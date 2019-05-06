@@ -5,19 +5,17 @@
 the project database.
 
 Examples:
->>> from google.cloud import bigquery
->>>
->>> client = bigquey.Client()
+>>> from broker import alert_ingestion
 >>>
 >>> # To ingest alerts via the BigQuery streaming interface
->>> stream_ingest_alerts(client)
+>>> alert_ingestion.stream_ingest_alerts()
 >>>
 >>> # To ingest 15 alerts at a time through the streaming interface
 >>> # (The default number of alerts is 10)
->>> stream_ingest_alerts(client, 15)
+>>> alert_ingestion.stream_ingest_alerts(15)
 >>>
 >>> # The same principles apply for the batch upload interface
->>> batch_ingest_alerts(15)
+>>> alert_ingestion.batch_ingest_alerts(15)
 """
 
 from ._ingest_alerts import batch_ingest_alerts, stream_ingest_alerts

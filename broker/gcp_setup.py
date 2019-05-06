@@ -29,9 +29,6 @@ def _setup_big_query():
 
     Creates:
         Datasets: ztf_alerts
-
-    Args:
-        schema_path (Str): Path to a json file defining DB schema
     """
 
     bigquery_client = bigquery.Client()

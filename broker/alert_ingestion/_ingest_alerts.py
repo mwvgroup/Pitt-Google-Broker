@@ -94,7 +94,8 @@ def stream_ingest_alerts(num_alerts=10, verbose=False):
     alert_table_ref = dataset_ref.table('alert')
     alert_table_id = f'{alert_table_ref.dataset_id}.{alert_table_ref.table_id}'
     candidate_table_ref = dataset_ref.table('candidate')
-    candidate_table_id = f'{candidate_table_ref.dataset_id}.{candidate_table_ref.table_id}'
+    candidate_table_id = \
+        f'{candidate_table_ref.dataset_id}.{candidate_table_ref.table_id}'
 
     for alert_packets in iter_alerts(num_alerts):
         alert_df, candidate_df = parse_alerts(alert_packets)
