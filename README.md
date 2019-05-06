@@ -9,22 +9,21 @@ The 60-second alert stream will not be made available to the public (at least no
 
 
 - [Installation Instructions](#installation-instructions)
-- [Broker ORM](#broker-orm)
+    - [GCP Environment](#gcp-environment)
+    - [Local Environment](#local-environment)
 - [Downloading ZTF Data](#downloading-ztf-data)
-- [Links and Resources](#links-and-resources)
-    + [General](#general)
-    + [LSST documents](#lsst-documents)
-    + [ZTF](#ztf)
+- [Ingesting Data to GCP](#ingesting-data-to-gcp)
+- [Cross Matching Targets](#cross-matching-targets)
 
 
 
 ## Installation Instructions
 
-#### Your GCP environment
+#### GCP Environment
 
 
 
-#### Your local environment
+#### Local Environment
 
 All Python dependencies are installable using `pip` and the `requirements.txt` file. To create a new conda environment and install dependencies, run:
 
@@ -106,41 +105,10 @@ The `xmatch` module provides target crossmatching of observed targets against th
 from broker import xmatch as xm
 
 # Write a CSV file with RA, DEC:
-fradec = 'mock_stream/data/alerts_radec.csv'
-xm.get_alerts_ra_dec(fout=fradec)
+ra_dec_path = 'mock_stream/data/alerts_radec.csv'
+xm.get_alerts_ra_dec(fout=ra_dec_path)
 
 # Query VizieR for cross matches:
-xm_table = xm.get_xmatches(fcat1=fradec, cat2='vizier:II/246/out')
+xm_table = xm.get_xmatches(fcat1=ra_dec_path, cat2='vizier:II/246/out')
 print(xm_table)
 ```
-
-
-
-## Links and Resources
-
-#### General
-
-- Project notes: [here](./notes/)
-- Online LSST forum for data managment (DM): [community.lsst.org/](https://community.lsst.org/)
-- LSST-DESC Broker Workshop talks [drive.google.com/...](https://drive.google.com/drive/folders/1sjYXbdwTID3VnzZNAkcjLbjRfpwNaO_n?usp=sharing) 
-
-
-
-#### LSST Documents
-
-- Plans and Policies for alert distribution (how will community brokers be chosen?): [ls.st/LDM-612](https://ls.st/LDM-612)
-- Call for letters ofiIntent for community alert brokers (how do I apply to be a community broker?): [ls.st/LDM-682](https://ls.st/LDM-682)
-- LSST alerts: key numbers (how many? how much? how often?): [dmtn-102.lsst.io](https://dmtn-102.lsst.io)
-- Data Products Definition Document (DPDD) (What data will LSST deliver?): [ls.st/dpdd](https://ls.st/dpdd)
-- Prototype schemas: [github.com/lsst-dm/sample-avro-alert](https://github.com/lsst-dm/sample-avro-alert)
-- Kafka-based alert stream: [github.com/lsst-dm/alert_stream](https://github.com/lsst-dm/alert_stream)
-
-
-
-#### ZTF
-
-- Sample alert packets: [ztf.uw.edu/alerts/public/](https://ztf.uw.edu/alerts/public/)
-- Alert packet tools: [zwicky.tf/4t5](https://zwicky.tf/4t5)
-- Alert schema documentation: [zwicky.tf/dm5](https://zwicky.tf/dm5)
-- Detailed pipelines documentation: [zwicky.tf/ykv](https://zwicky.tf/ykv)
-- PASP instrument papers: [zwicky.tf/3w9](https://zwicky.tf/3w9)
