@@ -8,7 +8,9 @@ the parent package. It does not create any BigQuery data tables, as those are
 created automatically if / when required.
 
 Examples:
->>> # Se a list of changes that will be made to your project
+>>> from broker.gcp_setup import setup_gcp, get_bq_schema
+>>>
+>>> # See a list of changes that will be made to your project
 >>> help(setup_gcp)
 >>>
 >>> # Setup your GCP project

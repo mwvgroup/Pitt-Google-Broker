@@ -19,22 +19,58 @@ The 60-second alert stream will not be made available to the public (at least no
 
 ## Installation Instructions
 
-#### GCP Environment
+#### 1. GCP Environment
 
+Before establishing the backend in GCP, you will need to create a new project as outlined [here](https://cloud.google.com/resource-manager/docs/creating-managing-projects). Be sure to take note of the project ID, as you will need it later on.
 
-
-#### Local Environment
+#### 2. Local Environment
 
 All Python dependencies are installable using `pip` and the `requirements.txt` file. To create a new conda environment and install dependencies, run:
 
 ```bash
-> conda create -n pitt_broker python=3.7 anaconda
-> conda activate pitt_broker  # Activate the new environment
-> pip install -r requirements.txt
-> conda deactivate  # Exit the environment
+conda create -n pitt_broker python=3.7 anaconda
+conda activate pitt_broker  # Activate the new environment
+pip install -r requirements.txt
+conda deactivate  # Exit the environment
 ```
 
-Note that for older versions of `conda` you may have to use `source activate` and `source deactivate` to activate and exit environments.
+Note that for older versions of `conda` you may have to use the depricated commands `source activate` to activate the environment. 
+
+While still in the new environment, the next step is to set the GCP project ID as an enviromental variable. This can be achieved by running the following after replacing `YOUR_PROJECT_ID` with the appropriate value:
+
+```bash
+# Go to the environment's home directory
+cd $CONDA_PREFIX
+
+# Create files to run on startup and exit
+mkdir -p ./etc/conda/activate.d
+mkdir -p ./etc/conda/deactivate.d
+touch ./etc/conda/activate.d/env_vars.sh
+touch ./etc/conda/deactivate.d/env_vars.sh
+
+# Add environmental variables
+echo 'export BROKER_PROJ_ID="YOUR_PROJECT_ID"' >> ./etc/conda/activate.d/env_vars.sh
+echo 'unset BROKER_PROJ_ID' >> ./etc/conda/deactivate.d/env_vars.sh
+```
+
+Finally you can exit the environment by running `conda deactivate` (or `source deactivate` for older clients).
+
+#### 3. Sinks and Datasets
+
+You will need to setup a handful of tools in GCP. Instead of doing this manually, the `broker` package provides a setup function for conveniance.
+
+```python
+from broker.gcp_setup import setup_gcp
+
+# See a list of changes that will be made to your project
+help(setup_gcp)
+
+# Setup your GCP project
+setup_gcp()
+
+```
+
+
 
 
 
