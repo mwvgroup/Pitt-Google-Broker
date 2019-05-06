@@ -85,7 +85,7 @@ def stream_ingest_alerts(num_alerts=10, verbose=False):
         verbose   (bool): Display progress bar for each table (Default: False)
     """
 
-    # Connect to BigQuery
+    log.info('Beginning stream ingestion')
     project_id = os.environ['BROKER_PROJ_ID']
     client = bigquery.Client(project_id)
 
@@ -119,10 +119,12 @@ def batch_ingest_alerts(num_alerts=10):
         num_alerts (int): Maximum alerts to ingest at a time (Default: 10)
     """
 
+    log.info('Beginning batch ingestion.')
     project_id = os.environ['BROKER_PROJ_ID']
     client = bigquery.Client(project_id)
 
     # Configure batch loading
+    log.debug('Configuring batch jobs')
     job_config = bigquery.LoadJobConfig()
     job_config.source_format = bigquery.SourceFormat.AVRO
 
@@ -137,15 +139,20 @@ def batch_ingest_alerts(num_alerts=10):
         for table_ref, data in zip(
                 (alert_table_ref, candidate_table_ref),
                 (alert_df, candidate_df)):
+
             with NamedTemporaryFile() as source_file:
                 pdx.to_avro(source_file.name, data)
 
-                # API request
-                job = client.load_table_from_file(
-                    source_file,
-                    table_ref,
-                    location="US",
-                    job_config=job_config,
-                )
+                try:
+                    # API request
+                    log.debug('Launching batch upload job.')
+                    job = client.load_table_from_file(
+                        source_file,
+                        table_ref,
+                        location="US",
+                        job_config=job_config,
+                    )
 
-                job.result()  # Wait for table load to complete.
+                except KeyboardInterrupt:
+                    job.result()
+                    raise
