@@ -43,5 +43,5 @@ This directory contains various project documents and notes for use by the devel
 - Competitive products survey:
   - [ANTARES.md](./competitive_product_survey/ANTARES.md)
   - [Lasair.md](./competitive_product_survey/Lasair.md)
-- Notes from the DESC broker workshop: [DESC Broker Workshop.md](./DESC Broker Workshop.md)
+- Notes from the DESC broker workshop: [desc_broker_workshop.md](desc_broker_workshop.md)
 - Cross matching: [cross_matching.md](./cross_matching.md)
