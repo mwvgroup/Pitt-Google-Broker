@@ -27,6 +27,8 @@ Examples:
 >>> print(alert_data)
 >>>
 >>> # Plot stamp images for alert data
+>>> from matplotlib import pyplot as plt
+>>>
 >>> fig = plot_stamps(alert_data)
 >>> plt.show()
 """

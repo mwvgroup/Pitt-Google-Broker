@@ -24,7 +24,7 @@ def _parse_alert_file(path, raw=False):
 
     Args:
         path (str): The file path to read
-        raw (bool): Optionally return the file data as bytes (Default = False)
+        raw (bool): Optionally return the file data as bytes (Default: False)
 
     Returns:
         The file contents as a dictionary or bytes
@@ -60,11 +60,11 @@ def iter_alerts(num_alerts=1, raw=False):
     """Iterate over all locally available alert data
 
     Args:
-        raw (bool): Optionally return the file data as bytes (Default = False)
+        num_alerts (int): Maximum number of alerts to yield at a time
+        raw       (bool): Optionally return file data as bytes (Default: False)
 
     Yields:
-        If num_alerts is one, yield a ZTF alert as a dictionary
-        If num_alerts is greater than one, yield a list of dictionaries
+        A list of dictionaries with ZTF alert data
     """
 
     path_pattern = os.path.join(DATA_DIR, '*.avro')
@@ -76,21 +76,15 @@ def iter_alerts(num_alerts=1, raw=False):
     if num_alerts < 0 or not isinstance(num_alerts, int):
         raise ValueError('num_alerts argument must be an integer >= 1')
 
-    if num_alerts == 1:
-        for file_path in file_list:
-            yield _parse_alert_file(file_path, raw)
-
-    else:
-        alerts_list = []
-        for file_path in file_list:
-            alerts_list.append(_parse_alert_file(file_path, raw))
-
-            if len(alerts_list) == num_alerts:
-                yield alerts_list
-                alerts_list = []
-
-        if alerts_list:
+    alerts_list = []
+    for file_path in file_list:
+        alerts_list.append(_parse_alert_file(file_path, raw))
+        if len(alerts_list) >= num_alerts:
             yield alerts_list
+            alerts_list = []
+
+    if alerts_list:
+        yield alerts_list
 
 
 def _plot_cutout(packet, fig=None, subplot=None, **kwargs):

@@ -10,6 +10,8 @@ google-cloud-storage
 matplotlib
 numpy
 pandas
+pandas-gbq
+pandavro
 pyyaml
 requests
 tqdm

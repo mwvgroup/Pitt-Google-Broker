@@ -10,8 +10,8 @@ Examples:
 >>> # Setup your GCP project
 >>> setup_gcp()
 >>>
->>> # Export a json copy of the GCP BigQuery schema used by this package
->>> export_schema('./schema.json')
+>>> # Return a json copy of the GCP BigQuery schema used by this package
+>>> get_bq_schema()
 """
 
 import yaml
@@ -100,16 +100,18 @@ def setup_gcp():
     _setup_logging_sinks()
 
 
-def export_bq_schema(path, client=None, tables=_tables, data_set='ztf_alerts'):
-    """Export the current backend BigQuery schema to a yaml file
+def get_bq_schema(client=None, tables=_tables, data_set='ztf_alerts'):
+    """Return the current backend BigQuery schema to as a dictionary
 
     By default export the schema for all tables used by this package
 
     Args:
-        path         (str): Path of output .json file
         client    (Client): A BigQuery client (Optional)
         tables (list[str]): Table names to export schemas for (Optional)
         data_set     (str): Name of the GCP data set (Optional)
+
+    Returns:
+        A dictionary with the schema for each table in the BigQuery dataset
     """
 
     if client is None:
@@ -134,8 +136,4 @@ def export_bq_schema(path, client=None, tables=_tables, data_set='ztf_alerts'):
 
         schema_out[table_name] = table_schema
 
-    if not path.endswith('.yml'):
-        path += '.yml'
-
-    with open(path, 'w') as ofile:
-        yaml.dump(schema_out, ofile)
+    return schema_out
