@@ -10,5 +10,6 @@ google-cloud-storage
 matplotlib
 numpy
 pandas
+pyyaml
 requests
 tqdm

@@ -14,7 +14,7 @@ Examples:
 >>> export_schema('./schema.json')
 """
 
-import json
+import yaml
 from pathlib import Path
 
 from google.api_core.exceptions import NotFound
@@ -39,7 +39,7 @@ def _setup_big_query(schema_path):
     data_set = bigquery_client.create_dataset('ztf_alerts', exists_ok=True)
 
     with open(schema_path) as ofile:
-        db_schema = json.load(ofile)
+        db_schema = yaml.load(ofile)
 
     for table_name in _tables:
         table_id = f'{data_set.project}.{data_set.dataset_id}.{table_name}'
@@ -100,10 +100,10 @@ def setup_gcp():
     _setup_logging_sinks()
 
 
-def export_schema(path, client=None, tables=_tables, data_set='ZTF'):
-    """Export the current backend schema to file
+def export_bq_schema(path, client=None, tables=_tables, data_set='ztf_alerts'):
+    """Export the current backend BigQuery schema to a yaml file
 
-    By Default export the schema for all tables used by this package
+    By default export the schema for all tables used by this package
 
     Args:
         path         (str): Path of output .json file
@@ -117,7 +117,7 @@ def export_schema(path, client=None, tables=_tables, data_set='ZTF'):
 
     data_set = client.get_dataset(data_set)
 
-    schema_json = {}
+    schema_out = {}
     for table_name in tables:
         table = client.get_table(
             f'{data_set.project}.{data_set.dataset_id}.{table_name}')
@@ -132,10 +132,10 @@ def export_schema(path, client=None, tables=_tables, data_set='ZTF'):
 
             table_schema.append(field_dict)
 
-        schema_json[table_name] = table_schema
+        schema_out[table_name] = table_schema
 
-    if not path.endswith('.json'):
-        path += '.json'
+    if not path.endswith('.yml'):
+        path += '.yml'
 
     with open(path, 'w') as ofile:
-        json.dump(schema_json, ofile, indent=2, sort_keys=True)
+        yaml.dump(schema_out, ofile)
