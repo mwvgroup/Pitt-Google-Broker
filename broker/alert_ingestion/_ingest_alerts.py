@@ -9,18 +9,16 @@ from tempfile import NamedTemporaryFile
 
 import pandas as pd
 import pandavro as pdx
-from google.cloud import bigquery, logging as gcp_logging
+from google.cloud import bigquery, error_reporting, logging as gcp_logging
 
 from ..ztf_archive import iter_alerts
 
 # Connect to GCP
 logging_client = gcp_logging.Client()
+error_client = error_reporting.Client()
 
 # Configure logging
 handler = logging_client.get_default_handler()
-str_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-handler.setFormatter(logging.Formatter(str_format))
-
 log = logging.Logger('alert_ingestion')
 log.setLevel(logging.INFO)
 log.addHandler(handler)
@@ -47,7 +45,10 @@ def _parse_alert(alert_packet):
         candidate_entry = alert_packet['candidate']
 
     else:
-        raise ValueError(f'Unexpected Schema Version: {schemavsn}')
+        err_msg = f'Unexpected Schema Version: {schemavsn}'
+        log.error(err_msg)
+        error_client.report(err_msg)
+        raise ValueError(err_msg)
 
     return alert_entry, candidate_entry
 
@@ -76,6 +77,8 @@ def parse_alerts(alert_list):
 
 def stream_ingest_alerts(num_alerts=10):
     """Ingest ZTF alerts into BigQuery via the streaming interface
+
+    Alert data WILL NOT be temporarily written to disk.
 
     Args:
         num_alerts (int): Maximum alerts to ingest at a time (Default: 10)
