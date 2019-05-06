@@ -75,21 +75,39 @@ def parse_alerts(alert_list):
     return pd.DataFrame(alert_table), pd.DataFrame(candidate_table)
 
 
-def stream_ingest_alerts(num_alerts=10):
+def stream_ingest_alerts(num_alerts=10, verbose=False):
     """Ingest ZTF alerts into BigQuery via the streaming interface
 
     Alert data WILL NOT be temporarily written to disk.
 
     Args:
         num_alerts (int): Maximum alerts to ingest at a time (Default: 10)
+        verbose   (bool): Display progress bar for each table (Default: False)
     """
 
+    # Connect to BigQuery
     project_id = os.environ['BROKER_PROJ_ID']
+    client = bigquery.Client(project_id)
+
+    # Get table IDs
+    dataset_ref = client.dataset('ztf_alerts')
+    alert_table_ref = dataset_ref.table('alert')
+    alert_table_id = f'{alert_table_ref.dataset_id}.{alert_table_ref.table_id}'
+    candidate_table_ref = dataset_ref.table('candidate')
+    candidate_table_id = f'{candidate_table_ref.dataset_id}.{candidate_table_ref.table_id}'
+
     for alert_packets in iter_alerts(num_alerts):
         alert_df, candidate_df = parse_alerts(alert_packets)
-
-        alert_df.to_gbq('alert', project_id, if_exists='append')
-        candidate_df.to_gbq('candidate', project_id, if_exists='append')
+        alert_df.to_gbq(
+            alert_table_id,
+            project_id,
+            if_exists='append',
+            progress_bar=verbose)
+        candidate_df.to_gbq(
+            candidate_table_id,
+            project_id,
+            if_exists='append',
+            progress_bar=verbose)
 
 
 def batch_ingest_alerts(num_alerts=10):
@@ -101,7 +119,8 @@ def batch_ingest_alerts(num_alerts=10):
         num_alerts (int): Maximum alerts to ingest at a time (Default: 10)
     """
 
-    client = bigquery.Client(os.environ['BROKER_PROJ_ID'])
+    project_id = os.environ['BROKER_PROJ_ID']
+    client = bigquery.Client(project_id)
 
     # Configure batch loading
     job_config = bigquery.LoadJobConfig()

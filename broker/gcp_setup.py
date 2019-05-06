@@ -3,6 +3,10 @@
 
 """This module sets up a GCP project for use with the `broker` package.
 
+This module is used to set up the necessary sinks and BigQuery datasets used by
+the parent package. It does not create any BigQuery data tables, as those are
+created automatically if / when required.
+
 Examples:
 >>> # Se a list of changes that will be made to your project
 >>> help(setup_gcp)
@@ -10,47 +14,28 @@ Examples:
 >>> # Setup your GCP project
 >>> setup_gcp()
 >>>
->>> # Return a json copy of the GCP BigQuery schema used by this package
+>>> # Return a copy of the GCP BigQuery schema as a dict
 >>> get_bq_schema()
 """
-
-import yaml
-from pathlib import Path
 
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, logging, storage
 
 _tables = ('alert', 'candidate')
-_schema_path = Path(__file__).resolve().parent / 'bigquery_schema.json'
 
 
-def _setup_big_query(schema_path):
+def _setup_big_query():
     """Create the necessary Big Query tables if they do not already exist
 
     Creates:
         Datasets: ztf_alerts
-        Tables  : alert, candidate
 
     Args:
         schema_path (Str): Path to a json file defining DB schema
     """
 
     bigquery_client = bigquery.Client()
-    data_set = bigquery_client.create_dataset('ztf_alerts', exists_ok=True)
-
-    with open(schema_path) as ofile:
-        db_schema = yaml.load(ofile)
-
-    for table_name in _tables:
-        table_id = f'{data_set.project}.{data_set.dataset_id}.{table_name}'
-        try:
-            bigquery_client.get_table(table_id)
-
-        except NotFound:
-            table_schema = [bigquery.SchemaField(**kwargs) for kwargs in
-                            db_schema[table_name]]
-            table = bigquery.Table(table_id, schema=table_schema)
-            bigquery_client.create_table(table)
+    bigquery_client.create_dataset('ztf_alerts', exists_ok=True)
 
 
 def _setup_logging_sinks():
@@ -91,12 +76,11 @@ def setup_gcp():
 
     Creates:
         Datasets: ztf_alerts
-        Tables  : alert, candidate
         Buckets : broker_logging_bucket
         Sinks   : broker_logging_sink
     """
 
-    _setup_big_query(_schema_path)
+    _setup_big_query()
     _setup_logging_sinks()
 
 

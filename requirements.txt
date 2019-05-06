@@ -9,7 +9,7 @@ google-cloud-logging
 google-cloud-storage
 matplotlib
 numpy
-pandas
+pandas>=0.24.2
 pandas-gbq
 pandavro
 pyyaml
