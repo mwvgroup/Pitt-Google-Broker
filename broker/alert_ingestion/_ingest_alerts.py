@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-"""Parse ANTARES alerts and add them to the project database."""
+"""Parse ZTF alerts and add them to the project database."""
 
 import logging
 import os
