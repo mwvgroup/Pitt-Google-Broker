@@ -56,8 +56,6 @@ def _parse_alert(alert_packet):
 def parse_alerts(alert_list):
     """Map ZTF alert to the data model used by the BigQuery backend
 
-    Alert data WILL NOT be temporarily written to disk.
-
     Args:
         alert_list (iterable[dict]): Iterable of ZTF alert packets
 
