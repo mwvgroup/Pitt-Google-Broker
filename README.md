@@ -25,7 +25,7 @@ Before establishing the backend in GCP, you will need to create a new project as
 
 #### 2. Local Environment
 
-All Python dependencies are installable using `pip` and the `requirements.txt` file. To create a new conda environment and install dependencies, run:
+To create a new conda environment, run:
 
 ```bash
 conda create -n pitt_broker python=3.7
