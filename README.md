@@ -28,15 +28,11 @@ Before establishing the backend in GCP, you will need to create a new project as
 All Python dependencies are installable using `pip` and the `requirements.txt` file. To create a new conda environment and install dependencies, run:
 
 ```bash
-conda create -n pitt_broker python=3.7 anaconda
+conda create -n pitt_broker python=3.7
 conda activate pitt_broker  # Activate the new environment
-pip install -r requirements.txt
-conda deactivate  # Exit the environment
 ```
 
-Note that for older versions of `conda` you may have to use the deprecated commands `source activate` to activate the environment. 
-
-While still in the new environment, the next step is to set the GCP project ID as an environmental variable. This can be achieved by running the following after replacing `YOUR_PROJECT_ID` with the appropriate value:
+Note that for older versions of `conda` you may have to use the deprecated command `source activate` to activate the environment. While still in the new environment, the next step is to set the GCP project ID as an environmental variable. This can be achieved by running the following after replacing `YOUR_PROJECT_ID` with the appropriate value:
 
 ```bash
 # Go to the environment's home directory
@@ -53,7 +49,22 @@ echo 'export BROKER_PROJ_ID="YOUR_PROJECT_ID"' >> ./etc/conda/activate.d/env_var
 echo 'unset BROKER_PROJ_ID' >> ./etc/conda/deactivate.d/env_vars.sh
 ```
 
-Finally, you can exit the environment by running `conda deactivate` (or `source deactivate` for older clients).
+Finally, you can install the package and exit the environment by running:
+
+```bash
+python setup.py install --user  # Install the package
+conda deactivate  # Use `source deactivate` for older clients
+```
+
+If you don't need the full package installed and only need the dependancies (ie. for development purposes) these can be installed using pip.
+
+```bash
+conda activate pitt_broker
+pip install -r requirements.txt
+conda deactivate
+```
+
+
 
 #### 3. Sinks and Datasets
 
@@ -67,7 +78,6 @@ help(setup_gcp)
 
 # Setup your GCP project
 setup_gcp()
-
 ```
 
 
@@ -145,3 +155,4 @@ xm.get_alerts_ra_dec(fout=ra_dec_path)
 xm_table = xm.get_xmatches(fcat1=ra_dec_path, cat2='vizier:II/246/out')
 print(xm_table)
 ```
+
