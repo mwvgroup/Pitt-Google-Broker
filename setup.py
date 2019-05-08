@@ -1,9 +1,11 @@
 # !/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
+from pathlib import Path
 from setuptools import find_packages, setup
 
-with open('requirements.txt') as f:
+requirements_path = Path(__file__).resolve().parent / 'requirements.txt'
+with open(requirements_path) as f:
     requirements = f.read().splitlines()
 
 setup(name='pitt_broker',

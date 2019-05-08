@@ -7,11 +7,14 @@ google-api-python-client
 google-cloud-bigquery
 google-cloud-logging
 google-cloud-storage
+google-cloud-error-reporting
+google-resumable-media
 matplotlib
 numpy
 pandas>=0.24.2
 pandas-gbq
 pandavro
-pyyaml
 requests
+sphinx
+sphinx_rtd_theme
 tqdm
