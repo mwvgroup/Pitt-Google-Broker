@@ -67,14 +67,18 @@ def iter_alerts(num_alerts=1, raw=False):
         A list of dictionaries with ZTF alert data
     """
 
+    err_msg = 'num_alerts argument must be an int >= 1'
+    if num_alerts <= 0:
+        raise ValueError(err_msg)
+
+    elif not isinstance(num_alerts, int):
+        raise TypeError(err_msg)
+
     path_pattern = os.path.join(DATA_DIR, '*.avro')
     file_list = glob(path_pattern)
     if not file_list:
-        raise RuntimeError("No local alert data found. Please run"
-                           " 'mock_stream.download_data' first.")
-
-    if num_alerts < 0 or not isinstance(num_alerts, int):
-        raise ValueError('num_alerts argument must be an integer >= 1')
+        raise RuntimeError(
+            "No local alert data found. Please run 'download_data' first.")
 
     alerts_list = []
     for file_path in file_list:

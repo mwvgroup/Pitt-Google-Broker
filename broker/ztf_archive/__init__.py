@@ -10,7 +10,7 @@ Examples:
 >>>
 >>> # Download recent data from the ZTF archive.
 >>> # Note: Daily releases can be as large as several Gb
->>> download_data()
+>>> ztfa.download_data()
 >>>
 >>> # Retrieve the number of daily releases that have been downloaded
 >>> print(ztfa.get_number_local_releases())
