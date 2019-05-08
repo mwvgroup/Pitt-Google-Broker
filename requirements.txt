@@ -15,6 +15,4 @@ pandas>=0.24.2
 pandas-gbq
 pandavro
 requests
-sphinx
-sphinx_rtd_theme
 tqdm
