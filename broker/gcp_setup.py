@@ -1,29 +1,19 @@
 #!/usr/bin/env python3.7
 # -*- coding: UTF-8 -*-
 
-"""This module sets up a GCP project for use with the `broker` package.
+"""The ``gcp_setup`` module sets up a GCP project for use with the ``broker``
+package.
 
 This module is used to set up the necessary sinks and BigQuery datasets used by
 the parent package. It does not create any BigQuery data tables, as those are
 created automatically if / when required.
-
-Examples:
->>> from broker.gcp_setup import setup_gcp, get_bq_schema
->>>
->>> # See a list of changes that will be made to your project
->>> help(setup_gcp)
->>>
->>> # Setup your GCP project
->>> setup_gcp()
->>>
->>> # Return a copy of the GCP BigQuery schema as a dict
->>> get_bq_schema()
 """
 
 import os
 
-from google.api_core.exceptions import NotFound
-from google.cloud import bigquery, logging, storage
+if 'RTD_BUILD' not in os.environ:
+    from google.api_core.exceptions import NotFound
+    from google.cloud import bigquery, logging, storage
 
 _tables = ('alert', 'candidate')
 
