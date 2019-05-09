@@ -7,21 +7,22 @@ Helpful links:
   https://astroquery.readthedocs.io/en/latest/#using-astroquery
   https://astroquery.readthedocs.io/en/latest/xmatch/xmatch.html#module-astroquery.xmatch
 
-Example Usage:
-  from mock_stream import xmatch as xm
-
-  # Write a CSV file with RA, DEC:
-  fradec = 'mock_stream/data/alerts_radec.csv'
-  xm.get_alerts_RA_DEC(fout=fradec)
-
-  Query VizieR for cross matches:
-  table = xm.get_xmatches(fcat1=fradec, cat2='vizier:II/246/out')
+Examples:
+>>> from broker import xmatch as xm
+>>>
+>>> # Write a CSV file with RA, DEC:
+>>> ra_dec_path = 'mock_stream/data/alerts_radec.csv'
+>>> xm.get_alerts_ra_dec(fout=ra_dec_path)
+>>>
+>>> # Query VizieR for cross matches:
+>>> xm_table = xm.get_xmatches(fcat1=ra_dec_path, cat2='vizier:II/246/out')
+>>> print(xm_table)
 """
 
 import pandas as pd
 from astropy import units as u
 from astroquery.xmatch import XMatch
-from .mock_ztf_stream import _parse_data as psd
+from .ztf_archive import _parse_data as psd
 
 
 def get_xmatches(
