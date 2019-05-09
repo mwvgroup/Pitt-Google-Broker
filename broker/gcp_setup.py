@@ -32,6 +32,7 @@ def _setup_logging_sinks():
     """Create sinks for exporting log entries to GCP
 
     New buckets include: ``<project_id>_logging_bucket``
+
     New Sinks include: ``broker_logging_sink``
     """
 
@@ -65,7 +66,9 @@ def setup_gcp():
     """Setup a GCP environment
 
     New data sets include: ``ztf_alerts``
+
     New buckets include: ``<project_id>_logging_bucket``
+
     New Sinks include: ``broker_logging_sink``
     """
 
