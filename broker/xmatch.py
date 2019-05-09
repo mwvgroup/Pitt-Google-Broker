@@ -24,10 +24,10 @@ def get_xmatches(
         cat2  (string): Passed through to XMatch.query().
 
     Returns:
-        An astropy table with columns:
-            'angDist','alert_id','ra','dec','2MASS','RAJ2000','DEJ2000',
-            'errHalfMaj','errHalfMin','errPosAng','Jmag','Hmag','Kmag',
-            'e_Jmag','e_Hmag','e_Kmag','Qfl','Rfl','X','MeasureJD'
+        An astropy table with columns 'angDist','alert_id','ra','dec','2MASS',
+          'RAJ2000','DEJ2000', 'errHalfMaj','errHalfMin','errPosAng',
+          'Jmag','Hmag','Kmag', 'e_Jmag','e_Hmag','e_Kmag','Qfl','Rfl','X',
+          'MeasureJD'
     """
 
     with open(fcat1) as ofile:

@@ -19,10 +19,9 @@ _tables = ('alert', 'candidate')
 
 
 def _setup_big_query():
-    """Create the necessary Big Query tables if they do not already exist
+    """Create the necessary Big Query datasets if they do not already exist
 
-    Creates:
-      Datasets: ztf_alerts
+    New data sets include: ``ztf_alerts``
     """
 
     bigquery_client = bigquery.Client()
@@ -32,9 +31,8 @@ def _setup_big_query():
 def _setup_logging_sinks():
     """Create sinks for exporting log entries to GCP
 
-    Creates:
-      Buckets: <project_id>_logging_bucket
-      Sinks  : broker_logging_sink
+    New buckets include: ``<project_id>_logging_bucket``
+    New Sinks include: ``broker_logging_sink``
     """
 
     storage_client = storage.Client()
@@ -66,10 +64,9 @@ def _setup_logging_sinks():
 def setup_gcp():
     """Setup a GCP environment
 
-    Creates:
-      Datasets: ztf_alerts
-      Buckets : <project_id>_logging_bucket
-      Sinks   : logging_sink
+    New data sets include: ``ztf_alerts``
+    New buckets include: ``<project_id>_logging_bucket``
+    New Sinks include: ``broker_logging_sink``
     """
 
     _setup_big_query()
