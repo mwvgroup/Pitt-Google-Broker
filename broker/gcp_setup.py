@@ -20,6 +20,8 @@ Examples:
 >>> get_bq_schema()
 """
 
+import os
+
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, logging, storage
 
@@ -41,12 +43,13 @@ def _setup_logging_sinks():
     """Create sinks for exporting log entries to GCP
 
     Creates:
-        Buckets: broker_logging_bucket
+        Buckets: <project_id>.logging_bucket
         Sinks  : broker_logging_sink
     """
 
     storage_client = storage.Client()
-    logging_bucket_name = 'broker_logging_bucket'
+    project_id = os.environ['BROKER_PROJ_ID']
+    logging_bucket_name = f'{project_id}.logging_bucket'
 
     # Create storage bucket if not exist
     try:
@@ -57,7 +60,7 @@ def _setup_logging_sinks():
 
     # Define logging sink
     logging_client = logging.Client()
-    logging_sink_name = 'broker_logging_sink'
+    logging_sink_name = 'logging_sink'
     logging_filter = None
     destination = f'storage.googleapis.com/{logging_bucket_name}'
     sink = logging_client.sink(
@@ -75,8 +78,8 @@ def setup_gcp():
 
     Creates:
         Datasets: ztf_alerts
-        Buckets : broker_logging_bucket
-        Sinks   : broker_logging_sink
+        Buckets : <project_id>.logging_bucket
+        Sinks   : logging_sink
     """
 
     _setup_big_query()
