@@ -6,22 +6,12 @@
 Helpful links:
   https://astroquery.readthedocs.io/en/latest/#using-astroquery
   https://astroquery.readthedocs.io/en/latest/xmatch/xmatch.html#module-astroquery.xmatch
-
-Examples:
->>> from broker import xmatch as xm
->>>
->>> # Write a CSV file with RA, DEC:
->>> ra_dec_path = 'mock_stream/data/alerts_radec.csv'
->>> xm.get_alerts_ra_dec(fout=ra_dec_path)
->>>
->>> # Query VizieR for cross matches:
->>> xm_table = xm.get_xmatches(fcat1=ra_dec_path, cat2='vizier:II/246/out')
->>> print(xm_table)
 """
 
 import pandas as pd
 from astropy import units as u
 from astroquery.xmatch import XMatch
+
 from .ztf_archive import _parse_data as psd
 
 
@@ -34,10 +24,10 @@ def get_xmatches(
         cat2  (string): Passed through to XMatch.query().
 
     Returns:
-        An astropy table with columns:
-            'angDist','alert_id','ra','dec','2MASS','RAJ2000','DEJ2000',
-            'errHalfMaj','errHalfMin','errPosAng','Jmag','Hmag','Kmag',
-            'e_Jmag','e_Hmag','e_Kmag','Qfl','Rfl','X','MeasureJD'
+        An astropy table with columns
+          angDist, alert_id, ra, dec, 2MASS, RAJ2000, DEJ2000,
+          errHalfMaj, errHalfMin, errPosAng, Jmag, Hmag, Kmag,
+          e_Jmag, e_Hmag, e_Kmag, Qfl, Rfl, X, MeasureJD
     """
 
     with open(fcat1) as ofile:

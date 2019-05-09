@@ -11,6 +11,7 @@ broker.alert_ingestion
 
 .. autosummary::
 
+    parse_alerts
     batch_ingest_alerts
     stream_ingest_alerts
 

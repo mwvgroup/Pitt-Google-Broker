@@ -9,19 +9,21 @@ from tempfile import NamedTemporaryFile
 
 import pandas as pd
 import pandavro as pdx
-from google.cloud import bigquery, error_reporting, logging as gcp_logging
 
 from ..ztf_archive import iter_alerts
 
-# Connect to GCP
-logging_client = gcp_logging.Client()
-error_client = error_reporting.Client()
+if 'RTD_BUILD' not in os.environ:
+    from google.cloud import bigquery, error_reporting, logging as gcp_logging
 
-# Configure logging
-handler = logging_client.get_default_handler()
-log = logging.Logger('alert_ingestion')
-log.setLevel(logging.INFO)
-log.addHandler(handler)
+    # Connect to GCP
+    logging_client = gcp_logging.Client()
+    error_client = error_reporting.Client()
+
+    # Configure logging
+    handler = logging_client.get_default_handler()
+    log = logging.Logger('alert_ingestion')
+    log.setLevel(logging.INFO)
+    log.addHandler(handler)
 
 
 def _parse_alert(alert_packet):
@@ -60,8 +62,8 @@ def parse_alerts(alert_list):
         alert_list (iterable[dict]): Iterable of ZTF alert packets
 
     Returns:
-        A Dataframe with data for the BigQuery `alert` table
-        A Dataframe with data for the BigQuery `candidate` table
+        A Dataframe with data for the BigQuery ``alert`` table
+        A Dataframe with data for the BigQuery ``candidate`` table
     """
 
     alert_table, candidate_table = [], []

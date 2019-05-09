@@ -136,7 +136,11 @@ def download_data(max_downloads=1):
 
 
 def get_number_local_alerts():
-    """Return the number of locally available alerts"""
+    """Return the number of locally available alerts
+
+    Returns:
+        The number of alerts downloaded to the local machine
+    """
 
     path_pattern = DATA_DIR / '*.avro'
     return len(glob(path_pattern))
@@ -144,6 +148,9 @@ def get_number_local_alerts():
 
 def get_number_local_releases():
     """Return the number of ZTF daily alert releases that have been downloaded
+
+    Returns:
+        The number of daily data releases downloaded to the local machine
     """
 
     local_alerts = _get_local_alerts_list()

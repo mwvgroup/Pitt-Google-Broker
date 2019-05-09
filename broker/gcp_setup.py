@@ -1,38 +1,27 @@
 #!/usr/bin/env python3.7
 # -*- coding: UTF-8 -*-
 
-"""This module sets up a GCP project for use with the `broker` package.
+"""The ``gcp_setup`` module sets up a GCP project for use with the ``broker``
+package.
 
 This module is used to set up the necessary sinks and BigQuery datasets used by
 the parent package. It does not create any BigQuery data tables, as those are
 created automatically if / when required.
-
-Examples:
->>> from broker.gcp_setup import setup_gcp, get_bq_schema
->>>
->>> # See a list of changes that will be made to your project
->>> help(setup_gcp)
->>>
->>> # Setup your GCP project
->>> setup_gcp()
->>>
->>> # Return a copy of the GCP BigQuery schema as a dict
->>> get_bq_schema()
 """
 
 import os
 
-from google.api_core.exceptions import NotFound
-from google.cloud import bigquery, logging, storage
+if 'RTD_BUILD' not in os.environ:
+    from google.api_core.exceptions import NotFound
+    from google.cloud import bigquery, logging, storage
 
 _tables = ('alert', 'candidate')
 
 
 def _setup_big_query():
-    """Create the necessary Big Query tables if they do not already exist
+    """Create the necessary Big Query datasets if they do not already exist
 
-    Creates:
-        Datasets: ztf_alerts
+    New data sets include: ``ztf_alerts``
     """
 
     bigquery_client = bigquery.Client()
@@ -42,9 +31,9 @@ def _setup_big_query():
 def _setup_logging_sinks():
     """Create sinks for exporting log entries to GCP
 
-    Creates:
-        Buckets: <project_id>_logging_bucket
-        Sinks  : broker_logging_sink
+    New buckets include: ``<project_id>_logging_bucket``
+
+    New Sinks include: ``broker_logging_sink``
     """
 
     storage_client = storage.Client()
@@ -74,12 +63,13 @@ def _setup_logging_sinks():
 
 
 def setup_gcp():
-    """Setup a GCP environment
+    """Create and setup GCP products for the ``broker`` package to connect to
 
-    Creates:
-        Datasets: ztf_alerts
-        Buckets : <project_id>_logging_bucket
-        Sinks   : logging_sink
+    New data sets include: ``ztf_alerts``
+
+    New buckets include: ``<project_id>_logging_bucket``
+
+    New Sinks include: ``broker_logging_sink``
     """
 
     _setup_big_query()
