@@ -43,13 +43,13 @@ def _setup_logging_sinks():
     """Create sinks for exporting log entries to GCP
 
     Creates:
-        Buckets: <project_id>.logging_bucket
+        Buckets: <project_id>_logging_bucket
         Sinks  : broker_logging_sink
     """
 
     storage_client = storage.Client()
     project_id = os.environ['BROKER_PROJ_ID']
-    logging_bucket_name = f'{project_id}.logging_bucket'
+    logging_bucket_name = f'{project_id}_logging_bucket'
 
     # Create storage bucket if not exist
     try:
@@ -78,7 +78,7 @@ def setup_gcp():
 
     Creates:
         Datasets: ztf_alerts
-        Buckets : <project_id>.logging_bucket
+        Buckets : <project_id>_logging_bucket
         Sinks   : logging_sink
     """
 
