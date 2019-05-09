@@ -62,8 +62,8 @@ def parse_alerts(alert_list):
         alert_list (iterable[dict]): Iterable of ZTF alert packets
 
     Returns:
-        A Dataframe with data for the BigQuery `alert` table
-        A Dataframe with data for the BigQuery `candidate` table
+        A Dataframe with data for the BigQuery ``alert`` table
+        A Dataframe with data for the BigQuery ``candidate`` table
     """
 
     alert_table, candidate_table = [], []

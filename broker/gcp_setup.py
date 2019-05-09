@@ -63,7 +63,7 @@ def _setup_logging_sinks():
 
 
 def setup_gcp():
-    """Setup a GCP environment
+    """Create and setup GCP products for the ``broker`` package to connect to
 
     New data sets include: ``ztf_alerts``
 
