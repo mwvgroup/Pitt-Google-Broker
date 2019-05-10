@@ -10,7 +10,8 @@ from unittest import TestCase
 from broker import ztf_archive as ztfa
 
 
-class DataAccess(TestCase):
+class DataDownload(TestCase):
+    """Test the downloading and parsing of ZTF data."""
 
     @classmethod
     def setUpClass(cls):
@@ -23,33 +24,56 @@ class DataAccess(TestCase):
         try:
             # Use the 23,553 alerts generated on 06/26/2018 for testing
             cls.number_alerts = 23553
+            cls.file_name = 'ztf_public_20180626.avro'
             ztfa.download_data_date(2018, 6, 26)
 
         except:
             cls._temp_dir.cleanup()
             raise
 
-    def tearDownClass(self):
+    @classmethod
+    def tearDownClass(cls):
         """Delete temporary files"""
 
-        self._temp_dir.cleanup()
+        cls._temp_dir.cleanup()
 
-    def test_get_number_local_releases(self):
-        """Tests for ``ztf_archive.get_number_local_releases``"""
+    def test_remote_release_list(self):
+        """Test the ``get_remote_release_list`` returns a reasonable number
+        of remote release files (>100)"""
 
-        self.assertEqual(ztfa.get_number_local_releases(), 1)
+        release_list = ztfa.get_remote_release_list()
+        self.assertGreater(
+            len(release_list), 100, 'Unreasonably few releases returned.')
 
-    def test_get_number_local_alerts(self):
-        """Tests for ``ztf_archive.get_number_local_alerts``"""
+    def test_local_release_list(self):
+        """Test ``get_local_release_list`` returns the expected list"""
 
-        self.assertEqual(ztfa.get_number_local_alerts(), self.number_alerts)
+        release_list = ztfa.get_local_release_list()
+        self.assertListEqual(release_list, [self.file_name])
 
-    def test_format_iter_alerts(self):
-        """Tests for ``ztf_archive.iter_alerts``"""
+    def test_local_alerts(self):
+        """Test ``get_local_alert_list`` returns a list of the correct size"""
+
+        num_alerts = len(ztfa.get_local_alert_list())
+        self.assertEqual(num_alerts, self.number_alerts)
+
+    def test_iter_alerts(self):
+        """Test ``iter_alerts`` returns an appropriately sized list of dicts"""
 
         alert_list = next(ztfa.iter_alerts(1))
         self.assertIsInstance(alert_list, list)
         self.assertIsInstance(alert_list[0], dict)
 
-        alert_list = ztfa.iter_alerts(10)
+        alert_list = next(ztfa.iter_alerts(10))
         self.assertEqual(len(alert_list), 10)
+
+    def test_get_alert_data(self):
+        """Test ``get_alert_data`` returns the correct data type."""
+
+        test_alert = ztfa.get_local_alert_list()[0]
+
+        test_data_dict = ztfa.get_alert_data(test_alert)
+        self.assertIsInstance(test_data_dict, dict)
+
+        test_data_bytes = ztfa.get_alert_data(test_alert, raw=True)
+        self.assertIsInstance(test_data_bytes, bytes)

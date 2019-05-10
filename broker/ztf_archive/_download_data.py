@@ -21,27 +21,11 @@ ZTF_URL = "https://ztf.uw.edu/alerts/public/"
 makedirs(DATA_DIR, exist_ok=True)
 
 
-def _get_local_alerts_list():
-    """Return a list of ZTF alert files that have already been downloaded
-
-    Files will have already been unzipped into DATA_DIR
+def get_remote_release_list():
+    """Get a list of published ZTF data releases from the ZTF Alerts Archive
 
     Returns:
-        A list of ZTF alert file names
-    """
-
-    if not ALERT_LOG.exists():
-        return []
-
-    else:
-        return np.loadtxt(ALERT_LOG, dtype='str')
-
-
-def _get_remote_file_list():
-    """Get a list of published ZTF alerts from the ZTF Alert Archive
-
-    Returns:
-        A list of file names for alerts published on the ZTF archive
+        A list of file names for alerts published on the ZTF Alerts Archive
     """
 
     # Get html table from page source
@@ -67,8 +51,33 @@ def _get_remote_file_list():
     return file_list
 
 
+def get_local_release_list():
+    """Return a list of ZTF daily releases that have already been downloaded
+
+    Returns:
+        A list of downloaded files from the ZTF Alerts Archive
+    """
+
+    if not ALERT_LOG.exists():
+        return []
+
+    else:
+        return np.loadtxt(ALERT_LOG, dtype='str')
+
+
+def get_local_alert_list():
+    """Return a list of alert ids for all downloaded alert data
+
+    Returns:
+        A list of alert ID values as ints
+    """
+
+    path_pattern = str(DATA_DIR / '*.avro')
+    return [int(Path(f).with_suffix('').name) for f in glob(path_pattern)]
+
+
 def _download_alerts_file(url, out_path):
-    """Download a daily alerts file and unzip the contents
+    """Download a ZTF daily release file and unzip the contents to DATA_DIR
 
     Args:
         url      (str): URL of the file to download
@@ -132,14 +141,14 @@ def download_recent_data(max_downloads=1):
         max_downloads (int): Number of daily releases to download (default = 1)
     """
 
-    file_list = _get_remote_file_list()
+    file_list = get_remote_release_list()
     num_downloads = min(max_downloads, len(file_list))
     for i, file_name in enumerate(file_list):
         if i >= max_downloads:
             break
 
         # Skip download if data was already downloaded
-        if file_name in _get_local_alerts_list():
+        if file_name in get_local_release_list():
             tqdm.write(
                 f'Already Downloaded ({i + 1}/{num_downloads}): {file_name}')
             continue
@@ -152,29 +161,3 @@ def download_recent_data(max_downloads=1):
 
         with open(ALERT_LOG, 'a') as ofile:
             ofile.write(file_name)
-
-
-def get_number_local_alerts():
-    """Return the number of locally available alerts
-
-    Returns:
-        The number of alerts downloaded to the local machine
-    """
-
-    path_pattern = DATA_DIR / '*.avro'
-    return len(glob(path_pattern))
-
-
-def get_number_local_releases():
-    """Return the number of ZTF daily alert releases that have been downloaded
-
-    Returns:
-        The number of daily data releases downloaded to the local machine
-    """
-
-    local_alerts = _get_local_alerts_list()
-    try:
-        return len(local_alerts)
-
-    except TypeError:
-        return 1
