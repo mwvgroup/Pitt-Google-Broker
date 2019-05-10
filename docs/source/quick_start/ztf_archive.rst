@@ -12,30 +12,32 @@ how to download and access data from the ZTF archive.
 
    from broker import ztf_archive as ztfa
 
-   # Download recent data from the ZTF archive.
-   # Note: Daily releases can be as large as several Gb
-   ztfa.download_data()
+   # Get a list of files available on the ZTF Alerts Archive
+   print(ztfa.get_remote_release_list())
 
-   # Retrieve the number of daily releases that are locally available
-   print(ztfa.get_number_local_releases())
+   # Download data from the ZTF archive for a given day.
+   ztfa.download_data_date(year=2018, month=6, day=26)
 
-   # Retrieve the number of alerts that have been downloaded
-   # from all combined daily releases.
-   print(ztfa.get_number_local_alerts())
+   # Get a list of downloaded files from the archive
+   print(ztfa.get_local_release_list())
 
-   # Iterate through alert data, 5 alerts at a time.
+   # Retrieve the IDs for all alerts downloaded to your local machine
+   alert_ids = ztfa.get_local_alert_list()
+   print(alert_ids)
+
+   # Get data for a specific alert
+   demo_id = alert_ids[0]
+   alert_data = ztfa.get_alert_data(demo_id)
+
+   # Plot image stamps used to generate the alert data
+   fig = ztfa.plot_stamps(alert_data)
+   fig.show()
+
+   # Alternatively, you can iterate through alert data, 5 alerts at a time.
    # The ztfa.iter_alerts function yields a list of alert packets
    for alert_list in ztfa.iter_alerts(5):
        alert_ids = [alert['candid'] for alert in alert_list]
        print(alert_ids)
        break
-
-   # Alternatively, you can also get data for a specific alert id
-   alert_data = ztfa.get_alert_data(alert_id[0])
-   print(alert_data)
-
-   # Plot image stamps used to generate the alert data
-   fig = plot_stamps(alert_data)
-   fig.show()
 
 .. _ZTF public alerts archive: https://ztf.uw.edu/alerts/public/

@@ -26,8 +26,9 @@ broker.ztf_archive
 
     download_data_date
     download_recent_data
-    get_number_local_alerts
-    get_number_local_releases
+    get_remote_release_list
+    get_local_release_list
+    get_local_alert_list
     get_alert_data
     iter_alerts
     plot_stamps
