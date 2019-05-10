@@ -3,7 +3,7 @@ ztf_archive
 
 .. py:currentmodule:: broker.ztf_archive
 
-.. autofunction:: download_data
+.. autofunction:: download_data_date
 
 .. autofunction:: get_number_local_alerts
 

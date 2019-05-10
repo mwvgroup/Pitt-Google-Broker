@@ -24,7 +24,8 @@ broker.ztf_archive
 
 .. autosummary::
 
-    download_data
+    download_data_date
+    download_recent_data
     get_number_local_alerts
     get_number_local_releases
     get_alert_data
