@@ -103,11 +103,30 @@ def _download_alerts_file(url, out_path):
             data.extractall(out_dir)
 
 
-def download_data(max_downloads=1):
+def download_data_date(year, month, day):
+    """Download ZTF alerts for a given date
+
+    Does not skip releases that are were previously downloaded.
+
+    Args:
+        year  (int): The year of the data to download
+        month (int): The month of the data to download
+        day   (int): The day of the data to download
+    """
+
+    file_name = f'ztf_public_{year}{month:02d}{day:02d}.tar.gz'
+    tqdm.write(f'Downloading {file_name}')
+
+    out_path = DATA_DIR / file_name
+    url = requests.compat.urljoin(ZTF_URL, file_name)
+    _download_alerts_file(url, out_path)
+
+
+def download_recent_data(max_downloads=1):
     """Download recent alert data from the ZTF alerts archive
 
-    Automatically skip published alerts that are empty. More recent releases
-    are downloaded first. Skip releases that are already downloaded.
+    More recent releases are downloaded first. Skip releases that are already
+    downloaded.
 
     Args:
         max_downloads (int): Number of daily releases to download (default = 1)
@@ -116,7 +135,7 @@ def download_data(max_downloads=1):
     file_list = _get_remote_file_list()
     num_downloads = min(max_downloads, len(file_list))
     for i, file_name in enumerate(file_list):
-        if i + 1 > max_downloads:
+        if i >= max_downloads:
             break
 
         # Skip download if data was already downloaded
