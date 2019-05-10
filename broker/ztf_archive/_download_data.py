@@ -7,7 +7,7 @@ import tarfile
 from glob import glob
 from os import makedirs
 from pathlib import Path
-from tempfile import NamedTemporaryFile
+from tempfile import TemporaryFile
 
 import numpy as np
 import requests
@@ -103,12 +103,13 @@ def _download_alerts_file(url, out_path):
         unit_scale=True)
 
     # write data to file
-    with NamedTemporaryFile() as ofile:
+    with TemporaryFile() as ofile:
         for data in data_iterable:
             ofile.write(data)
 
         tqdm.write('Unzipping alert data...')
-        with tarfile.open(ofile.name, "r:gz") as data:
+        ofile.seek(0)
+        with tarfile.open(fileobj=ofile, mode="r:gz") as data:
             data.extractall(out_dir)
 
 
