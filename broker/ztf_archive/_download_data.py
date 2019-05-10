@@ -58,11 +58,8 @@ def get_local_release_list():
         A list of downloaded files from the ZTF Alerts Archive
     """
 
-    if not ALERT_LOG.exists():
-        return []
-
-    else:
-        return np.loadtxt(ALERT_LOG, dtype='str')
+    with open(ALERT_LOG) as ofile:
+        return [line.strip() for line in ofile]
 
 
 def get_local_alert_list():
@@ -76,8 +73,8 @@ def get_local_alert_list():
     return [int(Path(f).with_suffix('').name) for f in glob(path_pattern)]
 
 
-def _download_alerts_file(url, out_path):
-    """Download a ZTF daily release file and unzip the contents to DATA_DIR
+def _download_alerts_file(file_name, out_path):
+    """Download a file from the ZTF Alerts Archive
 
     Args:
         url      (str): URL of the file to download
@@ -88,6 +85,7 @@ def _download_alerts_file(url, out_path):
     if not out_dir.exists():
         makedirs(out_dir)
 
+    url = requests.compat.urljoin(ZTF_URL, file_name)
     file_data = requests.get(url, stream=True)
 
     # Get size of data to be downloaded
@@ -112,6 +110,9 @@ def _download_alerts_file(url, out_path):
         with tarfile.open(fileobj=ofile, mode="r:gz") as data:
             data.extractall(out_dir)
 
+    with open(ALERT_LOG, 'a') as ofile:
+        ofile.write(file_name)
+
 
 def download_data_date(year, month, day):
     """Download ZTF alerts for a given date
@@ -128,8 +129,7 @@ def download_data_date(year, month, day):
     tqdm.write(f'Downloading {file_name}')
 
     out_path = DATA_DIR / file_name
-    url = requests.compat.urljoin(ZTF_URL, file_name)
-    _download_alerts_file(url, out_path)
+    _download_alerts_file(file_name, out_path)
 
 
 def download_recent_data(max_downloads=1):
@@ -157,8 +157,6 @@ def download_recent_data(max_downloads=1):
         out_path = DATA_DIR / file_name
         tqdm.write(f'Downloading ({i + 1}/{num_downloads}): {file_name}')
 
-        url = requests.compat.urljoin(ZTF_URL, file_name)
-        _download_alerts_file(url, out_path)
-
+        _download_alerts_file(file_name, out_path)
         with open(ALERT_LOG, 'a') as ofile:
             ofile.write(file_name)

@@ -17,14 +17,16 @@ class DataDownload(TestCase):
     def setUpClass(cls):
         """Download ZTF data for June 12th 2018"""
 
-        # Ignore existing local alert data
+        # Ignore existing local data by creating a temporary data directory
         cls._temp_dir = TemporaryDirectory()
-        ztfa._download_data.DATA_DIR = Path(cls._temp_dir.name)
+        temp_dir_path = Path(cls._temp_dir.name)
+        ztfa._download_data.DATA_DIR = temp_dir_path
+        ztfa._download_data.ALERT_LOG = temp_dir_path / 'alert_log.txt'
 
         try:
             # Use the 23,553 alerts generated on 06/26/2018 for testing
             cls.number_alerts = 23553
-            cls.file_name = 'ztf_public_20180626.avro'
+            cls.file_name = 'ztf_public_20180626.tar.gz'
             ztfa.download_data_date(2018, 6, 26)
 
         except:
