@@ -132,14 +132,16 @@ def download_data_date(year, month, day):
     _download_alerts_file(file_name, out_path)
 
 
-def download_recent_data(max_downloads=1):
+def download_recent_data(max_downloads=1, stop_on_exist=False):
     """Download recent alert data from the ZTF alerts archive
 
-    More recent releases are downloaded first. Skip releases that are already
-    downloaded.
+    Data is downloaded in reverse chronological order. Skip releases that are
+    already downloaded.
 
     Args:
-        max_downloads (int): Number of daily releases to download (default = 1)
+        max_downloads  (int): Number of daily releases to download (default: 1)
+        stop_on_exist (bool): Exit when encountering an alert that is already
+                               downloaded (Default: False)
     """
 
     file_list = get_remote_release_list()
@@ -152,11 +154,14 @@ def download_recent_data(max_downloads=1):
         if file_name in get_local_release_list():
             tqdm.write(
                 f'Already Downloaded ({i + 1}/{num_downloads}): {file_name}')
-            continue
+
+            if stop_on_exist:
+                return
+
+            else:
+                continue
 
         out_path = DATA_DIR / file_name
         tqdm.write(f'Downloading ({i + 1}/{num_downloads}): {file_name}')
 
         _download_alerts_file(file_name, out_path)
-        with open(ALERT_LOG, 'a') as ofile:
-            ofile.write(file_name)
