@@ -15,54 +15,96 @@ class DataDownload(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        """Download ZTF data for June 12th 2018"""
+        """Create a temporary directory and download alerts from 6/26/2018"""
 
-        # Ignore existing local data by creating a temporary data directory
-        cls._temp_dir = TemporaryDirectory()
-        temp_dir_path = Path(cls._temp_dir.name)
+        cls.temp_dir = TemporaryDirectory()
+        temp_dir_path = Path(cls.temp_dir.name)
+        ztfa._parse_data.DATA_DIR = temp_dir_path
         ztfa._download_data.DATA_DIR = temp_dir_path
         ztfa._download_data.ALERT_LOG = temp_dir_path / 'alert_log.txt'
 
+        # Metadata about the data downloaded by this test
+        test_date = (2018, 6, 26)
+        cls.file_name = 'ztf_public_20180626.tar.gz'
+        cls.expected_num_alerts = 23553
+
         try:
-            # Use the 23,553 alerts generated on 06/26/2018 for testing
-            cls.number_alerts = 23553
-            cls.file_name = 'ztf_public_20180626.tar.gz'
-            ztfa.download_data_date(2018, 6, 26)
+            ztfa.download_data_date(*test_date)
 
         except:
-            cls._temp_dir.cleanup()
+            cls.temp_dir.cleanup()
             raise
 
     @classmethod
     def tearDownClass(cls):
-        """Delete temporary files"""
+        """Remove any data downloaded during testing"""
 
-        cls._temp_dir.cleanup()
+        cls.temp_dir.cleanup()
+
+    def test_download_date(self):
+        """Test ``download_data_date``
+
+        Check the downloaded filename is in ztfa.get_local_release_list()
+        Check the correct number of alerts were unzipped
+        """
+
+        success = self.file_name in ztfa.get_local_release_list()
+        self.assertTrue(success, 'Expected filename not in local release list')
+
+        num_downloaded_alerts = len(ztfa.get_local_alert_list())
+        self.assertEqual(num_downloaded_alerts, self.expected_num_alerts)
 
     def test_remote_release_list(self):
-        """Test the ``get_remote_release_list`` returns a reasonable number
-        of remote release files (>100)"""
+        """Test ``get_remote_release_list`` returns a list of filenames
+
+        Check ``get_remote_release_list`` returns a list
+        Check the list is not empty
+        Check filenames are strings
+        Check filenames end with `.tar.gz`
+        """
 
         release_list = ztfa.get_remote_release_list()
-        self.assertGreater(
-            len(release_list), 100, 'Unreasonably few releases returned.')
+        self.assertIsInstance(release_list, list)
+        self.assertTrue(release_list)
+        for filename in release_list[:10]:
+            self.assertIsInstance(filename, str)
+            self.assertTrue(filename.endswith('.tar.gz'))
 
     def test_local_release_list(self):
-        """Test ``get_local_release_list`` returns the expected list"""
+        """Test ``get_local_release_list`` returns a list of filenames
 
-        release_list = ztfa.get_local_release_list()
-        self.assertListEqual(release_list, [self.file_name])
+        Check ``get_remote_release_list`` returns a list
+        Check the list is not empty
+        Check filenames are strings
+        Check filenames end with `.tar.gz`
+        """
+
+        release_list = ztfa.get_remote_release_list()
+        self.assertIsInstance(release_list, list)
+        self.assertTrue(release_list)
+        for filename in release_list[:10]:
+            self.assertIsInstance(filename, str)
+            self.assertTrue(filename.endswith('.tar.gz'))
 
     def test_local_alerts(self):
-        """Test ``get_local_alert_list`` returns a list of the correct size"""
+        """Test ``get_local_alert_list`` returns a list integers
 
-        num_alerts = len(ztfa.get_local_alert_list())
-        self.assertEqual(num_alerts, self.number_alerts)
+        Check ``get_local_alert_list`` returns a list
+        Check the list is not empty
+        Check alert IDs are integers
+        Check alert IDs are greater than
+        """
+
+        alert_list = ztfa.get_local_alert_list()
+        self.assertIsInstance(alert_list, list)
+        self.assertTrue(alert_list)
+        for alert_id in alert_list[:10]:
+            self.assertIsInstance(alert_id, int)
 
     def test_iter_alerts(self):
         """Test ``iter_alerts`` returns an appropriately sized list of dicts"""
 
-        alert = next(ztfa.iter_alerts(1))
+        alert = next(ztfa.iter_alerts())
         self.assertIsInstance(alert, dict)
 
         alert_list = next(ztfa.iter_alerts(1))

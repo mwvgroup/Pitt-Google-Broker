@@ -54,7 +54,8 @@ def get_alert_data(candid, raw=False):
         return _parse_alert_file(path, raw)
 
     except FileNotFoundError:
-        raise ValueError(f'Data for candid "{candid}" not locally available.')
+        raise ValueError(
+            f'Data for candid "{candid}" not locally available (at {path}).')
 
 
 def iter_alerts(num_alerts=None, raw=False):
