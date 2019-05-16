@@ -57,15 +57,18 @@ def get_alert_data(candid, raw=False):
         raise ValueError(f'Data for candid "{candid}" not locally available.')
 
 
-def iter_alerts(num_alerts=1, raw=False):
+def iter_alerts(num_alerts=None, raw=False):
     """Iterate over all locally available alert data
 
+    If ``num_alerts`` is not specified, yield individual alerts. Otherwise,
+    yield a list of alerts with length ``num_alerts``.
+
     Args:
-        num_alerts (int): Maximum number of alerts to yield at a time
-        raw       (bool): Optionally return file data as bytes (Default: False)
+        num_alerts (int): Maximum number of alerts to yield at a time (optional)
+        raw       (bool): Return file data as bytes (Default: False)
 
     Yields:
-        A list of dictionaries with ZTF alert data
+        A list of dictionaries or bytes representing ZTF alert data
     """
 
     err_msg = 'num_alerts argument must be an int >= 1'
@@ -81,6 +84,14 @@ def iter_alerts(num_alerts=1, raw=False):
         raise RuntimeError(
             "No local alert data found. Please run 'download_data' first.")
 
+    # Return individual alerts
+    if num_alerts is None:
+        for file_path in file_list:
+            yield _parse_alert_file(file_path, raw)
+
+        return
+
+    # Return alerts as list
     alerts_list = []
     for file_path in file_list:
         alerts_list.append(_parse_alert_file(file_path, raw))

@@ -62,6 +62,9 @@ class DataDownload(TestCase):
     def test_iter_alerts(self):
         """Test ``iter_alerts`` returns an appropriately sized list of dicts"""
 
+        alert = next(ztfa.iter_alerts(1))
+        self.assertIsInstance(alert, dict)
+
         alert_list = next(ztfa.iter_alerts(1))
         self.assertIsInstance(alert_list, list)
         self.assertIsInstance(alert_list[0], dict)
