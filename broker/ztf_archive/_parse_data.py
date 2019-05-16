@@ -72,11 +72,11 @@ def iter_alerts(num_alerts=None, raw=False):
     """
 
     err_msg = 'num_alerts argument must be an int >= 1'
-    if num_alerts <= 0:
-        raise ValueError(err_msg)
-
-    elif not isinstance(num_alerts, int):
+    if not isinstance(num_alerts, int):
         raise TypeError(err_msg)
+
+    elif num_alerts <= 0:
+        raise ValueError(err_msg)
 
     path_pattern = os.path.join(DATA_DIR, '*.avro')
     file_list = glob(path_pattern)

@@ -77,8 +77,8 @@ def _download_alerts_file(file_name, out_path):
     """Download a file from the ZTF Alerts Archive
 
     Args:
-        url      (str): URL of the file to download
-        out_path (str): The path where the downloaded file should be written
+        file_name (str): Name of the file to download
+        out_path  (str): The path where the downloaded file should be written
     """
 
     out_dir = Path(out_path).parent
@@ -158,10 +158,8 @@ def download_recent_data(max_downloads=1, stop_on_exist=False):
             if stop_on_exist:
                 return
 
-            else:
-                continue
+            continue
 
         out_path = DATA_DIR / file_name
         tqdm.write(f'Downloading ({i + 1}/{num_downloads}): {file_name}')
-
         _download_alerts_file(file_name, out_path)
