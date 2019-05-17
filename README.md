@@ -1,6 +1,8 @@
 # Pitt LSST Broker
 
 [![python](https://img.shields.io/badge/python-3.7-g.svg)]()
+[![Build Status](https://travis-ci.com/mwvgroup/Pitt-Broker.svg?branch=master)](https://travis-ci.com/mwvgroup/Pitt-Broker)
+[![Documentation Status](https://readthedocs.org/projects/pitt-broker/badge/?version=latest)](https://pitt-broker.readthedocs.io/en/latest/?badge=latest)
 
 Data from the Large Synoptic Survey Telescope ([LSST](https://www.lsst.org)) will be distributed through three distinct avenues. The first is a real-time stream of alerts that provides information on transient targets within 60 seconds of observation. The second is a daily data release, which contains the same information as the 60-second alerts plus some additional information. The last data product will be a yearly data release.
 
