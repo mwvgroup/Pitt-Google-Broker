@@ -38,11 +38,12 @@ def _parse_alert_file(path, raw=False):
             return next(fastavro.reader(f))
 
 
-def get_alert_data(candid):
+def get_alert_data(candid, raw=False):
     """Return the contents of an avro file published by ZTF
 
     Args:
         candid (int): Unique ZTF identifier for the subtraction candidate
+        raw   (bool): Optionally return the file data as bytes (Default: False)
 
     Returns:
         The file contents as a dictionary
@@ -50,29 +51,30 @@ def get_alert_data(candid):
 
     path = os.path.join(DATA_DIR, f'{candid}.avro')
     try:
-        return _parse_alert_file(path)
+        return _parse_alert_file(path, raw)
 
     except FileNotFoundError:
-        raise ValueError(f'Data for candid "{candid}" not locally available.')
+        raise ValueError(
+            f'Data for candid "{candid}" not locally available (at {path}).')
 
 
-def iter_alerts(num_alerts=1, raw=False):
+def iter_alerts(num_alerts=None, raw=False):
     """Iterate over all locally available alert data
 
+    If ``num_alerts`` is not specified, yield individual alerts. Otherwise,
+    yield a list of alerts with length ``num_alerts``.
+
     Args:
-        num_alerts (int): Maximum number of alerts to yield at a time
-        raw       (bool): Optionally return file data as bytes (Default: False)
+        num_alerts (int): Maximum number of alerts to yield at a time (optional)
+        raw       (bool): Return file data as bytes (Default: False)
 
     Yields:
-        A list of dictionaries with ZTF alert data
+        A list of dictionaries or bytes representing ZTF alert data
     """
 
     err_msg = 'num_alerts argument must be an int >= 1'
-    if num_alerts <= 0:
+    if num_alerts and num_alerts <= 0:
         raise ValueError(err_msg)
-
-    elif not isinstance(num_alerts, int):
-        raise TypeError(err_msg)
 
     path_pattern = os.path.join(DATA_DIR, '*.avro')
     file_list = glob(path_pattern)
@@ -80,6 +82,14 @@ def iter_alerts(num_alerts=1, raw=False):
         raise RuntimeError(
             "No local alert data found. Please run 'download_data' first.")
 
+    # Return individual alerts
+    if num_alerts is None:
+        for file_path in file_list:
+            yield _parse_alert_file(file_path, raw)
+
+        return
+
+    # Return alerts as list
     alerts_list = []
     for file_path in file_list:
         alerts_list.append(_parse_alert_file(file_path, raw))

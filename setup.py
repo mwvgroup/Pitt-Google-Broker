@@ -7,7 +7,7 @@ with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
 setup(name='pitt_broker',
-      version='0.0.1',
+      version='0.0.2',
       packages=find_packages(),
       keywords='LSST ZTF broker',
       description='A cloud based data broker for LSST and ZTF',

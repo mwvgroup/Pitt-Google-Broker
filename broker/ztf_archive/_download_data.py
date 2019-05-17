@@ -7,7 +7,7 @@ import tarfile
 from glob import glob
 from os import makedirs
 from pathlib import Path
-from tempfile import NamedTemporaryFile
+from tempfile import TemporaryFile
 
 import numpy as np
 import requests
@@ -21,27 +21,11 @@ ZTF_URL = "https://ztf.uw.edu/alerts/public/"
 makedirs(DATA_DIR, exist_ok=True)
 
 
-def _get_local_alerts_list():
-    """Return a list of ZTF alert files that have already been downloaded
-
-    Files will have already been unzipped into DATA_DIR
+def get_remote_release_list():
+    """Get a list of published ZTF data releases from the ZTF Alerts Archive
 
     Returns:
-        A list of ZTF alert file names
-    """
-
-    if not ALERT_LOG.exists():
-        return []
-
-    else:
-        return np.loadtxt(ALERT_LOG, dtype='str')
-
-
-def _get_remote_file_list():
-    """Get a list of published ZTF alerts from the ZTF Alert Archive
-
-    Returns:
-        A list of file names for alerts published on the ZTF archive
+        A list of file names for alerts published on the ZTF Alerts Archive
     """
 
     # Get html table from page source
@@ -67,18 +51,44 @@ def _get_remote_file_list():
     return file_list
 
 
-def _download_alerts_file(url, out_path):
-    """Download a daily alerts file and unzip the contents
+def get_local_release_list():
+    """Return a list of ZTF daily releases that have already been downloaded
+
+    Returns:
+        A list of downloaded files from the ZTF Alerts Archive
+    """
+
+    if not ALERT_LOG.exists():
+        return []
+
+    with open(ALERT_LOG, 'a') as ofile:
+        return [line.strip() for line in ofile]
+
+
+def get_local_alert_list():
+    """Return a list of alert ids for all downloaded alert data
+
+    Returns:
+        A list of alert ID values as ints
+    """
+
+    path_pattern = str(DATA_DIR / '*.avro')
+    return [int(Path(f).with_suffix('').name) for f in glob(path_pattern)]
+
+
+def _download_alerts_file(file_name, out_path):
+    """Download a file from the ZTF Alerts Archive
 
     Args:
-        url      (str): URL of the file to download
-        out_path (str): The path where the downloaded file should be written
+        file_name (str): Name of the file to download
+        out_path  (str): The path where the downloaded file should be written
     """
 
     out_dir = Path(out_path).parent
     if not out_dir.exists():
         makedirs(out_dir)
 
+    url = requests.compat.urljoin(ZTF_URL, file_name)
     file_data = requests.get(url, stream=True)
 
     # Get size of data to be downloaded
@@ -94,68 +104,65 @@ def _download_alerts_file(url, out_path):
         unit_scale=True)
 
     # write data to file
-    with NamedTemporaryFile() as ofile:
+    with TemporaryFile() as ofile:
         for data in data_iterable:
             ofile.write(data)
 
         tqdm.write('Unzipping alert data...')
-        with tarfile.open(ofile.name, "r:gz") as data:
+        ofile.seek(0)
+        with tarfile.open(fileobj=ofile, mode="r:gz") as data:
             data.extractall(out_dir)
 
+    with open(ALERT_LOG, 'a') as ofile:
+        ofile.write(file_name)
 
-def download_data(max_downloads=1):
-    """Download recent alert data from the ZTF alerts archive
 
-    Automatically skip published alerts that are empty. More recent releases
-    are downloaded first. Skip releases that are already downloaded.
+def download_data_date(year, month, day):
+    """Download ZTF alerts for a given date
+
+    Does not skip releases that are were previously downloaded.
 
     Args:
-        max_downloads (int): Number of daily releases to download (default = 1)
+        year  (int): The year of the data to download
+        month (int): The month of the data to download
+        day   (int): The day of the data to download
     """
 
-    file_list = _get_remote_file_list()
+    file_name = f'ztf_public_{year}{month:02d}{day:02d}.tar.gz'
+    tqdm.write(f'Downloading {file_name}')
+
+    out_path = DATA_DIR / file_name
+    _download_alerts_file(file_name, out_path)
+
+
+def download_recent_data(max_downloads=1, stop_on_exist=False):
+    """Download recent alert data from the ZTF alerts archive
+
+    Data is downloaded in reverse chronological order. Skip releases that are
+    already downloaded.
+
+    Args:
+        max_downloads  (int): Number of daily releases to download (default: 1)
+        stop_on_exist (bool): Exit when encountering an alert that is already
+                               downloaded (Default: False)
+    """
+
+    file_list = get_remote_release_list()
     num_downloads = min(max_downloads, len(file_list))
     for i, file_name in enumerate(file_list):
-        if i + 1 > max_downloads:
+        if i >= max_downloads:
             break
 
         # Skip download if data was already downloaded
-        if file_name in _get_local_alerts_list():
+        if file_name in get_local_release_list():
             tqdm.write(
                 f'Already Downloaded ({i + 1}/{num_downloads}): {file_name}')
+
+            if stop_on_exist:
+                return
+
             continue
 
         out_path = DATA_DIR / file_name
         tqdm.write(f'Downloading ({i + 1}/{num_downloads}): {file_name}')
-
-        url = requests.compat.urljoin(ZTF_URL, file_name)
-        _download_alerts_file(url, out_path)
-
-        with open(ALERT_LOG, 'a') as ofile:
-            ofile.write(file_name)
-
-
-def get_number_local_alerts():
-    """Return the number of locally available alerts
-
-    Returns:
-        The number of alerts downloaded to the local machine
-    """
-
-    path_pattern = DATA_DIR / '*.avro'
-    return len(glob(path_pattern))
-
-
-def get_number_local_releases():
-    """Return the number of ZTF daily alert releases that have been downloaded
-
-    Returns:
-        The number of daily data releases downloaded to the local machine
-    """
-
-    local_alerts = _get_local_alerts_list()
-    try:
-        return len(local_alerts)
-
-    except TypeError:
-        return 1
+        _download_alerts_file(file_name, out_path)

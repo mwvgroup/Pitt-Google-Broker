@@ -3,11 +3,15 @@ ztf_archive
 
 .. py:currentmodule:: broker.ztf_archive
 
-.. autofunction:: download_data
+.. autofunction:: download_data_date
 
-.. autofunction:: get_number_local_alerts
+.. autofunction:: download_recent_data
 
-.. autofunction:: get_number_local_releases
+.. autofunction:: get_remote_release_list
+
+.. autofunction:: get_local_release_list
+
+.. autofunction:: get_local_alert_list
 
 .. autofunction:: get_alert_data
 
