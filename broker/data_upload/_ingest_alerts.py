@@ -64,10 +64,13 @@ def stream_ingest(data, data_set, table):
 def batch_ingest(data, data_set, table):
     """Ingest ZTF alerts into BigQuery via the batch upload interface
 
-    Alert data WILL be temporarily written to disk.
+    Alert data WILL be temporarily written to disk. If the table does not
+    exist, create it.
 
     Args:
-        num_alerts (int): Maximum alerts to ingest at a time (Default: 10)
+        data (DataFrame): Data to upload to table
+        data_set   (str): The name of the data set
+        table      (str): The name of the table
     """
 
     # Configure batch loading
