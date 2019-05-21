@@ -52,7 +52,6 @@ def _map_to_schema(alert_packet):
     Returns:
         A dictionary representing a row in the BigQuery ``ztf.alert`` table
         A dictionary representing a row in the BigQuery ``ztf.candidate`` table
-        A dictionary representing a row in the BigQuery ``ztf.image`` table
     """
 
     schemavsn = alert_packet['schemavsn']
@@ -64,19 +63,13 @@ def _map_to_schema(alert_packet):
             candID=alert_packet['candid'],
             schemaVSN=schemavsn)
 
-        image_data = dict(
-            cutoutScience=alert_packet['cutoutScience'],
-            cutoutTemplate=alert_packet['cutoutTemplate'],
-            cutoutDifference=alert_packet['cutoutDifference']
-        )
-
     else:
         err_msg = f'Unexpected Schema Version: {schemavsn}'
         log.error(err_msg)
         error_client.report(err_msg)
         raise ValueError(err_msg)
 
-    return alert_data, candidate_data, image_data
+    return alert_data, candidate_data
 
 
 def map_to_schema(alert_list):
@@ -91,11 +84,9 @@ def map_to_schema(alert_list):
 
     alert_table, candidate_table, image_table = [], [], []
     for alert in alert_list:
-        alert_data, candidate_data, image_data = _map_to_schema(alert)
+        alert_data, candidate_data = _map_to_schema(alert)
         alert_table.append(alert_data)
         candidate_table.append(candidate_data)
         image_table.append(image_table)
 
-    return (pd.DataFrame(alert_table),
-            pd.DataFrame(candidate_table),
-            pd.DataFrame(image_table))
+    return pd.DataFrame(alert_table), pd.DataFrame(candidate_table)
