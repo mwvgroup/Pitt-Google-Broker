@@ -11,7 +11,7 @@ import pandavro as pdx
 from .._utils import setup_log
 
 if 'RTD_BUILD' not in os.environ:
-    from google.cloud import error_reporting, bigquery
+    from google.cloud import error_reporting, bigquery, storage
 
     error_client = error_reporting.Client()
     bq_client = bigquery.Client()
@@ -89,3 +89,18 @@ def batch_ingest(data, data_set, table):
         except KeyboardInterrupt:
             job.result()
             raise
+
+
+def upload_bucket_file(bucket_name, source_path, destination_name):
+    """Uploads a file to a storage bucket.
+
+    Args:
+        bucket_name      (str): Name of the bucket to upload into
+        source_path      (str): Path of the file to upload
+        destination_name (str): Name of the file to be created
+    """
+
+    storage_client = storage.Client()
+    bucket = storage_client.get_bucket(bucket_name)
+    blob = bucket.blob(destination_name)
+    blob.upload_from_filename(source_path)
