@@ -5,4 +5,4 @@
 into a BigQuery backend.
 """
 
-from ._ingest_alerts import batch_ingest_alerts, stream_ingest_alerts
+from ._ingest_alerts import _batch_ingest_alerts, _stream_ingest_meta

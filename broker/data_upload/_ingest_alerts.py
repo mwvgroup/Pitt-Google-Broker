@@ -7,13 +7,10 @@ import logging
 import os
 from tempfile import NamedTemporaryFile
 
-import pandas as pd
 import pandavro as pdx
 
-from ..ztf_archive import iter_alerts
-
 if 'RTD_BUILD' not in os.environ:
-    from google.cloud import bigquery, error_reporting, logging as gcp_logging
+    from google.cloud import error_reporting, logging as gcp_logging
 
     # Connect to GCP
     logging_client = gcp_logging.Client()
@@ -21,61 +18,12 @@ if 'RTD_BUILD' not in os.environ:
 
     # Configure logging
     handler = logging_client.get_default_handler()
-    log = logging.Logger('alert_ingestion')
+    log = logging.Logger('data_upload')
     log.setLevel(logging.INFO)
     log.addHandler(handler)
 
 
-def _parse_alert(alert_packet):
-    """Map ZTF alert to the data model used by the BigQuery backend
-
-    Args:
-        alert_packet (dict): A ztf alert packet
-
-    Returns:
-        A dictionary representing a row in the BigQuery `alert` table
-        A dictionary representing a row in the BigQuery `candidate` table
-    """
-
-    schemavsn = alert_packet['schemavsn']
-    if schemavsn == '3.2':
-        alert_entry = dict(
-            objectId=alert_packet['objectId'],
-            candID=alert_packet['candid'],
-            schemaVSN=schemavsn)
-
-        candidate_entry = alert_packet['candidate']
-
-    else:
-        err_msg = f'Unexpected Schema Version: {schemavsn}'
-        log.error(err_msg)
-        error_client.report(err_msg)
-        raise ValueError(err_msg)
-
-    return alert_entry, candidate_entry
-
-
-def parse_alerts(alert_list):
-    """Map ZTF alert to the data model used by the BigQuery backend
-
-    Args:
-        alert_list (iterable[dict]): Iterable of ZTF alert packets
-
-    Returns:
-        A Dataframe with data for the BigQuery ``alert`` table
-        A Dataframe with data for the BigQuery ``candidate`` table
-    """
-
-    alert_table, candidate_table = [], []
-    for alert in alert_list:
-        alert_data, candidate_data = _parse_alert(alert)
-        alert_table.append(alert_data)
-        candidate_table.append(candidate_data)
-
-    return pd.DataFrame(alert_table), pd.DataFrame(candidate_table)
-
-
-def stream_ingest_alerts(num_alerts=10, verbose=False):
+def _stream_ingest_meta(num_alerts=10, verbose=False):
     """Ingest ZTF alerts into BigQuery via the streaming interface
 
     Alert data WILL NOT be temporarily written to disk.
@@ -111,7 +59,7 @@ def stream_ingest_alerts(num_alerts=10, verbose=False):
             progress_bar=verbose)
 
 
-def batch_ingest_alerts(num_alerts=10):
+def _batch_ingest_alerts(num_alerts=10):
     """Ingest ZTF alerts into BigQuery via the batch upload interface
 
     Alert data WILL be temporarily written to disk.
@@ -157,3 +105,7 @@ def batch_ingest_alerts(num_alerts=10):
                 except KeyboardInterrupt:
                     job.result()
                     raise
+
+
+def ingest_alerts(alerts_df):
+    pass
