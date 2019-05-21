@@ -20,8 +20,8 @@
 # -- Project information -----------------------------------------------------
 
 project = 'Pitt Broker'
-copyright = '2019, Daniel Perrefort'
-author = 'Daniel Perrefort'
+copyright = '2019'
+author = 'Daniel Perrefort, Troy Raen, Christine Mazzola'
 
 # The short X.Y version
 version = ''
@@ -137,7 +137,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'PittBroker.tex', 'Pitt Broker Documentation',
-     'Daniel Perrefort', 'manual'),
+     'Daniel Perrefort, Troy Raen, Christine Mazzola', 'manual'),
 ]
 
 
