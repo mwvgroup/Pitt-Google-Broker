@@ -6,7 +6,7 @@
 import os as _os
 from warnings import warn as _warn
 
-from . import alert_ingestion, gcp_setup, ztf_archive
+from . import alert_acquisition, data_upload, ztf_archive
 
 if 'BROKER_PROJ_ID' not in _os.environ:
     _warn('GCP project id is not set in the current environment. Please see '
