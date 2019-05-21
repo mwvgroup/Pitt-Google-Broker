@@ -1,0 +1,20 @@
+{
+	"namespace": "ztf",
+	"type": "record",
+	"name": "alert",
+	"doc": "avro alert schema for ZTF (www.ztf.caltech.edu)",
+	"version": "3.2",
+	"fields": [
+                {"name": "schemavsn", "type": "string", "doc": "schema version used"},
+                {"name": "publisher", "type": "string", "doc": "origin of alert packet"},
+		{"name": "objectId", "type": "string", "doc": "object identifier or name"},
+		{"name": "candid", "type": "long"},
+		{"name": "candidate", "type": "ztf.alert.candidate"},
+		{"name": "prv_candidates", "type": [{
+				"type": "array",
+				"items": "ztf.alert.prv_candidate"}, "null" ], "default": null},
+		{"name": "cutoutScience", "type": ["ztf.alert.cutout", "null"], "default": null},
+		{"name": "cutoutTemplate", "type": ["ztf.alert.cutout", "null"], "default": null},
+		{"name": "cutoutDifference", "type": ["ztf.alert.cutout", "null"], "default": null}
+			]
+}
