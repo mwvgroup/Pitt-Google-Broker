@@ -7,25 +7,18 @@ This module is currently in progress and relies on the ZTF Public Alerts
 Archive, not the live ZTF stream.
 """
 
-import logging
 import os
 
 import pandas as pd
 
+from .._utils import setup_log
 from ..ztf_archive import iter_alerts
 
 if 'RTD_BUILD' not in os.environ:
-    from google.cloud import error_reporting, logging as gcp_logging
+    from google.cloud import error_reporting
 
-    # Connect to GCP
-    logging_client = gcp_logging.Client()
     error_client = error_reporting.Client()
-
-    # Configure logging
-    handler = logging_client.get_default_handler()
-    log = logging.Logger('ztf_acquisition')
-    log.setLevel(logging.INFO)
-    log.addHandler(handler)
+    log = setup_log('ztf_acquisition')
 
 alert_iterable = None
 

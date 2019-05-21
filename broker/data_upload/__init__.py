@@ -5,6 +5,5 @@
 into a BigQuery backend.
 """
 
-from ._ingest_alerts import batch_ingest, stream_ingest
 from ._gcp_setup import get_bq_schema, setup_gcp
-
+from ._ingest_alerts import batch_ingest, stream_ingest

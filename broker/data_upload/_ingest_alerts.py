@@ -3,26 +3,19 @@
 
 """Parse ZTF alerts and add them to the project database."""
 
-import logging
 import os
 from tempfile import NamedTemporaryFile
 
 import pandavro as pdx
 
+from .._utils import setup_log
+
 if 'RTD_BUILD' not in os.environ:
-    from google.cloud import error_reporting, bigquery, logging as gcp_logging
+    from google.cloud import error_reporting, bigquery
 
-    # Connect to GCP
-    logging_client = gcp_logging.Client()
     error_client = error_reporting.Client()
-
-    # Configure logging
-    handler = logging_client.get_default_handler()
-    log = logging.Logger('data_upload')
-    log.setLevel(logging.INFO)
-    log.addHandler(handler)
-
-    bq_client = bigquery.Client(os.environ['BROKER_PROJ_ID'])
+    bq_client = bigquery.Client()
+    log = setup_log('data_upload')
 
 
 def get_table_id(data_set, table):
