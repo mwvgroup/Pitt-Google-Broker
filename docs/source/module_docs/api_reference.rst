@@ -1,6 +1,16 @@
 API Reference
 =============
 
+broker
+------
+
+.. automodule:: broker
+
+.. autosummary::
+
+   setup_gcp
+
+
 broker.alert_ingestion
 ----------------------
 
@@ -29,7 +39,6 @@ broker.data_upload
 .. autosummary::
 
    get_bq_schema
-   setup_gcp
    batch_ingest
    stream_ingest
 

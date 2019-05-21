@@ -1,5 +1,5 @@
-ztf_archive
-===========
+broker.ztf_archive
+==================
 
 .. automodule:: broker.ztf_archive
 

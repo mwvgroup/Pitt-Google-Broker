@@ -18,7 +18,7 @@ if 'RTD_BUILD' not in os.environ:
     log = setup_log('data_upload')
 
 
-def get_table_id(data_set, table):
+def _get_table_id(data_set, table):
     """Return the ID for a BigQuery table
 
     Args:
@@ -45,7 +45,7 @@ def stream_ingest(data, data_set, table):
     """
 
     project_id = os.environ['BROKER_PROJ_ID']
-    table_id = get_table_id(data_set, table)
+    table_id = _get_table_id(data_set, table)
     data.to_gbq(
         table_id,
         project_id,
@@ -55,7 +55,7 @@ def stream_ingest(data, data_set, table):
 
 
 def batch_ingest(data, data_set, table):
-    """Ingest ZTF alerts into BigQuery via the batch upload interface
+    """Batch upload a Pandas DataFrame into a BigQuery table
 
     Alert data WILL be temporarily written to disk. If the table does not
     exist, create it.
@@ -71,7 +71,7 @@ def batch_ingest(data, data_set, table):
     job_config.source_format = bigquery.SourceFormat.AVRO
 
     # Get tables to store data
-    table_id = get_table_id(data_set, table)
+    table_id = _get_table_id(data_set, table)
 
     with NamedTemporaryFile() as source_file:
         pdx.to_avro(source_file.name, data)
@@ -92,7 +92,7 @@ def batch_ingest(data, data_set, table):
 
 
 def upload_bucket_file(bucket_name, source_path, destination_name):
-    """Uploads a file to a storage bucket.
+    """Uploads a file to a GCP storage bucket
 
     Args:
         bucket_name      (str): Name of the bucket to upload into

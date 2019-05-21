@@ -1,7 +1,8 @@
 #!/usr/bin/env python3.7
 # -*- coding: UTF-8 -*-
 
-"""This module provides cross matching services between observed targets and
+"""The ``xmatch`` module provides cross matching services between observed
+targets and external surveys.
 
 Helpful links:
   https://astroquery.readthedocs.io/en/latest/#using-astroquery

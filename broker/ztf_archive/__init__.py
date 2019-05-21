@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 
 """The ``ztf_archive`` module downloads and provides access to ZTF alerts from
-the 24hr ZTF alerts archive.
+the ZTF Public Alerts Archive.
 """
 
 from ._download_data import download_data_date

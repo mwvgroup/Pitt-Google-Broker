@@ -1,10 +1,10 @@
-alert_ingestion
-===============
+broker.alert_acquisition
+======================
 
 .. automodule:: broker.alert_acquisition
 
-alert_ingestion.ztf
--------------------
+broker.alert_acquisition.ztf
+----------------------------
 
 .. automodule:: broker.alert_acquisition.ztf
 
@@ -12,4 +12,4 @@ alert_ingestion.ztf
 
 .. autofunction:: get_alerts
 
-.. autofunction:: \map_to_schema
+.. autofunction:: map_to_schema

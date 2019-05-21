@@ -1,5 +1,5 @@
-data_upload
-===========
+broker.data_upload
+==================
 
 .. automodule:: broker.data_upload
 
@@ -7,8 +7,10 @@ data_upload
 
 .. autofunction:: get_bq_schema
 
-.. autofunction:: setup_gcp
+.. autofunction:: upload_bucket_file
 
 .. autofunction:: batch_ingest
 
 .. autofunction:: stream_ingest
+
+.. autofunction:: setup_gcp

@@ -1,13 +1,15 @@
 Ingesting Data to GCP
 =====================
 
-The ``alert_ingestion`` module handles the insertion of ZTF alert data
-into `BigQuery`_. Eventually this module will ingest data directly from the
+The ``data_upload`` module handles the insertion of alert data
+into GCP. Eventually this module will ingest data directly from the
 live ZTF stream, but for now, it relies on the ZTF Alert Archive
 described in the previous section. Data can be ingested into BigQuery
 through multiple avenues (see `here`_ for an overview of options and
-pricing models) but the ``alert_ingestion`` module only provides
-options to *stream* or *bulk insert* methods.
+pricing models).
+
+Stream Ingestion
+----------------
 
 .. code:: python
 

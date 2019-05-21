@@ -1,5 +1,5 @@
-xmatch
-======
+broker.xmatch
+=============
 
 .. automodule:: broker.xmatch
 

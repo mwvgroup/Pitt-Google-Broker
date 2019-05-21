@@ -21,7 +21,8 @@ _tables = ('alert', 'candidate')
 def _setup_big_query():
     """Create the necessary Big Query datasets if they do not already exist
 
-    New data sets include: ``ztf_alerts``
+    New data sets include:
+      ``ztf_alerts``
     """
 
     bigquery_client = bigquery.Client()
@@ -57,7 +58,8 @@ def _setup_logging_sinks():
 
     This function assumes destination buckets have already been created.
 
-    New Sinks include: ``broker_logging_sink``
+    New Sinks include:
+      ``broker_logging_sink``
     """
 
     # Create bucket name
@@ -80,54 +82,19 @@ def _setup_logging_sinks():
 
 
 def setup_gcp():
-    """Create and setup GCP products for the ``broker`` package to connect to
+    """Create and setup GCP products required by the ``broker`` package
 
-    New data sets include: ``ztf_alerts``
+    New data sets include:
+      ``ztf_alerts``
 
-    New buckets include: ``<project_id>_logging_bucket``
+    New buckets include:
+     ``<project_id>_logging_bucket``
+     ``<project_id>_ztf_images``
 
-    New Sinks include: ``broker_logging_sink``
+    New sinks include:
+      ``broker_logging_sink``
     """
 
     _setup_big_query()
     _setup_buckets()
     _setup_logging_sinks()
-
-
-def get_bq_schema(client=None, tables=_tables, data_set='ztf_alerts'):
-    """Return the current backend BigQuery schema to as a dictionary
-
-    By default export the schema for all tables used by this package
-
-    Args:
-        client    (Client): A BigQuery client (Optional)
-        tables (list[str]): Table names to export schemas for (Optional)
-        data_set     (str): Name of the GCP data set (Optional)
-
-    Returns:
-        A dictionary with the schema for each table in the BigQuery dataset
-    """
-
-    if client is None:
-        client = bigquery.Client()
-
-    data_set = client.get_dataset(data_set)
-
-    schema_out = {}
-    for table_name in tables:
-        table = client.get_table(
-            f'{data_set.project}.{data_set.dataset_id}.{table_name}')
-        table_schema = []
-        for field in table.schema:
-            field_dict = {
-                'name': field.name,
-                'field_type': field.field_type,
-                'mode': field.mode,
-                'description': field.description
-            }
-
-            table_schema.append(field_dict)
-
-        schema_out[table_name] = table_schema
-
-    return schema_out

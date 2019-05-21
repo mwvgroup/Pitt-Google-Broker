@@ -95,6 +95,22 @@ Finally, don't forget to exit your environment
 
    conda deactivate
 
+Setting up GCP
+--------------
+
+You will need to set up a handful of tools in GCP. Instead of doing this
+manually, the broker package provides a setup function for convenience.
+
+.. code:: python
+
+    from broker import setup_gcp
+
+    # See a list of changes that will be made to your GCP project
+    help(setup_gcp)
+
+    # Setup your GCP project
+    setup_gcp()
+
 .. _Create a project: https://cloud.google.com/resource-manager/docs/creating-managing-projects
 .. _Authenticate: https://cloud.google.com/docs/authentication/getting-started
 .. _here: https://cloud.google.com/resource-manager/docs/creating-managing-projects

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-"""Retrieve and parse alerts from ZTF.
+"""Retrieve and parse alerts from the ZTF."""
 
-This module is currently in progress and relies on the ZTF Public Alerts
-Archive, not the live ZTF stream.
-"""
+# Todo:
+#     This module is currently in progress and relies on the ZTF Public Alerts
+#     Archive, not the live ZTF stream.
 
 import os
 
@@ -24,10 +24,11 @@ alert_iterable = None
 
 
 def get_alerts(num_alert):
-    """Get alerts from the ZTF alert stream
+    """Fetch alerts from the ZTF alert stream
 
-    Todo: Function currently returns 10 alerts from the ZTF archive module.
-      Get data from the alert stream instead of the ZTF Archive.
+    Todo:
+        Function currently returns 10 alerts from the ZTF archive module.
+        Get data from the alert stream instead of the ZTF Archive.
 
     Args:
         num_alert (int): The number of alerts to fetch
@@ -80,6 +81,7 @@ def map_to_schema(alert_list):
 
     Returns:
         A Dataframe with data for the BigQuery ``ztf.alert`` table
+        A Dataframe with data for the BigQuery ``ztf.candidate`` table
     """
 
     alert_table, candidate_table, image_table = [], [], []
