@@ -28,24 +28,41 @@ def _setup_big_query():
     bigquery_client.create_dataset('ztf_alerts', exists_ok=True)
 
 
+def _setup_buckets():
+    """Create new storage buckets
+
+    New buckets include:
+      ``<project_id>_logging_bucket``
+      ``<project_id>_ztf_images
+    """
+
+    storage_client = storage.Client()
+
+    # Create bucket names
+    project_id = os.environ['BROKER_PROJ_ID']
+    logging_name = f'{project_id}_logging_bucket'
+    ztf_image_name = f'{project_id}_logging_bucket'
+
+    # Create buckets if the do not exist
+    for bucket_name in (logging_name, ztf_image_name):
+        try:
+            storage_client.get_bucket(bucket_name)
+
+        except NotFound:
+            storage_client.create_bucket(bucket_name)
+
+
 def _setup_logging_sinks():
     """Create sinks for exporting log entries to GCP
 
-    New buckets include: ``<project_id>_logging_bucket``
+    This function assumes destination buckets have already been created.
 
     New Sinks include: ``broker_logging_sink``
     """
 
-    storage_client = storage.Client()
+    # Create bucket name
     project_id = os.environ['BROKER_PROJ_ID']
     logging_bucket_name = f'{project_id}_logging_bucket'
-
-    # Create storage bucket if not exist
-    try:
-        storage_client.get_bucket(logging_bucket_name)
-
-    except NotFound:
-        storage_client.create_bucket(logging_bucket_name)
 
     # Define logging sink
     logging_client = logging.Client()
@@ -73,6 +90,7 @@ def setup_gcp():
     """
 
     _setup_big_query()
+    _setup_buckets()
     _setup_logging_sinks()
 
 
