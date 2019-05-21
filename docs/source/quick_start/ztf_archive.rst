@@ -4,8 +4,8 @@ Accessing the ZTF Archive
 All ZTF alerts are submitted at the end of the day to the `ZTF public alerts
 archive`_. The ``ztf_archive`` module is capable of automatically downloading,
 parsing, and plotting alert data that has been submitted to the public archive.
-Alert data can only be downloaded in groups of daily data releases (i.e. you
-cannot download individual alerts). The following code snippets demonstrates
+Alert data can only be downloaded in groups of daily data releases (i.e., you
+cannot download individual alerts). The following code snippets demonstrate
 how to download and access data from the ZTF archive.
 
 Downloading From the Archive

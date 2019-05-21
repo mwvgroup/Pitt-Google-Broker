@@ -72,9 +72,9 @@ ZTF References
    :maxdepth: 1
    :caption: Quick Start:
 
+   quick_start/ztf_archive
    quick_start/alert_ingestion
    quick_start/xmatch
-   quick_start/ztf_archive
 
 .. toctree::
    :hidden:
@@ -82,6 +82,7 @@ ZTF References
    :caption: Module Documentation:
 
    module_docs/api_reference
+   module_docs/broker
    module_docs/alert_acquisition
    module_docs/data_upload
    module_docs/xmatch

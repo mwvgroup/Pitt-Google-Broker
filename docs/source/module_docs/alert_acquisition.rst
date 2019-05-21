@@ -1,5 +1,5 @@
 broker.alert_acquisition
-======================
+========================
 
 .. automodule:: broker.alert_acquisition
 

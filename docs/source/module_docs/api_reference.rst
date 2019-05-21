@@ -6,6 +6,8 @@ broker
 
 .. automodule:: broker
 
+.. py:currentmodule:: broker
+
 .. autosummary::
 
    setup_gcp
@@ -38,7 +40,6 @@ broker.data_upload
 
 .. autosummary::
 
-   get_bq_schema
    batch_ingest
    stream_ingest
 

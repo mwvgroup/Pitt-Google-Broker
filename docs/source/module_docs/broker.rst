@@ -3,6 +3,6 @@ broker
 
 .. automodule:: broker
 
-.. py:currentmodule:: broker.alert_acquisition.ztf
+.. py:currentmodule:: broker
 
 .. autofunction:: setup_gcp
