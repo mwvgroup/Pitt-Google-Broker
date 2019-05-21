@@ -1,6 +1,8 @@
 ztf_archive
 ===========
 
+.. automodule:: broker.ztf_archive
+
 .. py:currentmodule:: broker.ztf_archive
 
 .. autofunction:: download_data_date

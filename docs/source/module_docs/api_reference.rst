@@ -5,15 +5,45 @@ broker.alert_ingestion
 ----------------------
 
 
-.. automodule:: broker.alert_ingestion
+.. automodule:: broker.alert_acquisition
 
-.. py:currentmodule:: broker.alert_ingestion
+broker.alert_ingestion.ztf
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automodule:: broker.alert_acquisition.ztf
+
+.. py:currentmodule:: broker.alert_acquisition.ztf
 
 .. autosummary::
 
-    parse_alerts
-    batch_ingest_alerts
-    stream_ingest_alerts
+    get_alerts
+    map_to_schema
+
+broker.data_upload
+------------------
+
+.. automodule:: broker.data_upload
+
+.. py:currentmodule:: broker.data_upload
+
+.. autosummary::
+
+   get_bq_schema
+   setup_gcp
+   batch_ingest
+   stream_ingest
+
+broker.xmatch
+-------------
+
+.. automodule:: broker.xmatch
+
+.. py:currentmodule:: broker.xmatch
+
+.. autosummary::
+
+    get_alerts_ra_dec
+    get_xmatches
 
 broker.ztf_archive
 ------------------
@@ -32,27 +62,3 @@ broker.ztf_archive
     get_alert_data
     iter_alerts
     plot_stamps
-
-broker.xmatch
--------------
-
-.. automodule:: broker.xmatch
-
-.. py:currentmodule:: broker.xmatch
-
-.. autosummary::
-
-    get_alerts_ra_dec
-    get_xmatches
-
-broker.gcp_setup
-----------------
-
-.. automodule:: broker.gcp_setup
-
-.. py:currentmodule:: broker.gcp_setup
-
-.. autosummary::
-
-    setup_gcp
-    get_bq_schema

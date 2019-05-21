@@ -26,8 +26,8 @@ Additional Resources
 For questions concerning the technical specifications of LSST or ZTF, the
 following may prove to be useful.
 
-LSST Documentation
-------------------
+LSST References
+---------------
 
 -  Plans and Policies for alert distribution: `ls.st/LDM-612`_
 -  Call for letters of intent for community alert brokers: `ls.st/LDM-682`_
@@ -38,8 +38,8 @@ LSST Documentation
 -  Prototype schemas: `github.com/lsst-dm/sample-avro-alert`_
 -  Kafka-based alert stream: `github.com/lsst-dm/alert_stream`_
 
-ZTF Documentation
------------------
+ZTF References
+--------------
 
 -  Sample alert packets: `ztf.uw.edu/alerts/public/`_
 -  Alert packet tools: `zwicky.tf/4t5`_
@@ -72,17 +72,17 @@ ZTF Documentation
    :maxdepth: 1
    :caption: Quick Start:
 
-   quick_start/ztf_archive
    quick_start/alert_ingestion
    quick_start/xmatch
+   quick_start/ztf_archive
 
 .. toctree::
    :hidden:
    :maxdepth: 1
-   :caption: Module Docs:
+   :caption: Module Documentation:
 
    module_docs/api_reference
-   module_docs/ztf_archive
-   module_docs/alert_ingestion
+   module_docs/alert_acquisition
+   module_docs/data_upload
    module_docs/xmatch
-   module_docs/gcp_setup
+   module_docs/ztf_archive

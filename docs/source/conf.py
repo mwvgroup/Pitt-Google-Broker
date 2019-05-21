@@ -26,8 +26,9 @@ author = 'Daniel Perrefort'
 # The short X.Y version
 version = ''
 # The full version, including alpha/beta/rc tags
+import matplotlib; matplotlib.use('PS')
 import broker
-release = '0.1'
+release = broker.__version__
 
 
 # -- General configuration ---------------------------------------------------

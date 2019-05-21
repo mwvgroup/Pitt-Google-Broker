@@ -1,13 +1,20 @@
 # !/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
+import sys
+
 from setuptools import find_packages, setup
+
+sys.path.insert(0, './')
+import matplotlib
+matplotlib.use('PS')
+import broker
 
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
 setup(name='pitt_broker',
-      version='0.0.2',
+      version=broker.__version__,
       packages=find_packages(),
       keywords='LSST ZTF broker',
       description='A cloud based data broker for LSST and ZTF',
