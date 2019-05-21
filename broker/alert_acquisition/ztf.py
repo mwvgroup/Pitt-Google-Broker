@@ -27,7 +27,7 @@ if 'RTD_BUILD' not in os.environ:
     log.setLevel(logging.INFO)
     log.addHandler(handler)
 
-alert_iterable = iter_alerts(10, raw=False)
+alert_iterable = None
 
 
 def get_alerts(num_alert):
@@ -35,33 +35,19 @@ def get_alerts(num_alert):
 
     Todo: Function currently returns 10 alerts from the ZTF archive module
         - Get data from the alert stream instead of the ZTF Archive
-        - Actually return ``num_alert`` number of alerts
-        - Return bytes instead of dicts
 
     Args:
         num_alert (int): The number of alerts to fetch
 
     Returns:
-        A list of alert data as bytes objects
+        A list of alert data as dict objects
     """
+
+    global alert_iterable
+    if alert_iterable is None:
+        alert_iterable = iter_alerts(num_alert, raw=False)
 
     return next(alert_iterable)
-
-
-def parse_alert(alert_bytes):
-    """Convert alert data from a bytes object to a dict
-
-    Todo: Function currently returns the input argument
-        - Convert bytes object to dict
-
-    Args:
-        alert_bytes (bytes): Alert data from ZTF
-
-    Returns:
-        The same alert data as a dictionary object
-    """
-
-    return alert_bytes
 
 
 def _map_to_schema(alert_packet):
