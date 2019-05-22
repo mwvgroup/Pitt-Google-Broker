@@ -3,12 +3,10 @@
 
 """Retrieve and parse alerts from the ZTF."""
 
-# Todo:
-#     This module is currently in progress and relies on the ZTF Public Alerts
-#     Archive, not the live ZTF stream.
-
 import os
+from pathlib import Path
 
+import fastavro
 import pandas as pd
 
 from .._utils import setup_log
@@ -20,7 +18,13 @@ if 'RTD_BUILD' not in os.environ:
     error_client = error_reporting.Client()
     log = setup_log('ztf_acquisition')
 
+SCHEMA_DIR = FILE_DIR = Path(__file__).resolve().parent / 'schema'
+
+# Temporary stop gap until the live alert stream is accessible
 alert_iterable = None
+from warnings import warn
+warn('This module is currently in progress and relies on the ZTF Public Alerts'
+     'Archive, not the live ZTF stream.')
 
 
 def get_alerts(num_alert):
@@ -92,3 +96,47 @@ def map_to_schema(alert_list):
         image_table.append(image_table)
 
     return pd.DataFrame(alert_table), pd.DataFrame(candidate_table)
+
+
+def get_schema(schemavsn):
+    """Return the avro schema for a given ZTF schema version
+
+    Args:
+        schemavsn (str): ZTF schema version (e.g. '3.2')
+
+    Returns:
+        The schema as a dictionary
+    """
+
+    schemavsn_dir = SCHEMA_DIR / f'ztf_{schemavsn}'
+    if not schemavsn_dir.exist():
+        raise ValueError(f'No ZTF schema version found matching "{schemavsn}"')
+
+    # Todo: open and return schema
+    raise RuntimeError('Function not finished!')
+
+
+def save_to_avro(data, schemavsn='3.2', path=None, fileobj=None):
+    """Save ZTF alert data to an avro file
+
+    Args:
+        data (list[dict]): Data to write to file
+        schemavsn   (str): ZTF schema version of output file (Default: '3.2')
+        path        (str): Output file path
+        fileobj (fileobj): Output file object
+    """
+
+    if not (path or fileobj):
+        raise ValueError('Must specify either `path` or `fileobj`.')
+
+    elif path and fileobj:
+        raise ValueError('Cannot specify both `path` and `fileobj`.')
+
+    elif path:
+        if not path.endswith('.avro'):
+            path += '.avro'
+
+        fileobj = open(path, 'wb')
+
+    schema = get_schema(schemavsn)
+    fastavro.writer(fileobj, schema, data)
