@@ -3,6 +3,7 @@
 
 """Retrieve and parse alerts from the ZTF."""
 
+import json
 import os
 from pathlib import Path
 
@@ -23,6 +24,7 @@ SCHEMA_DIR = FILE_DIR = Path(__file__).resolve().parent / 'schema'
 # Temporary stop gap until the live alert stream is accessible
 alert_iterable = None
 from warnings import warn
+
 warn('This module is currently in progress and relies on the ZTF Public Alerts'
      'Archive, not the live ZTF stream.')
 
@@ -108,12 +110,12 @@ def get_schema(schemavsn):
         The schema as a dictionary
     """
 
-    schemavsn_dir = SCHEMA_DIR / f'ztf_{schemavsn}'
-    if not schemavsn_dir.exist():
+    schema_path = SCHEMA_DIR / f'ztf_{schemavsn}.json'
+    if not schema_path.exists():
         raise ValueError(f'No ZTF schema version found matching "{schemavsn}"')
 
-    # Todo: open and return schema
-    raise RuntimeError('Function not finished!')
+    with open(schema_path, 'r') as ofile:
+        return json.load(ofile)
 
 
 def save_to_avro(data, schemavsn='3.2', path=None, fileobj=None):
@@ -140,3 +142,6 @@ def save_to_avro(data, schemavsn='3.2', path=None, fileobj=None):
 
     schema = get_schema(schemavsn)
     fastavro.writer(fileobj, schema, data)
+
+    if path:
+        fileobj.close()
