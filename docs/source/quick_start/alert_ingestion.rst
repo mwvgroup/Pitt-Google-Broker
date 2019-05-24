@@ -2,14 +2,14 @@ Ingesting Data to GCP
 =====================
 
 Alert ingestion is handled by the ``alert_acquisition`` and ``data_upload``
-modules. The following provides an example of acquiring and then uploading
-data into BigQuery.
+modules. This includes saving alert data to file and uploading data into
+BigQuery.
 
-.. important:: Data can be ingested into BigQuery through multiple avenues.
-   See `here`_ for an overview of options and pricing models.
+To File / Bucket Storage
+------------------------
 
-Stream Ingestion
-----------------
+The ``save_to_avro`` and ``upload_to_bucket`` functions handel file storage of
+alert data:
 
 .. code:: python
 
@@ -20,9 +20,26 @@ Stream Ingestion
     # Returns a list of dictionaries
     alert_list = ztf.get_alerts(10)
 
-    # Convert data into DataFrames with the same data model as the GCP backend
-    # The ZTF backend has two relevant tables here: "alert" and "candidate"
-    alert_df, candidate_df = ztf.map_to_schema(map_to_schema)
+    # Save alerts to a file
+    data_upload.save_to_avro(alert_list, 'demo.avro', schemavsn='3.2')
+
+    # Upload the file to GCP bucket storage
+    data_upload.upload_to_bucket(
+        bucket_name='my_bucket_name,
+        source_path='demo.avro',
+        destination_name='demo.avro')
+
+
+To Big Query
+------------
+
+The ``data_upload`` module also supports uploading alert data to BigQuery by
+either the stream or batch uploading interfaces.
+
+.. important:: See `here`_ for an overview of options and pricing models.
+
+
+
 
     # An example of a batch upload
     data_upload.batch_ingest(alert_df, 'ztf_alerts', 'alert')
