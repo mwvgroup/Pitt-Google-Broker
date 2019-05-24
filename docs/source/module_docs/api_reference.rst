@@ -42,6 +42,9 @@ broker.data_upload
 
    batch_ingest
    stream_ingest
+   upload_to_bucket
+   get_schema
+   save_to_avro
 
 broker.xmatch
 -------------
@@ -54,6 +57,7 @@ broker.xmatch
 
     get_alerts_ra_dec
     get_xmatches
+    upload_to_bucket_file_
 
 broker.ztf_archive
 ------------------
