@@ -120,10 +120,10 @@ def save_to_avro(data, schemavsn='3.2', path=None, fileobj=None):
     """Save ZTF alert data to an avro file
 
     Args:
-        data (list[dict]): Data to write to file
-        schemavsn   (str): ZTF schema version of output file (Default: '3.2')
-        path        (str): Output file path
-        fileobj (fileobj): Output file object
+        data   (list[dict]): Data to write to file
+        schemavsn     (str): ZTF schema version of output file (Default: '3.2')
+        path          (str): Output file path
+        fileobj (file-like): Output file object
     """
 
     if not (path or fileobj):
