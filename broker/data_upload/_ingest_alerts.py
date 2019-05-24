@@ -3,9 +3,12 @@
 
 """Parse ZTF alerts and add them to the project database."""
 
+import json
 import os
+from pathlib import Path
 from tempfile import NamedTemporaryFile
 
+import fastavro
 import pandavro as pdx
 
 from .._utils import setup_log
@@ -16,6 +19,8 @@ if 'RTD_BUILD' not in os.environ:
     error_client = error_reporting.Client()
     bq_client = bigquery.Client()
     log = setup_log('data_upload')
+
+SCHEMA_DIR = FILE_DIR = Path(__file__).resolve().parent / 'schema'
 
 
 def _get_table_id(data_set, table):
@@ -91,7 +96,7 @@ def batch_ingest(data, data_set, table):
             raise
 
 
-def upload_bucket_file(bucket_name, source_path, destination_name):
+def upload_to_bucket(bucket_name, source_path, destination_name):
     """Uploads a file to a GCP storage bucket
 
     Args:
@@ -104,3 +109,50 @@ def upload_bucket_file(bucket_name, source_path, destination_name):
     bucket = storage_client.get_bucket(bucket_name)
     blob = bucket.blob(destination_name)
     blob.upload_from_filename(source_path)
+
+
+def get_schema(schemavsn):
+    """Return the avro schema for a given ZTF schema version
+
+    Args:
+        schemavsn (str): ZTF schema version (e.g. '3.2')
+
+    Returns:
+        The schema as a dictionary
+    """
+
+    schema_path = SCHEMA_DIR / f'ztf_{schemavsn}.json'
+    if not schema_path.exists():
+        raise ValueError(f'No ZTF schema version found matching "{schemavsn}"')
+
+    with open(schema_path, 'r') as ofile:
+        return json.load(ofile)
+
+
+def save_to_avro(data, schemavsn='3.2', path=None, fileobj=None):
+    """Save ZTF alert data to an avro file
+
+    Args:
+        data    (DataFrame): Alert data to write to file
+        schemavsn     (str): ZTF schema version of output file (Default: '3.2')
+        path          (str): Output file path
+        fileobj (file-like): Output file object
+    """
+
+    if not (path or fileobj):
+        raise ValueError('Must specify either `path` or `fileobj`.')
+
+    elif path and fileobj:
+        raise ValueError('Cannot specify both `path` and `fileobj`.')
+
+    elif path:
+        if not path.endswith('.avro'):
+            path += '.avro'
+
+        fileobj = open(path, 'wb')
+
+    schema = get_schema(schemavsn)
+    fastavro.writer(fileobj, schema, data.to_dict('records'))
+
+    if path:
+        fileobj.close()

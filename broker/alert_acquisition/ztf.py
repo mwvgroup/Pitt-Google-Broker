@@ -3,11 +3,8 @@
 
 """Retrieve and parse alerts from the ZTF."""
 
-import json
 import os
-from pathlib import Path
 
-import fastavro
 import pandas as pd
 
 from .._utils import setup_log
@@ -18,8 +15,6 @@ if 'RTD_BUILD' not in os.environ:
 
     error_client = error_reporting.Client()
     log = setup_log('ztf_acquisition')
-
-SCHEMA_DIR = FILE_DIR = Path(__file__).resolve().parent / 'schema'
 
 # Temporary stop gap until the live alert stream is accessible
 alert_iterable = None
@@ -98,50 +93,3 @@ def map_to_schema(alert_list):
         image_table.append(image_table)
 
     return pd.DataFrame(alert_table), pd.DataFrame(candidate_table)
-
-
-def get_schema(schemavsn):
-    """Return the avro schema for a given ZTF schema version
-
-    Args:
-        schemavsn (str): ZTF schema version (e.g. '3.2')
-
-    Returns:
-        The schema as a dictionary
-    """
-
-    schema_path = SCHEMA_DIR / f'ztf_{schemavsn}.json'
-    if not schema_path.exists():
-        raise ValueError(f'No ZTF schema version found matching "{schemavsn}"')
-
-    with open(schema_path, 'r') as ofile:
-        return json.load(ofile)
-
-
-def save_to_avro(data, schemavsn='3.2', path=None, fileobj=None):
-    """Save ZTF alert data to an avro file
-
-    Args:
-        data    (DataFrame): Alert data to write to file
-        schemavsn     (str): ZTF schema version of output file (Default: '3.2')
-        path          (str): Output file path
-        fileobj (file-like): Output file object
-    """
-
-    if not (path or fileobj):
-        raise ValueError('Must specify either `path` or `fileobj`.')
-
-    elif path and fileobj:
-        raise ValueError('Cannot specify both `path` and `fileobj`.')
-
-    elif path:
-        if not path.endswith('.avro'):
-            path += '.avro'
-
-        fileobj = open(path, 'wb')
-
-    schema = get_schema(schemavsn)
-    fastavro.writer(fileobj, schema, data.to_dict('records'))
-
-    if path:
-        fileobj.close()
