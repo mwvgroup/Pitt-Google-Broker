@@ -122,7 +122,7 @@ def save_to_avro(data, schemavsn='3.2', path=None, fileobj=None):
     """Save ZTF alert data to an avro file
 
     Args:
-        data   (list[dict]): Data to write to file
+        data    (DataFrame): Alert data to write to file
         schemavsn     (str): ZTF schema version of output file (Default: '3.2')
         path          (str): Output file path
         fileobj (file-like): Output file object
@@ -141,7 +141,7 @@ def save_to_avro(data, schemavsn='3.2', path=None, fileobj=None):
         fileobj = open(path, 'wb')
 
     schema = get_schema(schemavsn)
-    fastavro.writer(fileobj, schema, data)
+    fastavro.writer(fileobj, schema, data.to_dict('records'))
 
     if path:
         fileobj.close()
