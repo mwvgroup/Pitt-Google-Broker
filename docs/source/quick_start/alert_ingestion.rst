@@ -1,27 +1,52 @@
 Ingesting Data to GCP
 =====================
 
-The ``alert_ingestion`` module handles the insertion of ZTF alert data
-into `BigQuery`_. Eventually this module will ingest data directly from the
-live ZTF stream, but for now, it relies on the ZTF Alert Archive
-described in the previous section. Data can be ingested into BigQuery
-through multiple avenues (see `here`_ for an overview of options and
-pricing models) but the ``alert_ingestion`` module only provides
-options to *stream* or *bulk insert* methods.
+Alert ingestion is handled by the ``alert_acquisition`` and ``data_upload``
+modules. This includes saving alert data to file and uploading data into
+BigQuery.
+
+To File / Bucket Storage
+------------------------
+
+The ``save_to_avro`` and ``upload_to_bucket`` functions handle file storage of
+alert data:
 
 .. code:: python
 
-   from broker import alert_ingestion
+    from broker import data_upload
+    from broker.alert_acquisition import ztf
 
-   # To ingest alerts via the BigQuery streaming interface
-   alert_ingestion.stream_ingest_alerts()
+    # Get a maximum of 10 alerts from ZTF
+    # Returns a list of dictionaries
+    alert_list = ztf.get_alerts(10)
 
-   # To ingest 15 alerts at a time through the streaming interface
-   # (The default number of alerts is 10)
-   alert_ingestion.stream_ingest_alerts(15)
+    # Save alerts to a file
+    data_upload.save_to_avro(alert_list, 'demo.avro', schemavsn='3.2')
 
-   # The same principles apply for the batch upload interface
-   alert_ingestion.batch_ingest_alerts(15)
+    # Upload the file to GCP bucket storage
+    data_upload.upload_to_bucket(
+        bucket_name='my_bucket_name,
+        source_path='demo.avro',
+        destination_name='demo.avro')
+
+
+To Big Query
+------------
+
+The ``data_upload`` module also supports uploading alert data to BigQuery by
+either the stream or batch uploading interfaces.
+
+.. important:: See `here`_ for an overview of options and pricing models.
+
+
+
+
+    # An example of a batch upload
+    data_upload.batch_ingest(alert_df, 'ztf_alerts', 'alert')
+
+    # An example of a stream upload
+    data_upload.stream_ingest(candidate_df, 'ztf_alerts', 'candidate')
+
 
 .. _BigQuery: https://cloud.google.com/bigquery/
 .. _here: https://cloud.google.com/bigquery/docs/loading-data

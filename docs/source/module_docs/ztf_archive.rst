@@ -1,5 +1,7 @@
-ztf_archive
-===========
+broker.ztf_archive
+==================
+
+.. automodule:: broker.ztf_archive
 
 .. py:currentmodule:: broker.ztf_archive
 
