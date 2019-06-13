@@ -17,9 +17,9 @@ if 'BROKER_PROJ_ID' not in _os.environ:
           'documentation for instructions on setting BROKER_PROJ_ID '
           'in your environment')
 
-if 'PATH_TO_CREDENTIALS' not in _os.environ:
+if 'GOOGLE_APPLICATION_CREDENTIALS' not in _os.environ:
     _warn('GCP credentials path is not set in the current environment. Please '
-          'see documentation for instructions on setting PATH_TO_CREDENTIALS '
-          'in your environment')
+          'see documentation for instructions on setting'
+          'GOOGLE_APPLICATION_CREDENTIALS in your environment')
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
