@@ -20,7 +20,7 @@ if 'RTD_BUILD' not in os.environ:
     bq_client = bigquery.Client()
     log = setup_log('data_upload')
 
-SCHEMA_DIR = FILE_DIR = Path(__file__).resolve().parent / 'schema'
+SCHEMA_DIR = Path(__file__).resolve().parent / 'schema'
 
 
 def _get_table_id(data_set, table):
@@ -62,7 +62,7 @@ def stream_ingest(data, data_set, table):
 def batch_ingest(data, data_set, table):
     """Batch upload a Pandas DataFrame into a BigQuery table
 
-    Alert data WILL be temporarily written to disk. If the table does not
+    Alert data may be temporarily written to disk. If the table does not
     exist, create it.
 
     Args:

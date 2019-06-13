@@ -29,7 +29,7 @@ broker.alert_ingestion.ztf
 .. autosummary::
 
     get_alerts
-    map_to_schema
+    map_alert_list_to_schema
 
 broker.data_upload
 ------------------

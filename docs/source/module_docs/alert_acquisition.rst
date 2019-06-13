@@ -12,4 +12,4 @@ broker.alert_acquisition.ztf
 
 .. autofunction:: get_alerts
 
-.. autofunction:: map_to_schema
+.. autofunction:: map_alert_list_to_schema

@@ -8,7 +8,7 @@ BigQuery.
 To File / Bucket Storage
 ------------------------
 
-The ``save_to_avro`` and ``upload_to_bucket`` functions handel file storage of
+The ``save_to_avro`` and ``upload_to_bucket`` functions handle file storage of
 alert data:
 
 .. code:: python

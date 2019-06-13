@@ -28,8 +28,8 @@ def get_alerts(num_alert):
     """Fetch alerts from the ZTF alert stream
 
     Todo:
-        Function currently returns 10 alerts from the ZTF archive module.
-        Get data from the alert stream instead of the ZTF Archive.
+        Function currently returns alerts from the ZTF archive module.
+        Get data from the ZTF Alert Stream instead of the ZTF Archive.
 
     Args:
         num_alert (int): The number of alerts to fetch
@@ -45,7 +45,7 @@ def get_alerts(num_alert):
     return next(alert_iterable)
 
 
-def _map_to_schema(alert_packet):
+def map_alert_to_schema(alert_packet):
     """Map a single ZTF alert to the data model used by the BigQuery backend
 
     Args:
@@ -74,7 +74,7 @@ def _map_to_schema(alert_packet):
     return alert_data, candidate_data
 
 
-def map_to_schema(alert_list):
+def map_alert_list_to_schema(alert_list):
     """Map ZTF alert metadata to the data model used by the BigQuery backend
 
     Args:
@@ -87,7 +87,7 @@ def map_to_schema(alert_list):
 
     alert_table, candidate_table, image_table = [], [], []
     for alert in alert_list:
-        alert_data, candidate_data = _map_to_schema(alert)
+        alert_data, candidate_data = map_alert_to_schema(alert)
         alert_table.append(alert_data)
         candidate_table.append(candidate_data)
         image_table.append(image_table)

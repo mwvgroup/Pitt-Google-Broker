@@ -26,7 +26,7 @@ author = 'Daniel Perrefort, Troy Raen, Christine Mazzola'
 # The short X.Y version
 version = ''
 # The full version, including alpha/beta/rc tags
-import matplotlib; matplotlib.use('PS')
+import matplotlib; matplotlib.use('PDF')
 import broker
 release = broker.__version__
 
