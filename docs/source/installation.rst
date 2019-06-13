@@ -43,7 +43,7 @@ GCP project ID and credentials path as environmental variables. In your
 .. code:: bash
 
     export BROKER_PROJ_ID="YOUR_PROJECT_ID"
-    export PATH_TO_CREDENTIALS="PATH_TO_JSON_CREDENTIALS"
+    export GOOGLE_APPLICATION_CREDENTIALS="PATH_TO_JSON_CREDENTIALS"
 
 The ``broker`` package will automatically check whether ``BROKER_PROJ_ID`` is
 available in the current environment. If the variable is not found, a warning
@@ -84,10 +84,10 @@ the following after replacing ``YOUR_PROJECT_ID`` and
 
    # Add environmental variables
    echo 'export BROKER_PROJ_ID="YOUR_PROJECT_ID"' >> ./etc/conda/activate.d/env_vars.sh
-   echo 'export PATH_TO_CREDENTIALS="PATH_TO_JSON_CREDENTIALS"' >> ./etc/conda/activate.d/env_vars.sh
+   echo 'export GOOGLE_APPLICATION_CREDENTIALS="PATH_TO_JSON_CREDENTIALS"' >> ./etc/conda/activate.d/env_vars.sh
 
    echo 'unset BROKER_PROJ_ID' >> ./etc/conda/deactivate.d/env_vars.sh
-   echo 'unset PATH_TO_CREDENTIALS' >> ./etc/conda/deactivate.d/env_vars.sh
+   echo 'unset GOOGLE_APPLICATION_CREDENTIALS' >> ./etc/conda/deactivate.d/env_vars.sh
 
 Finally, don't forget to exit your environemnt
 
