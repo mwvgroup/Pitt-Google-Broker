@@ -5,6 +5,7 @@
 """
 
 import logging
+import os
 
 import google.cloud as gcp
 
@@ -22,7 +23,7 @@ def setup_log(log_name, level='INFO'):
         A Logger object, or None
     """
 
-    if gcp is None:
+    if 'RTD_BUILD' in os.environ:
         return
 
     log = logging.Logger(log_name)
