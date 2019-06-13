@@ -10,7 +10,7 @@ with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
 # Get package version
-init_path = Path(__file__).resolve().parent / 'SNData/__init__.py'
+init_path = Path(__file__).resolve().parent / 'broker/__init__.py'
 with open(init_path, 'r') as f:
     source = f.read()
 
