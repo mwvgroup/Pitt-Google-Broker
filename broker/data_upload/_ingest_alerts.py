@@ -11,7 +11,7 @@ from tempfile import NamedTemporaryFile
 import fastavro
 import pandavro as pdx
 
-from .._utils import setup_log
+from ..utils import setup_log
 
 if 'RTD_BUILD' not in os.environ:
     from google.cloud import error_reporting, bigquery, storage

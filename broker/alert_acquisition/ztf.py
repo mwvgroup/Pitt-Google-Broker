@@ -7,7 +7,7 @@ import os
 
 import pandas as pd
 
-from .._utils import setup_log
+from ..utils import setup_log
 from ..ztf_archive import iter_alerts
 
 if 'RTD_BUILD' not in os.environ:
