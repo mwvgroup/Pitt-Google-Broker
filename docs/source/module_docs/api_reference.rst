@@ -40,8 +40,8 @@ broker.data_upload
 
 .. autosummary::
 
-   batch_ingest
-   stream_ingest
+   _batch_ingest
+   _stream_ingest
    upload_to_bucket
    get_schema
    save_to_avro

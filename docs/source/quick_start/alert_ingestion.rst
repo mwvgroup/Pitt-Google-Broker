@@ -42,10 +42,10 @@ either the stream or batch uploading interfaces.
 
 
     # An example of a batch upload
-    data_upload.batch_ingest(alert_df, 'ztf_alerts', 'alert')
+    data_upload._batch_ingest(alert_df, 'ztf_alerts', 'alert')
 
     # An example of a stream upload
-    data_upload.stream_ingest(candidate_df, 'ztf_alerts', 'candidate')
+    data_upload._stream_ingest(candidate_df, 'ztf_alerts', 'candidate')
 
 
 .. _BigQuery: https://cloud.google.com/bigquery/
