@@ -3,6 +3,7 @@
 
 """This module downloads sample ZTF alerts from the ZTF alerts archive."""
 
+import shutil
 import tarfile
 from glob import glob
 from os import makedirs
@@ -166,3 +167,10 @@ def download_recent_data(max_downloads=1, stop_on_exist=False):
         out_path = DATA_DIR / file_name
         tqdm.write(f'Downloading ({i + 1}/{num_downloads}): {file_name}')
         _download_alerts_file(file_name, out_path)
+
+
+def delete_local_data():
+    """Delete any locally data downloaded fro the ZTF Public Alerts Archive"""
+
+    shutil.rmtree(DATA_DIR)
+    makedirs(DATA_DIR, exist_ok=True)
