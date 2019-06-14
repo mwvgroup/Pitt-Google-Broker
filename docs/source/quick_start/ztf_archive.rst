@@ -19,13 +19,17 @@ iteratively in reverse chronological order.
    from broker import ztf_archive as ztfa
 
    # Get a list of files available on the ZTF Alerts Archive
-   print(ztfa.get_remote_release_list())
+   file_names, file_sizes = ztfa.get_remote_release_list()
+   print(file_names)
 
    # Download data from the ZTF archive for a given day.
    ztfa.download_data_date(year=2018, month=6, day=26)
 
    # Download the most recent day of available data
    ztfa.download_recent_data()
+
+   # Delete any data downloaded to your local machine
+   ztfa.delete_local_data()
 
 Although it is not recommended to download the entire alerts archive to your
 local machine, it is an educational thought exercise to see a few different
@@ -51,9 +55,6 @@ visualizing alert data.
 
 .. code:: python
 
-   # Get a list of files downloaded from the archive
-   print(ztfa.get_local_release_list())
-
    # Retrieve the IDs for all alerts downloaded to your local machine
    alert_ids = ztfa.get_local_alert_list()
    print(alert_ids)
@@ -66,7 +67,7 @@ visualizing alert data.
    fig = ztfa.plot_stamps(alert_data)
    fig.show()
 
-In addition to acceding individual alerts by their ID value, you can iterate
+In addition to accessing individual alerts by their ID value, you can iterate
 over the entire set of downloaded alert data.
 
 .. code:: python
@@ -77,7 +78,7 @@ over the entire set of downloaded alert data.
        break
 
    # Or iterate over multiple alerts at once
-   for alert_1, alert_2 in ztfa.iter_alerts(2):
+   for alert_list in ztfa.iter_alerts(100):
        # Some other redundant task
        break
 

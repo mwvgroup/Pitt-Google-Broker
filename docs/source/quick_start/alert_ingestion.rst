@@ -33,19 +33,16 @@ alert data:
 To Big Query
 ------------
 
-The ``data_upload`` module also supports uploading alert data to BigQuery by
-either the stream or batch uploading interfaces.
+The ``data_upload`` module also supports uploading alert data to BigQuery using
+the ``upload_to_bigquery`` function. By default data is ingested as a batch
+upload, however stream uploading is also available via the ``method='stream'``
+argument.
 
 .. important:: See `here`_ for an overview of options and pricing models.
 
-
-
-
-    # An example of a batch upload
-    data_upload._batch_ingest(alert_df, 'ztf_alerts', 'alert')
-
-    # An example of a stream upload
-    data_upload._stream_ingest(candidate_df, 'ztf_alerts', 'candidate')
+    # An example of a batch upload.
+    # If an error occures, try twice before giving up.
+    data_upload.upload_to_bigquery(alert_df, 'ztf_alerts', 'alert', max_tries=2)
 
 
 .. _BigQuery: https://cloud.google.com/bigquery/

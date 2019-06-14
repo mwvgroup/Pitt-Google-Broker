@@ -85,6 +85,7 @@ def _download_alerts_file(file_name, out_path):
     if not out_dir.exists():
         makedirs(out_dir)
 
+    # noinspection PyUnresolvedReferences
     url = requests.compat.urljoin(ZTF_URL, file_name)
     file_data = requests.get(url, stream=True)
 

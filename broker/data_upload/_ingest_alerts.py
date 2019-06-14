@@ -96,7 +96,7 @@ def _batch_ingest(data, data_set, table):
             raise
 
 
-def upload_to_bigquery(data, data_set, table_name, method='batch', max_tries=5):
+def upload_to_bigquery(data, data_set, table_name, method='batch', max_tries=2):
     """Batch upload a Pandas DataFrame into a BigQuery table
 
     If the upload fails, retry until success or until
@@ -107,7 +107,7 @@ def upload_to_bigquery(data, data_set, table_name, method='batch', max_tries=5):
         data_set   (str): The name of the data set
         table_name (str): The name of the table
         method     (str): The method upload name ('batch' or 'stream')
-        max_tries  (int): Maximum number of tries until error
+        max_tries  (int): Maximum number of tries until error (Default: 2)
     """
 
     if method == 'batch':
