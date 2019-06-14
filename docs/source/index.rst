@@ -3,17 +3,17 @@
 What is Pitt Broker
 ===================
 
-`Pitt Broker` is a cloud based, alert distribution service designed to provide
+**Pitt Broker** is a cloud-based, alert distribution service designed to provide
 near real-time processing for alerts from the `Large Synoptic Survey Telescope
 <https://www.lsst.org>`_ (LSST). One of the primary data products LSST will
 deliver is a real-time stream of alerts that provides information on transient
 targets within 60 seconds of observation. Instead of providing this alert
-stream  directly to the public, LSST will rely on community developed *broker*
-systems to relay the information. `Pitt Broker` is designed to maximize the
+stream  directly to the public, LSST will rely on community-developed *broker*
+systems to relay the information. **Pitt Broker** is designed to maximize the
 scalable availability and usefulness of the LSST alert data by combining
 cloud-based analysis opportunities with value-added data products.
 
-`Pitt Broker` is designed to run on the `Google Cloud Platform
+**Pitt Broker** is designed to run on the `Google Cloud Platform
 <https://cloud.google.com>`_ (GCP) and is currently focused on processing
 alerts from the `Zwicky Transient Factory <https://www.ztf.caltech.edu>`_
 (ZTF) and the `LSST Alert Simulator
@@ -26,8 +26,8 @@ Additional Resources
 For questions concerning the technical specifications of LSST or ZTF, the
 following may prove to be useful.
 
-LSST Documentation
-------------------
+LSST References
+---------------
 
 -  Plans and Policies for alert distribution: `ls.st/LDM-612`_
 -  Call for letters of intent for community alert brokers: `ls.st/LDM-682`_
@@ -38,8 +38,8 @@ LSST Documentation
 -  Prototype schemas: `github.com/lsst-dm/sample-avro-alert`_
 -  Kafka-based alert stream: `github.com/lsst-dm/alert_stream`_
 
-ZTF Documentation
------------------
+ZTF References
+--------------
 
 -  Sample alert packets: `ztf.uw.edu/alerts/public/`_
 -  Alert packet tools: `zwicky.tf/4t5`_
@@ -79,10 +79,11 @@ ZTF Documentation
 .. toctree::
    :hidden:
    :maxdepth: 1
-   :caption: Module Docs:
+   :caption: Module Documentation:
 
    module_docs/api_reference
-   module_docs/ztf_archive
-   module_docs/alert_ingestion
+   module_docs/broker
+   module_docs/alert_acquisition
+   module_docs/data_upload
    module_docs/xmatch
-   module_docs/gcp_setup
+   module_docs/ztf_archive
