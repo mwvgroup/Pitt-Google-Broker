@@ -1,10 +1,6 @@
 from google.cloud import pubsub_v1
+import pickle
 
-
-
-# Access ZTF alerts from the alert_acquistion module
-
-# Convert those alerts into encoded packets that are then published
 
 def publish_alerts(project_id, topic_name, alerts):
     
@@ -12,10 +8,15 @@ def publish_alerts(project_id, topic_name, alerts):
     
     topic_path = publisher.topic_path(project_id, topic_name)
     
-    data = # this comes from the alerts
-    data = data.encode('utf-8')
+    for alert in alerts:
+        
+        alert.pop("cutoutScience")
+        alert.pop("cutoutTemplate")
+        alert.pop("cutoutDifference")
+        
+        pickled = pickle.dumps(alert)
     
-    future = publisher.publish(topic_path, data=data)
+        future = publisher.publish(topic_path, data=pickled)
     
 
 # Create a user module for accessing those messages via a subscription
@@ -32,3 +33,5 @@ def subscribe_alerts(project_id, subscription_name, max_alerts=1):
         ack_ids.append(received_message.ack_id)
     
     subscriber.acknowledge(subscription_path, ack_ids)
+    
+    return(response.received_messages)
