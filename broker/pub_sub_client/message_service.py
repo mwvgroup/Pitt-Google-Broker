@@ -1,8 +1,18 @@
+"""Publish and retrieve messages via Pub/Sub."""
+
+
 from google.cloud import pubsub_v1
 import pickle
 
 
 def publish_alerts(project_id, topic_name, alerts):
+    """Publish encoded, simplified messages to a Pub/Sub topic
+    
+    Args:
+        project_id  (int): The GCP project ID number
+        topic_name  (str): The Pub/Sub topic name for publishing alerts
+        alerts     (list): The list of ZTF alerts to be published
+    """
     
     publisher = pubsub_v1.PublisherClient()
     
@@ -17,21 +27,33 @@ def publish_alerts(project_id, topic_name, alerts):
         pickled = pickle.dumps(alert)
     
         future = publisher.publish(topic_path, data=pickled)
-    
 
-# Create a user module for accessing those messages via a subscription
 
 def subscribe_alerts(project_id, subscription_name, max_alerts=1):
+    """Download, decode, and return messages from a Pub/Sub topic
+    
+    Args:
+        project_id          (int): The GCP project ID number
+        subscription_name   (str): The Pub/Sub subcription name linked to a Pub/Sub topic
+        max_alerts          (int): The maximum number of alerts to download
+    
+    Returns:
+        A list of downloaded and decoded messages
+    """
     
     subscriber = pubsub_v1.SubscriberClient()
     subscription_path = subscriber.subscription_path(project_id, subscription_name)
     
     response = subscriber.pull(subscription_path, max_messages=max_alerts)
     
-    ack_ids = []
+    message_list, ack_ids = [], []
+    
     for received_message in response.received_messages:
+        encoded = received_message.message.data
+        message = pickle.loads(encoded)
+        message_list.append(message)
         ack_ids.append(received_message.ack_id)
     
     subscriber.acknowledge(subscription_path, ack_ids)
     
-    return(response.received_messages)
+    return(message_list)
