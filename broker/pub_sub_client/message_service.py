@@ -9,7 +9,7 @@ def publish_alerts(project_id, topic_name, alerts):
     """Publish encoded, simplified messages to a Pub/Sub topic
     
     Args:
-        project_id  (int): The GCP project ID number
+        project_id  (str): The GCP project ID number
         topic_name  (str): The Pub/Sub topic name for publishing alerts
         alerts     (list): The list of ZTF alerts to be published
     """
