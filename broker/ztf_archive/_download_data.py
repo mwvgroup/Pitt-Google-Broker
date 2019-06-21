@@ -149,19 +149,14 @@ def download_recent_data(max_downloads=1, stop_on_exist=False):
 
     local_file_list = get_local_release_list()
     remote_file_list = get_remote_release_list()
+    files_to_get = set(remote_file_list) - set(local_file_list)
+    # Rely on the lexigraphic sorting to be reverse chronological
+    files_to_get = sort(list(files_to_get))[::-1]
 
-    num_downloads = min(max_downloads, len(remote_file_list))
-    for i, file_name in enumerate(remote_file_list[:num_downloads]):
-        # Skip download if data was already downloaded
-        if file_name in local_file_list:
-            tqdm.write(
-                f'Already Downloaded ({i + 1}/{num_downloads}): {file_name}')
+    files_to_get = files_to_get[:max_downloads]
+    num_downloads = len(files_to_get)  # For giving total file count
 
-            if stop_on_exist:
-                return
-
-            continue
-
+    for i, file_name in enumerate(files_to_get[:num_downloads]):
         out_path = os.path.join(DATA_DIR, file_name)
         tqdm.write(f'Downloading ({i + 1}/{num_downloads}): {file_name}')
         _download_alerts_file(file_name, out_path)
