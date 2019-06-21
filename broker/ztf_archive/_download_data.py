@@ -147,14 +147,13 @@ def download_recent_data(max_downloads=1, stop_on_exist=False):
                                downloaded (Default: False)
     """
 
-    file_list = get_remote_release_list()
-    num_downloads = min(max_downloads, len(file_list))
-    for i, file_name in enumerate(file_list):
-        if i >= max_downloads:
-            break
+    local_file_list = get_local_release_list()
+    remote_file_list = get_remote_release_list()
 
+    num_downloads = min(max_downloads, len(remote_file_list))
+    for i, file_name in enumerate(remote_file_list[:num_downloads]):
         # Skip download if data was already downloaded
-        if file_name in get_local_release_list():
+        if file_name in local_file_list:
             tqdm.write(
                 f'Already Downloaded ({i + 1}/{num_downloads}): {file_name}')
 
