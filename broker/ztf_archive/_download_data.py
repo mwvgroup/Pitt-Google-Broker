@@ -5,7 +5,7 @@
 
 import tarfile
 from glob import glob
-from os import makedirs
+import os
 from pathlib import Path
 from tempfile import TemporaryFile
 
@@ -15,10 +15,10 @@ from bs4 import BeautifulSoup
 from tqdm import tqdm
 
 FILE_DIR = Path(__file__).resolve().parent
-DATA_DIR = FILE_DIR / 'data'
-ALERT_LOG = DATA_DIR / 'alert_log.txt'
+DATA_DIR = os.path.join(FILE_DIR, 'data')
+ALERT_LOG = os.path.join(DATA_DIR, 'alert_log.txt')
 ZTF_URL = "https://ztf.uw.edu/alerts/public/"
-makedirs(DATA_DIR, exist_ok=True)
+os.makedirs(DATA_DIR, exist_ok=True)
 
 
 def get_remote_release_list():
@@ -72,7 +72,7 @@ def get_local_alert_list():
         A list of alert ID values as ints
     """
 
-    path_pattern = str(DATA_DIR / '*.avro')
+    path_pattern = os.path.join(DATA_DIR, '*.avro')
     return [int(Path(f).with_suffix('').name) for f in glob(path_pattern)]
 
 
@@ -86,7 +86,7 @@ def _download_alerts_file(file_name, out_path):
 
     out_dir = Path(out_path).parent
     if not out_dir.exists():
-        makedirs(out_dir)
+        os.makedirs(out_dir)
 
     url = requests.compat.urljoin(ZTF_URL, file_name)
     file_data = requests.get(url, stream=True)
@@ -131,7 +131,7 @@ def download_data_date(year, month, day):
     file_name = f'ztf_public_{year}{month:02d}{day:02d}.tar.gz'
     tqdm.write(f'Downloading {file_name}')
 
-    out_path = DATA_DIR / file_name
+    out_path = os.path.join(DATA_DIR, file_name)
     _download_alerts_file(file_name, out_path)
 
 
@@ -163,6 +163,6 @@ def download_recent_data(max_downloads=1, stop_on_exist=False):
 
             continue
 
-        out_path = DATA_DIR / file_name
+        out_path = os.path.join(DATA_DIR, file_name)
         tqdm.write(f'Downloading ({i + 1}/{num_downloads}): {file_name}')
         _download_alerts_file(file_name, out_path)
