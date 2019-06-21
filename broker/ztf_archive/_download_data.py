@@ -17,7 +17,7 @@ from tqdm import tqdm
 FILE_DIR = Path(__file__).resolve().parent
 DATA_DIR = os.path.join(FILE_DIR, 'data')
 ALERT_LOG = os.path.join(DATA_DIR, 'alert_log.txt')
-ZTF_URL = "https://ztf.uw.edu/alerts/public/"
+ZTF_URL = 'https://ztf.uw.edu/alerts/public/'
 os.makedirs(DATA_DIR, exist_ok=True)
 
 
@@ -31,16 +31,16 @@ def get_remote_release_list():
     # Get html table from page source
     page_source = str(requests.get(ZTF_URL).content)
     soup = BeautifulSoup(page_source, features='lxml')
-    soup_table = soup.find("table", attrs={"id": "indexlist"})
+    soup_table = soup.find('table', attrs={'id': 'indexlist'})
 
     # Get table rows with data - Ignore first header row. The second and last
     # rows are empty so are also ignored
-    data_rows = soup_table.find_all("tr")[2:-1]
+    data_rows = soup_table.find_all('tr')[2:-1]
 
     # Create list of alert file names
     file_list = []
     for row in data_rows:
-        row_data = [td.get_text() for td in row.find_all("td")]
+        row_data = [td.get_text() for td in row.find_all('td')]
         file_name = row_data[1]
         file_size = row_data[3]
 
@@ -110,7 +110,7 @@ def _download_alerts_file(file_name, out_path):
 
         tqdm.write('Unzipping alert data...')
         ofile.seek(0)
-        with tarfile.open(fileobj=ofile, mode="r:gz") as data:
+        with tarfile.open(fileobj=ofile, mode='r:gz') as data:
             data.extractall(out_dir)
 
     with open(ALERT_LOG, 'a') as ofile:
