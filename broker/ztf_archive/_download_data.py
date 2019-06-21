@@ -135,7 +135,8 @@ def download_data_date(year, month, day):
     _download_alerts_file(file_name, out_path)
 
 
-def download_recent_data(max_downloads=1, stop_on_exist=False):
+def download_recent_data(max_downloads=1, stop_on_exist=False,
+                         max_workers=20):
     """Download recent alert data from the ZTF alerts archive
 
     Data is downloaded in reverse chronological order. Skip releases that are
@@ -146,6 +147,9 @@ def download_recent_data(max_downloads=1, stop_on_exist=False):
         stop_on_exist (bool): Exit when encountering an alert that is already
                                downloaded (Default: False)
     """
+    import asyncio
+    import concurrent.futures
+    import requests
 
     local_file_list = get_local_release_list()
     remote_file_list = get_remote_release_list()
@@ -156,7 +160,24 @@ def download_recent_data(max_downloads=1, stop_on_exist=False):
     files_to_get = files_to_get[:max_downloads]
     num_downloads = len(files_to_get)  # For giving total file count
 
-    for i, file_name in enumerate(files_to_get[:num_downloads]):
-        out_path = os.path.join(DATA_DIR, file_name)
-        tqdm.write(f'Downloading ({i + 1}/{num_downloads}): {file_name}')
-        _download_alerts_file(file_name, out_path)
+    max_workers = min(max_workers, num_downloads)
+
+    async def get_files():
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            loop = asyncio.get_event_loop()
+            futures = [
+                loop.run_in_executor(
+                    None,
+                    _download_alerts_file,
+                    file_name,
+                    os.path.join(DATA_DIR, file_name)
+                )
+                for file_name in files_to_get[:num_downloads]
+#                for i, file_name in enumerate(files_to_get[:num_downloads])
+            ]
+            for response in await asyncio.gather(*futures):
+                pass
+#                tqdm.write(f'Downloading ({i + 1}/{num_downloads}): {file_name}')
+
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(get_files())
