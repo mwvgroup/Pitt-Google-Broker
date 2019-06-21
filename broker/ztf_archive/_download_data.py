@@ -76,12 +76,13 @@ def get_local_alert_list():
     return [int(Path(f).with_suffix('').name) for f in glob(path_pattern)]
 
 
-def _download_alerts_file(file_name, out_path):
+def _download_alerts_file(file_name, out_path, block_size=1024):
     """Download a file from the ZTF Alerts Archive
 
     Args:
         file_name (str): Name of the file to download
         out_path  (str): The path where the downloaded file should be written
+        block_size (int): [optional] Size of progress-bar block
     """
 
     out_dir = Path(out_path).parent
@@ -93,7 +94,6 @@ def _download_alerts_file(file_name, out_path):
 
     # Get size of data to be downloaded
     total_size = int(file_data.headers.get('content-length', 0))
-    block_size = 1024
     iteration_number = np.ceil(total_size // block_size)
 
     # Construct progress bar iterable
