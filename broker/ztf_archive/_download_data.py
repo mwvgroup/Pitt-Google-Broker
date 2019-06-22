@@ -108,6 +108,7 @@ def _download_alerts_file(file_name, out_path, block_size=1024):
         for data in data_iterable:
             ofile.write(data)
 
+        tqdm.write(f'Download {file_name}')
         tqdm.write('Unzipping alert data...')
         ofile.seek(0)
         with tarfile.open(fileobj=ofile, mode='r:gz') as data:
