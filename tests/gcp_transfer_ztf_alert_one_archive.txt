@@ -1,0 +1,2 @@
+TsvHttpData-1.0
+https://ztf.uw.edu/alerts/public/ztf_public_20180622.tar.gz	3574512638	7ac66ca86553fe8f145c8d8599309f31
