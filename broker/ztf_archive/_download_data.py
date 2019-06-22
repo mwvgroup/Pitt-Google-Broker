@@ -173,8 +173,7 @@ def download_recent_data(max_downloads=1, stop_on_exist=False,
                     file_name,
                     os.path.join(DATA_DIR, file_name)
                 )
-                for file_name in files_to_get[:num_downloads]
-#                for i, file_name in enumerate(files_to_get[:num_downloads])
+                for file_name in files_to_get
             ]
             for response in await asyncio.gather(*futures):
                 pass
