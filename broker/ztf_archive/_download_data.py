@@ -136,8 +136,7 @@ def download_data_date(year, month, day):
     _download_alerts_file(file_name, out_path)
 
 
-def download_recent_data(max_downloads=1, stop_on_exist=False,
-                         max_workers=20):
+def download_recent_data(max_downloads=1, max_workers=20):
     """Download recent alert data from the ZTF alerts archive
 
     Data is downloaded in reverse chronological order. Skip releases that are
@@ -145,8 +144,6 @@ def download_recent_data(max_downloads=1, stop_on_exist=False,
 
     Args:
         max_downloads  (int): Number of daily releases to download (default: 1)
-        stop_on_exist (bool): Exit when encountering an alert that is already
-                               downloaded (Default: False)
     """
     import asyncio
     import concurrent.futures
@@ -154,6 +151,8 @@ def download_recent_data(max_downloads=1, stop_on_exist=False,
 
     local_file_list = get_local_release_list()
     remote_file_list = get_remote_release_list()
+    remote_file_list = remote_file_list[:max_downloads]
+
     files_to_get = set(remote_file_list) - set(local_file_list)
     # Rely on the lexigraphic sorting to be reverse chronological
     files_to_get = sorted(list(files_to_get), reverse=True)
