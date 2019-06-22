@@ -58,7 +58,7 @@ def get_local_release_list():
         A list of downloaded files from the ZTF Alerts Archive
     """
 
-    if not ALERT_LOG.exists():
+    if not os.path.exists(ALERT_LOG):
         return []
 
     with open(ALERT_LOG, 'r') as ofile:
