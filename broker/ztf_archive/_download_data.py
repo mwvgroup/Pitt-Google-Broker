@@ -61,8 +61,8 @@ def get_local_release_list():
     if not os.path.exists(ALERT_LOG):
         return []
 
-    with open(ALERT_LOG, 'r') as ofile:
-        return [line.strip() for line in ofile]
+    with open(ALERT_LOG, 'r') as infile:
+        return [line.strip() for line in infile]
 
 
 def get_local_alert_list():
