@@ -68,13 +68,9 @@ class DataDownload(TestCase):
 
         num_to_test = 10  # Number or releases to check
         file_names = release_list[0]
-        file_sizes = release_list[1]
         for filename in file_names[:num_to_test]:
             self.assertIsInstance(filename, str)
             self.assertTrue(filename.endswith('.tar.gz'))
-
-        for file_size in file_sizes[:num_to_test]:
-            self.assertIsInstance(file_size, int)
 
     def test_local_release_list(self):
         """Test ``get_local_release_list`` returns a list of filenames
@@ -85,7 +81,7 @@ class DataDownload(TestCase):
         Check filenames end with `.tar.gz`
         """
 
-        release_list = ztfa.get_remote_release_list()
+        release_list = ztfa.get_local_release_list()
         self.assertIsInstance(release_list, list)
         self.assertTrue(release_list)
         for filename in release_list[:10]:
