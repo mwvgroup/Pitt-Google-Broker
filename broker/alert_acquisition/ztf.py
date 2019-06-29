@@ -81,8 +81,8 @@ def map_alert_list_to_schema(alert_list):
         alert_list (iterable[dict]): Iterable of ZTF alert packets
 
     Returns:
-        A Dataframe with data for the BigQuery ``ztf.alert`` table
-        A Dataframe with data for the BigQuery ``ztf.candidate`` table
+        A DataFrame with data for the BigQuery ``ztf.alert`` table
+        A DataFrame with data for the BigQuery ``ztf.candidate`` table
     """
 
     alert_table, candidate_table, image_table = [], [], []
