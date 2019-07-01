@@ -3,6 +3,7 @@
 
 """This module downloads sample ZTF alerts from the ZTF alerts archive."""
 
+import os
 import shutil
 import tarfile
 from glob import glob
@@ -15,11 +16,10 @@ import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 
-FILE_DIR = Path(__file__).resolve().parent
-DATA_DIR = FILE_DIR / 'data'
-ALERT_LOG = DATA_DIR / 'alert_log.txt'
+ZTF_DATA_DIR = Path(os.environ['PGB_DATA_DIR']) / 'ztf_archive'
+ALERT_LOG = ZTF_DATA_DIR / 'alert_log.txt'
 ZTF_URL = "https://ztf.uw.edu/alerts/public/"
-makedirs(DATA_DIR, exist_ok=True)
+makedirs(ZTF_DATA_DIR, exist_ok=True)
 
 
 def get_remote_release_list():
@@ -69,7 +69,7 @@ def get_local_alert_list():
         A list of alert ID values as ints
     """
 
-    path_pattern = str(DATA_DIR / '*.avro')
+    path_pattern = str(ZTF_DATA_DIR / '*.avro')
     return [int(Path(f).with_suffix('').name) for f in glob(path_pattern)]
 
 
@@ -129,7 +129,7 @@ def download_data_date(year, month, day):
     file_name = f'ztf_public_{year}{month:02d}{day:02d}.tar.gz'
     tqdm.write(f'Downloading {file_name}')
 
-    out_path = DATA_DIR / file_name
+    out_path = ZTF_DATA_DIR / file_name
     _download_alerts_file(file_name, out_path)
 
 
@@ -161,7 +161,7 @@ def download_recent_data(max_downloads=1, stop_on_exist=False):
 
             continue
 
-        out_path = DATA_DIR / f_name
+        out_path = ZTF_DATA_DIR / f_name
         tqdm.write(f'Downloading ({i + 1}/{num_downloads}): {f_name}')
         _download_alerts_file(f_name, out_path)
 
@@ -169,5 +169,5 @@ def download_recent_data(max_downloads=1, stop_on_exist=False):
 def delete_local_data():
     """Delete any locally data downloaded fro the ZTF Public Alerts Archive"""
 
-    shutil.rmtree(DATA_DIR)
-    makedirs(DATA_DIR, exist_ok=True)
+    shutil.rmtree(ZTF_DATA_DIR)
+    makedirs(ZTF_DATA_DIR, exist_ok=True)

@@ -9,14 +9,14 @@ import gzip
 import io
 import os
 from glob import glob
+from pathlib import Path
 
 import aplpy
 import fastavro
 import matplotlib.pyplot as plt
 from astropy.io import fits
 
-FILE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(FILE_DIR, 'data')
+ZTF_DATA_DIR = Path(os.environ['PGB_DATA_DIR']) / 'ztf_archive'
 
 
 def _parse_alert_file(path, raw=False):
@@ -49,7 +49,7 @@ def get_alert_data(candid, raw=False):
         The file contents as a dictionary
     """
 
-    path = os.path.join(DATA_DIR, f'{candid}.avro')
+    path = os.path.join(ZTF_DATA_DIR, f'{candid}.avro')
     try:
         return _parse_alert_file(path, raw)
 
@@ -76,7 +76,7 @@ def iter_alerts(num_alerts=None, raw=False):
     if num_alerts and num_alerts <= 0:
         raise ValueError(err_msg)
 
-    path_pattern = os.path.join(DATA_DIR, '*.avro')
+    path_pattern = os.path.join(ZTF_DATA_DIR, '*.avro')
     file_list = glob(path_pattern)
     if not file_list:
         raise RuntimeError(
