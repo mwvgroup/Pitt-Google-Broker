@@ -5,15 +5,12 @@
 """
 
 import logging
-import os
 
 import google.cloud as gcp
 
 
 def setup_log(log_name, level='INFO'):
     """Create a logging object connected to google cloud
-
-    If ``RTD_BUILD`` is defined in the environment, return None
 
     Args:
         log_name (str): Name of the logger
@@ -22,9 +19,6 @@ def setup_log(log_name, level='INFO'):
     Returns:
         A Logger object, or None
     """
-
-    if 'RTD_BUILD' in os.environ:
-        return
 
     log = logging.Logger(log_name)
     log.setLevel(level)

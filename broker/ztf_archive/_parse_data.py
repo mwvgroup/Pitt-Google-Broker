@@ -16,7 +16,8 @@ import fastavro
 import matplotlib.pyplot as plt
 from astropy.io import fits
 
-ZTF_DATA_DIR = Path(os.environ['PGB_DATA_DIR']) / 'ztf_archive'
+if not os.environ.get('GPB_OFFLINE', False):
+    ZTF_DATA_DIR = Path(os.environ['PGB_DATA_DIR']) / 'ztf_archive'
 
 
 def _parse_alert_file(path, raw=False):

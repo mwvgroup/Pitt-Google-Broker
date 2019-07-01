@@ -17,5 +17,7 @@ from ._parse_data import get_alert_data
 from ._parse_data import iter_alerts
 from ._parse_data import plot_stamps
 
-if 'PGB_DATA_DIR' not in _os.environ:
-    raise RuntimeError("Variable 'PGB_DATA_DIR' not specified in environment")
+if not _os.environ.get('GPB_OFFLINE', False):
+    if 'PGB_DATA_DIR' not in _os.environ:
+        raise RuntimeError(
+            "Variable 'PGB_DATA_DIR' not specified in environment")
