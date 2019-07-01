@@ -16,11 +16,10 @@ import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 
-if not os.environ.get('GPB_OFFLINE', False):
-    ZTF_DATA_DIR = Path(os.environ['PGB_DATA_DIR']) / 'ztf_archive'
-    ALERT_LOG = ZTF_DATA_DIR / 'alert_log.txt'
-    ZTF_URL = "https://ztf.uw.edu/alerts/public/"
-    makedirs(ZTF_DATA_DIR, exist_ok=True)
+ZTF_DATA_DIR = Path(os.environ['PGB_DATA_DIR']) / 'ztf_archive'
+ALERT_LOG = ZTF_DATA_DIR / 'alert_log.txt'
+ZTF_URL = "https://ztf.uw.edu/alerts/public/"
+makedirs(ZTF_DATA_DIR, exist_ok=True)
 
 
 def get_remote_release_list():
