@@ -3,6 +3,9 @@ sudo: required
 dist: xenial
 python: "3.7"
 os: linux
+env:
+  - PGB_DATA_DIR=~/pgb_data_dir
+
 
 install:
   - python setup.py install
