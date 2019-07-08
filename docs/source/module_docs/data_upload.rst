@@ -5,9 +5,7 @@ broker.data_upload
 
 .. py:currentmodule:: broker.data_upload
 
-.. autofunction:: batch_ingest
-
-.. autofunction:: stream_ingest
+.. autofunction:: upload_to_bigquery
 
 .. autofunction:: upload_to_bucket
 

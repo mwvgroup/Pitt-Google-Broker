@@ -9,7 +9,11 @@ google-cloud-bigquery
 google-cloud-logging
 google-cloud-storage
 google-cloud-error-reporting
+<<<<<<< HEAD
 google-cloud-pubsub
+=======
+googleapis-common-protos
+>>>>>>> master
 google-resumable-media
 lxml
 matplotlib

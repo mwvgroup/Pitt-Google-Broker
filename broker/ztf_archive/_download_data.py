@@ -3,6 +3,7 @@
 
 """This module downloads sample ZTF alerts from the ZTF alerts archive."""
 
+import shutil
 import tarfile
 from glob import glob
 from os import makedirs
@@ -38,17 +39,13 @@ def get_remote_release_list():
     data_rows = soup_table.find_all("tr")[2:-1]
 
     # Create list of alert file names
-    file_list = []
+    file_names, file_sizes = [], []
     for row in data_rows:
         row_data = [td.get_text() for td in row.find_all("td")]
-        file_name = row_data[1]
-        file_size = row_data[3]
+        file_names.append(row_data[1])
+        file_sizes.append(row_data[3])
 
-        # Skip alerts that are empty
-        if file_size.strip() != '44':
-            file_list.append(file_name)
-
-    return file_list
+    return file_names, file_sizes
 
 
 def get_local_release_list():
@@ -88,6 +85,7 @@ def _download_alerts_file(file_name, out_path):
     if not out_dir.exists():
         makedirs(out_dir)
 
+    # noinspection PyUnresolvedReferences
     url = requests.compat.urljoin(ZTF_URL, file_name)
     file_data = requests.get(url, stream=True)
 
@@ -147,22 +145,29 @@ def download_recent_data(max_downloads=1, stop_on_exist=False):
                                downloaded (Default: False)
     """
 
-    file_list = get_remote_release_list()
-    num_downloads = min(max_downloads, len(file_list))
-    for i, file_name in enumerate(file_list):
+    file_names, file_sizes = get_remote_release_list()
+    num_downloads = min(max_downloads, len(file_names))
+    for i, (f_name, f_size) in enumerate(zip(file_names, file_sizes)):
         if i >= max_downloads:
             break
 
         # Skip download if data was already downloaded
-        if file_name in get_local_release_list():
+        if f_name in get_local_release_list():
             tqdm.write(
-                f'Already Downloaded ({i + 1}/{num_downloads}): {file_name}')
+                f'Already Downloaded ({i + 1}/{num_downloads}): {f_name}')
 
             if stop_on_exist:
                 return
 
             continue
 
-        out_path = DATA_DIR / file_name
-        tqdm.write(f'Downloading ({i + 1}/{num_downloads}): {file_name}')
-        _download_alerts_file(file_name, out_path)
+        out_path = DATA_DIR / f_name
+        tqdm.write(f'Downloading ({i + 1}/{num_downloads}): {f_name}')
+        _download_alerts_file(f_name, out_path)
+
+
+def delete_local_data():
+    """Delete any locally data downloaded fro the ZTF Public Alerts Archive"""
+
+    shutil.rmtree(DATA_DIR)
+    makedirs(DATA_DIR, exist_ok=True)

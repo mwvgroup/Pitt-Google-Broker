@@ -38,7 +38,7 @@ def _get_table_id(data_set, table):
     return f'{table_ref.dataset_id}.{table_ref.table_id}'
 
 
-def stream_ingest(data, data_set, table):
+def _stream_ingest(data, data_set, table):
     """Stream ingest a Pandas DataFrame into a BigQuery table
 
     If the table does not exist, create it.
@@ -59,7 +59,7 @@ def stream_ingest(data, data_set, table):
     )
 
 
-def batch_ingest(data, data_set, table):
+def _batch_ingest(data, data_set, table):
     """Batch upload a Pandas DataFrame into a BigQuery table
 
     Alert data may be temporarily written to disk. If the table does not
@@ -94,6 +94,52 @@ def batch_ingest(data, data_set, table):
         except KeyboardInterrupt:
             job.result()
             raise
+
+
+def upload_to_bigquery(data, data_set, table_name, method='batch', max_tries=2):
+    """Batch upload a Pandas DataFrame into a BigQuery table
+
+    If the upload fails, retry until success or until
+    max_tries is reached.
+
+    Args:
+        data (DataFrame): Data to upload to table
+        data_set   (str): The name of the data set
+        table_name (str): The name of the table
+        method     (str): The method upload name ('batch' or 'stream')
+        max_tries  (int): Maximum number of tries until error (Default: 2)
+    """
+
+    if method == 'batch':
+        upload_func = _batch_ingest
+
+    elif method == 'stream':
+        upload_func = _stream_ingest
+
+    else:
+        raise ValueError(f'Invalid upload method: {method}')
+
+    i = 0
+    while True:
+        if i >= max_tries:
+            break
+
+        try:
+            upload_func(data, data_set, table_name)
+
+        except KeyboardInterrupt:
+            raise
+
+        except Exception as e:
+            print(f'Error uploading to table {table_name}: {str(e)}')
+            print('Trying again...')
+            i += 1
+            continue
+
+        else:
+            return
+
+    raise RuntimeError('Could not upload data.')
 
 
 def upload_to_bucket(bucket_name, source_path, destination_name):

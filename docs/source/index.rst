@@ -15,7 +15,7 @@ cloud-based analysis opportunities with value-added data products.
 
 **Pitt Broker** is designed to run on the `Google Cloud Platform
 <https://cloud.google.com>`_ (GCP) and is currently focused on processing
-alerts from the `Zwicky Transient Factory <https://www.ztf.caltech.edu>`_
+alerts from the `Zwicky Transient Facility <https://www.ztf.caltech.edu>`_
 (ZTF) and the `LSST Alert Simulator
 <https://www.lsst.org/scientists/simulations/alertsim>`_ (AlertSim) as a
 testing ground.

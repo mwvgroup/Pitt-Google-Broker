@@ -5,6 +5,8 @@ broker.ztf_archive
 
 .. py:currentmodule:: broker.ztf_archive
 
+.. autofunction:: delete_local_data
+
 .. autofunction:: download_data_date
 
 .. autofunction:: download_recent_data

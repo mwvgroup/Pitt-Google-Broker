@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 
 """A cloud-based, alert distribution service designed to provide near
-real-time processing for alerts from the  Zwicky Transient Factory (ZTF) and
+real-time processing for alerts from the  Zwicky Transient Facility (ZTF) and
 the Large Synoptic Survey Telescope (LSST).
 """
 
