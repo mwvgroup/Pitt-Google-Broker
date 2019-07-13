@@ -174,40 +174,44 @@ def delete_local_data():
     DATA_DIR.makdir(exist_ok=True, parents=True)
 
 
-def create_ztf_sync_table(bucket_name, out_file=None):
+def create_ztf_sync_table(bucket_name=None, out_path=None):
     """Create a table for uploading ZTF releases to a GCP bucket
 
     Only include files not already present in the bucket
 
     Args:
         bucket_name (str): Name of the bucket to upload into
-        out_file    (str): Optional path to write table to
+        out_path    (str): Optionally write table to a txt file
     """
 
-    # Get existing files
-    storage_client = storage.Client()
-    bucket = storage_client.get_bucket(bucket_name)
-    existing_files = [blob.name for blob in bucket.list_blobs()]
-
     # Get new file urls to upload
-    all_releases = get_remote_release_md5()
-    is_new = ~np.isin(all_releases['file'], existing_files)
-    new_releases = all_releases[is_new]
+    release_table = get_remote_release_md5()
+
+    # Get existing files
+    if bucket_name:
+        storage_client = storage.Client()
+        bucket = storage_client.get_bucket(bucket_name)
+        existing_files = [blob.name for blob in bucket.list_blobs()]
+
+        is_new = ~np.isin(release_table['file'], existing_files)
+        release_table = release_table[is_new]
 
     # Get file sizes
     url_list, size_list = [], []
-    for file_name in new_releases['file']:
+    for file_name in release_table['file']:
         url = requests.compat.urljoin(ZTF_URL, file_name)
         file_size = requests.head(url).headers['Content-Length']
         url_list.append(url)
         size_list.append(file_size)
 
-    out_table = Table(data=[url_list, size_list, new_releases['md5']])
-    if out_file:
+    out_table = Table(data=[url_list, size_list, release_table['md5']])
+    if out_path:
+        out_path = Path(out_path).with_suffix('.txt')
+
         # Format for compatibility with GCP data transfer service
         out_table.meta['comments'] = ['TsvHttpData-1.0']
         out_table.write(
-            out_file,
+            out_path,
             format='ascii.no_header',
             delimiter='\t',
             overwrite=True,
