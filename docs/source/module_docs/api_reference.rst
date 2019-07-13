@@ -68,11 +68,14 @@ broker.ztf_archive
 
 .. autosummary::
 
-    download_data_date
-    download_recent_data
-    get_remote_release_list
-    get_local_release_list
-    get_local_alert_list
-    get_alert_data
-    iter_alerts
-    plot_stamps
+   archive_url
+   create_ztf_sync_table
+   delete_local_data
+   download_data_date
+   download_recent_data
+   get_alert_data
+   get_local_alert_list
+   get_local_release_list
+   get_remote_release_md5
+   iter_alerts
+   plot_stamps
