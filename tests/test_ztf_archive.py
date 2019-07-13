@@ -55,12 +55,10 @@ class DataDownload(TestCase):
         self.assertEqual(num_downloaded_alerts, self.expected_num_alerts)
 
     def test_remote_release_list(self):
-        """Test ``get_remote_release_list`` returns a list of filenames
+        """Test ``get_remote_release_md5`` returns a table of filenames
 
-        Check ``get_remote_release_list`` returns a list
-        Check the list is not empty
-        Check filenames are strings
-        Check filenames end with `.tar.gz`
+        Check the return is not empty
+        Check first ten filenames end with `.tar.gz`
         """
 
         release_list = ztfa.get_remote_release_list()
@@ -69,13 +67,12 @@ class DataDownload(TestCase):
         num_to_test = 10  # Number or releases to check
         file_names = release_list[0]
         for filename in file_names[:num_to_test]:
-            self.assertIsInstance(filename, str)
             self.assertTrue(filename.endswith('.tar.gz'))
 
     def test_local_release_list(self):
         """Test ``get_local_release_list`` returns a list of filenames
 
-        Check ``get_remote_release_list`` returns a list
+        Check ``get_remote_release_md5`` returns a list
         Check the list is not empty
         Check filenames are strings
         Check filenames end with `.tar.gz`
