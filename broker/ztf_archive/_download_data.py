@@ -3,49 +3,50 @@
 
 """This module downloads sample ZTF alerts from the ZTF alerts archive."""
 
+import os
 import shutil
 import tarfile
 from glob import glob
-from os import makedirs
 from pathlib import Path
 from tempfile import TemporaryFile
 
 import numpy as np
 import requests
-from bs4 import BeautifulSoup
+from astropy.table import Table
 from tqdm import tqdm
+
+from ..utils import setup_log
 
 FILE_DIR = Path(__file__).resolve().parent
 DATA_DIR = FILE_DIR / 'data'
 ALERT_LOG = DATA_DIR / 'alert_log.txt'
 ZTF_URL = "https://ztf.uw.edu/alerts/public/"
-makedirs(DATA_DIR, exist_ok=True)
+DATA_DIR.makdir(exist_ok=True, parents=True)
+
+if 'RTD_BUILD' not in os.environ:
+    from google.cloud import error_reporting, storage
+
+    error_client = error_reporting.Client()
+    log = setup_log('data_upload')
 
 
-def get_remote_release_list():
+def get_remote_release_md5():
     """Get a list of published ZTF data releases from the ZTF Alerts Archive
 
     Returns:
         A list of file names for alerts published on the ZTF Alerts Archive
     """
 
-    # Get html table from page source
-    page_source = str(requests.get(ZTF_URL).content)
-    soup = BeautifulSoup(page_source, features='lxml')
-    soup_table = soup.find("table", attrs={"id": "indexlist"})
+    # Get MD5 values
+    md5_url = requests.compat.urljoin(ZTF_URL, 'MD5SUMS')
+    md5_table = requests.get(md5_url).content.decode()
 
-    # Get table rows with data - Ignore first header row. The second and last
-    # rows are empty so are also ignored
-    data_rows = soup_table.find_all("tr")[2:-1]
+    out_table = Table(
+        names=['url', 'md5'],
+        dtype=['U1000', 'U32'],
+        rows=[row.split() for row in md5_table.split('\n')[:-1]])
 
-    # Create list of alert file names
-    file_names, file_sizes = [], []
-    for row in data_rows:
-        row_data = [td.get_text() for td in row.find_all("td")]
-        file_names.append(row_data[1])
-        file_sizes.append(row_data[3])
-
-    return file_names, file_sizes
+    return out_table
 
 
 def get_local_release_list():
@@ -83,7 +84,7 @@ def _download_alerts_file(file_name, out_path):
 
     out_dir = Path(out_path).parent
     if not out_dir.exists():
-        makedirs(out_dir)
+        out_dir.makedir(existok=True, parents=True)
 
     # noinspection PyUnresolvedReferences
     url = requests.compat.urljoin(ZTF_URL, file_name)
@@ -145,9 +146,9 @@ def download_recent_data(max_downloads=1, stop_on_exist=False):
                                downloaded (Default: False)
     """
 
-    file_names, file_sizes = get_remote_release_list()
+    file_names = get_remote_release_md5()['File']
     num_downloads = min(max_downloads, len(file_names))
-    for i, (f_name, f_size) in enumerate(zip(file_names, file_sizes)):
+    for i, f_name in enumerate(file_names):
         if i >= max_downloads:
             break
 
@@ -170,4 +171,46 @@ def delete_local_data():
     """Delete any locally data downloaded fro the ZTF Public Alerts Archive"""
 
     shutil.rmtree(DATA_DIR)
-    makedirs(DATA_DIR, exist_ok=True)
+    DATA_DIR.makdir(exist_ok=True, parents=True)
+
+
+def create_ztf_sync_table(bucket_name, out_file=None):
+    """Create a table for uploading ZTF releases to a GCP bucket
+
+    Only include files not already present in the bucket
+
+    Args:
+        bucket_name (str): Name of the bucket to upload into
+        out_file    (str): Optional path to write table to
+    """
+
+    # Get existing files
+    storage_client = storage.Client()
+    bucket = storage_client.get_bucket(bucket_name)
+    existing_files = [blob.name for blob in bucket.list_blobs()]
+
+    # Get new file urls to upload
+    all_releases = get_remote_release_md5()
+    is_new = ~np.isin(all_releases['file'], existing_files)
+    new_releases = all_releases[is_new]
+
+    # Get file sizes
+    url_list, size_list = [], []
+    for file_name in new_releases['file']:
+        url = requests.compat.urljoin(ZTF_URL, file_name)
+        file_size = requests.head(url).headers['Content-Length']
+        url_list.append(url)
+        size_list.append(file_size)
+
+    out_table = Table(data=[url_list, size_list, new_releases['md5']])
+    if out_file:
+        # Format for compatibility with GCP data transfer service
+        out_table.meta['comments'] = ['TsvHttpData-1.0']
+        out_table.write(
+            out_file,
+            format='ascii.no_header',
+            delimiter='\t',
+            overwrite=True,
+            comment='')
+
+    return out_table
