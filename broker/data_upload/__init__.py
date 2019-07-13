@@ -6,7 +6,4 @@ into GCP. Please refer to the official GCP documentation for up to date
 information on the pricing models associated with various data upload services.
 """
 
-from ._ingest_alerts import _batch_ingest
-from ._ingest_alerts import get_schema
-from ._ingest_alerts import _stream_ingest
-from ._ingest_alerts import upload_to_bucket
+from ._ingest_alerts import upload_to_bigquery, upload_to_bucket

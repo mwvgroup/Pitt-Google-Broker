@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-"""Parse ZTF alerts and add them to the project database."""
+"""This module handles the uploading of generic gata into bigquery."""
 
 import os
 from tempfile import NamedTemporaryFile
@@ -11,10 +11,9 @@ import pandavro as pdx
 from ..utils import setup_log
 
 if 'RTD_BUILD' not in os.environ:
-    from google.cloud import error_reporting, bigquery, storage
+    from google.cloud import error_reporting, bigquery
 
     error_client = error_reporting.Client()
-    bq_client = bigquery.Client()
     log = setup_log('data_upload')
 
 
@@ -29,6 +28,7 @@ def _get_table_id(data_set, table):
         The name of the specified table as a string
     """
 
+    bq_client = bigquery.Client()
     table_ref = bq_client.dataset(data_set).table(table)
     return f'{table_ref.dataset_id}.{table_ref.table_id}'
 
@@ -73,6 +73,7 @@ def _batch_ingest(data, data_set, table):
     # Get tables to store data
     table_id = _get_table_id(data_set, table)
 
+    bq_client = bigquery.Client()
     with NamedTemporaryFile() as source_file:
         pdx.to_avro(source_file.name, data)
 
@@ -92,18 +93,17 @@ def _batch_ingest(data, data_set, table):
 
 
 def upload_to_bigquery(data, data_set, table_name, method='batch',
-                       max_tries=2):
+                       max_tries=1, verbose=True):
     """Batch upload a Pandas DataFrame into a BigQuery table
 
-    If the upload fails, retry until success or until
-    max_tries is reached.
+    If the upload fails, retry until success or until max_tries is reached.
 
     Args:
         data (DataFrame): Data to upload to table
         data_set   (str): The name of the data set
         table_name (str): The name of the table
         method     (str): The method upload name ('batch' or 'stream')
-        max_tries  (int): Maximum number of tries until error (Default: 2)
+        max_tries  (int): Maximum number of tries until error (Default: 1)
     """
 
     if method == 'batch':
@@ -115,10 +115,9 @@ def upload_to_bigquery(data, data_set, table_name, method='batch',
     else:
         raise ValueError(f'Invalid upload method: {method}')
 
-    i = 0
-    while True:
+    for i in range(max_tries):
         if i >= max_tries:
-            break
+            raise RuntimeError('Could not upload data. Max tries exceeded.')
 
         try:
             upload_func(data, data_set, table_name)
@@ -127,15 +126,11 @@ def upload_to_bigquery(data, data_set, table_name, method='batch',
             raise
 
         except Exception as e:
-            print(f'Error uploading to table {table_name}: {str(e)}')
-            print('Trying again...')
-            i += 1
+            if verbose:
+                print(f'Error uploading to table {table_name}: {str(e)}')
+                print('Trying again...')
+
             continue
-
-        else:
-            return
-
-    raise RuntimeError('Could not upload data.')
 
 
 def upload_to_bucket(bucket_name, source_path, destination_name):
@@ -151,9 +146,3 @@ def upload_to_bucket(bucket_name, source_path, destination_name):
     bucket = storage_client.get_bucket(bucket_name)
     blob = bucket.blob(destination_name)
     blob.upload_from_filename(source_path)
-
-
-def sync_ztf_archive(bucket_name):
-    """Synchronize a GCP bucket against the ZTF public alerts archive"""
-
-    pass
