@@ -19,7 +19,7 @@ iteratively in reverse chronological order.
    from broker import ztf_archive as ztfa
 
    # Get a list of files available on the ZTF Alerts Archive
-   file_names, file_sizes = ztfa.get_remote_release_md5()
+   file_names, file_sizes = ztfa.get_remote_md5_table()
    print(file_names)
 
    # Download data from the ZTF archive for a given day.

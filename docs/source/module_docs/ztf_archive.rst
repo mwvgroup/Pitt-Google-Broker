@@ -13,6 +13,6 @@ broker.ztf_archive
 .. autofunction:: get_alert_data
 .. autofunction:: get_local_alert_list
 .. autofunction:: get_local_release_list
-.. autofunction:: get_remote_release_md5
+.. autofunction:: get_remote_md5_table
 .. autofunction:: iter_alerts
 .. autofunction:: plot_stamps

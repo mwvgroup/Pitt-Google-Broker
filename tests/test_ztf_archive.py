@@ -41,64 +41,40 @@ class DataDownload(TestCase):
 
         cls.temp_dir.cleanup()
 
-    def test_download_date(self):
-        """Test ``download_data_date``
-
-        Check the downloaded filename is in ztfa.get_local_release_list()
-        Check the correct number of alerts were unzipped
-        """
-
-        success = self.file_name in ztfa.get_local_release_list()
-        self.assertTrue(success, 'Expected filename not in local release list')
+    def test_alert_list(self):
+        """Test the correct number of alerts were reported"""
 
         num_downloaded_alerts = len(ztfa.get_local_alert_list())
         self.assertEqual(num_downloaded_alerts, self.expected_num_alerts)
 
-    def test_remote_release_list(self):
-        """Test ``get_remote_release_md5`` returns a table of filenames
-
-        Check the return is not empty
-        Check first ten filenames end with `.tar.gz`
-        """
-
-        release_list = ztfa.get_remote_release_list()
-        self.assertTrue(release_list)
-
-        num_to_test = 10  # Number or releases to check
-        file_names = release_list[0]
-        for filename in file_names[:num_to_test]:
-            self.assertTrue(filename.endswith('.tar.gz'))
-
     def test_local_release_list(self):
         """Test ``get_local_release_list`` returns a list of filenames
 
-        Check ``get_remote_release_md5`` returns a list
-        Check the list is not empty
-        Check filenames are strings
-        Check filenames end with `.tar.gz`
+        Check ``get_local_release_list`` returns a list
+        Check correct file name(s) are in that list
+        Check first list entry is strings and ends with `.tar.gz`
         """
 
         release_list = ztfa.get_local_release_list()
         self.assertIsInstance(release_list, list)
-        self.assertTrue(release_list)
-        for filename in release_list[:10]:
-            self.assertIsInstance(filename, str)
-            self.assertTrue(filename.endswith('.tar.gz'))
+        self.assertIn(self.file_name, ztfa.get_local_release_list(),
+                      'Expected filename not in local release list')
 
-    def test_local_alerts(self):
-        """Test ``get_local_alert_list`` returns a list integers
+        self.assertIsInstance(release_list[0], str)
+        self.assertTrue(release_list[0].endswith('.tar.gz'))
 
-        Check ``get_local_alert_list`` returns a list
+    def test_local_alert_list(self):
+        """Test ``get_local_alert_list``
+
+        Check the return a list
         Check the list is not empty
-        Check alert IDs are integers
-        Check alert IDs are greater than
+        Check first entry is an integer
         """
 
         alert_list = ztfa.get_local_alert_list()
         self.assertIsInstance(alert_list, list)
         self.assertTrue(alert_list)
-        for alert_id in alert_list[:10]:
-            self.assertIsInstance(alert_id, int)
+        self.assertIsInstance(alert_list[0], int)
 
     def test_iter_alerts(self):
         """Test ``iter_alerts`` returns an appropriately sized list of dicts"""

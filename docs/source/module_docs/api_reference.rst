@@ -76,6 +76,6 @@ broker.ztf_archive
    get_alert_data
    get_local_alert_list
    get_local_release_list
-   get_remote_release_md5
+   get_remote_md5_table
    iter_alerts
    plot_stamps

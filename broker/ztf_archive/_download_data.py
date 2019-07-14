@@ -30,7 +30,7 @@ if 'RTD_BUILD' not in os.environ:
     log = setup_log('data_upload')
 
 
-def get_remote_release_md5():
+def get_remote_md5_table():
     """Get a list of published ZTF data releases from the ZTF Alerts Archive
 
     Returns:
@@ -146,7 +146,7 @@ def download_recent_data(max_downloads=1, stop_on_exist=False):
                                downloaded (Default: False)
     """
 
-    file_names = get_remote_release_md5()['File']
+    file_names = get_remote_md5_table()['File']
     num_downloads = min(max_downloads, len(file_names))
     for i, f_name in enumerate(file_names):
         if i >= max_downloads:
@@ -185,7 +185,7 @@ def create_ztf_sync_table(bucket_name=None, out_path=None):
     """
 
     # Get new file urls to upload
-    release_table = get_remote_release_md5()
+    release_table = get_remote_md5_table()
 
     # Get existing files
     if bucket_name:
