@@ -21,7 +21,7 @@ FILE_DIR = Path(__file__).resolve().parent
 DATA_DIR = FILE_DIR / 'data'
 ALERT_LOG = DATA_DIR / 'alert_log.txt'
 ZTF_URL = "https://ztf.uw.edu/alerts/public/"
-DATA_DIR.makdir(exist_ok=True, parents=True)
+DATA_DIR.mkdir(exist_ok=True, parents=True)
 
 if 'RTD_BUILD' not in os.environ:
     from google.cloud import error_reporting, storage
@@ -171,7 +171,7 @@ def delete_local_data():
     """Delete any locally data downloaded fro the ZTF Public Alerts Archive"""
 
     shutil.rmtree(DATA_DIR)
-    DATA_DIR.makdir(exist_ok=True, parents=True)
+    DATA_DIR.mkdir(exist_ok=True, parents=True)
 
 
 def create_ztf_sync_table(bucket_name=None, out_path=None):

@@ -9,37 +9,38 @@ from unittest import TestCase
 
 from broker import ztf_archive as ztfa
 
+temp_dir = TemporaryDirectory()
 
-class DataDownload(TestCase):
-    """Test the downloading and parsing of ZTF data."""
+# Metadata about the data downloaded by this test
+test_date = (2018, 6, 26)
+file_name = 'ztf_public_20180626.tar.gz'
+expected_num_alerts = 23553
 
-    @classmethod
-    def setUpClass(cls):
-        """Create a temporary directory and download alerts from 6/26/2018"""
 
-        cls.temp_dir = TemporaryDirectory()
-        temp_dir_path = Path(cls.temp_dir.name)
-        ztfa._parse_data.DATA_DIR = temp_dir_path
-        ztfa._download_data.DATA_DIR = temp_dir_path
-        ztfa._download_data.ALERT_LOG = temp_dir_path / 'alert_log.txt'
+def setUpModule():
+    """Download data to the local machine"""
 
-        # Metadata about the data downloaded by this test
-        test_date = (2018, 6, 26)
-        cls.file_name = 'ztf_public_20180626.tar.gz'
-        cls.expected_num_alerts = 23553
+    temp_dir_path = Path(temp_dir.name)
+    ztfa._parse_data.DATA_DIR = temp_dir_path
+    ztfa._download_data.DATA_DIR = temp_dir_path
+    ztfa._download_data.ALERT_LOG = temp_dir_path / 'alert_log.txt'
 
-        try:
-            ztfa.download_data_date(*test_date)
+    try:
+        ztfa.download_data_date(*test_date)
 
-        except:
-            cls.temp_dir.cleanup()
-            raise
+    except:
+        temp_dir.cleanup()
+        raise
 
-    @classmethod
-    def tearDownClass(cls):
-        """Remove any data downloaded during testing"""
 
-        cls.temp_dir.cleanup()
+def tearDownModule():
+    """Delete downloaded data from the local machine"""
+
+    temp_dir.cleanup()
+
+
+class DownloadLogging(TestCase):
+    """Test the logging of downloaded ZTF data."""
 
     def test_alert_list(self):
         """Test the correct number of alerts were reported"""
@@ -75,6 +76,10 @@ class DataDownload(TestCase):
         self.assertIsInstance(alert_list, list)
         self.assertTrue(alert_list)
         self.assertIsInstance(alert_list[0], int)
+
+
+class DataParsing(TestCase):
+    """Test the parsing of ZTF data."""
 
     def test_iter_alerts(self):
         """Test ``iter_alerts`` returns an appropriately sized list of dicts"""
