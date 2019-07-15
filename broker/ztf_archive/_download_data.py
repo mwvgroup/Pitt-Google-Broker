@@ -222,8 +222,6 @@ def create_ztf_sync_table(bucket_name=None, out_path=None, verbose=False):
     out_table['file_size'] = size_list
 
     if out_path:
-        out_path = Path(out_path).with_suffix('.txt')
-
         # Format for compatibility with GCP data transfer service
         out_table.meta['comments'] = ['TsvHttpData-1.0']
         out_table.write(
