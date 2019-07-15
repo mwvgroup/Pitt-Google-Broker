@@ -80,7 +80,7 @@ def get_local_alert_list(return_iter=False):
         return data_iter
 
     else:
-        return list(return_iter)
+        return list(data_iter)
 
 
 def _download_alerts_file(file_name, out_path):
