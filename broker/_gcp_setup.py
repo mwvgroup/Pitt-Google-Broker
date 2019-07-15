@@ -42,10 +42,12 @@ def _setup_buckets():
     # Create bucket names
     project_id = os.environ['BROKER_PROJ_ID']
     logging_name = f'{project_id}_logging_bucket'
-    ztf_image_name = f'{project_id}_logging_bucket'
+    alert_avro_name = f'{project_id}_alert_avro_bucket'
+    release_tar_name = f'{project_id}_release_tar_bucket'
+    buckets = (logging_name, alert_avro_name, release_tar_name)
 
     # Create buckets if the do not exist
-    for bucket_name in (logging_name, ztf_image_name):
+    for bucket_name in buckets:
         try:
             storage_client.get_bucket(bucket_name)
 
