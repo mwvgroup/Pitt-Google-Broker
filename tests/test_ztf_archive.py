@@ -12,9 +12,9 @@ from broker import ztf_archive as ztfa
 temp_dir = TemporaryDirectory()
 
 # Metadata about the data downloaded by this test
-test_date = (2018, 6, 26)
-file_name = 'ztf_public_20180626.tar.gz'
-expected_num_alerts = 23553
+TEST_DATE = (2018, 6, 26)
+TEST_FILE_NAME = 'ztf_public_20180626.tar.gz'
+NUM_TEST_ALERTS = 23553
 
 
 def setUpModule():
@@ -26,7 +26,7 @@ def setUpModule():
     ztfa._download_data.ALERT_LOG = temp_dir_path / 'alert_log.txt'
 
     try:
-        ztfa.download_data_date(*test_date)
+        ztfa.download_data_date(*TEST_DATE)
 
     except:
         temp_dir.cleanup()
@@ -43,13 +43,16 @@ class DownloadLogging(TestCase):
     """Test the logging of downloaded ZTF data."""
 
     def test_alert_list(self):
-        """Test the correct number of alerts were reported"""
+        """Test ``get_local_alert_list``
+
+        Check the correct number of alerts are returned
+        """
 
         num_downloaded_alerts = len(ztfa.get_local_alert_list())
-        self.assertEqual(num_downloaded_alerts, self.expected_num_alerts)
+        self.assertEqual(num_downloaded_alerts, NUM_TEST_ALERTS)
 
     def test_local_release_list(self):
-        """Test ``get_local_release_list`` returns a list of filenames
+        """Test ``get_local_release_list``
 
         Check ``get_local_release_list`` returns a list
         Check correct file name(s) are in that list
@@ -58,10 +61,10 @@ class DownloadLogging(TestCase):
 
         release_list = ztfa.get_local_release_list()
         self.assertIsInstance(release_list, list)
-        self.assertIn(self.file_name, ztfa.get_local_release_list(),
-                      'Expected filename not in local release list')
+        self.assertSequenceEqual(
+            [TEST_FILE_NAME], release_list,
+            'Expected filename not in local release list')
 
-        self.assertIsInstance(release_list[0], str)
         self.assertTrue(release_list[0].endswith('.tar.gz'))
 
     def test_local_alert_list(self):
