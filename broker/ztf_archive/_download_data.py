@@ -42,11 +42,11 @@ def get_remote_md5_table():
     md5_table = requests.get(md5_url).content.decode()
 
     out_table = Table(
-        names=['url', 'md5'],
-        dtype=['U1000', 'U32'],
+        names=['md5', 'file'],
+        dtype=['U32', 'U1000'],
         rows=[row.split() for row in md5_table.split('\n')[:-1]])
 
-    return out_table
+    return out_table['file', 'md5']
 
 
 def get_local_release_list():
@@ -63,15 +63,24 @@ def get_local_release_list():
         return [line.strip() for line in ofile]
 
 
-def get_local_alert_list():
+def get_local_alert_list(return_iter=False):
     """Return a list of alert ids for all downloaded alert data
+
+    Args:
+        return_iter (bool): Return an iterator instead of a list (Default: False)
 
     Returns:
         A list of alert ID values as ints
     """
 
     path_pattern = str(DATA_DIR / '*.avro')
-    return [int(Path(f).with_suffix('').name) for f in glob(path_pattern)]
+    data_iter = (int(Path(f).stem) for f in glob(path_pattern))
+
+    if return_iter:
+        return data_iter
+
+    else:
+        return list(return_iter)
 
 
 def _download_alerts_file(file_name, out_path):
@@ -174,7 +183,7 @@ def delete_local_data():
     DATA_DIR.mkdir(exist_ok=True, parents=True)
 
 
-def create_ztf_sync_table(bucket_name=None, out_path=None):
+def create_ztf_sync_table(bucket_name=None, out_path=None, verbose=False):
     """Create a table for uploading ZTF releases to a GCP bucket
 
     Only include files not already present in the bucket
@@ -186,6 +195,7 @@ def create_ztf_sync_table(bucket_name=None, out_path=None):
 
     # Get new file urls to upload
     release_table = get_remote_md5_table()
+    out_table = Table(release_table['md5'])
 
     # Get existing files
     if bucket_name:
@@ -196,15 +206,21 @@ def create_ztf_sync_table(bucket_name=None, out_path=None):
         is_new = ~np.isin(release_table['file'], existing_files)
         release_table = release_table[is_new]
 
+    files = release_table['file']
+    if verbose:
+        files = tqdm(files, desc='Requesting file sizes')
+
     # Get file sizes
     url_list, size_list = [], []
-    for file_name in release_table['file']:
+    for file_name in files:
         url = requests.compat.urljoin(ZTF_URL, file_name)
         file_size = requests.head(url).headers['Content-Length']
         url_list.append(url)
         size_list.append(file_size)
 
-    out_table = Table(data=[url_list, size_list, release_table['md5']])
+    out_table['url'] = url_list
+    out_table['file_size'] = size_list
+
     if out_path:
         out_path = Path(out_path).with_suffix('.txt')
 
