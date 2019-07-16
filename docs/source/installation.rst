@@ -49,9 +49,17 @@ The ``broker`` package will automatically check whether these variables are
 defined in its working environment. If either variable is not found, a warning
 will be raised on import.
 
+Various features of the ``broker`` package support downloading astronomical
+data on to your local machine. You will also need to specify this directory in
+you `.bash_profile` or `.bashrc` file:
+
+.. code:: bash
+
+    export PGB_DATA_DIR="~/some/directory/name/"
+
 
 Installation With Conda
---------------------------
+-----------------------
 
 If you would like to work in a dedicated conda environment, the steps are very
 similar:
@@ -85,11 +93,13 @@ achieved by running the following after replacing ``YOUR_PROJECT_ID`` and
    # Add environmental variables
    echo 'export BROKER_PROJ_ID="YOUR_PROJECT_ID"' >> ./etc/conda/activate.d/env_vars.sh
    echo 'export GOOGLE_APPLICATION_CREDENTIALS="PATH_TO_JSON_CREDENTIALS"' >> ./etc/conda/activate.d/env_vars.sh
+   echo 'export PGB_DATA_DIR="~/some/directory/name/"' >> ./etc/conda/activate.d/env_vars.sh
 
    echo 'unset BROKER_PROJ_ID' >> ./etc/conda/deactivate.d/env_vars.sh
    echo 'unset GOOGLE_APPLICATION_CREDENTIALS' >> ./etc/conda/deactivate.d/env_vars.sh
+   echo 'unset PGB_DATA_DIR' >> ./etc/conda/deactivate.d/env_vars.sh
 
-Finally, don't forget to exit your environment
+Finally, don't forget to exit your environment:
 
 .. code:: bash
 
