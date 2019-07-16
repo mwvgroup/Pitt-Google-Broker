@@ -16,7 +16,12 @@ import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 
-ZTF_DATA_DIR = Path(os.environ['PGB_DATA_DIR']) / 'ztf_archive'
+if 'PGB_DATA_DIR' in os.environ:
+    ZTF_DATA_DIR = Path(os.environ['PGB_DATA_DIR']) / 'ztf_archive'
+
+else:
+    ZTF_DATA_DIR = Path(__file__).resolve().parent / 'data'
+
 ALERT_LOG = ZTF_DATA_DIR / 'alert_log.txt'
 ZTF_URL = "https://ztf.uw.edu/alerts/public/"
 makedirs(ZTF_DATA_DIR, exist_ok=True)

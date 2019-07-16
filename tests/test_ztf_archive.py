@@ -70,7 +70,6 @@ class DataDownload(TestCase):
         file_names = release_list[0]
         for filename in file_names[:num_to_test]:
             self.assertIsInstance(filename, str)
-            self.assertTrue(filename.endswith('.tar.gz'))
 
     def test_local_release_list(self):
         """Test ``get_local_release_list`` returns a list of filenames
