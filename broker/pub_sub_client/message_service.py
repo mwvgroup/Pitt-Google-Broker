@@ -26,7 +26,7 @@ def publish_alerts(project_id, topic_name, alerts):
         
         pickled = pickle.dumps(alert)
     
-        future = publisher.publish(topic_path, data=pickled)
+        publisher.publish(topic_path, data=pickled)
 
 
 def subscribe_alerts(project_id, subscription_name, max_alerts=1):

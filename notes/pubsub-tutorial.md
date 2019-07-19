@@ -2,6 +2,13 @@
 
 ## Initial Setup
 
+You'll need to install some additional requirements to use Pub/Sub. The main requirement is the `pubsub_v1` package, installable via
+
+``` bash
+pip install google-cloud-pubsub
+```
+If you want to use the gcloud commands listed below *without* accessing the Google Cloud Platform webpage online, you'll need to install gcloud via this webpage: https://cloud.google.com/sdk/. Otherwise, you can use the Python-based commands instead.
+
 Create a project in Google Cloud Platform after starting the $300 trial. **Take note of the project number.**
 
 You'll need to activate your APIs/Services and get an authentication JSON file:

@@ -5,6 +5,7 @@
 the ZTF Public Alerts Archive.
 """
 
+from ._download_data import delete_local_data
 from ._download_data import download_data_date
 from ._download_data import download_recent_data
 from ._download_data import get_local_alert_list
