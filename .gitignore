@@ -125,3 +125,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
+# Troy's files
+/troy_papers/*
+GCPauth_Pitt-Broker-96bbb9222867.json
+GCPauth_pitt-google-broker-prototype-0679b75dded0.json
