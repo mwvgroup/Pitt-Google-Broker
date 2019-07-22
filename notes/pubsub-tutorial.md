@@ -145,7 +145,7 @@ for received_message in response.received_messages:
 # Acknowledges the received messages so they will not be sent again.
 subscriber.acknowledge(subscription_path, ack_ids)
 
-print("Received and acknowledged {} messages. Done.".format(len(ack_ids))
+print("Received and acknowledged {} messages. Done.".format(len(ack_ids)))
 ```
 Via GCP Console Commands:
 
