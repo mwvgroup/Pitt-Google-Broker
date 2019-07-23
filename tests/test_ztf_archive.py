@@ -19,8 +19,8 @@ class DataDownload(TestCase):
 
         cls.temp_dir = TemporaryDirectory()
         temp_dir_path = Path(cls.temp_dir.name)
-        ztfa._parse_data.DATA_DIR = temp_dir_path
-        ztfa._download_data.DATA_DIR = temp_dir_path
+        ztfa._parse_data.ZTF_DATA_DIR = temp_dir_path
+        ztfa._download_data.ZTF_DATA_DIR = temp_dir_path
         ztfa._download_data.ALERT_LOG = temp_dir_path / 'alert_log.txt'
 
         # Metadata about the data downloaded by this test
@@ -70,7 +70,6 @@ class DataDownload(TestCase):
         file_names = release_list[0]
         for filename in file_names[:num_to_test]:
             self.assertIsInstance(filename, str)
-            self.assertTrue(filename.endswith('.tar.gz'))
 
     def test_local_release_list(self):
         """Test ``get_local_release_list`` returns a list of filenames
