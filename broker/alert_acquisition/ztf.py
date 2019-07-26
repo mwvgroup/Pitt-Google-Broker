@@ -13,10 +13,7 @@ from ..utils import RTDSafeImport, setup_log
 from ..ztf_archive import iter_alerts
 
 with RTDSafeImport():
-    from google.cloud import error_reporting
-
-    error_client = error_reporting.Client()
-    log = setup_log('ztf_acquisition')
+    error_client, log = setup_log('ztf_acquisition')
 
 SCHEMA_DIR = Path(__file__).resolve().parent / 'schema'
 

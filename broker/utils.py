@@ -45,9 +45,11 @@ def setup_log(log_name, level='INFO'):
         level    (str): Reporting level for the log
 
     Returns:
+        A GCP error client
         A Logger object, or None
     """
 
+    err_client = gcp.error_reporting.Client()
     log = logging.Logger(log_name)
     log.setLevel(level)
 
@@ -56,4 +58,4 @@ def setup_log(log_name, level='INFO'):
     handler = logging_client.get_default_handler()
     log.addHandler(handler)
 
-    return log
+    return err_client, log

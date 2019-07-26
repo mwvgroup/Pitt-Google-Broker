@@ -11,10 +11,9 @@ import pandavro as pdx
 from ..utils import RTDSafeImport, setup_log
 
 with RTDSafeImport():
-    from google.cloud import error_reporting, bigquery, storage
+    from google.cloud import bigquery, storage
 
-    error_client = error_reporting.Client()
-    log = setup_log('data_upload')
+    error_client, log = setup_log('data_upload')
 
 
 def _get_table_id(data_set, table):
