@@ -54,8 +54,8 @@ class DownloadLogging(TestCase):
     def test_local_release_list(self):
         """Test ``get_local_release_list``
 
-        Check ``get_local_release_list`` returns a list
-        Check correct file name(s) are in that list
+        Check ``get_local_release_list`` returns a generator
+        Check correct releases are in that list
         """
 
         releases = ztfa.get_local_releases()
@@ -67,8 +67,7 @@ class DownloadLogging(TestCase):
     def test_local_alert_list(self):
         """Test ``get_local_alert_list``
 
-        Check the return a list
-        Check the list is not empty
+        Check the return a generator
         Check first entry is an integer
         """
 

@@ -7,8 +7,6 @@ the ZTF alerts tutorial: https://goo.gl/TsyEjx
 
 import gzip
 import io
-import os
-from glob import glob
 
 import aplpy
 import fastavro
@@ -16,6 +14,7 @@ import matplotlib.pyplot as plt
 from astropy.io import fits
 
 from ..utils import get_ztf_data_dir
+from ._download_data import get_local_alerts
 
 ZTF_DATA_DIR = get_ztf_data_dir()
 
@@ -50,7 +49,7 @@ def get_alert_data(alertid, raw=False):
         The file contents as a dictionary
     """
 
-    path = os.path.join(ZTF_DATA_DIR, f'{alertid}.avro')
+    path = next(ZTF_DATA_DIR.glob(f'*/{alertid}.avro'))
     try:
         return _parse_alert_file(path, raw)
 
@@ -77,23 +76,17 @@ def iter_alerts(num_alerts=None, raw=False):
     if num_alerts and num_alerts <= 0:
         raise ValueError(err_msg)
 
-    path_pattern = os.path.join(ZTF_DATA_DIR, '*.avro')
-    file_list = glob(path_pattern)
-    if not file_list:
-        raise RuntimeError(
-            "No local alert data found. Please run 'download_data' first.")
-
     # Return individual alerts
     if num_alerts is None:
-        for file_path in file_list:
-            yield _parse_alert_file(file_path, raw)
+        for alert_id in get_local_alerts():
+            yield get_alert_data(alert_id, raw)
 
         return
 
     # Return alerts as list
     alerts_list = []
-    for file_path in file_list:
-        alerts_list.append(_parse_alert_file(file_path, raw))
+    for alert_id in get_local_alerts():
+        alerts_list.append(get_alert_data(alert_id, raw))
         if len(alerts_list) >= num_alerts:
             yield alerts_list
             alerts_list = []
