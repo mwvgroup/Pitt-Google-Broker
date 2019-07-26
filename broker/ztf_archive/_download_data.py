@@ -81,8 +81,8 @@ def _download_alerts_file(file_name, out_dir, block_size, verbose):
     Args:
         file_name  (str): Name of the file to download
         out_dir    (str): The directory where the file should be downloaded to
-        block_size (int): Block size to use for large files (Default: 1024)
-        verbose   (bool): Display a progress bar (Default: True)
+        block_size (int): Block size to use for large files
+        verbose   (bool): Display a progress bar
     """
 
     # noinspection PyUnresolvedReferences
@@ -116,15 +116,17 @@ def _download_alerts_file(file_name, out_dir, block_size, verbose):
         ofile.write(file_name)
 
 
-def download_data_date(year, month, day, block_size=1024, verbose=False):
+def download_data_date(year, month, day, block_size=1024, verbose=True):
     """Download ZTF alerts for a given date
 
     Does not skip releases that are were previously downloaded.
 
     Args:
-        year  (int): The year of the data to download
-        month (int): The month of the data to download
-        day   (int): The day of the data to download
+        year       (int): The year of the data to download
+        month      (int): The month of the data to download
+        day        (int): The day of the data to download
+        block_size (int): Block size to use for large files (Default: 1024)
+        verbose   (bool): Display a progress bar (Default: True)
     """
 
     file_name = f'ztf_public_{year}{month:02d}{day:02d}.tar.gz'
@@ -135,7 +137,7 @@ def download_data_date(year, month, day, block_size=1024, verbose=False):
 
 
 def download_recent_data(
-        max_downloads=1, stop_on_exist=False, block_size=1024, verbose=False):
+        max_downloads=1, block_size=1024, verbose=True, stop_on_exist=False):
     """Download recent alert data from the ZTF alerts archive
 
     Data is downloaded in reverse chronological order. Skip releases that are
@@ -143,6 +145,8 @@ def download_recent_data(
 
     Args:
         max_downloads  (int): Number of daily releases to download (default: 1)
+        block_size     (int): Block size to use for large files (Default: 1024)
+        verbose       (bool): Display a progress bar (Default: True)
         stop_on_exist (bool): Exit when encountering an alert that is already
                                downloaded (Default: False)
     """
@@ -175,7 +179,7 @@ def delete_local_data():
     ZTF_DATA_DIR.mkdir(exist_ok=True, parents=True)
 
 
-def create_ztf_sync_table(bucket_name=None, out_path=None, verbose=False):
+def create_ztf_sync_table(bucket_name=None, out_path=None, verbose=True):
     """Create a table for uploading ZTF releases to a GCP bucket
 
     Only include files not already present in the bucket
@@ -183,7 +187,7 @@ def create_ztf_sync_table(bucket_name=None, out_path=None, verbose=False):
     Args:
         bucket_name (str): Name of the bucket to upload into
         out_path    (str): Optionally write table to a txt file
-        verbose    (bool): Whether to display a progress bar (Default: False)
+        verbose    (bool): Whether to display a progress bar (Default: True)
     """
 
     from google.cloud import storage

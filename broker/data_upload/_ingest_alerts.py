@@ -5,6 +5,7 @@
 
 import os
 from tempfile import NamedTemporaryFile
+from warnings import warn
 
 import pandavro as pdx
 
@@ -91,8 +92,7 @@ def _batch_ingest(data, data_set, table):
             raise
 
 
-def upload_to_bigquery(data, data_set, table_name, method='batch',
-                       max_tries=1, verbose=True):
+def upload_to_bigquery(data, data_set, table_name, method='batch', max_tries=1):
     """Batch upload a Pandas DataFrame into a BigQuery table
 
     If the upload fails, retry until success or until max_tries is reached.
@@ -125,9 +125,7 @@ def upload_to_bigquery(data, data_set, table_name, method='batch',
             raise
 
         except Exception as e:
-            if verbose:
-                print(f'Error uploading to table {table_name}: {str(e)}')
-                print('Trying again...')
+            warn(f'Error uploading to table {table_name}. Trying again: {str(e)}')
 
             continue
 

@@ -39,24 +39,24 @@ def _parse_alert_file(path, raw=False):
             return next(fastavro.reader(f))
 
 
-def get_alert_data(candid, raw=False):
+def get_alert_data(alertid, raw=False):
     """Return the contents of an avro file published by ZTF
 
     Args:
-        candid (int): Unique ZTF identifier for the subtraction candidate
-        raw   (bool): Optionally return the file data as bytes (Default: False)
+        alertid (int): Unique ZTF identifier for the alert packet
+        raw    (bool): Optionally return the file data as bytes (Default: False)
 
     Returns:
         The file contents as a dictionary
     """
 
-    path = os.path.join(ZTF_DATA_DIR, f'{candid}.avro')
+    path = os.path.join(ZTF_DATA_DIR, f'{alertid}.avro')
     try:
         return _parse_alert_file(path, raw)
 
     except FileNotFoundError:
         raise ValueError(
-            f'Data for candid "{candid}" not locally available (at {path}).')
+            f'Data for "{alertid}" not locally available (at {path}).')
 
 
 def iter_alerts(num_alerts=None, raw=False):
