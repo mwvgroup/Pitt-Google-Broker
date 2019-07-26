@@ -5,8 +5,20 @@
 """
 
 import logging
+import os
+from pathlib import Path
 
 import google.cloud as gcp
+
+
+def get_ztf_data_dir():
+    """Return the directory path where local ZTF alerts are stored"""
+
+    if 'PGB_DATA_DIR' in os.environ:
+        return Path(os.environ['PGB_DATA_DIR']) / 'ztf_archive'
+
+    else:
+        return Path(__file__).resolve().parent / 'data'
 
 
 def setup_log(log_name, level='INFO'):
