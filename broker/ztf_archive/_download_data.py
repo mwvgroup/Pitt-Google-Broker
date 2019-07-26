@@ -7,6 +7,7 @@ import os
 import shutil
 import tarfile
 from glob import glob
+from os import makedirs
 from pathlib import Path
 from tempfile import TemporaryFile
 
@@ -17,17 +18,21 @@ from tqdm import tqdm
 
 from ..utils import setup_log
 
-FILE_DIR = Path(__file__).resolve().parent
-DATA_DIR = FILE_DIR / 'data'
-ALERT_LOG = DATA_DIR / 'alert_log.txt'
-ZTF_URL = "https://ztf.uw.edu/alerts/public/"
-DATA_DIR.mkdir(exist_ok=True, parents=True)
+if 'PGB_DATA_DIR' in os.environ:
+    ZTF_DATA_DIR = Path(os.environ['PGB_DATA_DIR']) / 'ztf_archive'
+
+else:
+    ZTF_DATA_DIR = Path(__file__).resolve().parent / 'data'
 
 if 'RTD_BUILD' not in os.environ:
     from google.cloud import error_reporting, storage
 
     error_client = error_reporting.Client()
     log = setup_log('data_upload')
+
+ALERT_LOG = ZTF_DATA_DIR / 'alert_log.txt'
+ZTF_URL = "https://ztf.uw.edu/alerts/public/"
+makedirs(ZTF_DATA_DIR, exist_ok=True)
 
 
 def get_remote_md5_table():
@@ -73,7 +78,7 @@ def get_local_alert_list(return_iter=False):
         A list of alert ID values as ints
     """
 
-    path_pattern = str(DATA_DIR / '*.avro')
+    path_pattern = str(ZTF_DATA_DIR / '*.avro')
     data_iter = (int(Path(f).stem) for f in glob(path_pattern))
 
     if return_iter:
@@ -139,7 +144,7 @@ def download_data_date(year, month, day):
     file_name = f'ztf_public_{year}{month:02d}{day:02d}.tar.gz'
     tqdm.write(f'Downloading {file_name}')
 
-    out_path = DATA_DIR / file_name
+    out_path = ZTF_DATA_DIR / file_name
     _download_alerts_file(file_name, out_path)
 
 
@@ -171,7 +176,7 @@ def download_recent_data(max_downloads=1, stop_on_exist=False):
 
             continue
 
-        out_path = DATA_DIR / f_name
+        out_path = ZTF_DATA_DIR / f_name
         tqdm.write(f'Downloading ({i + 1}/{num_downloads}): {f_name}')
         _download_alerts_file(f_name, out_path)
 
@@ -179,8 +184,8 @@ def download_recent_data(max_downloads=1, stop_on_exist=False):
 def delete_local_data():
     """Delete any locally data downloaded fro the ZTF Public Alerts Archive"""
 
-    shutil.rmtree(DATA_DIR)
-    DATA_DIR.mkdir(exist_ok=True, parents=True)
+    shutil.rmtree(ZTF_DATA_DIR)
+    ZTF_DATA_DIR.mkdir(exist_ok=True, parents=True)
 
 
 def create_ztf_sync_table(bucket_name=None, out_path=None, verbose=False):
@@ -191,6 +196,7 @@ def create_ztf_sync_table(bucket_name=None, out_path=None, verbose=False):
     Args:
         bucket_name (str): Name of the bucket to upload into
         out_path    (str): Optionally write table to a txt file
+        verbose    (bool): Whether to display a progress bar (Default: False)
     """
 
     # Get new file urls to upload

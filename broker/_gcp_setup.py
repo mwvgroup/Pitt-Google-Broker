@@ -11,7 +11,7 @@ created automatically if / when required.
 
 import os
 
-if 'RTD_BUILD' not in os.environ:
+if not os.environ.get('GPB_OFFLINE', False):
     from google.api_core.exceptions import NotFound
     from google.cloud import bigquery, logging, storage
 

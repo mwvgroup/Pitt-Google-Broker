@@ -13,7 +13,7 @@ import pandas as pd
 from ..utils import setup_log
 from ..ztf_archive import iter_alerts
 
-if 'RTD_BUILD' not in os.environ:
+if not os.environ.get('GPB_OFFLINE', False):
     from google.cloud import error_reporting
 
     error_client = error_reporting.Client()

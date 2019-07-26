@@ -10,7 +10,7 @@ import pandavro as pdx
 
 from ..utils import setup_log
 
-if 'RTD_BUILD' not in os.environ:
+if not os.environ.get('GPB_OFFLINE', False):
     from google.cloud import error_reporting, bigquery, storage
 
     error_client = error_reporting.Client()
