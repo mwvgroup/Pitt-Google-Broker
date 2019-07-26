@@ -5,9 +5,7 @@
 
 import shutil
 import tarfile
-from glob import glob
 from os import makedirs
-from pathlib import Path
 from tempfile import TemporaryFile
 
 import numpy as np
@@ -18,7 +16,6 @@ from tqdm import tqdm
 from ..utils import get_ztf_data_dir
 
 ZTF_DATA_DIR = get_ztf_data_dir()
-ALERT_LOG = ZTF_DATA_DIR / 'alert_log.txt'
 ZTF_URL = "https://ztf.uw.edu/alerts/public/"
 makedirs(ZTF_DATA_DIR, exist_ok=True)
 
@@ -30,10 +27,8 @@ def get_remote_md5_table():
         A list of file names for alerts published on the ZTF Alerts Archive
     """
 
-    # Get MD5 values
     md5_url = requests.compat.urljoin(ZTF_URL, 'MD5SUMS')
     md5_table = requests.get(md5_url).content.decode()
-
     out_table = Table(
         names=['md5', 'file'],
         dtype=['U32', 'U1000'],
@@ -42,51 +37,35 @@ def get_remote_md5_table():
     return out_table['file', 'md5']
 
 
-def get_local_release_list():
+def get_local_releases():
     """Return a list of ZTF daily releases that have already been downloaded
 
     Returns:
-        A list of downloaded files from the ZTF Alerts Archive
+        An iterable of downloaded release dates from the ZTF Alerts Archive
     """
 
-    if not ALERT_LOG.exists():
-        return []
-
-    with open(ALERT_LOG, 'r') as ofile:
-        return [line.strip() for line in ofile]
+    return (p.name.lstrip('ztf_public_') for p in ZTF_DATA_DIR.glob('*'))
 
 
-def get_local_alert_list(return_iter=False):
+def get_local_alerts():
     """Return a list of alert ids for all downloaded alert data
 
-    Args:
-        return_iter (bool): Return an iterator instead of a list (Default: False)
-
     Returns:
-        A list of alert ID values as ints
+        An iterable of alert ID values as ints
     """
 
-    path_pattern = str(ZTF_DATA_DIR / '*.avro')
-    data_iter = (int(Path(f).stem) for f in glob(path_pattern))
-
-    if return_iter:
-        return data_iter
-
-    else:
-        return list(data_iter)
+    return (int(p.stem) for p in ZTF_DATA_DIR.glob('*/*.avro'))
 
 
-def _download_alerts_file(file_name, out_path):
+def _download_alerts_file(file_name, out_dir, block_size, verbose):
     """Download a file from the ZTF Alerts Archive
 
     Args:
-        file_name (str): Name of the file to download
-        out_path  (str): The path where the downloaded file should be written
+        file_name  (str): Name of the file to download
+        out_dir    (str): The directory where the file should be downloaded to
+        block_size (int): Block size to use for large files
+        verbose   (bool): Display a progress bar
     """
-
-    out_dir = Path(out_path).parent
-    if not out_dir.exists():
-        out_dir.makedir(existok=True, parents=True)
 
     # noinspection PyUnresolvedReferences
     url = requests.compat.urljoin(ZTF_URL, file_name)
@@ -94,49 +73,50 @@ def _download_alerts_file(file_name, out_path):
 
     # Get size of data to be downloaded
     total_size = int(file_data.headers.get('content-length', 0))
-    block_size = 1024
     iteration_number = np.ceil(total_size // block_size)
 
     # Construct progress bar iterable
-    data_iterable = tqdm(
-        file_data.iter_content(block_size),
-        total=iteration_number,
-        unit='KB',
-        unit_scale=True)
+    data_iterable = file_data.iter_content(block_size)
+    if verbose:
+        data_iterable = tqdm(
+            data_iterable,
+            total=iteration_number,
+            unit='KB',
+            unit_scale=True)
 
     # write data to file
     with TemporaryFile() as ofile:
         for data in data_iterable:
             ofile.write(data)
 
-        tqdm.write('Unzipping alert data...')
+        if verbose:
+            tqdm.write('Unzipping alert data...')
+
         ofile.seek(0)
         with tarfile.open(fileobj=ofile, mode="r:gz") as data:
             data.extractall(out_dir)
 
-    with open(ALERT_LOG, 'a') as ofile:
-        ofile.write(file_name)
 
-
-def download_data_date(year, month, day):
+def download_data_date(year, month, day, block_size=1024, verbose=True):
     """Download ZTF alerts for a given date
 
     Does not skip releases that are were previously downloaded.
 
     Args:
-        year  (int): The year of the data to download
-        month (int): The month of the data to download
-        day   (int): The day of the data to download
+        year       (int): The year of the data to download
+        month      (int): The month of the data to download
+        day        (int): The day of the data to download
+        block_size (int): Block size to use for large files (Default: 1024)
+        verbose   (bool): Display a progress bar (Default: True)
     """
 
     file_name = f'ztf_public_{year}{month:02d}{day:02d}.tar.gz'
-    tqdm.write(f'Downloading {file_name}')
-
-    out_path = ZTF_DATA_DIR / file_name
-    _download_alerts_file(file_name, out_path)
+    out_dir = ZTF_DATA_DIR / file_name.rstrip('.tar.gz')
+    _download_alerts_file(file_name, out_dir, block_size, verbose)
 
 
-def download_recent_data(max_downloads=1, stop_on_exist=False):
+def download_recent_data(
+        max_downloads=1, block_size=1024, verbose=True, stop_on_exist=False):
     """Download recent alert data from the ZTF alerts archive
 
     Data is downloaded in reverse chronological order. Skip releases that are
@@ -144,18 +124,20 @@ def download_recent_data(max_downloads=1, stop_on_exist=False):
 
     Args:
         max_downloads  (int): Number of daily releases to download (default: 1)
+        block_size     (int): Block size to use for large files (Default: 1024)
+        verbose       (bool): Display a progress bar (Default: True)
         stop_on_exist (bool): Exit when encountering an alert that is already
                                downloaded (Default: False)
     """
 
-    file_names = get_remote_md5_table()['File']
+    file_names = get_remote_md5_table()['file']
     num_downloads = min(max_downloads, len(file_names))
     for i, f_name in enumerate(file_names):
         if i >= max_downloads:
             break
 
         # Skip download if data was already downloaded
-        if f_name in get_local_release_list():
+        if f_name in list(get_local_releases()):
             tqdm.write(
                 f'Already Downloaded ({i + 1}/{num_downloads}): {f_name}')
 
@@ -164,9 +146,9 @@ def download_recent_data(max_downloads=1, stop_on_exist=False):
 
             continue
 
-        out_path = ZTF_DATA_DIR / f_name
+        out_dir = ZTF_DATA_DIR / f_name.rstrip('.tar.gz')
         tqdm.write(f'Downloading ({i + 1}/{num_downloads}): {f_name}')
-        _download_alerts_file(f_name, out_path)
+        _download_alerts_file(f_name, out_dir, block_size, verbose)
 
 
 def delete_local_data():
@@ -176,7 +158,7 @@ def delete_local_data():
     ZTF_DATA_DIR.mkdir(exist_ok=True, parents=True)
 
 
-def create_ztf_sync_table(bucket_name=None, out_path=None, verbose=False):
+def create_ztf_sync_table(bucket_name=None, out_path=None, verbose=True):
     """Create a table for uploading ZTF releases to a GCP bucket
 
     Only include files not already present in the bucket
@@ -184,7 +166,7 @@ def create_ztf_sync_table(bucket_name=None, out_path=None, verbose=False):
     Args:
         bucket_name (str): Name of the bucket to upload into
         out_path    (str): Optionally write table to a txt file
-        verbose    (bool): Whether to display a progress bar (Default: False)
+        verbose    (bool): Whether to display a progress bar (Default: True)
     """
 
     from google.cloud import storage

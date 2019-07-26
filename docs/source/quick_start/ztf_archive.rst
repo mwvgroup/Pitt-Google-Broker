@@ -19,8 +19,8 @@ iteratively in reverse chronological order.
    from broker import ztf_archive as ztfa
 
    # Get a list of files available on the ZTF Alerts Archive
-   file_names, file_sizes = ztfa.get_remote_md5_table()
-   print(file_names)
+   md5_table = ztfa.get_remote_md5_table()
+   print(md5_table)
 
    # Download data from the ZTF archive for a given day.
    ztfa.download_data_date(year=2018, month=6, day=26)
@@ -41,7 +41,7 @@ visualizing alert data.
 .. code:: python
 
    # Retrieve the IDs for all alerts downloaded to your local machine
-   alert_ids = ztfa.get_local_alert_list()
+   alert_ids = list(ztfa.get_local_alerts())
    print(alert_ids)
 
    # Get data for a specific alert
