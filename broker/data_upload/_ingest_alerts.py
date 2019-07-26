@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-"""This module handles the uploading of generic gata into bigquery."""
+"""This module handles the uploading of generic data into bigquery."""
 
 import os
 from tempfile import NamedTemporaryFile
 
 import pandavro as pdx
 
-from ..utils import setup_log
+from ..utils import RTDSafeImport, setup_log
 
-if not os.environ.get('GPB_OFFLINE', False):
+with RTDSafeImport():
     from google.cloud import error_reporting, bigquery, storage
 
     error_client = error_reporting.Client()

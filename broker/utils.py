@@ -9,6 +9,22 @@ import os
 from pathlib import Path
 
 import google.cloud as gcp
+from google.auth.exceptions import DefaultCredentialsError
+
+
+class RTDSafeImport:
+    """Suppress DefaultCredentialsError when ``GPB_OFFLINE`` is defined
+
+    When ``GPB_OFFLINE`` in the environment, suppress any credential errors and
+    exit. THis allows Read The Docs to build without GCP authentication.
+    """
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, traceback):
+        if exc_type == DefaultCredentialsError:
+            return 'GPB_OFFLINE' in os.environ
 
 
 def get_ztf_data_dir():

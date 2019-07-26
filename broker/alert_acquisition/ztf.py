@@ -4,16 +4,15 @@
 """Retrieve and parse alerts from the ZTF."""
 
 import json
-import os
 from pathlib import Path
 
 import fastavro
 import pandas as pd
 
-from ..utils import setup_log
+from ..utils import RTDSafeImport, setup_log
 from ..ztf_archive import iter_alerts
 
-if not os.environ.get('GPB_OFFLINE', False):
+with RTDSafeImport():
     from google.cloud import error_reporting
 
     error_client = error_reporting.Client()
