@@ -33,7 +33,7 @@ def get_ztf_data_dir():
         return Path(os.environ['PGB_DATA_DIR']) / 'ztf_archive'
 
     else:
-        return Path(__file__).resolve().parent / 'data'
+        return Path(__file__).resolve().parent / 'ztf_archive/data'
 
 
 def setup_log(log_name, level='INFO'):
