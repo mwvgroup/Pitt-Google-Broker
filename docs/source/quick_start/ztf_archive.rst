@@ -67,23 +67,24 @@ over the entire set of downloaded alert data.
        # Some other redundant task
        break
 
-.. _ZTF public alerts archive: https://ztf.uw.edu/alerts/public/
-
 
 Synchronizing with GCP
 ----------------------
 
 Instead of dealing with archive data on your local machine, you can use the
 GCP File Transfer Service to upload a table of files from ZTF directly into
-a storage bucket (see here for more information). This table can be generated
-automatically using the ``create_ztf_sync_table`` function. If the name of an
-existing GCP bucket is provided, then any ZTF release files already present
-in the bucket are ignored.
+a storage bucket (see the `GCP docs`_ for more information). This table can be
+generated automatically using the ``create_ztf_sync_table`` function. If the
+name of an existing GCP bucket is provided, then any ZTF release files already
+present in the bucket are ignored.
 
 .. code:: python
 
-   # Handle the table programatically
+   # Handle the table programmatically
    sync_table = create_ztf_sync_table('my_bucket')
 
    # Or save the results to a txt file
    sync_table = create_ztf_sync_table('my_bucket', 'out_file.txt')
+
+.. _ZTF public alerts archive: https://ztf.uw.edu/alerts/public/
+.. _GCP docs: https://cloud.google.com/storage-transfer/docs/create-manage-transfer-console

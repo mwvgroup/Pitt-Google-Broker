@@ -195,7 +195,6 @@ def create_ztf_sync_table(bucket_name=None, out_path=None, verbose=False):
 
     # Get new file urls to upload
     release_table = get_remote_md5_table()
-    out_table = Table(release_table['md5'])
 
     # Get existing files
     if bucket_name:
@@ -218,8 +217,8 @@ def create_ztf_sync_table(bucket_name=None, out_path=None, verbose=False):
         url_list.append(url)
         size_list.append(file_size)
 
-    out_table['url'] = url_list
-    out_table['file_size'] = size_list
+    out_table = Table(
+        {'url': url_list, 'size': size_list, 'md5': release_table['md5']})
 
     if out_path:
         # Format for compatibility with GCP data transfer service
