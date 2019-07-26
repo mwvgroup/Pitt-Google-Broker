@@ -19,9 +19,9 @@ class TestPubSub(TestCase):
         Check that the input alert matches the decoded output alert.
         """
         
-        project_id = # Fill in this blank once we've thought this through
-        topic_name = # Fill in this blank once we've thought this through
-        subscription_name = # Fill in this blank once we've thought this through
+        project_id = 0000000000000 # Fill in this blank once we've thought this through
+        topic_name = 'topic_here' # Fill in this blank once we've thought this through
+        subscription_name = 'subscribe_here' # Fill in this blank once we've thought this through
         
         psc.message_service.publish_alerts(project_id, topic_name, sample_alert)
         
