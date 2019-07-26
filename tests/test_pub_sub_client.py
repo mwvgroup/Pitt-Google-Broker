@@ -1,5 +1,6 @@
 """This file provides tests for the ``broker.pub_sub_client`` module."""
 
+import os
 from unittest import TestCase
 from deepdiff import DeepDiff
 
@@ -12,6 +13,7 @@ sample_alert = [{'schemavsn': '3.2', 'publisher': 'ZTF (www.ztf.caltech.edu)', '
 class TestPubSub(TestCase):
     """Test the functions in ``message_service`` for correct output, given an input."""
     
+    @unittest.skipIf('GPB_ONLINE' in os.environ)
     def test_input_match_output(self):
         """Publish an alert via ``publish_alerts`` and retrieve the message via ``subscribe_alerts``.
         Check that the input alert matches the decoded output alert.
