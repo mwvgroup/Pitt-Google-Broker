@@ -72,21 +72,18 @@ def get_local_alert_list(return_iter=False):
     if return_iter:
         return data_iter
 
-    else:
-        return list(data_iter)
+    return list(data_iter)
 
 
-def _download_alerts_file(file_name, out_path):
+def _download_alerts_file(file_name, out_dir, block_size, verbose):
     """Download a file from the ZTF Alerts Archive
 
     Args:
-        file_name (str): Name of the file to download
-        out_path  (str): The path where the downloaded file should be written
+        file_name  (str): Name of the file to download
+        out_dir    (str): The directory where the file should be downloaded to
+        block_size (int): Block size to use for large files (Default: 1024)
+        verbose   (bool): Display a progress bar (Default: True)
     """
-
-    out_dir = Path(out_path).parent
-    if not out_dir.exists():
-        out_dir.makedir(existok=True, parents=True)
 
     # noinspection PyUnresolvedReferences
     url = requests.compat.urljoin(ZTF_URL, file_name)
@@ -94,15 +91,16 @@ def _download_alerts_file(file_name, out_path):
 
     # Get size of data to be downloaded
     total_size = int(file_data.headers.get('content-length', 0))
-    block_size = 1024
     iteration_number = np.ceil(total_size // block_size)
 
     # Construct progress bar iterable
-    data_iterable = tqdm(
-        file_data.iter_content(block_size),
-        total=iteration_number,
-        unit='KB',
-        unit_scale=True)
+    data_iterable = file_data.iter_content(block_size)
+    if verbose:
+        data_iterable = tqdm(
+            data_iterable,
+            total=iteration_number,
+            unit='KB',
+            unit_scale=True)
 
     # write data to file
     with TemporaryFile() as ofile:
@@ -118,7 +116,7 @@ def _download_alerts_file(file_name, out_path):
         ofile.write(file_name)
 
 
-def download_data_date(year, month, day):
+def download_data_date(year, month, day, block_size=1024, verbose=False):
     """Download ZTF alerts for a given date
 
     Does not skip releases that are were previously downloaded.
@@ -133,10 +131,11 @@ def download_data_date(year, month, day):
     tqdm.write(f'Downloading {file_name}')
 
     out_path = ZTF_DATA_DIR / file_name
-    _download_alerts_file(file_name, out_path)
+    _download_alerts_file(file_name, out_path, block_size, verbose)
 
 
-def download_recent_data(max_downloads=1, stop_on_exist=False):
+def download_recent_data(
+        max_downloads=1, stop_on_exist=False, block_size=1024, verbose=False):
     """Download recent alert data from the ZTF alerts archive
 
     Data is downloaded in reverse chronological order. Skip releases that are
@@ -166,7 +165,7 @@ def download_recent_data(max_downloads=1, stop_on_exist=False):
 
         out_path = ZTF_DATA_DIR / f_name
         tqdm.write(f'Downloading ({i + 1}/{num_downloads}): {f_name}')
-        _download_alerts_file(f_name, out_path)
+        _download_alerts_file(f_name, out_path, block_size, verbose)
 
 
 def delete_local_data():
