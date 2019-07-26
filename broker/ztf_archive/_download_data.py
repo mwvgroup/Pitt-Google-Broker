@@ -5,9 +5,7 @@
 
 import shutil
 import tarfile
-from glob import glob
 from os import makedirs
-from pathlib import Path
 from tempfile import TemporaryFile
 
 import numpy as np
@@ -33,7 +31,6 @@ def get_remote_md5_table():
     # Get MD5 values
     md5_url = requests.compat.urljoin(ZTF_URL, 'MD5SUMS')
     md5_table = requests.get(md5_url).content.decode()
-
     out_table = Table(
         names=['md5', 'file'],
         dtype=['U32', 'U1000'],
@@ -42,18 +39,21 @@ def get_remote_md5_table():
     return out_table['file', 'md5']
 
 
-def get_local_release_list():
+def get_local_release_list(return_iter=False):
     """Return a list of ZTF daily releases that have already been downloaded
+
+    Args:
+        return_iter (bool): Return an iterator instead of a list (Default: False)
 
     Returns:
         A list of downloaded files from the ZTF Alerts Archive
     """
 
-    if not ALERT_LOG.exists():
-        return []
+    release_iter = (p.name.lstrip('ztf_public_') for p in ZTF_DATA_DIR.glob('*'))
+    if return_iter:
+        return release_iter
 
-    with open(ALERT_LOG, 'r') as ofile:
-        return [line.strip() for line in ofile]
+    return list(release_iter)
 
 
 def get_local_alert_list(return_iter=False):
@@ -66,13 +66,11 @@ def get_local_alert_list(return_iter=False):
         A list of alert ID values as ints
     """
 
-    path_pattern = str(ZTF_DATA_DIR / '*.avro')
-    data_iter = (int(Path(f).stem) for f in glob(path_pattern))
-
+    alert_iter = (p.stem for p in ZTF_DATA_DIR.glob('*/*.avro'))
     if return_iter:
-        return data_iter
+        return alert_iter
 
-    return list(data_iter)
+    return list(alert_iter)
 
 
 def _download_alerts_file(file_name, out_dir, block_size, verbose):
@@ -132,8 +130,8 @@ def download_data_date(year, month, day, block_size=1024, verbose=True):
     file_name = f'ztf_public_{year}{month:02d}{day:02d}.tar.gz'
     tqdm.write(f'Downloading {file_name}')
 
-    out_path = ZTF_DATA_DIR / file_name
-    _download_alerts_file(file_name, out_path, block_size, verbose)
+    out_dir = ZTF_DATA_DIR / file_name.rstrip('.tar.gz')
+    _download_alerts_file(file_name, out_dir, block_size, verbose)
 
 
 def download_recent_data(
@@ -167,9 +165,9 @@ def download_recent_data(
 
             continue
 
-        out_path = ZTF_DATA_DIR / f_name
+        out_dir = ZTF_DATA_DIR / f_name.rstrip('.tar.gz')
         tqdm.write(f'Downloading ({i + 1}/{num_downloads}): {f_name}')
-        _download_alerts_file(f_name, out_path, block_size, verbose)
+        _download_alerts_file(f_name, out_dir, block_size, verbose)
 
 
 def delete_local_data():

@@ -21,6 +21,6 @@ from ._parse_data import iter_alerts
 from ._parse_data import plot_stamps
 
 if 'PGB_DATA_DIR' not in _os.environ:
-    _warn('GCP credentials path is not set in the current environment. Please '
+    _warn('ZTF data directory not set in the current environment. Please '
           'see documentation for instructions on setting'
           'PGB_DATA_DIR in your environment')
