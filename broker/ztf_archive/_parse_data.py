@@ -9,15 +9,15 @@ import gzip
 import io
 import os
 from glob import glob
-from pathlib import Path
 
 import aplpy
 import fastavro
 import matplotlib.pyplot as plt
 from astropy.io import fits
 
-if not os.environ.get('GPB_OFFLINE', False):
-    ZTF_DATA_DIR = Path(os.environ['PGB_DATA_DIR']) / 'ztf_archive'
+from ..utils import get_ztf_data_dir
+
+ZTF_DATA_DIR = get_ztf_data_dir()
 
 
 def _parse_alert_file(path, raw=False):

@@ -3,7 +3,6 @@
 
 """This module downloads sample ZTF alerts from the ZTF alerts archive."""
 
-import os
 import shutil
 import tarfile
 from glob import glob
@@ -16,20 +15,9 @@ import requests
 from astropy.table import Table
 from tqdm import tqdm
 
-from ..utils import setup_log
+from ..utils import get_ztf_data_dir
 
-if 'PGB_DATA_DIR' in os.environ:
-    ZTF_DATA_DIR = Path(os.environ['PGB_DATA_DIR']) / 'ztf_archive'
-
-else:
-    ZTF_DATA_DIR = Path(__file__).resolve().parent / 'data'
-
-if 'RTD_BUILD' not in os.environ:
-    from google.cloud import error_reporting, storage
-
-    error_client = error_reporting.Client()
-    log = setup_log('data_upload')
-
+ZTF_DATA_DIR = get_ztf_data_dir()
 ALERT_LOG = ZTF_DATA_DIR / 'alert_log.txt'
 ZTF_URL = "https://ztf.uw.edu/alerts/public/"
 makedirs(ZTF_DATA_DIR, exist_ok=True)
@@ -198,6 +186,8 @@ def create_ztf_sync_table(bucket_name=None, out_path=None, verbose=False):
         out_path    (str): Optionally write table to a txt file
         verbose    (bool): Whether to display a progress bar (Default: False)
     """
+
+    from google.cloud import storage
 
     # Get new file urls to upload
     release_table = get_remote_md5_table()
