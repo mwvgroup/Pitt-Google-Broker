@@ -8,7 +8,6 @@ import logging
 import os
 from pathlib import Path
 
-import google.cloud as gcp
 from google.auth.exceptions import DefaultCredentialsError
 
 
@@ -49,12 +48,14 @@ def setup_log(log_name, level='INFO'):
         A Logger object, or None
     """
 
-    err_client = gcp.error_reporting.Client()
+    from google.cloud import logging as gcp_logging, error_reporting
+
     log = logging.Logger(log_name)
     log.setLevel(level)
 
     # Connect to GCP
-    logging_client = gcp.logging.Client()
+    err_client = error_reporting.Client()
+    logging_client = gcp_logging.Client()
     handler = logging_client.get_default_handler()
     log.addHandler(handler)
 
