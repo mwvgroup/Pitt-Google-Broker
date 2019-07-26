@@ -121,6 +121,15 @@ manually, the broker package provides a setup function for convenience.
     # Setup your GCP project
     setup_gcp()
 
+
+Running Offline
+---------------
+
+The ``broker`` package can be instructed to ignore certain tests and imports
+that involve connecting to Google Cloud by defining the ``GPB_OFFLINE``
+variable in your environment. The value of this variable is not considered,
+only whether the variable is defined.
+
 .. _Create a project: https://cloud.google.com/resource-manager/docs/creating-managing-projects
 .. _Authenticate: https://cloud.google.com/docs/authentication/getting-started
 .. _here: https://cloud.google.com/resource-manager/docs/creating-managing-projects
