@@ -6,14 +6,14 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import TestCase
-
+import types
 from broker import ztf_archive as ztfa
 
 temp_dir = TemporaryDirectory()
 
 # Metadata about the data downloaded by this test
 TEST_DATE = (2018, 6, 26)
-TEST_FILE_NAME = 'ztf_public_20180626.tar.gz'
+TEST_RELEASE = '20180626'
 NUM_TEST_ALERTS = 23553
 
 
@@ -48,24 +48,21 @@ class DownloadLogging(TestCase):
         Check the correct number of alerts are returned
         """
 
-        num_downloaded_alerts = len(ztfa.get_local_alert_list())
-        self.assertEqual(num_downloaded_alerts, NUM_TEST_ALERTS)
+        alert_list = list(ztfa.get_local_alerts())
+        self.assertEqual(len(alert_list), NUM_TEST_ALERTS)
 
     def test_local_release_list(self):
         """Test ``get_local_release_list``
 
         Check ``get_local_release_list`` returns a list
         Check correct file name(s) are in that list
-        Check first list entry is strings and ends with `.tar.gz`
         """
 
-        release_list = ztfa.get_local_release_list()
-        self.assertIsInstance(release_list, list)
+        releases = ztfa.get_local_releases()
+        self.assertIsInstance(releases, types.GeneratorType)
         self.assertSequenceEqual(
-            [TEST_FILE_NAME], release_list,
-            'Expected filename not in local release list')
-
-        self.assertTrue(release_list[0].endswith('.tar.gz'))
+            [TEST_RELEASE], list(releases),
+            'Expected release not in local release list')
 
     def test_local_alert_list(self):
         """Test ``get_local_alert_list``
@@ -75,10 +72,9 @@ class DownloadLogging(TestCase):
         Check first entry is an integer
         """
 
-        alert_list = ztfa.get_local_alert_list()
-        self.assertIsInstance(alert_list, list)
-        self.assertTrue(alert_list)
-        self.assertIsInstance(alert_list[0], int)
+        alerts = ztfa.get_local_alerts()
+        self.assertIsInstance(alerts, types.GeneratorType)
+        self.assertIsInstance(next(alerts), int)
 
 
 class DataParsing(TestCase):
@@ -100,7 +96,7 @@ class DataParsing(TestCase):
     def test_get_alert_data(self):
         """Test ``get_alert_data`` returns the correct data type."""
 
-        test_alert = ztfa.get_local_alert_list()[0]
+        test_alert = next(ztfa.get_local_alerts())
 
         test_data_dict = ztfa.get_alert_data(test_alert)
         self.assertIsInstance(test_data_dict, dict)

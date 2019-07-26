@@ -13,8 +13,8 @@ from ._download_data import create_ztf_sync_table
 from ._download_data import delete_local_data
 from ._download_data import download_data_date
 from ._download_data import download_recent_data
-from ._download_data import get_local_alert_list
-from ._download_data import get_local_release_list
+from ._download_data import get_local_alerts
+from ._download_data import get_local_releases
 from ._download_data import get_remote_md5_table
 from ._parse_data import get_alert_data
 from ._parse_data import iter_alerts

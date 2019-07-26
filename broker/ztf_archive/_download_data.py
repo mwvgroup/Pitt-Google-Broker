@@ -16,7 +16,6 @@ from tqdm import tqdm
 from ..utils import get_ztf_data_dir
 
 ZTF_DATA_DIR = get_ztf_data_dir()
-ALERT_LOG = ZTF_DATA_DIR / 'alert_log.txt'
 ZTF_URL = "https://ztf.uw.edu/alerts/public/"
 makedirs(ZTF_DATA_DIR, exist_ok=True)
 
@@ -28,7 +27,6 @@ def get_remote_md5_table():
         A list of file names for alerts published on the ZTF Alerts Archive
     """
 
-    # Get MD5 values
     md5_url = requests.compat.urljoin(ZTF_URL, 'MD5SUMS')
     md5_table = requests.get(md5_url).content.decode()
     out_table = Table(
@@ -39,38 +37,24 @@ def get_remote_md5_table():
     return out_table['file', 'md5']
 
 
-def get_local_release_list(return_iter=False):
+def get_local_releases():
     """Return a list of ZTF daily releases that have already been downloaded
 
-    Args:
-        return_iter (bool): Return an iterator instead of a list (Default: False)
-
     Returns:
-        A list of downloaded files from the ZTF Alerts Archive
+        An iterable of downloaded release dates from the ZTF Alerts Archive
     """
 
-    release_iter = (p.name.lstrip('ztf_public_') for p in ZTF_DATA_DIR.glob('*'))
-    if return_iter:
-        return release_iter
-
-    return list(release_iter)
+    return (p.name.lstrip('ztf_public_') for p in ZTF_DATA_DIR.glob('*'))
 
 
-def get_local_alert_list(return_iter=False):
+def get_local_alerts():
     """Return a list of alert ids for all downloaded alert data
 
-    Args:
-        return_iter (bool): Return an iterator instead of a list (Default: False)
-
     Returns:
-        A list of alert ID values as ints
+        An iterable of alert ID values as ints
     """
 
-    alert_iter = (p.stem for p in ZTF_DATA_DIR.glob('*/*.avro'))
-    if return_iter:
-        return alert_iter
-
-    return list(alert_iter)
+    return (int(p.stem) for p in ZTF_DATA_DIR.glob('*/*.avro'))
 
 
 def _download_alerts_file(file_name, out_dir, block_size, verbose):
@@ -105,13 +89,12 @@ def _download_alerts_file(file_name, out_dir, block_size, verbose):
         for data in data_iterable:
             ofile.write(data)
 
-        tqdm.write('Unzipping alert data...')
+        if verbose:
+            tqdm.write('Unzipping alert data...')
+
         ofile.seek(0)
         with tarfile.open(fileobj=ofile, mode="r:gz") as data:
             data.extractall(out_dir)
-
-    with open(ALERT_LOG, 'a') as ofile:
-        ofile.write(file_name)
 
 
 def download_data_date(year, month, day, block_size=1024, verbose=True):
@@ -128,8 +111,6 @@ def download_data_date(year, month, day, block_size=1024, verbose=True):
     """
 
     file_name = f'ztf_public_{year}{month:02d}{day:02d}.tar.gz'
-    tqdm.write(f'Downloading {file_name}')
-
     out_dir = ZTF_DATA_DIR / file_name.rstrip('.tar.gz')
     _download_alerts_file(file_name, out_dir, block_size, verbose)
 
@@ -149,14 +130,14 @@ def download_recent_data(
                                downloaded (Default: False)
     """
 
-    file_names = get_remote_md5_table()['File']
+    file_names = get_remote_md5_table()['file']
     num_downloads = min(max_downloads, len(file_names))
     for i, f_name in enumerate(file_names):
         if i >= max_downloads:
             break
 
         # Skip download if data was already downloaded
-        if f_name in get_local_release_list():
+        if f_name in list(get_local_releases()):
             tqdm.write(
                 f'Already Downloaded ({i + 1}/{num_downloads}): {f_name}')
 
