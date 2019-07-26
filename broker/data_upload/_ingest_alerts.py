@@ -11,7 +11,7 @@ import pandavro as pdx
 from ..utils import setup_log
 
 if 'RTD_BUILD' not in os.environ:
-    from google.cloud import error_reporting, bigquery
+    from google.cloud import error_reporting, bigquery, storage
 
     error_client = error_reporting.Client()
     log = setup_log('data_upload')
