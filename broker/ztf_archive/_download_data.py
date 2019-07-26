@@ -3,7 +3,6 @@
 
 """This module downloads sample ZTF alerts from the ZTF alerts archive."""
 
-import os
 import shutil
 import tarfile
 from glob import glob
@@ -13,44 +12,34 @@ from tempfile import TemporaryFile
 
 import numpy as np
 import requests
-from bs4 import BeautifulSoup
+from astropy.table import Table
 from tqdm import tqdm
 
-if 'PGB_DATA_DIR' in os.environ:
-    ZTF_DATA_DIR = Path(os.environ['PGB_DATA_DIR']) / 'ztf_archive'
+from ..utils import get_ztf_data_dir
 
-else:
-    ZTF_DATA_DIR = Path(__file__).resolve().parent / 'data'
-
+ZTF_DATA_DIR = get_ztf_data_dir()
 ALERT_LOG = ZTF_DATA_DIR / 'alert_log.txt'
 ZTF_URL = "https://ztf.uw.edu/alerts/public/"
 makedirs(ZTF_DATA_DIR, exist_ok=True)
 
 
-def get_remote_release_list():
+def get_remote_md5_table():
     """Get a list of published ZTF data releases from the ZTF Alerts Archive
 
     Returns:
         A list of file names for alerts published on the ZTF Alerts Archive
     """
 
-    # Get html table from page source
-    page_source = str(requests.get(ZTF_URL).content)
-    soup = BeautifulSoup(page_source, features='lxml')
-    soup_table = soup.find("table", attrs={"id": "indexlist"})
+    # Get MD5 values
+    md5_url = requests.compat.urljoin(ZTF_URL, 'MD5SUMS')
+    md5_table = requests.get(md5_url).content.decode()
 
-    # Get table rows with data - Ignore first header row. The second and last
-    # rows are empty so are also ignored
-    data_rows = soup_table.find_all("tr")[2:-1]
+    out_table = Table(
+        names=['md5', 'file'],
+        dtype=['U32', 'U1000'],
+        rows=[row.split() for row in md5_table.split('\n')[:-1]])
 
-    # Create list of alert file names
-    file_names, file_sizes = [], []
-    for row in data_rows:
-        row_data = [td.get_text() for td in row.find_all("td")]
-        file_names.append(row_data[1])
-        file_sizes.append(row_data[3])
-
-    return file_names, file_sizes
+    return out_table['file', 'md5']
 
 
 def get_local_release_list():
@@ -67,15 +56,24 @@ def get_local_release_list():
         return [line.strip() for line in ofile]
 
 
-def get_local_alert_list():
+def get_local_alert_list(return_iter=False):
     """Return a list of alert ids for all downloaded alert data
+
+    Args:
+        return_iter (bool): Return an iterator instead of a list (Default: False)
 
     Returns:
         A list of alert ID values as ints
     """
 
     path_pattern = str(ZTF_DATA_DIR / '*.avro')
-    return [int(Path(f).with_suffix('').name) for f in glob(path_pattern)]
+    data_iter = (int(Path(f).stem) for f in glob(path_pattern))
+
+    if return_iter:
+        return data_iter
+
+    else:
+        return list(data_iter)
 
 
 def _download_alerts_file(file_name, out_path):
@@ -88,7 +86,7 @@ def _download_alerts_file(file_name, out_path):
 
     out_dir = Path(out_path).parent
     if not out_dir.exists():
-        makedirs(out_dir)
+        out_dir.makedir(existok=True, parents=True)
 
     # noinspection PyUnresolvedReferences
     url = requests.compat.urljoin(ZTF_URL, file_name)
@@ -150,9 +148,9 @@ def download_recent_data(max_downloads=1, stop_on_exist=False):
                                downloaded (Default: False)
     """
 
-    file_names, file_sizes = get_remote_release_list()
+    file_names = get_remote_md5_table()['File']
     num_downloads = min(max_downloads, len(file_names))
-    for i, (f_name, f_size) in enumerate(zip(file_names, file_sizes)):
+    for i, f_name in enumerate(file_names):
         if i >= max_downloads:
             break
 
@@ -175,4 +173,57 @@ def delete_local_data():
     """Delete any locally data downloaded fro the ZTF Public Alerts Archive"""
 
     shutil.rmtree(ZTF_DATA_DIR)
-    makedirs(ZTF_DATA_DIR, exist_ok=True)
+    ZTF_DATA_DIR.mkdir(exist_ok=True, parents=True)
+
+
+def create_ztf_sync_table(bucket_name=None, out_path=None, verbose=False):
+    """Create a table for uploading ZTF releases to a GCP bucket
+
+    Only include files not already present in the bucket
+
+    Args:
+        bucket_name (str): Name of the bucket to upload into
+        out_path    (str): Optionally write table to a txt file
+        verbose    (bool): Whether to display a progress bar (Default: False)
+    """
+
+    from google.cloud import storage
+
+    # Get new file urls to upload
+    release_table = get_remote_md5_table()
+
+    # Get existing files
+    if bucket_name:
+        storage_client = storage.Client()
+        bucket = storage_client.get_bucket(bucket_name)
+        existing_files = [blob.name for blob in bucket.list_blobs()]
+
+        is_new = ~np.isin(release_table['file'], existing_files)
+        release_table = release_table[is_new]
+
+    files = release_table['file']
+    if verbose:
+        files = tqdm(files, desc='Requesting file sizes')
+
+    # Get file sizes
+    url_list, size_list = [], []
+    for file_name in files:
+        url = requests.compat.urljoin(ZTF_URL, file_name)
+        file_size = requests.head(url).headers['Content-Length']
+        url_list.append(url)
+        size_list.append(file_size)
+
+    out_table = Table(
+        {'url': url_list, 'size': size_list, 'md5': release_table['md5']})
+
+    if out_path:
+        # Format for compatibility with GCP data transfer service
+        out_table.meta['comments'] = ['TsvHttpData-1.0']
+        out_table.write(
+            out_path,
+            format='ascii.no_header',
+            delimiter='\t',
+            overwrite=True,
+            comment='')
+
+    return out_table

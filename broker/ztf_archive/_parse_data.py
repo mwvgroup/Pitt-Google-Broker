@@ -15,7 +15,9 @@ import fastavro
 import matplotlib.pyplot as plt
 from astropy.io import fits
 
-from ._download_data import ZTF_DATA_DIR
+from ..utils import get_ztf_data_dir
+
+ZTF_DATA_DIR = get_ztf_data_dir()
 
 
 def _parse_alert_file(path, raw=False):
