@@ -1,4 +1,4 @@
-# Pub/Sub Step-by-Step
+# Pub/Sub Step-by-Step (note: _not_ a tutorial to pub\_sub\_client)
 
 ## Initial Setup
 
@@ -19,7 +19,7 @@ You'll need to activate your APIs/Services and get an authentication JSON file:
 - Click **CREATE CREDENTIALS** along the top and select **Service account key** as your option.
 - If you haven't created a service account, you'll need to select **New service account** and fill in the relevant information.
 
-> Note: I used "Role > Project > Owner" to get "full permissions", but this may not be the best option in the future.
+> Note: I used "Role > Project > Owner" to get "full permissions", but this may not be the best option in the future. Recently, I tried "Pub/Sub > Pub/Sub Editor" with equally good results for the service account. This allows them to "Modify topics and subscriptions, publish and consume messages."
 
 > Note: The service account has an associated "name", of sorts, that follows an email address format. It goes: `SERVICE_ACCOUNT_NAME@PROJECT_ID.iam.gserviceaccount.com`, where you set the SERVICE\_ACCOUNT\_NAME and the PROJECT\_ID is listed in the JSON file. The PROJECT\_ID is not the same as the project number. This email address is also listed in the JSON file as "client\_email".
 
@@ -36,6 +36,19 @@ export GOOGLE_APPLICATION_CREDENTIALS="FILE_PATH/FILE_NAME.json"
 ## Topics and Subscriptions
 ### Starting a Topic
 
+By python script:
+``` python
+from google.cloud import pubsub_v1
+
+project_id = 1111111111111	# replace with your project number
+topic_name = my_topic	# replace with your topic name
+
+publisher = pubsub_v1.PublisherClient()
+topic_path = publisher.topic_path(project_id, topic_name)
+topic = publisher.create_topic(topic_path)
+
+```
+
 By GCP GUI:
 
 - Click on the **Navigation menu** and scroll down and click on **Pub/Sub** under Big Data.
@@ -49,6 +62,20 @@ gcloud pubsub topics create my_topic
 > Note: It may take a few seconds for the topic to appear on your project's *Topics* page, so be patient.
 
 ### Starting a Subscription
+
+By python script:
+``` python
+from google.cloud import pubsub_v1
+
+project_id = 1111111111111	# replace with your project number
+subscription_name = my_sub	# replace with your subscription name
+
+subscriber = pubsub_v1.SubscriberClient()
+topic_path = subscriber.topic_path(project_id, topic_name)
+subscription_path = subscriber.subscription_path(project_id, subscription_name)
+
+subscription = subscriber.create_subscription(subscription_path, topic_path)
+```
 
 By GCP GUI:
 
@@ -86,7 +113,7 @@ Some of the code below is largely taken from [this quickstart guide](https://clo
 
 #### Publishing
 
-Via python script:
+Via python script, assuming the topic has already been made:
 
 ``` python
 from google.cloud import pubsub_v1
@@ -121,7 +148,7 @@ Via GCP Console Commands:
 
 #### Retrieve/Pull Messages
 
-Via python script:
+Via python script, assuming the subscription has already been made:
 
 ``` python
 from google.cloud import pubsub_v1
