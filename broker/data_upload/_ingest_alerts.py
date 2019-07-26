@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-"""This module handles the uploading of generic gata into bigquery."""
+"""This module handles the uploading of generic data into bigquery."""
 
 import os
 from tempfile import NamedTemporaryFile
+from warnings import warn
 
 import pandavro as pdx
 
-from ..utils import setup_log
+from ..utils import RTDSafeImport, setup_log
 
-if not os.environ.get('GPB_OFFLINE', False):
-    from google.cloud import error_reporting, bigquery, storage
+with RTDSafeImport():
+    from google.cloud import bigquery, storage
 
-    error_client = error_reporting.Client()
-    log = setup_log('data_upload')
+    error_client, log = setup_log('data_upload')
 
 
 def _get_table_id(data_set, table):
@@ -92,8 +92,7 @@ def _batch_ingest(data, data_set, table):
             raise
 
 
-def upload_to_bigquery(data, data_set, table_name, method='batch',
-                       max_tries=1, verbose=True):
+def upload_to_bigquery(data, data_set, table_name, method='batch', max_tries=1):
     """Batch upload a Pandas DataFrame into a BigQuery table
 
     If the upload fails, retry until success or until max_tries is reached.
@@ -126,9 +125,7 @@ def upload_to_bigquery(data, data_set, table_name, method='batch',
             raise
 
         except Exception as e:
-            if verbose:
-                print(f'Error uploading to table {table_name}: {str(e)}')
-                print('Trying again...')
+            warn(f'Error uploading to table {table_name}. Trying again: {str(e)}')
 
             continue
 

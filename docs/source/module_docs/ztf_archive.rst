@@ -11,8 +11,8 @@ broker.ztf_archive
 .. autofunction:: download_data_date
 .. autofunction:: download_recent_data
 .. autofunction:: get_alert_data
-.. autofunction:: get_local_alert_list
-.. autofunction:: get_local_release_list
+.. autofunction:: get_local_alerts
+.. autofunction:: get_local_releases
 .. autofunction:: get_remote_md5_table
 .. autofunction:: iter_alerts
 .. autofunction:: plot_stamps
