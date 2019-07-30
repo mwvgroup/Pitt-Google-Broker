@@ -5,7 +5,6 @@ from astrorapid.classify import Classify
 from sklearn.externals import joblib
 
 from astropy.coordinates import SkyCoord
-# from astropy import units as u
 from astroquery.irsa_dust import IrsaDust
 
 # fs SETUP
@@ -27,7 +26,8 @@ def classify(light_curves, plot=True, use_redshift=True):
                                         photflag, ra, dec, objid, redshift, mwebv)
 
     Returns:
-        List of predictions for each object.
+        List of tuples where each tuple contains predicted probabilities
+        of each class for a single object.
     """
 
     classification = Classify(known_redshift=use_redshift)
@@ -96,19 +96,19 @@ def collect_ZTF_alerts(max_alerts=10):
         list of light curve data for classification.
 
     Args:
-        max_alerts (int): max number of alerts to collect. (Default: 10)
+        max_alerts (int):   Max number of alerts to collect. (Default: 10)
+                            Set to negative number for all alerts.
 
     Returns:
         light_curves (list of tuples): Formatted as required for input to RAPID classifier.
 
     """
 
-    count_multiple_hostgals = 0
     light_curves = [] # collect alert data for ar.Classify
     for a, alert in enumerate(psd.iter_alerts()):
         cand = alert['candidate']
 
-        # Start the package of alert data for format_alert_data()
+        # Collecting alert data for format_alert_data()
         dict = {'objectId'  : alert['objectId'],
                 'ra'        : cand['ra'],
                 'dec'       : cand['dec'],
@@ -133,13 +133,13 @@ def collect_ZTF_alerts(max_alerts=10):
         except:
             continue # fix this.. what to do when no known host gal
 
-        # Observation epochs
+        # Observation epoch data
         fid_dict = {1:'g', 2:'r', 3:'i'}
         dict['Obs'] = []
         passbands = [] # keep track of these for later data cuts
         for c, cdat in enumerate([cand] + alert['prv_candidates']):
             try:
-                assert cdat['magpsf'] is not None # magpsf and sigmapsf are null for nondetections
+                assert cdat['magpsf'] is not None # magpsf is null for nondetections
                 # test this. try setting the magnitude to cdat['diffmaglim'] instead of skipping.
             except:
                 # print('Object {}, epoch {} has a nondetection.'.format(dict['objectId'], c))
@@ -168,19 +168,20 @@ def collect_ZTF_alerts(max_alerts=10):
         for i, hg in enumerate(hostgal_lst):
             dict['hostgal'] = hg
             if i>0:
-                dict['objectId'] = objectId+'_hg'+str(i+1)
-                count_multiple_hostgals = count_multiple_hostgals+1
+                dict['objectId'] = objectId+'_hostgal'+str(i+1)
+                # count_multiple_hostgals = count_multiple_hostgals+1
             light_curves.append(format_alert_data(dict))
 
 
-        if (a > max_alerts) & (a > 0):
+        if ((a+1) >= max_alerts) & (a !< 0):
             break
 
-    return light_curves, count_multiple_hostgals
+    return light_curves
 
 
 def calc_redshift(mag_dict):
-    """ Calculates redshift using pre-trained model from Rongpu.
+    """ Calculates redshift using a single pre-trained random forest model from Rongpu.
+        THIS MODEL WAS TRAINED ON DECaLS DATA AND IS NOT A GOOD PREDICTOR FOR Pan-STARRS DATA!
 
         Args:
             mag_dict  (dict):
@@ -205,6 +206,7 @@ def calc_redshift(mag_dict):
 
     return z_phot[0]
 
+
 def mag_to_flux(mag, zeropoint, magerr):
     """ Converts an AB magnitude and its error to fluxes.
     """
@@ -212,32 +214,8 @@ def mag_to_flux(mag, zeropoint, magerr):
     fluxerr = flux* magerr* np.log(10/2.5)
     return flux, fluxerr
 
+
 def jd_to_mjd(jd):
     """ Converts Julian Date to modified Julian Date.
     """
     return jd - 2400000.5
-
-
-# alert['candidate'].keys() = ['jd', 'fid', 'pid', 'diffmaglim', 'pdiffimfilename', 'programpi',
-# 'programid', 'candid', 'isdiffpos', 'tblid', 'nid', 'rcid', 'field', 'xpos', 'ypos',
-# 'ra', 'dec', 'magpsf', 'sigmapsf','chipsf', 'magap', 'sigmagap',
-# 'distnr', 'magnr', 'sigmagnr', 'chinr', 'sharpnr', 'sky', 'magdiff', 'fwhm', 'classtar',
-# 'mindtoedge', 'magfromlim', 'seeratio', 'aimage', 'bimage', 'aimagerat', 'bimagerat',
-# 'elong', 'nneg', 'nbad', 'rb', 'ssdistnr', 'ssmagnr', 'ssnamenr', 'sumrat', 'magapbig',
-# 'sigmagapbig','ranr', 'decnr', 'sgmag1', 'srmag1', 'simag1', 'szmag1', 'sgscore1',
-# 'distpsnr1', 'ndethist', 'ncovhist', 'jdstarthist', 'jdendhist', 'scorr', 'tooflag',
-# 'objectidps1', 'objectidps2', 'sgmag2', 'srmag2', 'simag2', 'szmag2', 'sgscore2', 'distpsnr2',
-# 'objectidps3', 'sgmag3', 'srmag3', 'simag3', 'szmag3', 'sgscore3', 'distpsnr3',
-# 'nmtchps', 'rfid', 'jdstartref', 'jdendref', 'nframesref', 'rbversion', 'dsnrms', 'ssnrms',
-# 'dsdiff', 'magzpsci', 'magzpsciunc', 'magzpscirms', 'nmatches', 'clrcoeff', 'clrcounc',
-# 'zpclrcov', 'zpmed', 'clrmed', 'clrrms', 'neargaia', 'neargaiabright', 'maggaia', 'maggaiabright',
-# 'exptime', 'drb', 'drbversion']
-#
-# alert['prv_candidates'][0].keys() = ['jd', 'fid', 'pid', 'diffmaglim', 'pdiffimfilename',
-# 'programpi', 'programid', 'candid', 'isdiffpos', 'tblid', 'nid', 'rcid', 'field',
-# 'xpos', 'ypos', 'ra', 'dec', 'magpsf', 'sigmapsf','chipsf', 'magap', 'sigmagap',
-# 'distnr', 'magnr', 'sigmagnr', 'chinr', 'sharpnr', 'sky', 'magdiff', 'fwhm', 'classtar',
-# 'mindtoedge', 'magfromlim', 'seeratio', 'aimage', 'bimage', 'aimagerat', 'bimagerat','elong',
-# 'nneg', 'nbad', 'rb', 'ssdistnr', 'ssmagnr', 'ssnamenr', 'sumrat', 'magapbig', 'sigmagapbig',
-# 'ranr', 'decnr', 'scorr', 'magzpsci', 'magzpsciunc', 'magzpscirms', 'clrcoeff', 'clrcounc',
-# 'rbversion'])
