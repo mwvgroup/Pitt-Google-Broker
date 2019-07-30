@@ -2,6 +2,7 @@ aplpy
 astropy>=3.1
 astroquery
 beautifulsoup4
+deepdiff
 fastavro
 google-api-python-client
 google-auth
@@ -9,6 +10,7 @@ google-cloud-bigquery
 google-cloud-logging
 google-cloud-storage
 google-cloud-error-reporting
+google-cloud-pubsub
 googleapis-common-protos
 google-resumable-media
 lxml
