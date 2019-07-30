@@ -173,7 +173,7 @@ def collect_ZTF_alerts(max_alerts=10):
             light_curves.append(format_alert_data(dict))
 
 
-        if ((a+1) >= max_alerts) & (a !< 0):
+        if ((a+1) >= max_alerts) & (a >= 0):
             break
 
     return light_curves
