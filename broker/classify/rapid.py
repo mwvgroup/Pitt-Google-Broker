@@ -7,23 +7,15 @@ from sklearn.externals import joblib
 from astropy.coordinates import SkyCoord
 from astroquery.irsa_dust import IrsaDust
 
-# fs SETUP
-# had to manually update the following:
-# pip install wrapt --upgrade --ignore-installed
-# pip install setuptools --upgrade
-# pip install protobuf --upgrade
-# then the following succeeded:
-# pip install astrorapid
 
-# fe SETUP
-
-def classify(light_curves, plot=True, use_redshift=True):
+def classify(light_curves, plot=True, plotdir='./broker/classify/plots', use_redshift=True):
     """ Classifies alerts using RAPID (aka astrorapid).
 
     Args:
         light_curves (list of tuples): light_curve_info for multiple objects,
             where light_curve_info = (mjd, flux, fluxerr, passband, zeropoint, \
                                         photflag, ra, dec, objid, redshift, mwebv)
+            e.g. light_curves = collect_ZTF_alerts(max_alerts=10)
 
     Returns:
         List of tuples where each tuple contains predicted probabilities
@@ -36,9 +28,11 @@ def classify(light_curves, plot=True, use_redshift=True):
 
     if plot:
         # Plot classifications vs time
-        figdir='./tests/rapid/classifications'
-        classification.plot_light_curves_and_classifications(figdir=figdir)
-        # classification.plot_classification_animation(figdir=figdir)
+        classification.plot_light_curves_and_classifications(figdir=plotdir)
+        # classification.plot_classification_animation(figdir=plotdir)
+        print('\nRAPID classification plot(s) saved to {}'.format(plotdir))
+        print("Pass arg 'plotdir' to change this location.")
+
 
     return predictions
 
@@ -51,14 +45,14 @@ def format_alert_data(alert):
                         'objectId'  : (int) unique for each object
                         'ra'        : (float) right ascension
                         'dec'       : (float) declination
-                        'hostgal'   : (dict) ??? (used to calculate redshift)
+                        'hostgal'   : (dict) (used to calculate redshift)
                         'Obs'       : (list of dicts) one entry per epoch.
                                         Each dict needs the following key:value pairs
-                                        'mjd'       : () modified julian date
+                                        'mjd'       : (float) modified julian date
                                         'flux'      : (float)
                                         'fluxerr'   : (float)
                                         'passband'  : (str)
-                                        'photflag'  : ()
+                                        'photflag'  : (int)
 
     Returns:
         Tuple of light curve data, Formatted as required for input to RAPID classifier.
@@ -93,7 +87,7 @@ def format_alert_data(alert):
 
 def collect_ZTF_alerts(max_alerts=10):
     """ Iterates through previously downloaded ZTF alerts and returns
-        list of light curve data for classification.
+        list of light curve data formatted for classification by RAPID.
 
     Args:
         max_alerts (int):   Max number of alerts to collect. (Default: 10)
@@ -104,7 +98,7 @@ def collect_ZTF_alerts(max_alerts=10):
 
     """
 
-    light_curves = [] # collect alert data for ar.Classify
+    light_curves = [] # collect alert data for astrorapid.Classify
     for a, alert in enumerate(psd.iter_alerts()):
         cand = alert['candidate']
 
@@ -140,7 +134,7 @@ def collect_ZTF_alerts(max_alerts=10):
         for c, cdat in enumerate([cand] + alert['prv_candidates']):
             try:
                 assert cdat['magpsf'] is not None # magpsf is null for nondetections
-                # test this. try setting the magnitude to cdat['diffmaglim'] instead of skipping.
+                # test this. try setting magnitude to cdat['diffmaglim'] instead of skipping.
             except:
                 # print('Object {}, epoch {} has a nondetection.'.format(dict['objectId'], c))
                 pass
@@ -150,7 +144,8 @@ def collect_ZTF_alerts(max_alerts=10):
                         'flux'      : flux,
                         'fluxerr'   : fluxerr,
                         'passband'  : fid_dict[cdat['fid']], # fix this, no entry for z band
-                        'photflag'  : 0 # fix this, determines trigger time (1st mjd where this == 6144)
+                        'photflag'  : 0 # fix this, determines trigger time
+                                        # (1st mjd where this == 6144)
                 }
 
                 dict['Obs'].append(obs)
@@ -181,7 +176,6 @@ def collect_ZTF_alerts(max_alerts=10):
 
 def calc_redshift(mag_dict):
     """ Calculates redshift using a single pre-trained random forest model from Rongpu.
-        THIS MODEL WAS TRAINED ON DECaLS DATA AND IS NOT A GOOD PREDICTOR FOR Pan-STARRS DATA!
 
         Args:
             mag_dict  (dict):
@@ -189,9 +183,13 @@ def calc_redshift(mag_dict):
         Returns:
             redshift of galaxy associated with mag_dict.
     """
+    print('WARNING: The photo-z calculation needs to be updated.')
+    print('\tIt uses a random forest model trained on DECaLS data')
+    print('\tfor photo-z estimation on Pan-STARRS data.')
+    print('\tThe result should not be trusted.')
 
     # Load single pre-trained tree
-    regrf = joblib.load('./regrf_20181008_0.pkl')
+    regrf = joblib.load('./broker/classify/regrf_20181008_0.pkl')
 
     gmag = mag_dict['gmag']
     rmag = mag_dict['rmag']
