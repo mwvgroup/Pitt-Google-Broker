@@ -10,7 +10,7 @@ env:
 
 
 install:
-  - pip install setuptools>=41.0.0
+  - pip install setuptools
   - python setup.py install
 
 script:
