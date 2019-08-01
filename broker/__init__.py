@@ -9,7 +9,7 @@ the Large Synoptic Survey Telescope (LSST).
 import os as _os
 from warnings import warn as _warn
 
-from . import alert_acquisition, data_upload, xmatch, ztf_archive
+from . import alert_acquisition, data_upload, value_added, ztf_archive
 from ._gcp_setup import setup_gcp
 
 if 'BROKER_PROJ_ID' not in _os.environ:
