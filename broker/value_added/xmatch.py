@@ -13,15 +13,65 @@ import pandas as pd
 from astropy import units as u
 from astroquery.xmatch import XMatch
 
-from .ztf_archive import _parse_data as psd
+from broker.ztf_archive import _parse_data as psd
+from . import redshift as red
 
 
-def get_xmatches(
-        fcat1='mock_stream/data/alerts_radec.csv', cat2='vizier:II/246/out'):
-    """
+def get_xmatches(alert_list, survey='ZTF'):
+    """ Finds alert cross matches in all available catalogs.
 
     Args:
-        fcat1 (string): Path to csv file, as written by get_alerts_ra_dec.
+        alert_list (list): list of alert dicts
+        survey      (str): name of survey generating the alerts
+
+    Returns:
+        list of dictionaries, one for each cross match
+
+    """
+    xmatches = []
+
+    for alert in alert_list:
+
+        if survey == 'ZTF':
+            # get xmatches included in alert packet
+            cand = alert['candidate']
+            for s in ['1','2','3']: # for each PS1 source in alert
+                sgscore = cand['sgscore'+s]
+
+                # calculate redshift
+                print('WARNING: The ZTF/Pan-STARRS photo-z calculation needs to be updated.')
+                print('\tIt uses a random forest model trained on DECaLS data')
+                print('\tfor photo-z estimation on Pan-STARRS data.')
+                print('\tThe result should not be trusted.')
+                zdict = {   'gmag': cand['sgmag'+s],
+                            'rmag': cand['srmag'+s],
+                            'zmag': cand['simag'+s], # note this is imag
+                            'w1mag': cand['szmag'+s], # note this is zmag
+                            'w2mag': 0.0,
+                            'radius': 0.0,
+                            'q': 0.0,
+                            'p': 0.0
+                        }
+                # if source is likely a galaxy, calculate redshift
+                # else set it to -1
+                redshift = red.calcz_rongpuRF(zdict) if sgscore>0.75 else -1
+
+                # collect the xmatch data
+                xmatches.append({   'objectId': alert['objectId'],
+                                    'xobjId': cand['objectidps'+s],
+                                    'xcatalog': 'PS1',
+                                    'redshift': redshift,
+                                    'dist2d': cand['distpsnr'+s],
+                                    'sgscore': sgscore
+                                })
+
+    return xmatches
+
+
+def get_astroquery_xmatches(fcat1='mock_stream/data/alerts_radec.csv', cat2='vizier:II/246/out'):
+    """
+    Args:
+        fcat1 (string): Path to csv file, as written by get_alerts_ra_dec(fout=fcat1).
         cat2  (string): Passed through to XMatch.query().
 
     Returns:
@@ -29,6 +79,7 @@ def get_xmatches(
           angDist, alert_id, ra, dec, 2MASS, RAJ2000, DEJ2000,
           errHalfMaj, errHalfMin, errPosAng, Jmag, Hmag, Kmag,
           e_Jmag, e_Hmag, e_Kmag, Qfl, Rfl, X, MeasureJD
+
     """
 
     with open(fcat1) as ofile:
