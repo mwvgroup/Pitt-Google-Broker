@@ -1,26 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-"""Parse ZTF alerts and add them to the project database."""
+"""This module handles the uploading of generic data into bigquery."""
 
-import json
 import os
-from pathlib import Path
 from tempfile import NamedTemporaryFile
+from warnings import warn
 
-import fastavro
 import pandavro as pdx
 
-from ..utils import setup_log
+from ..utils import RTDSafeImport, setup_log
 
-if not os.environ.get('GPB_OFFLINE', False):
-    from google.cloud import error_reporting, bigquery, storage
+with RTDSafeImport():
+    from google.cloud import bigquery, storage
 
-    error_client = error_reporting.Client()
-    bq_client = bigquery.Client()
-    log = setup_log('data_upload')
-
-SCHEMA_DIR = Path(__file__).resolve().parent / 'schema'
+    error_client, log = setup_log('data_upload')
 
 
 def _get_table_id(data_set, table):
@@ -34,6 +28,7 @@ def _get_table_id(data_set, table):
         The name of the specified table as a string
     """
 
+    bq_client = bigquery.Client()
     table_ref = bq_client.dataset(data_set).table(table)
     return f'{table_ref.dataset_id}.{table_ref.table_id}'
 
@@ -78,6 +73,7 @@ def _batch_ingest(data, data_set, table):
     # Get tables to store data
     table_id = _get_table_id(data_set, table)
 
+    bq_client = bigquery.Client()
     with NamedTemporaryFile() as source_file:
         pdx.to_avro(source_file.name, data)
 
@@ -96,18 +92,17 @@ def _batch_ingest(data, data_set, table):
             raise
 
 
-def upload_to_bigquery(data, data_set, table_name, method='batch', max_tries=2):
+def upload_to_bigquery(data, data_set, table_name, method='batch', max_tries=1):
     """Batch upload a Pandas DataFrame into a BigQuery table
 
-    If the upload fails, retry until success or until
-    max_tries is reached.
+    If the upload fails, retry until success or until max_tries is reached.
 
     Args:
         data (DataFrame): Data to upload to table
         data_set   (str): The name of the data set
         table_name (str): The name of the table
         method     (str): The method upload name ('batch' or 'stream')
-        max_tries  (int): Maximum number of tries until error (Default: 2)
+        max_tries  (int): Maximum number of tries until error (Default: 1)
     """
 
     if method == 'batch':
@@ -119,10 +114,9 @@ def upload_to_bigquery(data, data_set, table_name, method='batch', max_tries=2):
     else:
         raise ValueError(f'Invalid upload method: {method}')
 
-    i = 0
-    while True:
+    for i in range(max_tries):
         if i >= max_tries:
-            break
+            raise RuntimeError('Could not upload data. Max tries exceeded.')
 
         try:
             upload_func(data, data_set, table_name)
@@ -131,15 +125,9 @@ def upload_to_bigquery(data, data_set, table_name, method='batch', max_tries=2):
             raise
 
         except Exception as e:
-            print(f'Error uploading to table {table_name}: {str(e)}')
-            print('Trying again...')
-            i += 1
+            warn(f'Error uploading to table {table_name}. Trying again: {str(e)}')
+
             continue
-
-        else:
-            return
-
-    raise RuntimeError('Could not upload data.')
 
 
 def upload_to_bucket(bucket_name, source_path, destination_name):
@@ -155,50 +143,3 @@ def upload_to_bucket(bucket_name, source_path, destination_name):
     bucket = storage_client.get_bucket(bucket_name)
     blob = bucket.blob(destination_name)
     blob.upload_from_filename(source_path)
-
-
-def get_schema(schemavsn):
-    """Return the avro schema for a given ZTF schema version
-
-    Args:
-        schemavsn (str): ZTF schema version (e.g. '3.2')
-
-    Returns:
-        The schema as a dictionary
-    """
-
-    schema_path = SCHEMA_DIR / f'ztf_{schemavsn}.json'
-    if not schema_path.exists():
-        raise ValueError(f'No ZTF schema version found matching "{schemavsn}"')
-
-    with open(schema_path, 'r') as ofile:
-        return json.load(ofile)
-
-
-def save_to_avro(data, schemavsn='3.2', path=None, fileobj=None):
-    """Save ZTF alert data to an avro file
-
-    Args:
-        data    (DataFrame): Alert data to write to file
-        schemavsn     (str): ZTF schema version of output file (Default: '3.2')
-        path          (str): Output file path
-        fileobj (file-like): Output file object
-    """
-
-    if not (path or fileobj):
-        raise ValueError('Must specify either `path` or `fileobj`.')
-
-    elif path and fileobj:
-        raise ValueError('Cannot specify both `path` and `fileobj`.')
-
-    elif path:
-        if not path.endswith('.avro'):
-            path += '.avro'
-
-        fileobj = open(path, 'wb')
-
-    schema = get_schema(schemavsn)
-    fastavro.writer(fileobj, schema, data.to_dict('records'))
-
-    if path:
-        fileobj.close()

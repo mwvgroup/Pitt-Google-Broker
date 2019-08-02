@@ -45,3 +45,4 @@ This directory contains various project documents and notes for use by the devel
   - [Lasair.md](./competitive_product_survey/Lasair.md)
 - Notes from the DESC broker workshop: [desc_broker_workshop.md](desc_broker_workshop.md)
 - Cross matching: [cross_matching.md](./cross_matching.md)
+- Tutorial to setting up Cloud Pub/Sub: [pubsub-tutorial.md](./pubsub-tutorial.md)
