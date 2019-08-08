@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn.externals import joblib
+from pathlib import Path
 
 def calcz_rongpuRF(data):
     """ Calculates redshift using a single pre-trained random forest model from Rongpu.
@@ -13,7 +14,8 @@ def calcz_rongpuRF(data):
     """
 
     # Load single pre-trained tree
-    regrf = joblib.load('./broker/value_added/regrf_20181008_0.pkl')
+    RFpath = Path(__file__).resolve().parent / 'regrf_20181008_0.pkl'
+    regrf = joblib.load(RFpath)
 
     g = data['gmag']
     r = data['rmag']
