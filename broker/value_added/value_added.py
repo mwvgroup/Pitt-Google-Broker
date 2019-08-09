@@ -65,26 +65,42 @@ def format_for_rapid(alert_list, xmatch_list, survey='ZTF'):
         fid_dict = {1:'g', 2:'r', 3:'i'}
         mjd, flux, fluxerr, passband, photflag = ([] for i in range(5))
 
-        for epoch in alert['prv_candidates'] + [alert['candidate']]:
+        epochs = alert['prv_candidates'] + [alert['candidate']]
+        # if one epoch is missing a zeropoint, they should all be missing
+        zp_fallback, zp_in_keys = 26.0, [1 for i in range(len(epochs))] # assumed True to start
+        for n, epoch in enumerate(epochs):
             try:
                 assert epoch['magpsf'] is not None # magpsf is null for nondetections
                 # test this. try setting magnitude to epoch['diffmaglim'] instead of skipping.
             except:
-                pass
+                continue # move to next epoch
 
-            else:
-                mjd.append(jd_to_mjd(epoch['jd']))
-                f, ferr = mag_to_flux(epoch['magpsf'],epoch['magzpsci'],epoch['sigmapsf'])
-                flux.append(f)
-                fluxerr.append(ferr)
-                passband.append(fid_dict[epoch['fid']])
-                photflag.append(4096)  # fix this, determines trigger time
+            # early schema(s) did not contain a magnitude zeropoint
+            if 'magzpsci' not in epoch.keys(): # fix this. do something better.
+                print('\tEpoch does not have zeropoint data. Setting to {}'.format(zp_fallback))
+                zp_in_keys[n] = 0
+                epoch['magzpsci'] = zp_fallback
+
+            mjd.append(jd_to_mjd(epoch['jd']))
+            f, ferr = mag_to_flux(epoch['magpsf'],epoch['magzpsci'],epoch['sigmapsf'])
+            flux.append(f)
+            fluxerr.append(ferr)
+            passband.append(fid_dict[epoch['fid']])
+            photflag.append(4096)  # fix this, determines trigger time
                                     # (1st mjd where this == 6144)
+
+        # check that either all or no epochs have missing zeropoint
+        if sum(zp_in_keys) not in [0, len(epochs)]:
+            err_msg = ("Inconsistent zeropoint values in the epochs of alert {}."
+                        "Cannot continue with classification.").format(oid)
+            assert False, err_msg
+
         # Set trigger date. fix this.
         photflag[np.where(flux==np.max(flux))[0][0]] = 6144
 
         # skip classification if don't have g passband
         if 'g' not in passband: continue
+        # if 'r' not in passband: continue # this hasn't been a problem yet
 
         # MW dust extinction
         # fix this. ZTF docs say ra, dec are in J2000 [deg]
@@ -100,7 +116,7 @@ def format_for_rapid(alert_list, xmatch_list, survey='ZTF'):
             xcatalog = xmatch['xcatalog']
 
             # skip classification if xobject is not a galaxy
-            if xmatch['sgscore'] < 0.75: continue
+            if xmatch['sgscore'] > 0.999: continue # ->1 implies star. fix this, high threshold
             # skip classification if xobject redshift == -1
             redshift = xmatch['redshift']
             if redshift < 0: continue
