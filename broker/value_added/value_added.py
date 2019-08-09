@@ -67,7 +67,7 @@ def format_for_rapid(alert_list, xmatch_list, survey='ZTF'):
 
         epochs = alert['prv_candidates'] + [alert['candidate']]
         # if one epoch is missing a zeropoint, they should all be missing
-        zp_fallback, zp_in_keys = 26.0, [1 for i in range(len(epochs))] # assumed True to start
+        zp_fallback, zp_in_keys = 26.0, [0 for i in range(len(epochs))]
         for n, epoch in enumerate(epochs):
             try:
                 assert epoch['magpsf'] is not None # magpsf is null for nondetections
@@ -78,7 +78,7 @@ def format_for_rapid(alert_list, xmatch_list, survey='ZTF'):
             # early schema(s) did not contain a magnitude zeropoint
             if 'magzpsci' not in epoch.keys(): # fix this. do something better.
                 print('\tEpoch does not have zeropoint data. Setting to {}'.format(zp_fallback))
-                zp_in_keys[n] = 0
+                zp_in_keys[n] = 1
                 epoch['magzpsci'] = zp_fallback
 
             mjd.append(jd_to_mjd(epoch['jd']))
@@ -89,8 +89,8 @@ def format_for_rapid(alert_list, xmatch_list, survey='ZTF'):
             photflag.append(4096)  # fix this, determines trigger time
                                     # (1st mjd where this == 6144)
 
-        # check that either all or no epochs have missing zeropoint
-        if sum(zp_in_keys) not in [0, len(epochs)]:
+        # check that either all or no epochs with detections have missing zeropoint
+        if sum(zp_in_keys) not in [0, len(mjd)]:
             err_msg = ("Inconsistent zeropoint values in the epochs of alert {}."
                         "Cannot continue with classification.").format(oid)
             assert False, err_msg
