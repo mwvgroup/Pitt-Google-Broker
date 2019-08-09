@@ -51,7 +51,7 @@ def format_for_rapid(alert_list, xmatch_list, survey='ZTF'):
     assert (survey=='ZTF'), "\nvalue_added.format_for_rapid() requires survey=='ZTF'"
 
     light_curves = []
-    cx_data = [] # collect candidate and xmatch data to merge with RAPID results
+    cx_dicts = {} # collect candidate and xmatch data to merge with RAPID results
     oid_map = map_objectId_list(xmatch_list) # maps objectId's to list positions
 
     for alert in alert_list:
@@ -107,22 +107,22 @@ def format_for_rapid(alert_list, xmatch_list, survey='ZTF'):
 
             # get unique alert-hostgal id
             # this ID is currently *only* used for RAPID *input*, it can be anything
-            id = alert_xobj_id([oid, cid, cand_mjd, xcatalog, xobjId ])
+            cxid = alert_xobj_id([oid, cid, cand_mjd, xcatalog, xobjId ])
 
             # Collect all the info
             light_curves.append((np.asarray(mjd), np.asarray(flux), np.asarray(fluxerr), \
                                 np.asarray(passband), np.asarray(photflag), \
-                                ra, dec, id, redshift, mwebv))
+                                ra, dec, cxid, redshift, mwebv))
 
-            cx_data.append({    'objectId': oid,
+            cx_dicts[cxid] = {   'objectId': oid,
                                 'candid': cid,
                                 'xobjId': xobjId,
                                 'xcatalog': xcatalog,
                                 'redshift': redshift,
                                 'cand_mjd': cand_mjd
-                            })
+                            }
 
-    return light_curves, cx_data
+    return light_curves, cx_dicts
 
 
 def alert_xobj_id(data):

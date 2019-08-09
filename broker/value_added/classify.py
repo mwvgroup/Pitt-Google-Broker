@@ -1,7 +1,8 @@
 from astrorapid.classify import Classify
 
 
-def rapid(light_curves, cx_data, plot=False, plotdir='./broker/value_added/plots', use_redshift=True):
+def rapid(light_curves, cx_dicts, plot=False, plotdir='./broker/value_added/plots',
+            use_redshift=True):
     """ Classifies alerts using RAPID (aka astrorapid).
 
     Args:
@@ -10,11 +11,11 @@ def rapid(light_curves, cx_data, plot=False, plotdir='./broker/value_added/plots
                                         (mjd, flux, fluxerr, passband,
                                         photflag, ra, dec, objid, redshift, mwebv)
 
-        cx_data        (list of dicts): candidate and xmatch info as needed for
+        cx_dicts        (list of dicts): candidate and xmatch info as needed for
                                         BigQuery classification table.
         Note:
             A given index must identify the same unique object + host galaxy combination
-            in both the light_curves and cx_data lists.
+            in both the light_curves and cx_dicts lists.
             Use the function value_added.format_for_rapid() to get both lists.
 
     Returns:
@@ -22,7 +23,8 @@ def rapid(light_curves, cx_data, plot=False, plotdir='./broker/value_added/plots
     """
 
     classification = Classify(known_redshift=use_redshift)
-    predictions = classification.get_predictions(light_curves, return_predictions_at_obstime=True)
+    predictions = classification.get_predictions(light_curves, \
+                    return_predictions_at_obstime=True, return_objids=True)
 
     if plot:
         # Plot classifications vs time
@@ -31,34 +33,36 @@ def rapid(light_curves, cx_data, plot=False, plotdir='./broker/value_added/plots
         print('\nRAPID classification plot(s) saved to {}'.format(plotdir))
         print("Pass arg 'plotdir' to change this location.")
 
-    class_dicts_list = format_rapid_for_BQ(cx_data, predictions)
+    class_dicts_list = format_rapid_for_BQ(cx_dicts, predictions)
 
     return class_dicts_list
 
 
-def format_rapid_for_BQ(cx_data, predictions):
+def format_rapid_for_BQ(cx_dicts, predictions):
     """ Combines RAPID output with candidate and xmatch data and formats for upload to BigQuery.
 
     Args:
-        cx_data        (list of dicts): candidate and xmatch info as needed for
+        cx_dicts       (dict of dicts): candidate and xmatch info as needed for
                                         BigQuery classification table.
+                                        Keys are lightcurve IDs (cxid, as given by
+                                        value_added.alert_xobj_id()).
 
         predictions            (tuple): as returned by rapid function get_predictions()
 
     Returns:
-        cx_data with candidate epoch classification info added to each dictionary.
+        cx_dicts with candidate epoch classification info added to each dictionary.
     """
 
-    classes_list, times_list = predictions # lists of arrays
+    # classes_list, times_list, objids_list = predictions # lists of arrays
 
-    # Check that all light curves were classified
-    err_msg = "Number of predictions from RAPID != Number of input light curves. \
-                \nCannot match predictions to candid's."
-    assert len(classes_list) == len(cx_data), err_msg
+    # Check that all light curves were classified --- no longer needed, have cxid
+    # err_msg = "Number of predictions from RAPID != Number of input light curves. \
+    #             \nCannot match predictions to candid's."
+    # assert len(classes_list) == len(cx_dicts), err_msg
 
     # Merge predicitions with alert and hostgal info
     class_dicts_list = []
-    for lc_preds, lc_times, cx_dict in zip(classes_list, times_list, cx_data):
+    for lc_preds, lc_times, cxid in zip(*predictions):
         # Get the predictions for the current alert candidate only
         cand_preds = lc_preds[-1] # check this.
         # I tried to match the candidate mjd (see below), but the output times are
@@ -82,6 +86,6 @@ def format_rapid_for_BQ(cx_data, predictions):
         #                 \n(Exactly 1 match is required.)".format(len(cand_preds))
         #     assert False, err_msg
 
-        class_dicts_list.append({**cx_dict, **preds_dict})
+        class_dicts_list.append({**cx_dicts[cxid], **preds_dict})
 
     return class_dicts_list
