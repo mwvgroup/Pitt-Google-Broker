@@ -10,6 +10,7 @@ Helpful links:
 """
 
 import pandas as pd
+from warnings import warn as _warn
 from astropy import units as u
 from astroquery.xmatch import XMatch
 
@@ -39,10 +40,10 @@ def get_xmatches(alert_list, survey='ZTF'):
                 sgscore = cand['sgscore'+s]
 
                 # calculate redshift
-                print('WARNING: The ZTF/Pan-STARRS photo-z calculation needs to be updated.')
-                print('\tIt uses a random forest model trained on DECaLS data')
-                print('\tfor photo-z estimation on Pan-STARRS data.')
-                print('\tThe result should not be trusted.')
+                _warn('The ZTF/Pan-STARRS photo-z calculation needs to be updated. '
+                        'It uses a random forest model trained on DECaLS data '
+                        'for photo-z estimation on Pan-STARRS data. '
+                        '\nThe result should not be trusted!')
                 zdict = {   'gmag': cand['sgmag'+s],
                             'rmag': cand['srmag'+s],
                             'zmag': cand['simag'+s], # note this is imag

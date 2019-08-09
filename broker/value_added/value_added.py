@@ -1,4 +1,5 @@
 import numpy as np
+from warnings import warn as _warn
 from astropy.coordinates import SkyCoord
 from astroquery.irsa_dust import IrsaDust
 
@@ -77,7 +78,7 @@ def format_for_rapid(alert_list, xmatch_list, survey='ZTF'):
 
             # early schema(s) did not contain a magnitude zeropoint
             if 'magzpsci' not in epoch.keys(): # fix this. do something better.
-                print('\tEpoch does not have zeropoint data. Setting to {}'.format(zp_fallback))
+                _warn('Epoch does not have zeropoint data. Setting to {}'.format(zp_fallback))
                 zp_in_keys[n] = 1
                 epoch['magzpsci'] = zp_fallback
 
