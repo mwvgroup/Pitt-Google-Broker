@@ -1,7 +1,7 @@
 #!/usr/bin/env python3.7
 # -*- coding: UTF-8 -*-
 
-"""The ``value_added`` module retrieves/calculates and provies access
+"""The ``value_added`` module retrieves/calculates and provides access
 to all value added products (e.g. classification, cross matches, etc.)
 """
 

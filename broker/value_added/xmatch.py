@@ -1,12 +1,12 @@
 #!/usr/bin/env python3.7
 # -*- coding: UTF-8 -*-
 
-"""The ``xmatch`` module provides cross matching services between observed
-targets and external surveys.
+""" The ``xmatch`` module provides cross matching services between observed
+    targets and external surveys.
 
-Helpful links:
-  https://astroquery.readthedocs.io/en/latest/#using-astroquery
-  https://astroquery.readthedocs.io/en/latest/xmatch/xmatch.html#module-astroquery.xmatch
+    Helpful links:
+    https://astroquery.readthedocs.io/en/latest/#using-astroquery
+    https://astroquery.readthedocs.io/en/latest/xmatch/xmatch.html#module-astroquery.xmatch
 """
 
 import pandas as pd
@@ -18,15 +18,21 @@ from broker.ztf_archive import _parse_data as psd
 from . import redshift as red
 
 
-def get_xmatches(alert_list, survey='ZTF'):
+def get_xmatches(alert_list, survey='ZTF', sg_thresh=0.5):
     """ Finds alert cross matches in all available catalogs.
 
     Args:
         alert_list (list): list of alert dicts
+
         survey      (str): name of survey generating the alerts
 
+        sg_thresh (float): sgscore threshold (maximum) for calling it a galaxy.
+                           (sgscore -> 1 implies star)
+
     Returns:
-        list of dictionaries, one for each cross match
+        Dictionaries of cross match info, formatted for BigQuery.
+        One dictionary per unique alert-xmatch pair.
+        [ {<column name (str)>: <value (str or float)>} ]
 
     """
     xmatches = []
@@ -55,7 +61,8 @@ def get_xmatches(alert_list, survey='ZTF'):
                         }
                 # if source is likely a galaxy, calculate redshift
                 # else set it to -1
-                redshift = red.calcz_rongpuRF(zdict) if sgscore>0.75 else -1
+                redshift = red.calcz_rongpuRF(zdict) if sgscore < sg_thresh \
+                                                     else -1
 
                 # collect the xmatch data
                 xmatches.append({   'objectId': alert['objectId'],
@@ -95,12 +102,12 @@ def get_astroquery_xmatches(fcat1='mock_stream/data/alerts_radec.csv', cat2='viz
 
 
 def get_alerts_ra_dec(fout=None, max_alerts=1000):
-    """Iterate through alerts and grab RA, DEC.
-
-    Write data to file with format compatible with astroquery.xmatch.query().
+    """ For use with get_astroquery_xmatches().
+        Iterates through alerts and writes RA & DEC info to file with format
+        compatible with astroquery.xmatch.query().
 
     Args:
-        fout    (string): Path to save file.
+        fout       (str): Path to save file.
         max_alerts (int): Max number of alerts to grab data from.
                            <= 0 will return all available.
 

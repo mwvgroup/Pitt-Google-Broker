@@ -1,5 +1,28 @@
-import numpy as np
+#!/usr/bin/env python3.7
+# -*- coding: UTF-8 -*-
+
+""" This is the main module controlling the calculation, lookup, and return
+    of all value added products (e.g. cross matches and classifications).
+
+    Usage Example:
+
+        ```python
+        # get alerts
+        from broker.ztf_archive import _parse_data as psd
+        num_alerts = 15
+        alert_list = next(psd.iter_alerts(num_alerts=num_alerts))
+
+        # get value added products
+        from broker.value_added import value_added as va
+        kwargs = { 'survey': 'ZTF', 'rapid_plotdir': './broker/value_added/plots' }
+        xmatches, classifications = va.get_value_added(alert_list, **kwargs)
+        ```
+"""
+
 from warnings import warn as _warn
+
+import numpy as np
+from astropy.time import Time
 from astropy.coordinates import SkyCoord
 from astroquery.irsa_dust import IrsaDust
 
@@ -7,45 +30,60 @@ from . import xmatch as xm
 from . import classify as classify
 
 
-def get_value_added(alert_list, survey='ZTF'):
-    """ Calculates (or looks up) all value added products for each alert in alert_list.
+def get_value_added(alert_list, survey='ZTF', rapid_plotdir=None):
+    """ Compiles all value added products for each alert in alert_list.
 
     Args:
-        alert_list (list): list of alert dicts
-        survey      (str): name of survey generating the alerts
+        alert_list   (list): list of alert dicts
+
+        survey        (str): name of survey generating the alerts
+
+        rapid_plotdir (str): directory for RAPID classification plots.
+                             Pass None to skip plotting.
 
     Returns:
-        Lists of dictionaries of value added products.
+        Lists of dictionaries of value added products, formatted for
+        upload to BigQuery. One dictionary per unique alert-xmatch pair.
+
+        xmatch_dicts [ {<column name (str)>: <value (str or float)>} ]
+
+        classification_dicts [ {<column name (str)>: <value (str or float)>} ]
+
     """
 
-    # Cross Matches
-    xmatch_dicts_list = xm.get_xmatches(alert_list, survey=survey) # list of dictionaries
+    ### Cross Matches
+    xmatch_dicts = xm.get_xmatches(alert_list, survey=survey)  # list of dicts
+    ###
 
-    # Classification
+    ### Classification
     # RAPID
-    light_curves, cx_data = format_for_rapid(alert_list, xmatch_dicts_list, survey=survey)
-    if len(light_curves) > 0:
-        class_dicts_list = classify.rapid(light_curves, cx_data, plot=False, use_redshift=True)
-    else:
-        print('\nThere are no alerts with enough information for classification.\n')
-        class_dicts_list = []
+    light_curves, cx_data = format_for_rapid(alert_list, xmatch_dicts,
+                                             survey=survey)
+    classification_dicts = classify.rapid(light_curves, cx_data,
+                                          plot=False, use_redshift=True)
+                                          # list of dicts
+    ###
 
-    return xmatch_dicts_list, class_dicts_list
+    return xmatch_dicts, classification_dicts
 
 
 def format_for_rapid(alert_list, xmatch_list, survey='ZTF'):
     """ Creates a list of tuples formatted for RAPID classifier.
 
     Args:
-        alert_list  (list): list of alert dicts
-        xmatch_list (list): list of cross matched objects as given by xm.get_xmatches()
+        alert_list  (list): alert dicts
+        xmatch_list (list): cross matched objects as given by xm.get_xmatches()
         survey       (str): name of survey generating the alerts
 
     Returns:
-        light_curves (list): list of tuples formatted as required for input to RAPID.
+        light_curves (list): [(light curve info formatted for input to RAPID.)]
 
-        cx_data      (list): list of dicts of candidate and xmatch info as needed for
-                             upload to BigQuery classification table.
+        cx_dicts     (dict): { alert_xobj_id (str):
+                               { <column name (str)>: <value (str or float)> } }
+                             Values are dicts of candidate and xmatch info
+                             as needed for upload to BQ classification table.
+                             Classification info should be added using the
+                             ``classify`` module.
 
     """
     # throw an error if received non-ZTF data
@@ -162,37 +200,36 @@ def alert_xobj_id(data):
         If data is a string, returns list of strings of parsed Id's
     """
 
-    if type(data) == list:
-        assert len(data)==5, 'alert_xobj_id() received invalid data list.'
-        data = [ str(d) for d in data ] # convert to strings
-        return '-'.join(data)
+    if isinstance(data, list):
+        # soft check that the input is as expected. fix this.
+        if len(data)!=5:
+            raise ValueError('alert_xobj_id() received invalid data list.')
 
-    elif type(data) == str:
+        return '-'.join([ str(d) for d in data ])
+
+    elif isinstance(data, str):
         return data.split('-')
 
     else:
-        assert False, 'alert_xobj_id() received invalid data type.'
+        raise ValueError('alert_xobj_id() received invalid data type.')
+
     return None
 
 
 def map_objectId_list(dict_list):
-    """ Creates a mapping between list indicies and objectId's.
+    """ Creates a mapping between list indices and objectId's.
 
     Args:
-        dict_list: list of dictionaries. Each dict must include key 'objectId'
+        dict_list (list of dicts): Each dict must include key 'objectId'
 
     Returns:
-        dictionary with key = objectId, value = list of dict_list indicies matching objectId
+        { <objectID (str)>: <corresponding indices in dict_list (list[int])> }
     """
 
-    d = {}
-    for idx, dict in enumerate(dict_list):
-        oid = dict['objectId']
-        try:
-            indicies = d[oid] + [idx]
-        except KeyError:
-            indicies = [idx]
-        d[oid] = indicies
+    out_dict = dict()
+    for idx, d in enumerate(dict_list):
+        obj_id = d['objectId']
+        out_dict[obj_id] = [*out_dict.get(obj_id, []), idx]
 
     return d
 
@@ -208,4 +245,4 @@ def mag_to_flux(mag, zeropoint, magerr):
 def jd_to_mjd(jd):
     """ Converts Julian Date to modified Julian Date.
     """
-    return jd - 2400000.5
+    return Time(jd, format='jd').mjd
