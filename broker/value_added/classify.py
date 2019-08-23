@@ -1,91 +1,96 @@
+#!/usr/bin/env python3.7
+# -*- coding: UTF-8 -*-
+
+""" The ``classify`` module predicts the object type/classification and
+    returns the results formatted for upload to BigQuery.
+
+    Currently using the RAPID (astrorapid) classifier.
+
+    Helpful links:
+      https://astrorapid.readthedocs.io
+"""
+
 from astrorapid.classify import Classify
 
 
-def rapid(light_curves, cx_dicts, plot=False, plotdir='./broker/value_added/plots',
-            use_redshift=True):
+def rapid(light_curves, cx_dicts, plotdir=None):
     """ Classifies alerts using RAPID (aka astrorapid).
 
     Args:
-        light_curves  (list of tuples): light_curve_info for multiple objects,
-                                        where light_curve_info =
-                                        (mjd, flux, fluxerr, passband,
-                                        photflag, ra, dec, objid, redshift, mwebv)
+        light_curves (list): [light_curve_info formatted for input to RAPID.]
+                             where
+                             light_curve_info = (mjd, flux, fluxerr, passband,
+                                                 photflag, ra, dec,
+                                                 objid, redshift, mwebv)
 
-        cx_dicts        (list of dicts): candidate and xmatch info as needed for
-                                        BigQuery classification table.
+        cx_dicts     (dict): { alert_xobj_id (str):
+                             { <column name (str)>: <value (str or float)> } }
+                             Values are dicts of candidate and xmatch info
+                             as needed for upload to BQ classification table.
         Note:
-            A given index must identify the same unique object + host galaxy combination
-            in both the light_curves and cx_dicts lists.
+            A given index must identify the same unique object + host galaxy
+            combination in both the light_curves and cx_dicts lists.
             Use the function value_added.format_for_rapid() to get both lists.
 
+        plotdir                  (str): Directory for classification plots.
+                                        Pass None to skip plotting.
+
     Returns:
-        List of dictionaries formatted for upload to BigQuery classification table.
+        Dictionaries of classification results, formatted for BigQuery.
+        One dictionary per element in light_curves.
+        This is cx_dicts with classification info added.
+        [ {<column name (str)>: <value (str or float)>} ]
+
     """
+    # If there is nothing to classify, return an empty list
+    if len(light_curves) == 0:
+        _warn('\nThere are no alerts with enough information for classification.\n')
+        return []
 
-    classification = Classify(known_redshift=use_redshift)
-    predictions = classification.get_predictions(light_curves, \
-                    return_predictions_at_obstime=True, return_objids=True)
+    classification = Classify(known_redshift=True)
+    predictions = classification.get_predictions(light_curves,
+                        return_predictions_at_obstime=True, return_objids=True)
+                  # = classes_list, times_list, objids_list
+                  # lists of arrays, one array per classified object
 
-    if plot:
+    if plotdir is not None:
         # Plot classifications vs time
         classification.plot_light_curves_and_classifications(figdir=plotdir)
         # classification.plot_classification_animation(figdir=plotdir)
-        print('\nRAPID classification plot(s) saved to {}'.format(plotdir))
-        print("Pass arg 'plotdir' to change this location.")
 
-    class_dicts_list = format_rapid_for_BQ(cx_dicts, predictions)
+    classification_dicts = format_rapid_for_BQ(cx_dicts, predictions)
 
-    return class_dicts_list
+    return classification_dicts
 
 
 def format_rapid_for_BQ(cx_dicts, predictions):
-    """ Combines RAPID output with candidate and xmatch data and formats for upload to BigQuery.
+    """ Combines RAPID output with candidate and xmatch data and formats
+        for upload to BigQuery.
 
     Args:
-        cx_dicts       (dict of dicts): candidate and xmatch info as needed for
-                                        BigQuery classification table.
-                                        Keys are lightcurve IDs (cxid, as given by
-                                        value_added.alert_xobj_id()).
+        cx_dicts (dict of dicts): candidate and xmatch info as needed for
+                                  BigQuery classification table.
+                                  Keys are lightcurve IDs (cxid, as given
+                                  by value_added.alert_xobj_id()).
 
-        predictions            (tuple): as returned by rapid function get_predictions()
+        predictions      (tuple): as returned by astrorapid's get_predictions()
 
     Returns:
-        cx_dicts with candidate epoch classification info added to each dictionary.
+        cx_dicts with candidate epoch classification info added to each dict.
     """
 
-    # classes_list, times_list, objids_list = predictions # lists of arrays
-
-    # Check that all light curves were classified --- no longer needed, have cxid
-    # err_msg = "Number of predictions from RAPID != Number of input light curves. \
-    #             \nCannot match predictions to candid's."
-    # assert len(classes_list) == len(cx_dicts), err_msg
-
     # Merge predicitions with alert and hostgal info
-    class_dicts_list = []
+    classification_dicts = []
     for lc_preds, lc_times, cxid in zip(*predictions):
-        # Get the predictions for the current alert candidate only
-        cand_preds = lc_preds[-1] # check this.
-        # I tried to match the candidate mjd (see below), but the output times are
-        # not exactly the same as the input times.
-        class_keys = ['prob_class{}'.format(i) for i in range(len(cand_preds))] # fix this.
-        preds_dict = dict(zip(class_keys, cand_preds.tolist()))
-        # # find position of cand_mjd in lc_times array
-        # cand_mjd = cx_dict.pop('cand_mjd') # this is not sent to BQ
-        # cand_idx = lc_times == cand_mjd # array of bools
-        # # get the class predictions for the alert candidate, ensure exactly 1 match
-        # cand_preds = lc_preds[cand_idx] # array of classification arrays
-        # if len(cand_preds) == 1:
-        #     cand_preds = cand_preds[0] # array of class predictions for candidate epoch
-        #     class_keys = [str(i) for i in range(len(cand_preds))]
-        #     preds_dict = dict(zip(class_keys, cand_preds.tolist()))
-        # else:
-        #     print(cx_dict)
-        #     print(cand_mjd, lc_times)
-        #     err_msg = "Found {} RAPID classification predictions at \
-        #                 observation time = candidate mjd. \
-        #                 \n(Exactly 1 match is required.)".format(len(cand_preds))
-        #     assert False, err_msg
+        # Get the predictions for the current alert candidate only.
+        # I tried to match the candidate mjd input with a rapid output,
+        # but the output times are not exactly the same as the input times.
+        # This should be the last prediction, but check this.
+        cand_preds = lc_preds[-1]
+        class_colnames = [f'prob_class{i}' for i in range(len(cand_preds))]
+        preds_dict = dict(zip(class_colnames, cand_preds.tolist()))
 
-        class_dicts_list.append({**cx_dicts[cxid], **preds_dict})
+        # Add predictions to cx_dicts
+        classification_dicts.append({**cx_dicts[cxid], **preds_dict})
 
-    return class_dicts_list
+    return classification_dicts

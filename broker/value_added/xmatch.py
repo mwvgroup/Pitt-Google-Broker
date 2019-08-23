@@ -9,8 +9,9 @@
     https://astroquery.readthedocs.io/en/latest/xmatch/xmatch.html#module-astroquery.xmatch
 """
 
-import pandas as pd
 from warnings import warn as _warn
+
+import pandas as pd
 from astropy import units as u
 from astroquery.xmatch import XMatch
 
@@ -35,6 +36,11 @@ def get_xmatches(alert_list, survey='ZTF', sg_thresh=0.5):
         [ {<column name (str)>: <value (str or float)>} ]
 
     """
+    _warn('The ZTF/Pan-STARRS photo-z calculation needs to be updated. '
+          'It uses a random forest model trained on DECaLS data '
+          'for photo-z estimation on Pan-STARRS data. '
+          '\nThe result should not be trusted!')
+
     xmatches = []
 
     for alert in alert_list:
@@ -42,22 +48,18 @@ def get_xmatches(alert_list, survey='ZTF', sg_thresh=0.5):
         if survey == 'ZTF':
             # get xmatches included in alert packet
             cand = alert['candidate']
-            for s in ['1','2','3']: # for each PS1 source in alert
+            for s in ['1', '2', '3']:  # for each PS1 source in alert
                 sgscore = cand['sgscore'+s]
 
                 # calculate redshift
-                _warn('The ZTF/Pan-STARRS photo-z calculation needs to be updated. '
-                        'It uses a random forest model trained on DECaLS data '
-                        'for photo-z estimation on Pan-STARRS data. '
-                        '\nThe result should not be trusted!')
-                zdict = {   'gmag': cand['sgmag'+s],
-                            'rmag': cand['srmag'+s],
-                            'zmag': cand['simag'+s], # note this is imag
-                            'w1mag': cand['szmag'+s], # note this is zmag
-                            'w2mag': 0.0,
-                            'radius': 0.0,
-                            'q': 0.0,
-                            'p': 0.0
+                zdict = { 'gmag': cand['sgmag'+s],
+                          'rmag': cand['srmag'+s],
+                          'zmag': cand['simag'+s],  # note this is imag
+                          'w1mag': cand['szmag'+s],  # note this is zmag
+                          'w2mag': 0.0,
+                          'radius': 0.0,
+                          'q': 0.0,
+                          'p': 0.0
                         }
                 # if source is likely a galaxy, calculate redshift
                 # else set it to -1
@@ -65,21 +67,24 @@ def get_xmatches(alert_list, survey='ZTF', sg_thresh=0.5):
                                                      else -1
 
                 # collect the xmatch data
-                xmatches.append({   'objectId': alert['objectId'],
-                                    'xobjId': cand['objectidps'+s],
-                                    'xcatalog': 'PS1',
-                                    'redshift': redshift,
-                                    'dist2d': cand['distpsnr'+s],
-                                    'sgscore': sgscore
+                xmatches.append({ 'objectId': alert['objectId'],
+                                  'xobjId': cand['objectidps'+s],
+                                  'xcatalog': 'PS1',
+                                  'redshift': redshift,
+                                  'dist2d': cand['distpsnr'+s],
+                                  'sgscore': sgscore
                                 })
 
     return xmatches
 
 
-def get_astroquery_xmatches(fcat1='mock_stream/data/alerts_radec.csv', cat2='vizier:II/246/out'):
+def get_astroquery_xmatches(fcat1='mock_stream/data/alerts_radec.csv',
+                            cat2='vizier:II/246/out'):
     """
     Args:
-        fcat1 (string): Path to csv file, as written by get_alerts_ra_dec(fout=fcat1).
+        fcat1 (string): Path to csv file,
+                        as written by get_alerts_ra_dec(fout=fcat1).
+
         cat2  (string): Passed through to XMatch.query().
 
     Returns:
