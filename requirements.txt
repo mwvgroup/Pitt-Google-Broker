@@ -1,7 +1,7 @@
 aplpy
 astropy>=3.1
 astroquery
-astrorapid
+astrorapid>=0.1.30
 beautifulsoup4
 deepdiff
 fastavro
