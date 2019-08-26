@@ -138,7 +138,8 @@ def format_for_rapid_proc_alert(alert, xmatch_list, oid_map):
 
     # MW dust extinction
     # fix this. ZTF docs say ra, dec are in J2000 [deg]
-    coo = SkyCoord(ra, dec, frame='icrs', unit='deg')
+    coo = SkyCoord(alert['candidate']['ra'], alert['candidate']['dec'],
+                   frame='icrs', unit='deg')
     dust = IrsaDust.get_query_table(coo, section='ebv')
     mwebv = dust['ext SandF mean'][0]
 
@@ -198,13 +199,15 @@ def format_for_rapid_proc_epochs(epochs):
                            'Cannot continue with classification.'))
 
     # Set trigger date. fix this.
-    photflag[np.equals(flux == np.max(flux))] = 6144
+    photflag = np.asarray(photflag)
+    photflag[flux == np.max(flux)] = 6144
 
+    # Gather info
     epoch_dict = { 'mjd': np.asarray(mjd),
                    'flux': np.asarray(flux),
                    'fluxerr': np.asarray(fluxerr),
                    'passband': np.asarray(passband),
-                   'photflag': np.asarray(photflag)
+                   'photflag': photflag
                  }
 
     return epoch_dict
@@ -327,7 +330,7 @@ def map_objectId_list(dict_list):
         obj_id = d['objectId']
         out_dict[obj_id] = [*out_dict.get(obj_id, []), idx]
 
-    return d
+    return out_dict
 
 
 def mag_to_flux(mag, zeropoint, magerr):
