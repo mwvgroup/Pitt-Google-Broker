@@ -6,7 +6,6 @@ real-time processing for alerts from the  Zwicky Transient Facility (ZTF) and
 the Large Synoptic Survey Telescope (LSST).
 """
 
-from . import alert_acquisition, data_upload, xmatch, ztf_archive
 from ._gcp_setup import setup_gcp
 
 __version__ = '0.1.1'

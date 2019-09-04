@@ -33,4 +33,6 @@ setup(name='pitt_broker',
 
       python_requires='>=3.7',
       install_requires=requirements,
-      include_package_data=False)
+      include_package_data=True,
+      package_data={'':['value_added/*.pkl']}
+      )

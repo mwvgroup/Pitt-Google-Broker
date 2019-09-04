@@ -10,6 +10,7 @@ env:
 
 
 install:
+  - pip install tb-nightly
   - python setup.py install
 
 script:
