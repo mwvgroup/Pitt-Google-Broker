@@ -22,3 +22,4 @@ pandas-gbq
 pandavro
 requests
 tqdm
+google-cloud-pubsub
