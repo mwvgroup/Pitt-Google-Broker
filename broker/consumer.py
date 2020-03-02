@@ -3,16 +3,15 @@
 
 """Ingest alerts from a Kafka stream to GCS Storage and PubSub"""
 
+import logging
 import os
+from tempfile import TemporaryFile
 from warnings import warn
 
 from confluent_kafka import Consumer, KafkaException
 from google.cloud import pubsub_v1, storage
 
-from .utils import RTDSafeImport, setup_log
-
-with RTDSafeImport():
-    error_client, log = setup_log(__name__)
+log = logging.Logger(__name__)
 
 DEFAULT_ZTF_CONFIG = {
     'bootstrap.servers': 'public2.alerts.ztf.uw.edu:9094',
@@ -33,23 +32,26 @@ DEFAULT_ZTF_CONFIG = {
 class GCSKafkaConsumer(Consumer):
     """Ingests data from a kafka stream into big_query"""
 
-    def __init__(self, config, bucket_name, kafka_topics, pubsub_topic):
+    def __init__(self, kafka_config, bucket_name, kafka_topics, pubsub_topic):
         """Ingests data from a kafka stream into big_query
 
         Args:
-            config      (dict): Kafka consumer configuration properties
-            bucket_name  (str): Name of the bucket to upload into
+            kafka_config      (dict): Kafka consumer configuration properties
+            bucket_name        (str): Name of the bucket to upload into
             kafka_topics (list[str]): Kafka topics to subscribe to
         """
 
+        self.server = kafka_config["bootstrap.servers"]
+        log.info(f'Instantiating consumer for {self.server}')
+
         # Enforce NO auto commit
-        commit_config = config.get('enable.auto.commit', None)
+        commit_config = kafka_config.get('enable.auto.commit', None)
         if commit_config != 'FALSE':
             warn(f'enable.auto.commit set to {commit_config} - changing to `False`')
-            config.setdefault('enable.auto.commit', 'FALSE')
+            kafka_config.setdefault('enable.auto.commit', 'FALSE')
 
         # Connect to ZTF stream
-        super().__init__(config)
+        super().__init__(kafka_config)
         self.subscribe(kafka_topics)
 
         # Connect to Google Cloud
@@ -63,16 +65,26 @@ class GCSKafkaConsumer(Consumer):
         self.publisher = pubsub_v1.PublisherClient()
         self.topic_path = self.publisher.topic_path(project_id, pubsub_topic)
 
-    def upload_to_bucket(self, file_obj, destination_name):
-        """Uploads a file like object to a GCP storage bucket
+    def close(self):
+        """Close down and terminate the Kafka Consumer"""
+
+        log.info(f'Closing consumer for {self.server}')
+        super().close()
+
+    def upload_bytes_to_bucket(self, bytes, destination_name):
+        """Uploads bytes data to a GCP storage bucket
 
         Args:
-            file_obj    (BinaryIO): Name of the bucket to upload into
+            bytes          (bytes): Data to upload
             destination_name (str): Name of the file to be created
         """
 
+        log.debug(f'Uploading file to {destination_name}')
         blob = self.bucket.blob(destination_name)
-        blob.upload_from_filename(file_obj)
+        with TemporaryFile() as temp_file:
+            temp_file.write(bytes)
+            temp_file.seek(0)
+            blob.upload_from_file(temp_file)
 
     def publish_pubsub(self, message):
         """Publish a PubSub alert
@@ -91,21 +103,35 @@ class GCSKafkaConsumer(Consumer):
     def run(self):
         """Ingest kafka Messages to GCS and PubSub"""
 
-        while True:
-            msg = self.poll()
+        log.info('Starting consumer.run ...')
+        try:
+            while True:
+                msg = self.poll(timeout=5)
+                if msg is None:
+                    continue
 
-            if msg is None:
-                continue
+                if msg.error():
+                    err_msg = '{} [{}] at offset {} with key {}:\n  %%  {}'
+                    err_data = (msg.topic(), msg.partition(), msg.offset(), msg.key(), msg.error())
+                    log.error(err_msg.format(err_data))
+                    raise KafkaException(msg.error())
 
-            if msg.error():
-                err_msg = '{} [{}] at offset {} with key {}:\n  %%  {}'
-                err_data = (msg.topic(), msg.partition(), msg.offset(), msg.key(), msg.error())
-                log.log(err_msg.format(err_data))
-                raise KafkaException(msg.error())
+                else:
+                    timestamp_kind, timestamp = msg.timestamp()
+                    assert timestamp_kind == 1
+                    file_name = f'{timestamp}.avro'
 
-            else:
-                # Todo: Is msg.key() unique? How to name GCS Files
-                file_name = msg.key()
-                self.upload_to_bucket(msg.value(), msg.key())
-                self.publish_pubsub(file_name)
-                self.commit()
+                    log.debug(f'Ingesting {file_name}')
+                    self.upload_bytes_to_bucket(msg.value(), file_name)
+                    self.publish_pubsub(file_name)
+                    # self.commit()
+
+                break
+
+        except KeyboardInterrupt:
+            log.error('User ended consumer')
+            raise
+
+        except Exception as e:
+            log.error(f'Consumer level error: {e}')
+            raise
