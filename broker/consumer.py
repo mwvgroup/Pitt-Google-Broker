@@ -1,7 +1,40 @@
 #!/usr/bin/env python3.7
 # -*- coding: UTF-8 -*-
 
-"""Ingest alerts from a Kafka stream to GCS Storage and PubSub"""
+"""The ``consumer`` module handles the ingestion of a Kafka alert stream into
+Google Cloud Storage (GCS) and defines default connection settings for
+different Kafka servers.
+
+Usage Example
+-------------
+
+.. code-block:: python
+   :linenos:
+
+   from broker.consumer import GCSKafkaConsumer, DEFAULT_ZTF_CONFIG
+
+   # Define connection configuration using default values as a starting point
+   config = DEFAULT_ZTF_CONFIG.copy()
+   config['sasl.kerberos.keytab'] = '<Path to authentication file>'
+   config['sasl.kerberos.principal'] = '<>'
+   print('Connecting with config values:\n\n', config)
+
+   # Create a consumer
+   c = GCSKafkaConsumer(
+       kafka_config=config,
+       bucket_name='my-GCS-bucket-name',
+       kafka_topics='ztf_20200301_programid1',
+       pubsub_topic='my-GCS-PubSub-name',
+       debug=True  # Use debug to run without updating your kafka offset
+   )
+
+   # Ingest alerts one at a time indefinitely
+   c.run()
+
+
+Module Docs
+-----------
+"""
 
 import logging
 import os
@@ -12,6 +45,7 @@ from confluent_kafka import Consumer, KafkaException
 from google.cloud import pubsub_v1, storage
 
 log = logging.Logger(__name__)
+__names__ = ['DEFAULT_ZTF_CONFIG', 'GCSKafkaConsumer']
 
 DEFAULT_ZTF_CONFIG = {
     'bootstrap.servers': 'public2.alerts.ztf.uw.edu:9094',
@@ -126,7 +160,6 @@ class GCSKafkaConsumer(Consumer):
                     file_name = f'{timestamp}.avro'
 
                     log.debug(f'Ingesting {file_name}')
-                    print(file_name)
                     self.upload_bytes_to_bucket(msg.value(), file_name)
                     self.publish_pubsub(file_name)
                     if not self.debug:
