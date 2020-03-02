@@ -5,7 +5,7 @@
 
 import logging
 import os
-from tempfile import TemporaryFile
+from tempfile import SpooledTemporaryFile
 from warnings import warn
 
 from confluent_kafka import Consumer, KafkaException
@@ -32,15 +32,19 @@ DEFAULT_ZTF_CONFIG = {
 class GCSKafkaConsumer(Consumer):
     """Ingests data from a kafka stream into big_query"""
 
-    def __init__(self, kafka_config, bucket_name, kafka_topics, pubsub_topic):
+    def __init__(self, kafka_config, bucket_name, kafka_topic,
+                 pubsub_topic, debug=False):
         """Ingests data from a kafka stream into big_query
 
         Args:
-            kafka_config      (dict): Kafka consumer configuration properties
-            bucket_name        (str): Name of the bucket to upload into
-            kafka_topics (list[str]): Kafka topics to subscribe to
+            kafka_config (dict): Kafka consumer configuration properties
+            bucket_name   (str): Name of the bucket to upload into
+            kafka_topic   (str): Kafka topics to subscribe to
+            pubsub_topic  (str): PubSub topic to publish to
+            debug        (bool): Run without committing Kafka position
         """
 
+        self.debug = debug
         self.server = kafka_config["bootstrap.servers"]
         log.info(f'Instantiating consumer for {self.server}')
 
@@ -50,17 +54,15 @@ class GCSKafkaConsumer(Consumer):
             warn(f'enable.auto.commit set to {commit_config} - changing to `False`')
             kafka_config.setdefault('enable.auto.commit', 'FALSE')
 
-        # Connect to ZTF stream
+        # Connect to Kafka stream
         super().__init__(kafka_config)
-        self.subscribe(kafka_topics)
+        self.subscribe([kafka_topic])
 
         # Connect to Google Cloud
         self.storage_client = storage.Client()
         self.bucket = self.storage_client.get_bucket(bucket_name)
 
         # Configure PubSub
-        # The ``topic_path`` method creates a fully qualified identifier
-        # in the form ``projects/{project_id}/topics/{topic_name}``
         project_id = os.getenv('BROKER_PROJ_ID')
         self.publisher = pubsub_v1.PublisherClient()
         self.topic_path = self.publisher.topic_path(project_id, pubsub_topic)
@@ -81,7 +83,9 @@ class GCSKafkaConsumer(Consumer):
 
         log.debug(f'Uploading file to {destination_name}')
         blob = self.bucket.blob(destination_name)
-        with TemporaryFile() as temp_file:
+
+        # By default, spool data in memory to avoid IO unless data is too big
+        with SpooledTemporaryFile() as temp_file:
             temp_file.write(bytes)
             temp_file.seek(0)
             blob.upload_from_file(temp_file)
@@ -122,11 +126,11 @@ class GCSKafkaConsumer(Consumer):
                     file_name = f'{timestamp}.avro'
 
                     log.debug(f'Ingesting {file_name}')
+                    print(file_name)
                     self.upload_bytes_to_bucket(msg.value(), file_name)
                     self.publish_pubsub(file_name)
-                    # self.commit()
-
-                break
+                    if not self.debug:
+                        self.commit()
 
         except KeyboardInterrupt:
             log.error('User ended consumer')
