@@ -17,7 +17,7 @@ Usage Example
    config = DEFAULT_ZTF_CONFIG.copy()
    config['sasl.kerberos.keytab'] = '<Path to authentication file>'
    config['sasl.kerberos.principal'] = '<>'
-   print('Connecting with config values:\n\n', config)
+   print(config)
 
    # Create a consumer
    c = GCSKafkaConsumer(
