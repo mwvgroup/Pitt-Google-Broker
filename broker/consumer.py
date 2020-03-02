@@ -19,13 +19,14 @@ DEFAULT_ZTF_CONFIG = {
     'group.id': 'group',
     'session.timeout.ms': 6000,
     'enable.auto.commit': 'FALSE',
-    'sasl.kerberos.principal': 'pitt-reader@KAFKA.SECURE',
     'sasl.kerberos.kinit.cmd': 'kinit -t "%{sasl.kerberos.keytab}" -k %{sasl.kerberos.principal}',
-    'sasl.kerberos.keytab': None,
     'sasl.kerberos.service.name': 'kafka',
     'security.protocol': 'SASL_PLAINTEXT',
     'sasl.mechanisms': 'GSSAPI',
     'auto.offset.reset': 'earliest'
+    # User authentication
+    # 'sasl.kerberos.principal':
+    # 'sasl.kerberos.keytab':
 }
 
 
