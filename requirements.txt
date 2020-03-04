@@ -23,4 +23,4 @@ pandavro
 requests
 tqdm
 google-cloud-pubsub
-confluent_kafka
+confluent-kafka
