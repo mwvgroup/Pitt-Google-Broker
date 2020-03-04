@@ -23,7 +23,7 @@ Usage Example
    c = GCSKafkaConsumer(
        kafka_config=config,
        bucket_name='my-GCS-bucket-name',
-       kafka_topics='ztf_20200301_programid1',
+       kafka_topic='ztf_20200301_programid1',
        pubsub_topic='my-GCS-PubSub-name',
        debug=True  # Use debug to run without updating your kafka offset
    )
@@ -68,7 +68,7 @@ class GCSKafkaConsumer(Consumer):
 
     def __init__(self, kafka_config, bucket_name, kafka_topic,
                  pubsub_topic, debug=False):
-        """Ingests data from a kafka stream into big_query
+        """Ingests data from a kafka stream and stores a copy in GCS
 
         Args:
             kafka_config (dict): Kafka consumer configuration properties
