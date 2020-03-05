@@ -81,9 +81,8 @@ ZTF References
    :maxdepth: 1
    :caption: Module Documentation:
 
-   module_docs/api_reference
    module_docs/broker
-   module_docs/alert_acquisition
-   module_docs/data_upload
-   module_docs/xmatch
+   module_docs/consumer
+   module_docs/value_added
+   module_docs/pub_sub_client
    module_docs/ztf_archive
