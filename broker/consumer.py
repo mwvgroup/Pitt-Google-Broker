@@ -22,9 +22,9 @@ Usage Example
    # Create a consumer
    c = GCSKafkaConsumer(
        kafka_config=config,
-       bucket_name='my-GCS-bucket-name',
+       bucket_name='my-gcs-bucket-name',
        kafka_topic='ztf_20200301_programid1',
-       pubsub_topic='my-GCS-PubSub-name',
+       pubsub_topic='my-gcs-pubsub-name',
        debug=True  # Use debug to run without updating your kafka offset
    )
 
