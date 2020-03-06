@@ -5,15 +5,6 @@ astrorapid>=0.1.30
 beautifulsoup4
 deepdiff
 fastavro
-google-api-python-client
-google-auth
-google-cloud-bigquery
-google-cloud-logging
-google-cloud-storage
-google-cloud-error-reporting
-google-cloud-pubsub
-googleapis-common-protos
-google-resumable-media
 lxml
 matplotlib
 numpy
@@ -22,5 +13,18 @@ pandas-gbq
 pandavro
 requests
 tqdm
+
+# GCS dependencies
+google-api-python-client
+google-auth
 google-cloud-pubsub
+google-cloud-bigquery
+google-cloud-logging
+google-cloud-storage
+google-cloud-error-reporting
+googleapis-common-protos
+google-resumable-media
+
+# Kafka dependencies
 confluent-kafka
+# krb5  # conda install krb5

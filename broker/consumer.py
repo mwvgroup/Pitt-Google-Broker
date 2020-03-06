@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.7
+#!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
 """The ``consumer`` module handles the ingestion of a Kafka alert stream into
@@ -23,7 +23,7 @@ Usage Example
    c = GCSKafkaConsumer(
        kafka_config=config,
        bucket_name='my-gcs-bucket-name',
-       kafka_topic='ztf_20200301_programid1',
+       kafka_topic='my_kafka_topic_name',
        pubsub_topic='my-gcs-pubsub-name',
        debug=True  # Use debug to run without updating your kafka offset
    )
@@ -32,8 +32,8 @@ Usage Example
    c.run()
 
 
-Module Docs
------------
+Module Documentation
+--------------------
 """
 
 import logging
@@ -43,9 +43,9 @@ from warnings import warn
 
 from confluent_kafka import Consumer, KafkaException
 from google.cloud import pubsub_v1, storage
+from google.cloud.pubsub_v1.publisher.futures import Future
 
-log = logging.Logger(__name__)
-__names__ = ['DEFAULT_ZTF_CONFIG', 'GCSKafkaConsumer']
+log = logging.getLogger(__name__)
 
 DEFAULT_ZTF_CONFIG = {
     'bootstrap.servers': 'public2.alerts.ztf.uw.edu:9094',
@@ -63,77 +63,128 @@ DEFAULT_ZTF_CONFIG = {
 }
 
 
+class TempAlertFile(SpooledTemporaryFile):
+    """Subclass of SpooledTemporaryFile that is tied into the log"""
+
+    def rollover(self):
+        """Move contents of the spooled file from memory onto disk"""
+
+        log.warning(f'Alert size exceeded max memory size: {self._max_size}')
+        super().rollover()
+
+
+def _set_config_defaults(kafka_config: dict) -> dict:
+    """Set default values for a Kafka configuration dictionary
+
+    Default values:
+        enable.auto.commit: False,
+        logger: log
+
+    Args:
+        kafka_config: Dictionary of config values
+
+    Returns:
+        A copy of the passed configuration dictionary set with default values
+    """
+
+    kafka_config = kafka_config.copy()
+    default_vals = {'enable.auto.commit': False, 'logger': log}
+    for key, default_value in default_vals.items():
+        config_val = kafka_config.get(key, None)
+        if config_val != default_value:
+            msg = f'Config value {key} passed as {config_val} - changing to `{default_value}`'
+            warn(msg)
+            log.warning(msg)
+            kafka_config.setdefault('enable.auto.commit', 'FALSE')
+
+    return kafka_config
+
+
 class GCSKafkaConsumer(Consumer):
     """Ingests data from a kafka stream into big_query"""
 
-    def __init__(self, kafka_config, bucket_name, kafka_topic,
-                 pubsub_topic, debug=False):
+    def __init__(
+            self,
+            kafka_config: dict,
+            kafka_topic: str,
+            bucket_name: str,
+            pubsub_topic: str,
+            debug: bool = False):
         """Ingests data from a kafka stream and stores a copy in GCS
 
+        Storage bucket and PubSub topic must already exist and have
+        appropriate permissions.
+
         Args:
-            kafka_config (dict): Kafka consumer configuration properties
-            bucket_name   (str): Name of the bucket to upload into
-            kafka_topic   (str): Kafka topics to subscribe to
-            pubsub_topic  (str): PubSub topic to publish to
-            debug        (bool): Run without committing Kafka position
+            kafka_config: Kafka consumer configuration properties
+            kafka_topic: Kafka topics to subscribe to
+            bucket_name: Name of the bucket to upload into
+            pubsub_topic: PubSub topic to publish to
+            debug: Run without committing Kafka position
         """
 
-        self.debug = debug
-        self.server = kafka_config["bootstrap.servers"]
-        log.info(f'Instantiating consumer for {self.server}')
-
-        # Enforce NO auto commit
-        commit_config = kafka_config.get('enable.auto.commit', None)
-        if commit_config != 'FALSE':
-            warn(f'enable.auto.commit set to {commit_config} - changing to `False`')
-            kafka_config.setdefault('enable.auto.commit', 'FALSE')
+        self._debug = debug
+        self.kafka_topic = kafka_topic
+        self.bucket_name = bucket_name
+        self.pubsub_topic = pubsub_topic
+        self.kafka_server = kafka_config["bootstrap.servers"]
+        log.info(f'Initializing consumer: {self.__repr__()}')
 
         # Connect to Kafka stream
-        super().__init__(kafka_config)
+        # Enforce NO auto commit, correct log handling
+        super().__init__(_set_config_defaults(kafka_config))
         self.subscribe([kafka_topic])
 
-        # Connect to Google Cloud
+        # Connect to Google Cloud Storage
         self.storage_client = storage.Client()
         self.bucket = self.storage_client.get_bucket(bucket_name)
+        log.info(f'Connected to bucket: {self.bucket.name}')
 
-        # Configure PubSub
+        # Configure PubSub topic
         project_id = os.getenv('BROKER_PROJ_ID')
         self.publisher = pubsub_v1.PublisherClient()
         self.topic_path = self.publisher.topic_path(project_id, pubsub_topic)
 
+        # Raise error if topic does not exist
+        self.topic = self.publisher.get_topic(self.topic_path)
+        log.info(f'Connected to PubSub: {self.topic_path}')
+
     def close(self):
         """Close down and terminate the Kafka Consumer"""
 
-        log.info(f'Closing consumer for {self.server}')
+        log.info(f'Closing consumer: {self.__repr__()}')
         super().close()
 
-    def upload_bytes_to_bucket(self, bytes, destination_name):
+    def upload_bytes_to_bucket(self, data: bytes, destination_name: str):
         """Uploads bytes data to a GCP storage bucket
 
         Args:
-            bytes          (bytes): Data to upload
-            destination_name (str): Name of the file to be created
+            data: Data to upload
+            destination_name: Name of the file to be created
         """
 
-        log.debug(f'Uploading file to {destination_name}')
+        log.debug(f'Uploading {destination_name} to {self.bucket.name}')
         blob = self.bucket.blob(destination_name)
 
         # By default, spool data in memory to avoid IO unless data is too big
-        with SpooledTemporaryFile() as temp_file:
-            temp_file.write(bytes)
+        # LSST alerts are anticipated at 80 kB, so 150 kB should be plenty
+        max_alert_packet_size = 150000
+        with SpooledTemporaryFile(max_size=max_alert_packet_size, mode='w+b') as temp_file:
+            temp_file.write(data)
             temp_file.seek(0)
             blob.upload_from_file(temp_file)
 
-    def publish_pubsub(self, message):
+    def publish_pubsub(self, message: str) -> Future:
         """Publish a PubSub alert
 
         Args:
-            message (str): The message to publish
+            message: The message to publish
 
         Returns:
             The Id of the published message
         """
 
+        log.debug(f'Publishing message: {message}')
         message_data = message.encode('UTF-8')
         future = self.publisher.publish(self.topic_path, data=message_data)
         return future.result()
@@ -144,31 +195,40 @@ class GCSKafkaConsumer(Consumer):
         log.info('Starting consumer.run ...')
         try:
             while True:
-                msg = self.poll(timeout=5)
+                msg = self.consume(num_messages=1, timeout=5)
                 if msg is None:
                     continue
 
                 if msg.error():
-                    err_msg = '{} [{}] at offset {} with key {}:\n  %%  {}'
                     err_data = (msg.topic(), msg.partition(), msg.offset(), msg.key(), msg.error())
-                    log.error(err_msg.format(err_data))
+                    err_msg = 'KafkaException for {} [{}] at offset {} with key {}:\n  %%  {}'.format(*err_data)
+                    log.error(err_msg, exc_info=True)
                     raise KafkaException(msg.error())
 
                 else:
                     timestamp_kind, timestamp = msg.timestamp()
-                    assert timestamp_kind == 1
                     file_name = f'{timestamp}.avro'
 
                     log.debug(f'Ingesting {file_name}')
                     self.upload_bytes_to_bucket(msg.value(), file_name)
                     self.publish_pubsub(file_name)
-                    if not self.debug:
+                    if not self._debug:
                         self.commit()
 
         except KeyboardInterrupt:
-            log.error('User ended consumer')
+            log.error('User ended consumer', exc_info=True)
             raise
 
         except Exception as e:
-            log.error(f'Consumer level error: {e}')
+            log.error(f'Consumer level error: {e}', exc_info=True)
             raise
+
+    def __repr__(self):
+        return (
+            '<Consumer('
+            f'kafka_server: {self.kafka_server}, '
+            f'kafka_topic: {self.kafka_topic}, '
+            f'bucket_name: {self.bucket_name}, '
+            f'pubsub_topic: {self.pubsub_topic}'
+            ')>'
+        )
