@@ -168,7 +168,8 @@ class GCSKafkaConsumer(Consumer):
 
         # By default, spool data in memory to avoid IO unless data is too big
         # LSST alerts are anticipated at 80 kB, so 150 kB should be plenty
-        with SpooledTemporaryFile(max_size=150000, mode='w+b') as temp_file:
+        max_alert_packet_size = 150000
+        with SpooledTemporaryFile(max_size=max_alert_packet_size, mode='w+b') as temp_file:
             temp_file.write(data)
             temp_file.seek(0)
             blob.upload_from_file(temp_file)
