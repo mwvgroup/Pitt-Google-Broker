@@ -1,10 +1,4 @@
 # -*- coding: utf-8 -*-
-#
-# Configuration file for the Sphinx documentation builder.
-#
-# This file does only contain a selection of the most common options. For a
-# full list see the documentation:
-# http://www.sphinx-doc.org/en/master/config
 
 # -- Path setup --------------------------------------------------------------
 
@@ -21,20 +15,15 @@
 
 project = 'Pitt Broker'
 copyright = '2019'
-author = 'Daniel Perrefort, Troy Raen, Christine Mazzola'
+author = 'The Pitt-Google Broker Team'
 
 # The short X.Y version
 version = ''
 # The full version, including alpha/beta/rc tags
-import matplotlib; matplotlib.use('PDF')
 import broker
 release = broker.__version__
 
-
 # -- General configuration ---------------------------------------------------
-
-# If your documentation needs a minimal Sphinx version, state it here.
-# needs_sphinx = '1.0'
 
 # Sphinx extension module names here
 extensions = [
@@ -51,8 +40,7 @@ extensions = [
 # templates_path = ['_templates']
 
 # The suffix(es) of source filenames.
-# You can specify multiple suffix as a list of strings.
-source_suffix = '.rst'
+source_suffix = ['.rst', ]
 
 # The master toctree document.
 master_doc = 'index'
@@ -68,83 +56,5 @@ exclude_patterns = []
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = None
 
-
-# -- Options for HTML output -------------------------------------------------
-
 # The theme to use for HTML and HTML Help pages.
 html_theme = 'sphinx_rtd_theme'
-# html_theme_options = {}
-
-# Add any paths that contain custom static files relative to this directory.
-# They are copied after the builtin static files, so a file named "default.css"
-# will overwrite the builtin "default.css".
-# html_static_path = ['_static']
-
-
-# -- Options for HTMLHelp output ---------------------------------------------
-
-# Output file base name for HTML help builder.
-htmlhelp_basename = 'PittBrokerdoc'
-
-
-# -- Options for LaTeX output ------------------------------------------------
-
-latex_elements = {
-    # The paper size ('letterpaper' or 'a4paper').
-    # 'papersize': 'letterpaper',
-
-    # The font size ('10pt', '11pt' or '12pt').
-    # 'pointsize': '10pt',
-
-    # Additional stuff for the LaTeX preamble.
-    # 'preamble': '',
-
-    # Latex figure (float) alignment
-    # 'figure_align': 'htbp',
-}
-
-# Grouping the document tree into LaTeX files. List of tuples
-# (source start file, target name, title,
-#  author, documentclass [howto, manual, or own class]).
-latex_documents = [
-    (master_doc, 'PittBroker.tex', 'Pitt Broker Documentation',
-     'Daniel Perrefort, Troy Raen, Christine Mazzola', 'manual'),
-]
-
-
-# -- Options for manual page output ------------------------------------------
-
-# One entry per manual page. List of tuples
-# (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, 'pittbroker', 'Pitt Broker Documentation',
-     [author], 1)
-]
-
-
-# -- Options for Texinfo output ----------------------------------------------
-
-# Grouping the document tree into Texinfo files. List of tuples
-# (source start file, target name, title, author,
-#  dir menu entry, description, category)
-texinfo_documents = [
-    (master_doc, 'PittBroker', 'Pitt Broker Documentation',
-     author, 'PittBroker', 'One line description of project.',
-     'Miscellaneous'),
-]
-
-
-# -- Options for Epub output -------------------------------------------------
-
-# Bibliographic Dublin Core info.
-epub_title = project
-
-# The unique identifier of the text. This can be a ISBN number
-# or the project homepage.
-# epub_identifier = ''
-
-# A unique identification for the text.
-# epub_uid = ''
-
-# A list of files that should not be packed into the epub file.
-epub_exclude_files = ['search.html']
