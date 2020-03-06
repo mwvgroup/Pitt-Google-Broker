@@ -49,9 +49,9 @@ def rapid(light_curves, cx_dicts, plotdir=None):
 
     classification = Classify(known_redshift=True)
     predictions = classification.get_predictions(light_curves,
-                        return_predictions_at_obstime=True, return_objids=True)
-                  # = classes_list, times_list, objids_list
-                  # lists of arrays, one array per classified object
+                                                 return_predictions_at_obstime=True, return_objids=True)
+    # = classes_list, times_list, objids_list
+    # lists of arrays, one array per classified object
 
     if plotdir is not None:
         # Plot classifications vs time

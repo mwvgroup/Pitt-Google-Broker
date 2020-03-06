@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-"""This module parses locally downloaded ZTF alerts. It is based heavily on
-the ZTF alerts tutorial: https://goo.gl/TsyEjx
+"""Parses locally downloaded ZTF alerts. It is based heavily on the ZTF alerts
+tutorial: https://goo.gl/TsyEjx
 """
 
 import gzip

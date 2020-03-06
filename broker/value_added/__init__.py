@@ -6,5 +6,5 @@ to all value added products (e.g. classification, cross matches, etc.)
 """
 
 from .classify import rapid
-from .xmatch import get_xmatches
 from .value_added import get_value_added
+from .xmatch import get_xmatches

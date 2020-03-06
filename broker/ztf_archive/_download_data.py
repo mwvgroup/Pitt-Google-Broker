@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-"""This module downloads sample ZTF alerts from the ZTF alerts archive."""
+"""Downloads sample ZTF alerts from the ZTF alerts archive."""
 
 import shutil
 import tarfile
-from os import makedirs
 from tempfile import TemporaryFile
+from typing import Iterable
 
 import numpy as np
 import requests
@@ -16,11 +16,11 @@ from tqdm import tqdm
 from broker.ztf_archive._utils import get_ztf_data_dir
 
 ZTF_DATA_DIR = get_ztf_data_dir()
+ZTF_DATA_DIR.mkdir(exist_ok=True, parents=True)
 ZTF_URL = "https://ztf.uw.edu/alerts/public/"
-makedirs(ZTF_DATA_DIR, exist_ok=True)
 
 
-def get_remote_md5_table():
+def get_remote_md5_table() -> Table:
     """Get a list of published ZTF data releases from the ZTF Alerts Archive
 
     Returns:
@@ -37,8 +37,8 @@ def get_remote_md5_table():
     return out_table['file', 'md5']
 
 
-def get_local_releases():
-    """Return a list of ZTF daily releases that have already been downloaded
+def get_local_releases() -> Iterable[str]:
+    """Return an iterable of ZTF daily releases that have already been downloaded
 
     Returns:
         An iterable of downloaded release dates from the ZTF Alerts Archive
@@ -47,9 +47,9 @@ def get_local_releases():
     return (p.name.lstrip('ztf_public_') for p in ZTF_DATA_DIR.glob('*'))
 
 
-def get_local_alerts():
-    """Return a list of alert ids for all downloaded alert data
-
+def get_local_alerts() -> Iterable[int]:
+    """Return an iterable list of alert ids for all downloaded alert data
+    
     Returns:
         An iterable of alert ID values as ints
     """
@@ -57,14 +57,18 @@ def get_local_alerts():
     return (int(p.stem) for p in ZTF_DATA_DIR.glob('*/*.avro'))
 
 
-def _download_alerts_file(file_name, out_dir, block_size, verbose):
+def _download_alerts_file(
+        file_name: str,
+        out_dir: str,
+        block_size: int,
+        verbose: bool = True) -> None:
     """Download a file from the ZTF Alerts Archive
 
     Args:
-        file_name  (str): Name of the file to download
-        out_dir    (str): The directory where the file should be downloaded to
-        block_size (int): Block size to use for large files
-        verbose   (bool): Display a progress bar
+        file_name: Name of the file to download
+        out_dir: The directory where the file should be downloaded to
+        block_size: Block size to use for large files
+        verbose: Display a progress bar
     """
 
     # noinspection PyUnresolvedReferences
@@ -97,17 +101,17 @@ def _download_alerts_file(file_name, out_dir, block_size, verbose):
             data.extractall(out_dir)
 
 
-def download_data_date(year, month, day, block_size=1024, verbose=True):
+def download_data_date(year, month, day, block_size=1024, verbose=True) -> None:
     """Download ZTF alerts for a given date
 
     Does not skip releases that are were previously downloaded.
 
     Args:
-        year       (int): The year of the data to download
-        month      (int): The month of the data to download
-        day        (int): The day of the data to download
-        block_size (int): Block size to use for large files (Default: 1024)
-        verbose   (bool): Display a progress bar (Default: True)
+        year: The year of the data to download
+        month: The month of the data to download
+        day: The day of the data to download
+        block_size: Block size to use for large files (Default: 1024)
+        verbose: Display a progress bar (Default: True)
     """
 
     file_name = f'ztf_public_{year}{month:02d}{day:02d}.tar.gz'
@@ -116,18 +120,20 @@ def download_data_date(year, month, day, block_size=1024, verbose=True):
 
 
 def download_recent_data(
-        max_downloads=1, block_size=1024, verbose=True, stop_on_exist=False):
+        max_downloads: int = 1,
+        block_size: int = 1024,
+        verbose: bool = True,
+        stop_on_exist: bool = False) -> None:
     """Download recent alert data from the ZTF alerts archive
 
     Data is downloaded in reverse chronological order. Skip releases that are
     already downloaded.
 
     Args:
-        max_downloads  (int): Number of daily releases to download (default: 1)
-        block_size     (int): Block size to use for large files (Default: 1024)
-        verbose       (bool): Display a progress bar (Default: True)
-        stop_on_exist (bool): Exit when encountering an alert that is already
-                               downloaded (Default: False)
+        max_downloads: Number of daily releases to download
+        block_size: Block size to use for large file
+        verbose: Display a progress bar
+        stop_on_exist: Exit when encountering an alert that is already downloaded
     """
 
     file_names = get_remote_md5_table()['file']
@@ -151,14 +157,17 @@ def download_recent_data(
         _download_alerts_file(f_name, out_dir, block_size, verbose)
 
 
-def delete_local_data():
+def delete_local_data() -> None:
     """Delete any locally data downloaded fro the ZTF Public Alerts Archive"""
 
     shutil.rmtree(ZTF_DATA_DIR)
     ZTF_DATA_DIR.mkdir(exist_ok=True, parents=True)
 
 
-def create_ztf_sync_table(bucket_name=None, out_path=None, verbose=True):
+def create_ztf_sync_table(
+        bucket_name: str = None,
+        out_path: str = None,
+        verbose: bool = True) -> Table:
     """Create a table for uploading ZTF releases to a GCP bucket
 
     Only include files not already present in the bucket
