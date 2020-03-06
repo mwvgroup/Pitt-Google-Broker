@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.7
+#!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
 """This module downloads sample ZTF alerts from the ZTF alerts archive."""
@@ -13,7 +13,7 @@ import requests
 from astropy.table import Table
 from tqdm import tqdm
 
-from ..utils import get_ztf_data_dir
+from broker.ztf_archive._utils import get_ztf_data_dir
 
 ZTF_DATA_DIR = get_ztf_data_dir()
 ZTF_URL = "https://ztf.uw.edu/alerts/public/"

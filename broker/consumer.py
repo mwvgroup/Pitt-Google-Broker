@@ -31,7 +31,6 @@ Usage Example
    # Ingest alerts one at a time indefinitely
    c.run()
 
-
 Module Documentation
 --------------------
 """
@@ -42,8 +41,10 @@ from tempfile import SpooledTemporaryFile
 from warnings import warn
 
 from confluent_kafka import Consumer, KafkaException
-from google.cloud import pubsub_v1, storage
-from google.cloud.pubsub_v1.publisher.futures import Future
+
+if not os.getenv('GPB_OFFLINE', False):
+    from google.cloud import pubsub, storage
+    from google.cloud.pubsub_v1.publisher.futures import Future
 
 log = logging.getLogger(__name__)
 
@@ -66,7 +67,7 @@ DEFAULT_ZTF_CONFIG = {
 class TempAlertFile(SpooledTemporaryFile):
     """Subclass of SpooledTemporaryFile that is tied into the log"""
 
-    def rollover(self):
+    def rollover(self) -> None:
         """Move contents of the spooled file from memory onto disk"""
 
         log.warning(f'Alert size exceeded max memory size: {self._max_size}')
@@ -142,14 +143,14 @@ class GCSKafkaConsumer(Consumer):
 
         # Configure PubSub topic
         project_id = os.getenv('BROKER_PROJ_ID')
-        self.publisher = pubsub_v1.PublisherClient()
+        self.publisher = pubsub.PublisherClient()
         self.topic_path = self.publisher.topic_path(project_id, pubsub_topic)
 
         # Raise error if topic does not exist
         self.topic = self.publisher.get_topic(self.topic_path)
         log.info(f'Connected to PubSub: {self.topic_path}')
 
-    def close(self):
+    def close(self) -> None:
         """Close down and terminate the Kafka Consumer"""
 
         log.info(f'Closing consumer: {self.__repr__()}')
@@ -189,7 +190,7 @@ class GCSKafkaConsumer(Consumer):
         future = self.publisher.publish(self.topic_path, data=message_data)
         return future.result()
 
-    def run(self):
+    def run(self) -> None:
         """Ingest kafka Messages to GCS and PubSub"""
 
         log.info('Starting consumer.run ...')
@@ -223,7 +224,7 @@ class GCSKafkaConsumer(Consumer):
             log.error(f'Consumer level error: {e}', exc_info=True)
             raise
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             '<Consumer('
             f'kafka_server: {self.kafka_server}, '

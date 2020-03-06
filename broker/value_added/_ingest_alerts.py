@@ -9,7 +9,7 @@ from warnings import warn
 
 import pandavro as pdx
 
-from ..utils import RTDSafeImport, setup_log
+from broker.ztf_archive._utils import RTDSafeImport, setup_log
 
 with RTDSafeImport():
     from google.cloud import bigquery, storage
