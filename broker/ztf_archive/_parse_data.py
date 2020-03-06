@@ -71,7 +71,7 @@ def iter_alerts(num_alerts: int = None, raw: bool = False) -> _AVRO_DATA:
 
     Args:
         num_alerts: Maximum number of alerts to yield at a time (optional)
-        raw: Return file data as bytes (Default: False)
+        raw: Return file data as bytes
 
     Yields:
         A list of dictionaries or bytes representing ZTF alert data

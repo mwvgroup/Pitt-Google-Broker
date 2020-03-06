@@ -4,7 +4,10 @@
 """The ``ztf_archive`` module downloads and provides access to ZTF alerts from
 the ZTF Public Alerts Archive.
 
-.. code:: python
+Usage Example
+-------------
+
+.. code-block:: python
    :linenos:
 
    from broker import ztf_archive as ztfa

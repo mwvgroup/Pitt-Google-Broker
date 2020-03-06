@@ -14,7 +14,8 @@ Downloading From the Archive
 Daily data releases can be downloaded from the ZTF archive individually or
 iteratively in reverse chronological order.
 
-.. code:: python
+.. code-block:: python
+   :linenos:
 
    from broker import ztf_archive as ztfa
 
@@ -38,7 +39,8 @@ Accessing Local Alerts
 The ``ztf_archive`` module also provides functions for accessing and
 visualizing alert data.
 
-.. code:: python
+.. code-block:: python
+   :linenos:
 
    # Retrieve the IDs for all alerts downloaded to your local machine
    alert_ids = list(ztfa.get_local_alerts())
@@ -55,7 +57,8 @@ visualizing alert data.
 In addition to accessing individual alerts by their ID value, you can iterate
 over the entire set of downloaded alert data.
 
-.. code:: python
+.. code-block:: python
+   :linenos:
 
    # Iterate over alerts one at a time
    for alert_list in ztfa.iter_alerts():

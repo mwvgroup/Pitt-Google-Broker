@@ -4,7 +4,7 @@ What is Pitt Broker
 ===================
 
 **Pitt Broker** is a cloud-based, alert distribution service designed to provide
-near real-time processing for alerts from the `Large Synoptic Survey Telescope
+near real-time processing for alerts from the `Legacy Survey of Space and Time
 <https://www.lsst.org>`_ (LSST). One of the primary data products LSST will
 deliver is a real-time stream of alerts that provides information on transient
 targets within 60 seconds of observation. Instead of providing this alert
@@ -64,16 +64,15 @@ ZTF References
    :maxdepth: 1
 
    Overview<self>
-   installation
-
+   installation_setup/installation
+   installation_setup/gcp_deployment
 
 .. toctree::
    :hidden:
    :maxdepth: 1
-   :caption: Quick Start:
+   :caption: Quick Start Guides:
 
    quick_start/ztf_archive
-   quick_start/alert_ingestion
    quick_start/xmatch
 
 .. toctree::
@@ -81,7 +80,6 @@ ZTF References
    :maxdepth: 1
    :caption: Module Documentation:
 
-   module_docs/broker
    module_docs/consumer
    module_docs/value_added
    module_docs/pub_sub_client
