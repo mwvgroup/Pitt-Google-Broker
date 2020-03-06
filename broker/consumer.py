@@ -43,6 +43,7 @@ from warnings import warn
 
 from confluent_kafka import Consumer, KafkaException
 from google.cloud import pubsub_v1, storage
+from google.cloud.pubsub_v1.publisher.futures import Future
 
 log = logging.getLogger(__name__)
 
@@ -72,7 +73,7 @@ class TempAlertFile(SpooledTemporaryFile):
         super().rollover()
 
 
-def _set_config_defaults(kafka_config: dict):
+def _set_config_defaults(kafka_config: dict) -> dict:
     """Set default values for a Kafka configuration dictionary
 
     Default values:
@@ -172,7 +173,7 @@ class GCSKafkaConsumer(Consumer):
             temp_file.seek(0)
             blob.upload_from_file(temp_file)
 
-    def publish_pubsub(self, message: str):
+    def publish_pubsub(self, message: str) -> Future:
         """Publish a PubSub alert
 
         Args:
