@@ -23,7 +23,7 @@ Usage Example
    c = GCSKafkaConsumer(
        kafka_config=config,
        bucket_name='my-gcs-bucket-name',
-       kafka_topic='ztf_20200301_programid1',
+       kafka_topic='my_kafka_topic_name',
        pubsub_topic='my-gcs-pubsub-name',
        debug=True  # Use debug to run without updating your kafka offset
    )
@@ -39,13 +39,15 @@ Module Documentation
 import logging
 import os
 from tempfile import SpooledTemporaryFile
+from warnings import warn
 
 from confluent_kafka import Consumer, KafkaException
+from google.cloud import logging as cloud_logging
 from google.cloud import pubsub_v1, storage
 
-from .exceptions import CloudConnectionError
-
 log = logging.getLogger(__name__)
+cloud_logging.Client().setup_logging()
+
 
 DEFAULT_ZTF_CONFIG = {
     'bootstrap.servers': 'public2.alerts.ztf.uw.edu:9094',
@@ -63,7 +65,17 @@ DEFAULT_ZTF_CONFIG = {
 }
 
 
-def set_config_defaults(kafka_config: dict) -> dict:
+class TempAlertFile(SpooledTemporaryFile):
+    """Subclass of SpooledTemporaryFile that is tied into the log"""
+
+    def rollover(self):
+        """Move contents of the spooled file from memory onto disk"""
+
+        log.warning(f'Alert size exceeded max memory size: {self._max_size}')
+        super().rollover()
+
+
+def _set_config_defaults(kafka_config: dict):
     """Set default values for a Kafka configuration dictionary
 
     Default values:
@@ -82,20 +94,12 @@ def set_config_defaults(kafka_config: dict) -> dict:
     for key, default_value in default_vals.items():
         config_val = kafka_config.get(key, None)
         if config_val != default_value:
-            log.warning(f'Config value {key} set to {config_val} - changing to `{default_value}`')
+            msg = f'Config value {key} passed as {config_val} - changing to `{default_value}`'
+            warn(msg)
+            log.warning(msg)
             kafka_config.setdefault('enable.auto.commit', 'FALSE')
 
     return kafka_config
-
-
-class TempAlertFile(SpooledTemporaryFile):
-    """Subclass of SpooledTemporaryFile that is tied into the log"""
-
-    def rollover(self):
-        """Move contents of the spooled file from memory onto disk"""
-
-        log.warning(f'Alert size exceeded max memory size: {self._max_size}')
-        super().rollover()
 
 
 class GCSKafkaConsumer(Consumer):
@@ -110,50 +114,47 @@ class GCSKafkaConsumer(Consumer):
             debug: bool = False):
         """Ingests data from a kafka stream and stores a copy in GCS
 
+        Storage bucket and PubSub topic must already exist and have
+        appropriate permissions.
+
         Args:
-            kafka_config (dict): Kafka consumer configuration properties
-            kafka_topic   (str): Kafka topics to subscribe to
-            bucket_name   (str): Name of the bucket to upload into
-            pubsub_topic  (str): PubSub topic to publish to
-            debug        (bool): Run without committing Kafka position
+            kafka_config: Kafka consumer configuration properties
+            kafka_topic: Kafka topics to subscribe to
+            bucket_name: Name of the bucket to upload into
+            pubsub_topic: PubSub topic to publish to
+            debug: Run without committing Kafka position
         """
 
-        self.debug = debug
-        self.server = kafka_config["bootstrap.servers"]
-        log.info(f'Instantiating consumer for {self.server}')
-
-        # Enforce NO auto commit, correct log handling
-        kafka_config = set_config_defaults(kafka_config)
+        self._debug = debug
+        self.kafka_topic = kafka_topic
+        self.bucket_name = bucket_name
+        self.pubsub_topic = pubsub_topic
+        self.kafka_server = kafka_config["bootstrap.servers"]
+        log.info(f'Initializing consumer: {self.__repr__()}')
 
         # Connect to Kafka stream
-        super().__init__(kafka_config)
+        # Enforce NO auto commit, correct log handling
+        super().__init__(_set_config_defaults(kafka_config))
         self.subscribe([kafka_topic])
 
         # Connect to Google Cloud Storage
         self.storage_client = storage.Client()
         self.bucket = self.storage_client.get_bucket(bucket_name)
+        log.info(f'Connected to bucket: {self.bucket.name}')
 
         # Configure PubSub topic
         project_id = os.getenv('BROKER_PROJ_ID')
         self.publisher = pubsub_v1.PublisherClient()
         self.topic_path = self.publisher.topic_path(project_id, pubsub_topic)
 
-    # Todo: raise error if kafka not authenticated
-    # Todo: may want to raise error if pubsub topic is not defined
-    def _check_connection(self):
-
-        if not self.bucket.exists():
-            msg = f'Bucket {self.bucket.name} does not exist'
-            log.error(msg, exc_info=True)
-            raise CloudConnectionError(msg)
-
-        log.info(f'Connected to bucket: {self.bucket.name}')  # Todo raise error if bucket does not exist
-        log.info(f'Connected to PubSub: {self.topic_path}')  # Todo raise error if topic does not exist
+        # Raise error if topic does not exist
+        self.publisher.get_topic(self.topic_path)
+        log.info(f'Connected to PubSub: {self.topic_path}')
 
     def close(self):
         """Close down and terminate the Kafka Consumer"""
 
-        log.info(f'Closing consumer for {self.server}')
+        log.info(f'Closing consumer: {self.__repr__()}')
         super().close()
 
     def upload_bytes_to_bucket(self, data: bytes, destination_name: str):
@@ -184,6 +185,7 @@ class GCSKafkaConsumer(Consumer):
             The Id of the published message
         """
 
+        log.debug(f'Publishing message: {message}')
         message_data = message.encode('UTF-8')
         future = self.publisher.publish(self.topic_path, data=message_data)
         return future.result()
@@ -194,26 +196,24 @@ class GCSKafkaConsumer(Consumer):
         log.info('Starting consumer.run ...')
         try:
             while True:
-                msg = self.poll(timeout=5)
+                msg = self.consume(num_messages=1, timeout=5)
                 if msg is None:
                     continue
 
                 if msg.error():
-                    err_msg = '{} [{}] at offset {} with key {}:\n  %%  {}'
                     err_data = (msg.topic(), msg.partition(), msg.offset(), msg.key(), msg.error())
-                    log.error(err_msg.format(err_data))
+                    err_msg = 'KafkaException for {} [{}] at offset {} with key {}:\n  %%  {}'.format(*err_data)
+                    log.error(err_msg, exc_info=True)
                     raise KafkaException(msg.error())
 
                 else:
-                    # todo: These time stamp values are huge. Why?
                     timestamp_kind, timestamp = msg.timestamp()
-                    assert timestamp_kind == 1  # Todo: don't use assert
                     file_name = f'{timestamp}.avro'
 
                     log.debug(f'Ingesting {file_name}')
                     self.upload_bytes_to_bucket(msg.value(), file_name)
                     self.publish_pubsub(file_name)
-                    if not self.debug:
+                    if not self._debug:
                         self.commit()
 
         except KeyboardInterrupt:
@@ -223,3 +223,13 @@ class GCSKafkaConsumer(Consumer):
         except Exception as e:
             log.error(f'Consumer level error: {e}', exc_info=True)
             raise
+
+    def __repr__(self):
+        return (
+            '<Consumer('
+            f'kafka_server: {self.kafka_server}, '
+            f'kafka_topic: {self.kafka_topic}, '
+            f'bucket_name: {self.bucket_name}, '
+            f'pubsub_topic: {self.pubsub_topic}'
+            ')>'
+        )
