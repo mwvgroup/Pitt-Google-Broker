@@ -42,12 +42,9 @@ from tempfile import SpooledTemporaryFile
 from warnings import warn
 
 from confluent_kafka import Consumer, KafkaException
-from google.cloud import logging as cloud_logging
 from google.cloud import pubsub_v1, storage
 
 log = logging.getLogger(__name__)
-cloud_logging.Client().setup_logging()
-
 
 DEFAULT_ZTF_CONFIG = {
     'bootstrap.servers': 'public2.alerts.ztf.uw.edu:9094',
@@ -148,7 +145,7 @@ class GCSKafkaConsumer(Consumer):
         self.topic_path = self.publisher.topic_path(project_id, pubsub_topic)
 
         # Raise error if topic does not exist
-        self.publisher.get_topic(self.topic_path)
+        self.topic = self.publisher.get_topic(self.topic_path)
         log.info(f'Connected to PubSub: {self.topic_path}')
 
     def close(self):
