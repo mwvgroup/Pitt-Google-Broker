@@ -6,10 +6,6 @@ beautifulsoup4
 deepdiff
 fastavro
 lxml
-matplotlib
-numpy
-pandas
-pandas-gbq
 pandavro
 requests
 tqdm
