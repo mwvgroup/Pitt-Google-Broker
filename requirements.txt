@@ -6,6 +6,7 @@ beautifulsoup4
 deepdiff
 fastavro
 lxml
+numpy
 pandavro
 requests
 tqdm
