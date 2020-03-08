@@ -1,3 +1,21 @@
+# Minimum requirements for importing package during build
+aplpy
+astropy
+astroquery
+astrorapid>=0.1.30
+beautifulsoup4
+deepdiff
+fastavro
+lxml
+matplotlib
+numpy
+pandas
+pandas-gbq
+pandavro
+requests
+tqdm
+
+
 # Needed for building docs
 sphinx
 sphinx-copybutton
