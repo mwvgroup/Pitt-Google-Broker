@@ -7,7 +7,7 @@ deepdiff
 fastavro
 lxml
 matplotlib
-numpy
+numpy>=1.16.0
 pandas
 pandas-gbq
 pandavro
