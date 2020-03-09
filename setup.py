@@ -32,7 +32,7 @@ setup(name='pitt_broker',
       ],
 
       python_requires='>=3.7',
-      install_requires=requirements,
+      install_requires=['numpy'],
       include_package_data=True,
       package_data={'':['value_added/*.pkl']}
       )

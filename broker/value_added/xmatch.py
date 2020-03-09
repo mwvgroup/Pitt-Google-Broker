@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.7
+#!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
 """ The ``xmatch`` module provides cross matching services between observed
@@ -49,30 +49,32 @@ def get_xmatches(alert_list, survey='ZTF', sg_thresh=0.5):
             # get xmatches included in alert packet
             cand = alert['candidate']
             for s in ['1', '2', '3']:  # for each PS1 source in alert
-                sgscore = cand['sgscore'+s]
+                sgscore = cand['sgscore' + s]
 
                 # calculate redshift
-                zdict = { 'gmag': cand['sgmag'+s],
-                          'rmag': cand['srmag'+s],
-                          'zmag': cand['simag'+s],  # note this is imag
-                          'w1mag': cand['szmag'+s],  # note this is zmag
-                          'w2mag': 0.0,
-                          'radius': 0.0,
-                          'q': 0.0,
-                          'p': 0.0
-                        }
+                zdict = {
+                    'gmag': cand['sgmag' + s],
+                    'rmag': cand['srmag' + s],
+                    'zmag': cand['simag' + s],  # note this is imag
+                    'w1mag': cand['szmag' + s],  # note this is zmag
+                    'w2mag': 0.0,
+                    'radius': 0.0,
+                    'q': 0.0,
+                    'p': 0.0
+                }
                 # if source is likely a galaxy, calculate redshift
                 # else set it to -1
                 redshift = red.calcz_rongpuRF(zdict) if sgscore < sg_thresh \
-                                                     else -1
+                    else -1
 
                 # collect the xmatch data
-                xmatches.append({ 'objectId': alert['objectId'],
-                                  'xobjId': cand['objectidps'+s],
-                                  'xcatalog': 'PS1',
-                                  'redshift': redshift,
-                                  'dist2d': cand['distpsnr'+s],
-                                  'sgscore': sgscore
+                xmatches.append({
+                                    'objectId': alert['objectId'],
+                                    'xobjId': cand['objectidps' + s],
+                                    'xcatalog': 'PS1',
+                                    'redshift': redshift,
+                                    'dist2d': cand['distpsnr' + s],
+                                    'sgscore': sgscore
                                 })
 
     return xmatches
@@ -129,9 +131,11 @@ def get_alerts_ra_dec(fout=None, max_alerts=1000):
             alert_data = psd.get_alert_data(alert_id)
 
             # Save the data
-            dat = {'alert_id': alert_id,
-                   'ra': alert_data['candidate']['ra'],
-                   'dec': alert_data['candidate']['dec']}
+            dat = {
+                'alert_id': alert_id,
+                'ra': alert_data['candidate']['ra'],
+                'dec': alert_data['candidate']['dec']
+            }
             data_list.append(dat)
 
             if (a > max_alerts) & (a > 0):

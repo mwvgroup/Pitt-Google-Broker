@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.7
+#!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
 """ The ``reshift`` module estimates and returns the redshift of a given
@@ -6,9 +6,10 @@
 
 """
 
+from pathlib import Path
+
 import numpy as np
 from sklearn.externals import joblib
-from pathlib import Path
 
 RFpath = Path(__file__).resolve().parent / 'regrf_20181008_0.pkl'
 
@@ -37,7 +38,7 @@ def calcz_rongpuRF(data):
     q = data['q']
     p = data['p']
 
-    data1 = np.column_stack((g-r, r-z, z-w1, w1-w2, r, radius, q, p))
+    data1 = np.column_stack((g - r, r - z, z - w1, w1 - w2, r, radius, q, p))
     z_phot = regrf.predict(data1)
 
     return z_phot[0]

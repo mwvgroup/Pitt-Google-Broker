@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.7
+#!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
 """ This is the main module controlling the calculation, lookup, and return
@@ -22,12 +22,12 @@
 from warnings import warn as _warn
 
 import numpy as np
-from astropy.time import Time
 from astropy.coordinates import SkyCoord
+from astropy.time import Time
 from astroquery.irsa_dust import IrsaDust
 
-from . import xmatch as xm
 from . import classify as classify
+from . import xmatch as xm
 
 
 def get_value_added(alert_list, survey='ZTF', rapid_plotdir=None):
@@ -61,7 +61,7 @@ def get_value_added(alert_list, survey='ZTF', rapid_plotdir=None):
                                               survey=survey)
     classification_dicts = classify.rapid(light_curves, cx_dicts,
                                           plotdir=rapid_plotdir)
-                                          # list of dicts
+    # list of dicts
     ###
 
     return xmatch_dicts, classification_dicts
@@ -145,8 +145,8 @@ def format_for_rapid_proc_alert(alert, xmatch_list, oid_map):
 
     # Create objects for each candidate-host galaxy pair
     light_curves, cx_dicts = format_for_rapid_proc_xmatches(alert, xmatch_list,
-                                   oid_map[alert['objectId']],
-                                   epoch_data, mwebv)
+                                                            oid_map[alert['objectId']],
+                                                            epoch_data, mwebv)
 
     return light_curves, cx_dicts
 
@@ -166,7 +166,7 @@ def format_for_rapid_proc_epochs(epochs):
     # prepare empty lists to zip epoch data
     mjd, flux, fluxerr, passband, photflag = ([] for i in range(5))
     # passband mapping
-    fid_dict = {1:'g', 2:'r', 3:'i'}
+    fid_dict = {1: 'g', 2: 'r', 3: 'i'}
     # set and track epochs with missing zeropoints
     zp_fallback, zp_in_keys = 26.0, [0 for i in range(len(epochs))]
 
@@ -190,25 +190,26 @@ def format_for_rapid_proc_epochs(epochs):
         fluxerr.append(ferr)
         passband.append(fid_dict[epoch['fid']])
         photflag.append(4096)  # fix this, determines trigger time
-                               # (1st mjd where this == 6144)
+        # (1st mjd where this == 6144)
 
     # check zeropoint consistency
     # either 0 or all epochs (with detections) should be missing zeropoints
     if sum(zp_in_keys) not in [0, len(mjd)]:
         raise ValueError((f'Inconsistent zeropoint values in alert {oid}. '
-                           'Cannot continue with classification.'))
+                          'Cannot continue with classification.'))
 
     # Set trigger date. fix this.
     photflag = np.asarray(photflag)
     photflag[flux == np.max(flux)] = 6144
 
     # Gather info
-    epoch_dict = { 'mjd': np.asarray(mjd),
-                   'flux': np.asarray(flux),
-                   'fluxerr': np.asarray(fluxerr),
-                   'passband': np.asarray(passband),
-                   'photflag': photflag
-                 }
+    epoch_dict = {
+        'mjd': np.asarray(mjd),
+        'flux': np.asarray(flux),
+        'fluxerr': np.asarray(fluxerr),
+        'passband': np.asarray(passband),
+        'photflag': photflag
+    }
 
     return epoch_dict
 
@@ -255,7 +256,7 @@ def format_for_rapid_proc_xmatches(alert, xmatch_list, xm_indices, epoch_data, m
         if redshift < 0: continue
 
         # get unique candidate-xmatch id to match RAPID input and output
-        cxid = alert_xobj_id([oid, cid, cand_mjd, xcatalog, xobjId ])
+        cxid = alert_xobj_id([oid, cid, cand_mjd, xcatalog, xobjId])
 
         # Collect all the info
         light_curves.append((epoch_data['mjd'],
@@ -270,13 +271,14 @@ def format_for_rapid_proc_xmatches(alert, xmatch_list, xm_indices, epoch_data, m
                              mwebv
                              ))
 
-        cx_dicts[cxid] = {  'objectId': oid,
-                            'candid': cid,
-                            'xobjId': xobjId,
-                            'xcatalog': xcatalog,
-                            'redshift': redshift,
-                            'cand_mjd': cand_mjd
-                         }
+        cx_dicts[cxid] = {
+            'objectId': oid,
+            'candid': cid,
+            'xobjId': xobjId,
+            'xcatalog': xcatalog,
+            'redshift': redshift,
+            'cand_mjd': cand_mjd
+        }
 
     return light_curves, cx_dicts
 
@@ -303,10 +305,10 @@ def alert_xobj_id(data):
 
     if isinstance(data, list):
         # soft check that the input is as expected. fix this.
-        if len(data)!=5:
+        if len(data) != 5:
             raise ValueError('alert_xobj_id() received invalid data list.')
 
-        return '-'.join([ str(d) for d in data ])
+        return '-'.join([str(d) for d in data])
 
     elif isinstance(data, str):
         return data.split('-')
@@ -336,8 +338,8 @@ def map_objectId_list(dict_list):
 def mag_to_flux(mag, zeropoint, magerr):
     """ Converts an AB magnitude and its error to fluxes.
     """
-    flux = 10**( (zeropoint - mag)/ 2.5 )
-    fluxerr = flux* magerr* np.log(10/2.5)
+    flux = 10 ** ((zeropoint - mag) / 2.5)
+    fluxerr = flux * magerr * np.log(10 / 2.5)
     return flux, fluxerr
 
 
