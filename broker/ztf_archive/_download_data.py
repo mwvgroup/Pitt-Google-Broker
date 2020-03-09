@@ -101,7 +101,12 @@ def _download_alerts_file(
             data.extractall(out_dir)
 
 
-def download_data_date(year, month, day, block_size=1024, verbose=True) -> None:
+def download_data_date(
+        year: int,
+        month: int,
+        day: int,
+        block_size: int = 1024,
+        verbose: bool = True) -> None:
     """Download ZTF alerts for a given date
 
     Does not skip releases that are were previously downloaded.

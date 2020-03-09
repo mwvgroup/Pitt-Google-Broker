@@ -3,17 +3,17 @@
 What is Pitt Broker
 ===================
 
-**Pitt Broker** is a cloud-based, alert distribution service designed to provide
+The **Pitt-Google Broker** is a cloud-based, alert distribution service designed to provide
 near real-time processing for alerts from the `Legacy Survey of Space and Time
 <https://www.lsst.org>`_ (LSST). One of the primary data products LSST will
 deliver is a real-time stream of alerts that provides information on transient
 targets within 60 seconds of observation. Instead of providing this alert
 stream  directly to the public, LSST will rely on community-developed *broker*
-systems to relay the information. **Pitt Broker** is designed to maximize the
-scalable availability and usefulness of the LSST alert data by combining
-cloud-based analysis opportunities with value-added data products.
+systems to relay the information. **Pitt-Google Broker** is designed to
+maximize the scalable availability and usefulness of the LSST alert data by
+combining cloud-based analysis opportunities with value-added data products.
 
-**Pitt Broker** is designed to run on the `Google Cloud Platform
+**Pitt-Google Broker** is designed to run on the `Google Cloud Platform
 <https://cloud.google.com>`_ (GCP) and is currently focused on processing
 alerts from the `Zwicky Transient Facility <https://www.ztf.caltech.edu>`_
 (ZTF) and the `LSST Alert Simulator
