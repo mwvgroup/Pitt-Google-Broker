@@ -6,9 +6,6 @@ MAINTAINER Daniel Perrefort "djperrefort@pitt.edu"
 RUN apt-get update
 RUN apt-get install -y git
 
-RUN git clone https://github.com/mwvgroup/Pitt-Google-Broker
-RUN git checkout djperrefort/docker
-
-ADD consume.py /
+RUN git clone --single-branch --branch djperrefort/docker https://github.com/mwvgroup/Pitt-Google-Broker
 
 CMD [ "python", "./Pitt-Google-Broker/scripts/consume_ztf.py" ]
