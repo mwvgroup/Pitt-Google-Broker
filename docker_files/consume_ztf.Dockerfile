@@ -1,7 +1,13 @@
 FROM python:3.7
 
+MAINTAINER Daniel Perrefort "djperrefort@pitt.edu"
+
+# Install git
+RUN apt-get update
+RUN apt-get install -y git
+
+git clone https://github.com/mwvgroup/Pitt-Google-Broker
+
 ADD consume.py /
 
-RUN pip install pgbroker
-
-CMD [ "python", "./consume_ztf.py.py" ]
+CMD [ "python", "./Pitt-Google-Broker/consume_ztf.py" ]
