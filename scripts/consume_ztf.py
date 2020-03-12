@@ -6,7 +6,7 @@
 import os
 from datetime import datetime
 
-from pgbroker.consumer import GCSKafkaConsumer
+from broker.consumer import GCSKafkaConsumer
 
 # Define connection configuration using default values as a starting point
 config = {
