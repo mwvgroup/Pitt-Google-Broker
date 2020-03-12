@@ -6,8 +6,8 @@ MAINTAINER Daniel Perrefort "djperrefort@pitt.edu"
 RUN apt-get update
 RUN apt-get install -y git
 
-git clone https://github.com/mwvgroup/Pitt-Google-Broker
+RUN git clone https://github.com/mwvgroup/Pitt-Google-Broker
 
 ADD consume.py /
 
-CMD [ "python", "./Pitt-Google-Broker/consume_ztf.py" ]
+CMD [ "python", "./Pitt-Google-Broker/scripts/consume_ztf.py" ]
