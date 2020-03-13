@@ -54,7 +54,7 @@ Individual PGB services are deployed to the cloud as dedicated docker images.
 The Dockerfiles that define these images are stored in the PGB
 [GitHub Repository](https://github.com/mwvgroup/Pitt-Google-Broker) under
 the ``docker_files`` directory. Each Dockerfile has a corresponding script
-in the ``scripts`` directory that launches a particular PGB service when the
+in the same directory that launches a particular PGB service when the
 docker container is deployed. 
 
 In the following steps we will configure GCP to store the built images for
@@ -62,7 +62,7 @@ these Dockerfiles in the GCP Container Registry. This allows for easy
 deployment of the images and their corresponding PGB services to various GCP
 products.
 
-## Manual Image Deployment
+## Uploading an Image
 
 The first step to deploying a Docker image is to build it from the
 corresponding Dockerfile. This is accomplished by using the `build` command:
@@ -89,9 +89,9 @@ docker push [HOSTNAME]/[PROJECT-ID]/[IMAGE]
 For more information on pushing to the GCP Container Registry, see 
 [https://cloud.google.com/container-registry/docs/pushing-and-pulling](https://cloud.google.com/container-registry/docs/pushing-and-pulling).
 
-## Configuring Automatic Deployment
+## Configuring Automatic Image Deployment
 
-List steps here on how to automatically deploy Dockerfiles to GCP.
+List steps here on how to automatically deploy Docker Images to GCP products.
 
 # Deploying the Alert Consumer
 
