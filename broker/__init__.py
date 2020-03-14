@@ -9,7 +9,7 @@ the Large Synoptic Survey Telescope (LSST).
 import os
 from warnings import warn
 
-if not os.getenv('GPB_OFFLINE', False):
+if 'PGB_OFFLINE' not in os.environ:
     from google.cloud import logging as cloud_logging
 
     cloud_logging.Client().setup_logging()
