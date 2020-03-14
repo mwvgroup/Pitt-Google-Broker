@@ -11,7 +11,7 @@ Usage Example
 .. code-block:: python
    :linenos:
 
-   from broker.alert_ingenstion import consume
+   from broker.alert_ingestion import consume
 
    # Define connection configuration using default values as a starting point
    config = consume.DEFAULT_ZTF_CONFIG.copy()
@@ -37,11 +37,11 @@ Default Config Settings
 Dictionaries with a subset of default configuration settings are provided as
 described below.
 
-+----------------------------+----------------------+
-| Survey Name                | Variable Name        |
-+============================+======================+
-| Zwicky Transient Facility  | `DEFAULT_ZTF_CONFIG` |
-+----------------------------+----------------------+
++-----------------------------------------+-----------------------------------+
+| Survey Name                             | Variable Name                     |
++=========================================+===================================+
+| Zwicky Transient Facility               | `DEFAULT_ZTF_CONFIG`              |
++-----------------------------------------+-----------------------------------+
 
 Module Documentation
 --------------------

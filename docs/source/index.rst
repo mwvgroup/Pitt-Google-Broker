@@ -80,7 +80,7 @@ ZTF References
    :maxdepth: 1
    :caption: Module Documentation:
 
-   module_docs/consumer
+   module_docs/alert_ingestion
    module_docs/value_added
    module_docs/pub_sub_client
    module_docs/ztf_archive

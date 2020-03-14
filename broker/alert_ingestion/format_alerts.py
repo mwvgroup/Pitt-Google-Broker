@@ -13,7 +13,7 @@ function. For example, to format a ZTF alert with schema version 3.3:
 .. code-block:: python
    :linenos:
 
-   from broker.alert_ingenstion import format_alerts
+   from broker.alert_ingestion import format_alerts
 
    formatted_alert = format_alert_schema(b'this is some alert data', survey='ztf', version=3.3)
 
@@ -26,7 +26,7 @@ this functionality is accessible via dedicated functions:
 .. code-block:: python
    :linenos:
 
-   from broker.alert_ingenstion import format_alerts
+   from broker.alert_ingestion import format_alerts
 
    alerts_bytes = b'this is some more alert data`
    guessed_survey = guess_schema_survey(alerts_bytes)
