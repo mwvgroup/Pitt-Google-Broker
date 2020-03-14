@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-"""The ``consumer`` module handles the ingestion of a Kafka alert stream into
+"""The ``consume`` module handles the ingestion of a Kafka alert stream into
 Google Cloud Storage (GCS) and defines default connection settings for
 different Kafka servers.
 
@@ -11,16 +11,16 @@ Usage Example
 .. code-block:: python
    :linenos:
 
-   from broker.consumer import GCSKafkaConsumer, DEFAULT_ZTF_CONFIG
+   from broker.alert_ingenstion import consume
 
    # Define connection configuration using default values as a starting point
-   config = DEFAULT_ZTF_CONFIG.copy()
+   config = consume.DEFAULT_ZTF_CONFIG.copy()
    config['sasl.kerberos.keytab'] = '<Path to authentication file>'
-   config['sasl.kerberos.principal'] = '<>'
+   config['sasl.kerberos.principal'] = '<Name of principal>'
    print(config)
 
-   # Create a consumer
-   c = GCSKafkaConsumer(
+   # Create a GCS consumer object
+   c = consume.GCSKafkaConsumer(
        kafka_config=config,
        bucket_name='my-gcs-bucket-name',
        kafka_topic='my_kafka_topic_name',
@@ -30,6 +30,18 @@ Usage Example
 
    # Ingest alerts one at a time indefinitely
    c.run()
+
+Default Config Settings
+-----------------------
+
+Dictionaries with a subset of default configuration settings are provided as
+described below.
+
++----------------------------+----------------------+
+| Survey Name                | Variable Name        |
++============================+======================+
+| Zwicky Transient Facility  | `DEFAULT_ZTF_CONFIG` |
++----------------------------+----------------------+
 
 Module Documentation
 --------------------
@@ -65,7 +77,10 @@ DEFAULT_ZTF_CONFIG = {
 
 
 class TempAlertFile(SpooledTemporaryFile):
-    """Subclass of SpooledTemporaryFile that is tied into the log"""
+    """Subclass of SpooledTemporaryFile that is tied into the log
+
+    Log warning is issued when file rolls over onto disk.
+    """
 
     def rollover(self) -> None:
         """Move contents of the spooled file from memory onto disk"""
