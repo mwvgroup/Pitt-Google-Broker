@@ -10,7 +10,7 @@ from broker.consumer import GCSKafkaConsumer
 
 # Define connection configuration using default values as a starting point
 config = {
-    'bootstrap.servers': os.getenv('ztf_server'),
+    'bootstrap.servers': os.environ['ztf_server'],
     'group.id': 'group',
     'session.timeout.ms': 6000,
     'enable.auto.commit': 'FALSE',
@@ -19,8 +19,8 @@ config = {
     'security.protocol': 'SASL_PLAINTEXT',
     'sasl.mechanisms': 'GSSAPI',
     'auto.offset.reset': 'earliest',
-    'sasl.kerberos.principal': os.getenv('ztf_principle'),
-    'sasl.kerberos.keytab': os.getenv('ztf_keytab_path'),
+    'sasl.kerberos.principal': os.environ['ztf_principle'],
+    'sasl.kerberos.keytab': os.environ['ztf_keytab_path'],
 }
 
 # Each ZTF topic is its own date
@@ -30,9 +30,9 @@ ztf_topic = f'ztf_{now.year}{now.month:02d}{now.day:02d}_programid1'
 # Create a consumer
 c = GCSKafkaConsumer(
     kafka_config=config,
-    bucket_name='ztf_avro_files',
+    bucket_name='ardent-cycling-243415-ztf-avro-files',
     kafka_topic=ztf_topic,
-    pubsub_topic='ztf_avro_status'
+    pubsub_topic='ztf-avro-status'
 )
 
 if __name__ == '__main__':
