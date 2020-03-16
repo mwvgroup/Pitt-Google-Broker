@@ -68,7 +68,7 @@ The first step to deploying a Docker image is to build it from the
 corresponding Dockerfile. This is accomplished by using the `build` command:
 
 ```bash
-docker built -t [IMAGE NAME] -f [DOCKERFILE NAME] [DIRECTORY PATH OF DOCKERFILE]
+docker build -t [IMAGE NAME] -f [DOCKERFILE NAME] [DIRECTORY PATH OF DOCKERFILE]
 ```
 
 Next the docker image needs to be tagged with the name of the GCP
