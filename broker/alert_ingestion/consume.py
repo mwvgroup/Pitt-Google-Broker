@@ -49,8 +49,11 @@ Module Documentation
 
 import logging
 import os
+from pathlib import Path
 from tempfile import SpooledTemporaryFile
 from warnings import warn
+import pickle
+import fastavro
 
 from confluent_kafka import Consumer, KafkaException
 
@@ -88,6 +91,19 @@ class TempAlertFile(SpooledTemporaryFile):
         log.warning(f'Alert size exceeded max memory size: {self._max_size}')
         super().rollover()
 
+    @property
+    def readable(self):
+        return self._file.readable
+
+    @property
+    def writable(self):
+        return self._file.writable
+
+    @property
+    def seekable(self): # this is necessary so that fastavro can write to the file
+        return self._file.seekable
+
+
 
 def _set_config_defaults(kafka_config: dict) -> dict:
     """Set default values for a Kafka configuration dictionary
@@ -117,7 +133,7 @@ def _set_config_defaults(kafka_config: dict) -> dict:
 
 
 class GCSKafkaConsumer(Consumer):
-    """Ingests data from a kafka stream into big_query"""
+    """Ingests data from a kafka stream into BigQuery"""
 
     def __init__(
             self,
@@ -171,6 +187,39 @@ class GCSKafkaConsumer(Consumer):
         log.info(f'Closing consumer: {self.__repr__()}')
         super().close()
 
+    @staticmethod
+    def fix_schema(temp_file: TempAlertFile, survey: str, version: float) -> None:
+        """ Rewrites the temp_file with a corrected schema header
+            so that it is valid for upload to BigQuery.
+
+        Args:
+            temp_file: Temporary file containing the alert.
+            survey: Name of the survey generating the alert.
+            version: Survey version.
+        """
+
+        # get the corrected schema, if it exists
+        try:
+            f = f'valid_schemas/{survey}_v{version}.pkl'
+            with open(Path(__file__).resolve().parent / f, 'rb') as file:
+                valid_schema = pickle.load(file)
+
+        except FileNotFoundError:
+            return
+
+        # load the file and get the data with fastavro
+        data = []
+        temp_file.seek(0)
+        for r in fastavro.reader(temp_file):
+            data.append(r)
+
+        # write the corrected file
+        temp_file.seek(0)
+        fastavro.writer(temp_file, valid_schema, data)
+        temp_file.truncate() # truncate at current position (removes leftover data)
+
+        return
+
     def upload_bytes_to_bucket(self, data: bytes, destination_name: str):
         """Uploads bytes data to a GCP storage bucket
 
@@ -182,12 +231,17 @@ class GCSKafkaConsumer(Consumer):
         log.debug(f'Uploading {destination_name} to {self.bucket.name}')
         blob = self.bucket.blob(destination_name)
 
+        # Get the survey name and version
+        survey = guess_schema_survey(data)
+        version = guess_schema_version(data)
+
         # By default, spool data in memory to avoid IO unless data is too big
         # LSST alerts are anticipated at 80 kB, so 150 kB should be plenty
         max_alert_packet_size = 150000
-        with SpooledTemporaryFile(max_size=max_alert_packet_size, mode='w+b') as temp_file:
+        with TempAlertFile(max_size=max_alert_packet_size, mode='w+b') as temp_file:
             temp_file.write(data)
             temp_file.seek(0)
+            self.fix_schema(temp_file, survey, version)
             blob.upload_from_file(temp_file)
 
     def publish_pubsub(self, message: str) -> Future:
@@ -248,3 +302,43 @@ class GCSKafkaConsumer(Consumer):
             f'pubsub_topic: {self.pubsub_topic}'
             ')>'
         )
+
+
+def guess_schema_version(alert_bytes: bytes) -> float:
+    """Retrieve the ZTF schema version
+
+    Args:
+        alert_bytes: An alert from ZTF or LSST
+
+    Returns:
+        The schema version
+    """
+
+    version_regex_pattern = b"(schema_vsn=')([0-9]*\.[0-9]*)(')"
+    version_match = re.match(version_regex_pattern, alert_bytes)
+    if version_match is None:
+        err_msg = f'Could not guess schema version for alert {alert_bytes}'
+        log.error(err_msg)
+        raise SchemaParsingError(err_msg)
+
+    return float(version_match.group(2))
+
+
+def guess_schema_survey(alert_bytes: bytes) -> str:
+    """Retrieve the ZTF schema version
+
+    Args:
+        alert_bytes: An alert from ZTF or LSST
+
+    Returns:
+        The survey name
+    """
+
+    survey_regex_pattern = b"(survey=')(\S*)(')"
+    survey_match = re.match(survey_regex_pattern, alert_bytes)
+    if survey_match is None:
+        err_msg = f'Could not guess survey name for alert {alert_bytes}'
+        log.error(err_msg)
+        raise SchemaParsingError(err_msg)
+
+    return survey_match.groups(2).decode()
