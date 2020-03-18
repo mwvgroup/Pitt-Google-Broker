@@ -13,25 +13,24 @@ Usage Example
    import gen_valid_schema as gvs
 
    fin = <path to Avro file>
-   fout_stub = 'ztf_v3_3'
-   schema = gvs.get_write_valid_schema(fin, fout_stub, survey='ZTF', version=3.3)
+   survey, version = 'ztf', 3.3
+   valid_schema = gvs.write_valid_schema(fin, survey, version)
 """
 
+from pathlib import Path
 import logging
+import pickle
 import json
 import fastavro
 
 log = logging.getLogger(__name__)
 
 
-def write_valid_schema(fin: str, fout_stub: str, survey: str, version: float) -> dict:
+def write_valid_schema(fin: str, survey: str, version: float) -> dict:
     """ Corrects an Avro file schema to comply with the strict validation requirements of BigQuery. Writes both the original and corrected schemas to a bytes file and returns the corrected schema as a dict.
 
     Args:
         fin         : Path to alert Avro file.
-        fout_stub   : Path stub to write the corrected schema header (as a bytes object).
-                        Original schema will be written to 'fout_stub_original.bytes'.
-                        Corrected schema will be written to 'fout_stub_valid.bytes'.
         survey      : The name of the survey the alert is from.
         version     : The schema version of the alert is from.
 
@@ -40,10 +39,12 @@ def write_valid_schema(fin: str, fout_stub: str, survey: str, version: float) ->
     """
 
     format_funcs = {
-        'ZTF': {
+        'ztf': {
             3.3: _fix_schema_ZTF_v3_3
         }
     }
+
+    fout = Path(__file__).resolve().parent / f'{survey}_v{version}.pkl'
 
     schema, data = _load_Avro(fin) # load the file
 
@@ -57,9 +58,9 @@ def write_valid_schema(fin: str, fout_stub: str, survey: str, version: float) ->
 
     else:
         valid_schema = format_func(schema) # get the corrected schema
-        _write_schema_to_bytes_file(schema, valid_schema, fout_stub)
+        _write_schema_as_dict(valid_schema, fout)
 
-    return schema
+    return valid_schema
 
 def _fix_schema_ZTF_v3_3(schema: dict):
     """ Corrects the ZTF version 3.3 schema to comply with the strict Avro validation requirements of BigQuery.
@@ -132,17 +133,14 @@ def _load_Avro(fin: str):
             break
     return schema, data
 
-def _write_Avro(fout: str, schema: dict, data: dict):
-    """ Writes the schema and data to an Avro file.
-    """
-    with open(fout, 'wb') as out:
-        fastavro.writer(out, schema, [data])
-
-    return None
-
 def _write_schema_as_dict(schema: dict, fout: str):
     """ Writes the schema to file as a dictionary
     """
+
+    with open(fout, 'wb') as file:
+        pickle.dump(schema,file) # write the dict to a pkl file
+
+    return None
 
 def _write_schema_to_bytes_file(schema: dict, valid_schema: dict, fout_stub: str):
     """ Converts the schema dicts to bytes objects, the writes them to file.
@@ -164,5 +162,13 @@ def _write_schema_to_bytes_file(schema: dict, valid_schema: dict, fout_stub: str
         schema_bytes = json.dumps(sch).encode('utf-8')
         with open(fout, 'wb') as f:
             f.write(schema_bytes)
+
+    return None
+
+def _write_Avro(fout: str, schema: dict, data: dict):
+    """ Writes the schema and data to an Avro file.
+    """
+    with open(fout, 'wb') as out:
+        fastavro.writer(out, schema, [data])
 
     return None
