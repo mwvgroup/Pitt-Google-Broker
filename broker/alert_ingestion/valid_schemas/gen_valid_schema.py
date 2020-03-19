@@ -131,22 +131,26 @@ def _reverse_types(field: dict) -> dict:
 
     return field
 
-def _load_Avro(fin: str):
+def _load_Avro(fin):
     """
     Args:
-        fin   (str) : Path to alert Avro file.
+        fin   (str or file-like) : Path to, or file-like object representing, alert Avro file
 
     Returns:
         schema (dict) : schema from the Avro file header.
-        data   (dict) : data from the Avro file.
+        data   (list) : list of dicts containing the data from the Avro file.
     """
 
-    with open(fin, 'rb') as f:
-        avro_reader = fastavro.reader(f)
-        schema = avro_reader.writer_schema
-        for r in avro_reader:
-            data = r
-            break
+    f = open(fin, 'rb') if type(fin)==str else fin
+
+    avro_reader = fastavro.reader(f)
+    schema = avro_reader.writer_schema
+    data = []
+    for r in avro_reader:
+        data.append(r)
+
+    if type(fin)==str: f.close()
+
     return schema, data
 
 def _write_schema_as_dict(schema: dict, fout: str):
