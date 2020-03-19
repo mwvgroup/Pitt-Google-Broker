@@ -61,7 +61,7 @@ def write_valid_schema(fin: str, survey: str, version: float) -> dict:
 
     fout = Path(__file__).resolve().parent / f'{survey}_v{version}.pkl'
 
-    schema, data = _load_Avro(fin) # load the file
+    schema, __ = _load_Avro(fin) # load the file
 
     try:
         format_func = format_funcs.get(survey, {})[version]
@@ -181,10 +181,11 @@ def _write_schema_to_bytes_file(schema: dict, valid_schema: dict, fout_stub: str
 
     return None
 
-def _write_Avro(fout: str, schema: dict, data: dict):
+def _write_Avro(fout: str, schema: dict, data: list):
     """ Writes the schema and data to an Avro file.
+    schema and data as returned by _load_Avro()
     """
     with open(fout, 'wb') as out:
-        fastavro.writer(out, schema, [data])
+        fastavro.writer(out, schema, data)
 
     return None
