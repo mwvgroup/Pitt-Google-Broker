@@ -3,7 +3,9 @@
 
 """The ``consume`` module handles the ingestion of a Kafka alert stream into
 Google Cloud Storage (GCS) and defines default connection settings for
-different Kafka servers.
+different Kafka servers. If an alert's schema header needs to be corrected
+to be compliant with BigQuery's strict validation standards, that change is
+made here, before the alert is stored.
 
 Usage Example
 -------------
@@ -221,7 +223,10 @@ class GCSKafkaConsumer(Consumer):
         return
 
     def upload_bytes_to_bucket(self, data: bytes, destination_name: str):
-        """Uploads bytes data to a GCP storage bucket
+        """Uploads bytes data to a GCP storage bucket. Prior to storage,
+        corrects the schema header to be compliant with BigQuery's strict
+        validation standards if the alert is from a survey version with an
+        associated pickle file in the valid_schemas directory.
 
         Args:
             data: Data to upload

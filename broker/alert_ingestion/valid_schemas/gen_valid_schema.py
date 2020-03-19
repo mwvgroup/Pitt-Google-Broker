@@ -1,12 +1,23 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-""" The ``gen_valid_schema`` module generates a corrected alert schema from an Avro file. Used when the schema in the incoming alerts is not a valid schema under the strict requirements of BigQuery. This only needs to be done once for each survey version. The corrected schema is stored in a pickle file and used by the ``consume`` module to fix the affected alert packets before storing them in GCS.
+""" The ``gen_valid_schema`` module generates a corrected alert schema from an
+Avro file. Used when the schema in the incoming alerts is not a valid schema
+under the strict requirements of BigQuery. This only needs to be done once for
+each survey version. The corrected schema is stored in a pickle file which is
+automatically used by the ``consume`` module to fix the affected alert packets
+before storing them in GCS.
 
 Usage Example
 -------------
 
-    Survey versions that have already been configured are registered in the ``format_funcs`` dict in the ``write_valid_schema()`` function. To configure a new survey version, define a new function that accepts the schema from the survey's Avro file (the schema to be corrected) as a dict and returns the corrected schema as a dict. See ``_fix_schema_ZTF_v3_3()`` for an example. Register the new function in the ``format_funcs`` dict. Then generate the pickle file as follows.
+    Survey versions that have already been configured are registered in the
+    ``format_funcs`` dict in the ``write_valid_schema()`` function. To
+    configure a new survey version, define a new function that accepts the
+    schema from the survey's Avro file (the schema to be corrected) as a dict
+    and returns the corrected schema as a dict. See ``_fix_schema_ZTF_v3_3()``
+    for an example. Register the new function in the ``format_funcs`` dict.
+    Then generate the pickle file as follows.
 
 .. code-block:: python
    :linenos:
@@ -29,7 +40,9 @@ log = logging.getLogger(__name__)
 
 
 def write_valid_schema(fin: str, survey: str, version: float) -> dict:
-    """ Corrects an Avro file schema to comply with the strict validation requirements of BigQuery. Writes the corrected schema to a pickle file and also returns it as a dict.
+    """ Corrects an Avro file schema to comply with the strict validation
+    requirements of BigQuery. Writes the corrected schema to a pickle file and
+    also returns it as a dict.
 
     Args:
         fin         : Path to alert Avro file.
@@ -65,7 +78,8 @@ def write_valid_schema(fin: str, survey: str, version: float) -> dict:
     return valid_schema
 
 def _fix_schema_ZTF_v3_3(schema: dict):
-    """ Corrects the ZTF version 3.3 schema to comply with the strict Avro validation requirements of BigQuery.
+    """ Corrects the ZTF version 3.3 schema to comply with the strict Avro
+    validation requirements of BigQuery.
 
     Args:
         schema : Avro schema header, as returned by _load_Avro()
