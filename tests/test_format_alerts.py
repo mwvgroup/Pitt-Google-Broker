@@ -10,7 +10,7 @@ To test a new survey version, store the Avro files for a few alerts in the
 ``test_alerts`` directory. Include the name and version of the survey in the
 file name, separated by underscores. For the version, prepend a "v" and replace
 the period with a dash. For example, the filename for a ZTF version 3.3 alert
-should be: ``ztf_v3-3_originalfilename.avro.
+should be: ``ztf_v3-3_originalfilename.avro``.
 """
 
 from pathlib import Path
@@ -27,15 +27,19 @@ class AlertFormattingDataUnchanged(TestCase):
     """Test data we retrieve from file before / after formatting is the same"""
 
     def get_survey_and_schema(self, filename: str) -> (str, float):
+        """ Parses the filename to get the survey and version"""
         f = filename.split('_')
         survey = f[0]
         version = float('.'.join(f[1].strip('v').split('-')))
         return (survey, version)
 
     def test_data_unchanged(self):
+        # Test all alerts in test_alerts_dir
         for path in test_alerts_dir.glob('*.avro'):
+            # Get the original data
             __, original_data = _load_Avro(str(path))
 
+            # Correct the schema
             survey, version = self.get_survey_and_schema(path.name)
             max_size = 150000
             with consume.TempAlertFile(max_size=max_size, mode='w+b') as temp_file:
@@ -43,7 +47,9 @@ class AlertFormattingDataUnchanged(TestCase):
                     temp_file.write(f.read())
                 temp_file.seek(0)
                 consume.GCSKafkaConsumer.fix_schema(temp_file, survey, version)
+
                 temp_file.seek(0)
+                # Get the data after correcting the schema
                 __, corrected_data = _load_Avro(temp_file)
 
             self.assertEqual(original_data, corrected_data)
