@@ -57,7 +57,7 @@ def setup_buckets() -> None:
     storage_client = storage.Client()
 
     # Create bucket names
-    project_id = os.environ['BROKER_PROJ_ID']
+    project_id = os.environ['GOOGLE_CLOUD_PROJECT']
     alert_avro_name = f'{project_id}_alert_avro_bucket'
 
     # Create buckets if the do not exist

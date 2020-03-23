@@ -175,7 +175,7 @@ class GCSKafkaConsumer(Consumer):
         log.info(f'Connected to bucket: {self.bucket.name}')
 
         # Configure PubSub topic
-        project_id = os.getenv('BROKER_PROJ_ID')
+        project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
         self.publisher = pubsub.PublisherClient()
         self.topic_path = self.publisher.topic_path(project_id, pubsub_topic)
 

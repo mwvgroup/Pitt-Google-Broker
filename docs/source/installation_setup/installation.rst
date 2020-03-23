@@ -40,7 +40,7 @@ GCP project ID and credentials path as environmental variables. In your
 
 .. code-block:: bash
 
-    export BROKER_PROJ_ID="YOUR_PROJECT_ID"
+    export GOOGLE_CLOUD_PROJECT="YOUR_PROJECT_ID"
     export GOOGLE_APPLICATION_CREDENTIALS="PATH_TO_JSON_CREDENTIALS"
 
 The ``broker`` package will automatically check whether these variables are
