@@ -190,7 +190,7 @@ class GCSKafkaConsumer(Consumer):
         super().close()
 
     @staticmethod
-    def fix_schema(temp_file: TempAlertFile, survey: str, version: float) -> None:
+    def fix_schema(temp_file: TempAlertFile, survey: str, version: str) -> None:
         """ Rewrites the temp_file with a corrected schema header
             so that it is valid for upload to BigQuery.
 
@@ -200,13 +200,14 @@ class GCSKafkaConsumer(Consumer):
             version: Survey version.
         """
 
-        # get the corrected schema, if it exists
+        # get the corrected schema if it exists, else return
         try:
-            f = f'valid_schemas/{survey}_v{version}.pkl'
-            with open(Path(__file__).resolve().parent / f, 'rb') as file:
+            fpkl = f'valid_schemas/{survey}_v{version}.pkl'
+            with open(Path(__file__).resolve().parent / fpkl, 'rb') as file:
                 valid_schema = pickle.load(file)
 
         except FileNotFoundError:
+            log.info(f'Original schema header retained for {survey} version {version}')
             return
 
         # load the file and get the data with fastavro
@@ -219,8 +220,10 @@ class GCSKafkaConsumer(Consumer):
         temp_file.seek(0)
         fastavro.writer(temp_file, valid_schema, data)
         temp_file.truncate() # truncate at current position (removes leftover data)
+        temp_file.seek(0)
 
-        return
+        log.info(f'Schema header reformatted for {survey} version {version}')
+
 
     def upload_bytes_to_bucket(self, data: bytes, destination_name: str):
         """Uploads bytes data to a GCP storage bucket. Prior to storage,
@@ -326,7 +329,7 @@ def guess_schema_version(alert_bytes: bytes) -> float:
         log.error(err_msg)
         raise SchemaParsingError(err_msg)
 
-    return float(version_match.group(2))
+    return version_match.group(2)
 
 
 def guess_schema_survey(alert_bytes: bytes) -> str:
