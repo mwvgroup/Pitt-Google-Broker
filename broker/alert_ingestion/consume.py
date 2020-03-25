@@ -102,9 +102,8 @@ class TempAlertFile(SpooledTemporaryFile):
         return self._file.writable
 
     @property
-    def seekable(self): # this is necessary so that fastavro can write to the file
+    def seekable(self):  # necessary so that fastavro can write to the file
         return self._file.seekable
-
 
 
 def _set_config_defaults(kafka_config: dict) -> dict:
@@ -197,33 +196,32 @@ class GCSKafkaConsumer(Consumer):
         Args:
             temp_file: Temporary file containing the alert.
             survey: Name of the survey generating the alert.
-            version: Survey version.
+            version: Schema version.
         """
 
         # get the corrected schema if it exists, else return
         try:
             fpkl = f'valid_schemas/{survey}_v{version}.pkl'
-            with open(Path(__file__).resolve().parent / fpkl, 'rb') as file:
-                valid_schema = pickle.load(file)
+            inpath = Path(__file__).resolve().parent / fpkl
+            with inpath.open('rb') as infile:
+                valid_schema = pickle.load(infile)
 
         except FileNotFoundError:
-            log.info(f'Original schema header retained for {survey} version {version}')
+            msg = f'Original schema header retained for {survey} v{version}'
+            log.debug(msg)
             return
 
         # load the file and get the data with fastavro
-        data = []
         temp_file.seek(0)
-        for r in fastavro.reader(temp_file):
-            data.append(r)
+        data = [r for r in fastavro.reader(temp_file)]
 
         # write the corrected file
         temp_file.seek(0)
         fastavro.writer(temp_file, valid_schema, data)
-        temp_file.truncate() # truncate at current position (removes leftover data)
+        temp_file.truncate()  # removes leftover data
         temp_file.seek(0)
 
-        log.info(f'Schema header reformatted for {survey} version {version}')
-
+        log.debug(f'Schema header reformatted for {survey} version {version}')
 
     def upload_bytes_to_bucket(self, data: bytes, destination_name: str):
         """Uploads bytes data to a GCP storage bucket. Prior to storage,

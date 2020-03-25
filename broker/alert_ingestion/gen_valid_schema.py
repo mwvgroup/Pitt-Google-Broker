@@ -11,23 +11,25 @@ before storing them in GCS.
 Usage Example
 -------------
 
-    Survey versions that have already been configured are registered in the
-    ``format_funcs`` dict in the ``write_valid_schema()`` function. To
-    configure a new survey version, define a new function that accepts the
-    schema from the survey's Avro file (the schema to be corrected) as a dict
-    and returns the corrected schema as a dict. See ``_fix_schema_ZTF_v3_3()``
-    for an example. Register the new function in the ``format_funcs`` dict.
-    Then generate the pickle file as follows.
+Survey versions that have already been configured are registered in the
+``format_funcs`` dict in the ``write_valid_schema()`` function. To
+configure a new survey version, define a new function that accepts the
+schema from the survey's Avro file (the schema to be corrected) as a dict
+and returns the corrected schema as a dict. See ``_fix_schema_ZTF_v3_3()``
+for an example. Register the new function in the ``format_funcs`` dict.
+Then generate the pickle file as follows.
 
 .. code-block:: python
    :linenos:
 
-   import gen_valid_schema as gvs
+   from broker.alert_ingenstion import gen_valid_schema as gvs
 
    fin = <path to Avro file>
    survey, version = 'ztf', 3.3
    valid_schema = gvs.write_valid_schema(fin, survey, version)
 
+Module Documentation
+--------------------
 """
 
 from pathlib import Path
@@ -59,9 +61,10 @@ def write_valid_schema(fin: str, survey: str, version: float) -> dict:
         }
     }
 
-    fout = Path(__file__).resolve().parent / f'{survey}_v{version}.pkl'
+    fpkl = f'{survey}_v{version}.pkl'
+    fout = Path(__file__).resolve().parent / 'valid_schemas' / fpkl
 
-    schema, __ = _load_Avro(fin) # load the file
+    schema, __ = _load_Avro(fin)  # load the file
 
     try:
         format_func = format_funcs.get(survey, {})[version]
@@ -72,12 +75,13 @@ def write_valid_schema(fin: str, survey: str, version: float) -> dict:
         raise RuntimeError(err_msg)
 
     else:
-        valid_schema = format_func(schema) # get the corrected schema
-        _write_schema_as_dict(valid_schema, fout)
+        valid_schema = format_func(schema)  # get the corrected schema
+        _write_dict_to_pickle(valid_schema, fout)
 
     return valid_schema
 
-def _fix_schema_ZTF_v3_3(schema: dict):
+
+def _fix_schema_ZTF_v3_3(schema: dict) -> dict:
     """ Corrects the ZTF version 3.3 schema to comply with the strict Avro
     validation requirements of BigQuery.
 
@@ -86,7 +90,7 @@ def _fix_schema_ZTF_v3_3(schema: dict):
     Returns:
         schema : updated schema
     """
-    for l1, l1_field in enumerate(schema['fields']): # l1_field is a dict
+    for l1, l1_field in enumerate(schema['fields']):  # l1_field is a dict
 
         # do the top level fields
         schema['fields'][l1] = _reverse_types(l1_field)
@@ -107,60 +111,65 @@ def _fix_schema_ZTF_v3_3(schema: dict):
 
     return schema
 
+
 def _reverse_types(field: dict) -> dict:
-    """ Reverses the order of field['type'] if it is a list _and_ field['default'] is null or is not specified. Otherwise the field is returned unchanged. This is intended to move the 'null' element to the beginning on the type list, but it is up to the user to make sure 'null' is at the end of the list before calling this function.
+    """ Reverses the order of field['type'] if it is a list _and_
+    field['default'] is null or is not specified. Otherwise the field is
+    returned unchanged. This is intended to move the 'null' element to the
+    beginning on the type list, but it is up to the user to make sure 'null'
+    is at the end of the list before calling this function.
 
     Args:
-        field : a single element of the 'fields' list in the ZTF Avro schema dict
+        field : single element of the 'fields' list in the ZTF Avro schema dict
 
     Returns:
         field : input field with the 'type' list reversed if necessary.
     """
 
-    if isinstance(field['type'],list):
+    if isinstance(field['type'], list):
 
         try:
-            if field['default'] is None: # default is None -> reverse the list
+            if field['default'] is None:  # default is None -> reverse the list
                 new_types = field['type'][::-1]
-            else: # default is something other than null -> leave list unchanged
+            else:  # default is something other than null -> leave unchanged
                 new_types = field['type']
-        except KeyError: # default not specified -> reverse the list
+        except KeyError:  # default not specified -> reverse the list
             new_types = field['type'][::-1]
 
         field['type'] = new_types
 
     return field
 
+
 def _load_Avro(fin):
     """
     Args:
-        fin   (str or file-like) : Path to, or file-like object representing, alert Avro file
+        fin   (str or file-like) : Path to, or file-like object representing,
+                                   alert Avro file
 
     Returns:
         schema (dict) : schema from the Avro file header.
         data   (list) : list of dicts containing the data from the Avro file.
     """
-
-    f = open(fin, 'rb') if type(fin)==str else fin
+    is_path = isinstance(fin, str)
+    f = open(fin, 'rb') if is_path else fin
 
     avro_reader = fastavro.reader(f)
     schema = avro_reader.writer_schema
-    data = []
-    for r in avro_reader:
-        data.append(r)
+    data = [r for r in avro_reader]
 
-    if type(fin)==str: f.close()
+    if is_path:
+        f.close()
 
     return schema, data
 
-def _write_schema_as_dict(schema: dict, fout: str):
+
+def _write_dict_to_pickle(schema: dict, fout: str):
     """ Writes the schema to file as a dictionary
     """
-
     with open(fout, 'wb') as file:
-        pickle.dump(schema,file) # write the dict to a pkl file
+        pickle.dump(schema, file)  # write the dict to a pkl file
 
-    return None
 
 def _write_schema_to_bytes_file(schema: dict, valid_schema: dict, fout_stub: str):
     """ Converts the schema dicts to bytes objects, the writes them to file.
@@ -168,9 +177,12 @@ def _write_schema_to_bytes_file(schema: dict, valid_schema: dict, fout_stub: str
     Args:
         schema      : Original schema
         valid_schema: Corrected schema
-        fout_stub   : Path stub to write the corrected schema header (as a bytes object).
-                        Original schema will be written to 'fout_stub_original.bytes'.
-                        Corrected schema will be written to 'fout_stub_valid.bytes'.
+        fout_stub   : Path stub to write the corrected schema header (as a
+                      bytes object).
+                        - Original schema will be written to
+                        'fout_stub_original.bytes'.
+                        - Corrected schema will be written to
+                        'fout_stub_valid.bytes'.
     """
 
     z = zip(
@@ -184,6 +196,7 @@ def _write_schema_to_bytes_file(schema: dict, valid_schema: dict, fout_stub: str
             f.write(schema_bytes)
 
     return None
+
 
 def _write_Avro(fout: str, schema: dict, data: list):
     """ Writes the schema and data to an Avro file.

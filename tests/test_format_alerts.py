@@ -6,26 +6,17 @@ in GCS. This includes testing the generation of the valid schema pickle file by
 the ``alert_ingestion.valid_schemas.gen_valid_schema`` module, and the
 correction of alert schemas by the ``alert_ingestion.consume`` module.
 
-Before running these tests:
-    1. The environment variables ``GOOGLE_CLOUD_PROJECT`` and
-    ``GOOGLE_APPLICATION_CREDENTIALS`` must be set (see broker installation
-    instructions).
-    2. The dataset referenced by the `dataset_id` variable (below) must exist
-    and the user must have appropriate permissions (for details, see
-    https://cloud.google.com/bigquery/docs/loading-data-local).
-
 To test a new survey version:
     1. Store an Avro file in the ``test_alerts`` directory. Include the name
     and version of the survey in the file name, separated by underscores
     (e.g., ``ztf_3.3_originalfilename.avro``).
-    2. Register the test alert's path to the ``test_alert_path`` dictionary with
-    a key formatted as f'{survey}_{version}'.
+    2. Register the test alert's path to the ``test_alert_path`` dictionary
+    with a key formatted as f'{survey}_{version}'.
     3. Create new test functions using the following as templates:
-        1. ``test_data_unchanged_ztf_3_3()``: Change the name of the function and the
-        `survey` and `version` variables.
+        1. ``test_data_unchanged_ztf_3_3()``: Change the name of the function
+        and the `survey` and `version` variables.
         2. ``test_BQupload_ztf_3_3``: Change the name of the function and the
         `survey` and `version` variables.
-
 """
 
 import os
@@ -39,11 +30,12 @@ from broker.alert_ingestion.valid_schemas.gen_valid_schema import _load_Avro
 
 
 dataset_id = 'dataset_for_testing'
-max_alert_size = 150000 # for creating temporary files
+max_alert_size = 150000  # for creating temporary files
 test_alerts_dir = Path(__file__).parent / 'test_alerts'
 test_alert_path = {
             'ztf_3.3': test_alerts_dir / 'ztf_3.3_1154308030015010004.avro',
 }
+
 
 def run_consume_fix_schema(path: Path, temp_file: BinaryIO):
     """ Loads the file at path into the temp_file and runs
@@ -96,15 +88,16 @@ class AlertFormattingDataUnchanged(TestCase):
             __, corrected_data = _load_Avro(temp_file)
 
         # test data unchanged
-        msg = f'Data was changed while correcting the schema header for {survey} version {version}'
+        msg = (f'Data was changed while correcting the schema header'
+               f' for {survey} version {version}')
         self.assertEqual(original_data, corrected_data, msg)
 
 
 class AlertFormattedForBigQuery(TestCase):
     """ Test that the alerts are formatted properly for import into BigQuery.
     This test clears the BQ test table before uploading an alert and therefore
-    does _NOT_ test whether different survey/version combinations are compatible
-    for upload to the same BQ table.
+    does _NOT_ test whether different survey/version combinations are
+    compatible for upload to the same BQ table.
 
 
     """
@@ -113,15 +106,14 @@ class AlertFormattedForBigQuery(TestCase):
     def setUpClass(cls):
         cls.client = bigquery.Client()
         cls.dataset_id = dataset_id
-        cls.table_id = 'temp_table' # created automatically if it doesn't yet exist
+        cls.table_id = 'temp_table'  # created automatically if needed
 
         cls.dataset_ref = cls.client.dataset(cls.dataset_id)
         cls.table_ref = cls.dataset_ref.table(cls.table_id)
         cls.job_config = bigquery.LoadJobConfig()
         cls.job_config.source_format = bigquery.SourceFormat.AVRO
         cls.job_config.write_disposition = bigquery.WriteDisposition.WRITE_TRUNCATE
-        cls.job_config.autodetect = True # enable schema autodetection
-
+        cls.job_config.autodetect = True  # enable schema autodetection
 
     def test_BQupload_ztf_3_3(self):
         """ ZTF version 3.3 upload to BigQuery test. """
@@ -132,19 +124,21 @@ class AlertFormattedForBigQuery(TestCase):
         # Correct the schema and upload to BQ
         with consume.TempAlertFile(max_size=max_alert_size, mode='r+b') as temp_file:
             run_consume_fix_schema(path, temp_file)
-            self.upload_to_BigQuery(temp_file)
+            self.assert_alert_uploads_to_BigQuery(temp_file)
 
-
-    def upload_to_BigQuery(self, temp_file):
-        """ Uploads temp_file (Avro format expected) into a BigQuery table.
+    def assert_alert_uploads_to_BigQuery(self, temp_file):
+        """ Tests whether an alert is formatted correctly for insertion into a
+        BigQuery table.
         """
 
         temp_file.seek(0)
-        job = self.client.load_table_from_file(temp_file, self.table_ref, job_config=self.job_config)
+        job = self.client.load_table_from_file(temp_file,
+                                               self.table_ref,
+                                               job_config=self.job_config)
 
         try:
             job.result()  # Waits for table load to complete.
-        except BadRequest as e: # schema header is not formatted correctly
+        except BadRequest as e:  # schema header is not formatted correctly
             self.fail(str(e))
         except as e:
             self.error(str(e))
@@ -154,26 +148,6 @@ class AlertFormattedForBigQuery(TestCase):
 
 
 
-#
-#     @classmethod
-#     def setUpClass(cls):
-#         """Read in test alert data"""
-#
-#         cls.test_alerts = dict()
-#         for path in test_alerts_dir.glob('*.avro'):
-#             # Todo: add this logic
-#             survey, schema_version = get_survey_and_schema(path.name)
-#             alert_data = parse_alert_file(path)
-#
-#             cls.test_alerts.setdefault(survey, {})[schema_version] = alert_data
-#
-#     # Todo: Add method for each formatting function
-#     def test_format_ztf_3_3(self):
-#         """Test schema formatting for ZTF version 3.3"""
-#
-#         self.fail()
-#
-#
 # class SchemaVersionGuessing(TestCase):
 #     """Test functions for guessing schema versions from alert data"""
 #

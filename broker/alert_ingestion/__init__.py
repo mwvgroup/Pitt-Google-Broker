@@ -8,4 +8,4 @@ alert data to Cloud Storage, and publishing PubSub status messages for the
 ingested alerts.
 """
 
-from .consume import GCSKafkaConsumer, DEFAULT_ZTF_CONFIG
+from . import consume
