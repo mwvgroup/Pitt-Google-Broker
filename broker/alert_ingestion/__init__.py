@@ -8,4 +8,4 @@ alert data to Cloud Storage, and publishing PubSub status messages for the
 ingested alerts.
 """
 
-from . import consume
+from . import consume, gen_valid_schema

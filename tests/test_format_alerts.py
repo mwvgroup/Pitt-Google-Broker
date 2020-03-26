@@ -17,6 +17,9 @@ To test a new survey version:
         and the `survey` and `version` variables.
         2. ``test_BQupload_ztf_3_3``: Change the name of the function and the
         `survey` and `version` variables.
+
+Module Documentation
+--------------------
 """
 
 import os

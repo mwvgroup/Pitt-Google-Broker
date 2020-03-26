@@ -223,7 +223,7 @@ class GCSKafkaConsumer(Consumer):
 
         log.debug(f'Schema header reformatted for {survey} version {version}')
 
-    def upload_bytes_to_bucket(self, data: bytes, destination_name: str):
+    def upload_bytes_to_bucket(self, data: bytes, destination_name: str) -> None:
         """Uploads bytes data to a GCP storage bucket. Prior to storage,
         corrects the schema header to be compliant with BigQuery's strict
         validation standards if the alert is from a survey version with an

@@ -34,6 +34,7 @@ Module Documentation
 
 from pathlib import Path
 import logging
+from typing import Tuple, BinaryIO, Union
 import pickle
 import json
 import fastavro
@@ -87,9 +88,11 @@ def _fix_schema_ZTF_v3_3(schema: dict) -> dict:
 
     Args:
         schema : Avro schema header, as returned by _load_Avro()
+
     Returns:
         schema : updated schema
     """
+
     for l1, l1_field in enumerate(schema['fields']):  # l1_field is a dict
 
         # do the top level fields
@@ -141,7 +144,7 @@ def _reverse_types(field: dict) -> dict:
     return field
 
 
-def _load_Avro(fin):
+def _load_Avro(fin: Union[Path, BinaryIO]) -> Tuple[dict, dict]:
     """
     Args:
         fin   (str or file-like) : Path to, or file-like object representing,
@@ -151,6 +154,7 @@ def _load_Avro(fin):
         schema (dict) : schema from the Avro file header.
         data   (list) : list of dicts containing the data from the Avro file.
     """
+
     is_path = isinstance(fin, str)
     f = open(fin, 'rb') if is_path else fin
 
@@ -164,14 +168,14 @@ def _load_Avro(fin):
     return schema, data
 
 
-def _write_dict_to_pickle(schema: dict, fout: str):
-    """ Writes the schema to file as a dictionary
-    """
+def _write_dict_to_pickle(schema: dict, fout: str) -> None:
+    """ Writes the schema to file as a dictionary"""
+
     with open(fout, 'wb') as file:
         pickle.dump(schema, file)  # write the dict to a pkl file
 
 
-def _write_schema_to_bytes_file(schema: dict, valid_schema: dict, fout_stub: str):
+def _write_schema_to_bytes_file(schema: dict, valid_schema: dict, fout_stub: str) -> None:
     """ Converts the schema dicts to bytes objects, the writes them to file.
 
     Args:
@@ -195,14 +199,11 @@ def _write_schema_to_bytes_file(schema: dict, valid_schema: dict, fout_stub: str
         with open(fout, 'wb') as f:
             f.write(schema_bytes)
 
-    return None
 
-
-def _write_Avro(fout: str, schema: dict, data: list):
+def _write_Avro(fout: str, schema: dict, data: list) -> None:
     """ Writes the schema and data to an Avro file.
     schema and data as returned by _load_Avro()
     """
+
     with open(fout, 'wb') as out:
         fastavro.writer(out, schema, data)
-
-    return None
