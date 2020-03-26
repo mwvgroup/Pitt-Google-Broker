@@ -143,7 +143,7 @@ class AlertFormattedForBigQuery(TestCase):
             job.result()  # Waits for table load to complete.
         except BadRequest as e:  # schema header is not formatted correctly
             self.fail(str(e))
-        except as e:
+        except Exception as e:
             self.error(str(e))
 
         # print(f'Loaded {job.output_rows} rows into {self.dataset_id}:{self.table_id}')
