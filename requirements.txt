@@ -12,7 +12,7 @@ pandas
 pandas-gbq
 pandavro
 requests
-six
+six>=1.13.0
 tqdm
 
 # GCS dependencies
