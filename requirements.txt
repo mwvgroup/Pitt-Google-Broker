@@ -12,6 +12,7 @@ pandas
 pandas-gbq
 pandavro
 requests
+six
 tqdm
 
 # GCS dependencies
