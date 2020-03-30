@@ -26,7 +26,7 @@ class GCS2BQ_upload(TestCase):
             job_errors = main.stream_GCS_to_BQ(data, context)
 
         except Exception as e:
-            self.error(str(e))
+            self.fail(str(e))
 
         else:
             self.assertIsNone(job_errors)
