@@ -41,17 +41,20 @@ def setup_big_query() -> None:
 
     New data sets include:
       ``ztf_alerts``
+      ``testing_dataset``
     """
 
     bigquery_client = bigquery.Client()
     bigquery_client.create_dataset('ztf_alerts', exists_ok=True)
+    bigquery_client.create_dataset('testing_dataset', exists_ok=True)
 
 
 def setup_buckets() -> None:
     """Create new storage buckets
 
     New buckets include:
-      ``<project_id>_alert_avro_bucket
+      ``<project_id>_alert_avro_bucket``
+      ``<project_id>_testing_bucket``
     """
 
     storage_client = storage.Client()
@@ -59,9 +62,10 @@ def setup_buckets() -> None:
     # Create bucket names
     project_id = os.environ['GOOGLE_CLOUD_PROJECT']
     alert_avro_name = f'{project_id}_alert_avro_bucket'
+    testing_name = f'{project_id}_testing_bucket'
 
     # Create buckets if the do not exist
-    for bucket_name in (alert_avro_name,):
+    for bucket_name in (alert_avro_name, testing_name):
         try:
             storage_client.get_bucket(bucket_name)
 
