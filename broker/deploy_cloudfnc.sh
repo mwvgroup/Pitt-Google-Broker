@@ -11,7 +11,7 @@
 ###
 
 # NOT SURE OF THE RIGHT WAY TO GET INTO THIS DIRECTORY:
-cd alert_ingestion/GCS_to_BQ
+cd broker/alert_ingestion/GCS_to_BQ
 
 # deploy stream_GCS_to_BQ() to listen to the alert avro bucket
 bucket="${GOOGLE_CLOUD_PROJECT}_alert_avro_bucket"
