@@ -22,7 +22,7 @@ The ``broker`` package can be installed by running the ``setup.py`` file:
 
     python setup.py install --user
 
-Any missing dependencies should autimatically be installed in your Python
+Any missing dependencies should automatically be installed in your Python
 environment. However, if you have any issues installing the package you may
 need to install the dependencies manually and then try again. Dependencies can
 be installed using the ``pip`` package manager and the `requirements.txt` file:
@@ -62,11 +62,25 @@ only whether the variable is defined. This feature is primarily used for
 building docs and running tests. The behavior of the ``broker`` package
 when using  ``GPB_OFFLINE`` should not be relied on in a production environment.
 
+Installing the Google Cloud SDK
+-------------------------------
+
+The ``gcloud`` command line tool is needed to deploy a Google Cloud Function to
+listen to a file storage bucket and upload new files to a BigQuery database
+(see Setting up GCP below). This tool is part of the
+`Google Cloud SDK https://cloud.google.com/sdk/docs`_. There are several
+installation options `detailed here https://cloud.google.com/sdk/install`_.
+Once the SDK is installed, initialize ``gcloud`` by following the
+`instructions here https://cloud.google.com/sdk/docs/initializing`_.
+
 Setting up GCP
 --------------
 
-You will need to set up a handful of tools in GCP. Instead of doing this
-manually, the broker package provides a setup function for convenience.
+You will need to set up a handful of tools in GCP. The broker package provides
+two setup tools that automate these tasks for convenience.
+
+The following Python function sets up the GCP buckets, datasets, and logging
+sinks.
 
 .. code-block:: python
    :linenos:
@@ -78,6 +92,17 @@ manually, the broker package provides a setup function for convenience.
 
     # Setup your GCP project
     auto_setup()
+
+The ``stream_GCS_to_BQ`` function must be deployed from the command line as a
+Google Cloud Function so that it listens to the appropriate bucket(s) for new
+alert Avro files and appends the data to a BigQuery table. The Google Cloud SDK
+must be installed first (see above). The following script  automates the
+deployment.
+
+.. code-block::bash
+    :linenos:
+
+    ./broker/deploy_cloudfnc.sh
 
 
 .. _Create a project: https://cloud.google.com/resource-manager/docs/creating-managing-projects
