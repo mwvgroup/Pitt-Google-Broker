@@ -10,10 +10,14 @@ https://cloud.google.com/bigquery/docs/loading-data-cloud-storage-avro.
 Usage Example
 -------------
 
-First, check that the buckets and datasets referenced in the ``bucket2table``
-dictionary (below) point to the appropriate Google Cloud Platform (GCP)
-resources. (These should have been initialized during the GCP setup, see
+First, check that the buckets, datasets, and tables referenced in the
+``bucket2table`` dictionary (below) point to the appropriate Google Cloud
+Platform (GCP) resources. (These should have been initialized during the GCP
+setup, see
 https://pitt-broker.readthedocs.io/en/latest/installation.html#setting-up-gcp.)
+Buckets and datasets must exist (with appropriate permissions) prior to
+invoking this module. Tables are created automatically and on-the-fly if they
+don't already exist.
 
 Deploy the ``stream_GCS_to_BQ`` function by running the following command in
 the directory where this module is located. Be sure to replace
@@ -39,8 +43,8 @@ from google.cloud import bigquery
 log = logging.getLogger(__name__)
 BQ = bigquery.Client()
 
-# The bucket2table dictionary determines which BQ table an alert will be
-# uploaded to based on which GCS bucket the alert is stored in.
+# The bucket2table dictionary determines which BQ table the alert data will be
+# uploaded to based on which GCS bucket the alert Avro file is stored in.
 PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
 streaming_bucket = '_'.join([PROJECT_ID, 'alert_avro_bucket'])
 testing_bucket = '_'.join([PROJECT_ID, 'testing_bucket'])
@@ -74,7 +78,7 @@ def stream_GCS_to_BQ(data: dict, context: dict) -> str:
                f'configured for the `stream_GCS_to_BQ` Cloud Function. '
                f'Data in {file_name} cannot be uploaded to BigQuery.')
         log.error(msg)
-        return f'GCS bucket {e} not configured'
+        return f'GCS bucket {e} not configured'  # used in testing
 
     # API request
     load_job = BQ.load_table_from_uri(uri, BQ_TABLE_ID, job_config=job_config)
