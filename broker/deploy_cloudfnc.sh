@@ -13,6 +13,6 @@
 # NOT SURE OF THE RIGHT WAY TO GET INTO THIS DIRECTORY:
 cd broker/alert_ingestion/GCS_to_BQ
 
-# deploy stream_GCS_to_BQ() to listen to the alert avro bucket
-bucket="${GOOGLE_CLOUD_PROJECT}_alert_avro_bucket"
+# deploy stream_GCS_to_BQ() to listen to the ztf_alert_avro_bucket
+bucket="${GOOGLE_CLOUD_PROJECT}_ztf_alert_avro_bucket"
 gcloud functions deploy stream_GCS_to_BQ --runtime python37 --set-env-vars GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT} --trigger-resource ${bucket} --trigger-event google.storage.object.finalize

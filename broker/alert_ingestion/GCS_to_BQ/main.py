@@ -29,7 +29,7 @@ https://cloud.google.com/functions/docs/calling/storage.
 .. code-block:: bash
    :linenos:
 
-   gcloud functions deploy stream_GCS_to_BQ --runtime python37 --trigger-resource <YOUR_TRIGGER_BUCKET_NAME> --trigger-event google.storage.object.finalize
+   gcloud functions deploy stream_GCS_to_BQ --runtime python37 --set-env-vars GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT} --trigger-resource <YOUR_TRIGGER_BUCKET_NAME> --trigger-event google.storage.object.finalize
 
 The script ``broker/deploy_cloudfnc.sh`` automates the deployment.
 

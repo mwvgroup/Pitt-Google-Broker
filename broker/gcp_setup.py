@@ -28,7 +28,6 @@ Module Documentation
 """
 
 import os
-from google import api_core
 
 if not os.getenv('GPB_OFFLINE', False):
     from google.api_core.exceptions import NotFound
@@ -71,7 +70,7 @@ def setup_buckets() -> None:
         try:
             storage_client.get_bucket(bucket_name)
 
-        except api_core.exceptions.NotFound:
+        except NotFound:
             storage_client.create_bucket(bucket_name)
 
 
@@ -92,7 +91,7 @@ def setup_pubsub() -> None:
         try:
             publisher.get_topic(topic_path)
 
-        except api_core.exceptions.NotFound:
+        except NotFound:
             publisher.create_topic(topic_path)
 
 
