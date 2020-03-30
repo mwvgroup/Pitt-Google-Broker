@@ -33,7 +33,7 @@ if not os.getenv('GPB_OFFLINE', False):
     from google.api_core.exceptions import NotFound
     from google.cloud import bigquery, logging, storage
 
-_tables = ('alert', 'candidate')
+_tables = ('alerts')
 
 
 def setup_big_query() -> None:

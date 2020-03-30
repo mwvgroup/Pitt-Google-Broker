@@ -24,6 +24,8 @@ https://cloud.google.com/functions/docs/calling/storage.
 
    gcloud functions deploy stream_GCS_to_BQ --runtime python37 --trigger-resource <YOUR_TRIGGER_BUCKET_NAME> --trigger-event google.storage.object.finalize
 
+The script ``broker/deploy_cloudfnc.sh`` automates the deployment.
+
 Module Documentation
 --------------------
 """
@@ -35,8 +37,8 @@ from google.cloud import bigquery
 log = logging.getLogger(__name__)
 
 PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
-BQ_DATASET = 'GCS_Avro_to_BigQuery_test'
-BQ_TABLE = 'streaming_test1'
+BQ_DATASET = 'ztf_alerts'
+BQ_TABLE = 'alerts'
 BQ_TABLE_ID = '.'.join([PROJECT_ID, BQ_DATASET, BQ_TABLE])
 BQ = bigquery.Client()
 
