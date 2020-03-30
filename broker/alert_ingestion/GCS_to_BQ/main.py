@@ -4,16 +4,17 @@
 """This module is intended to be deployed as a Google Cloud Function so that it
 listens to a Google Cloud Storage (GCS) bucket. When a new file is detected in
 the bucket (Avro file format expected), it will automatically load it into a
-BigQuery (BQ) table. This code borrows heavily from
+BigQuery (BQ) table and publish a message to PubSub (PS). This code borrows
+heavily from
 https://cloud.google.com/bigquery/docs/loading-data-cloud-storage-avro.
 
 Usage Example
 -------------
 
-First, check that the buckets, datasets, and tables referenced in the
-``bucket2table`` dictionary (below) point to the appropriate Google Cloud
-Platform (GCP) resources. (These should have been initialized during the GCP
-setup, see
+First, check that the buckets (GCS), datasets (BQ), tables (BQ), and topics (PS)
+referenced in the ``bucket_resources`` dictionary (below) point to the appropriate
+Google Cloud Platform (GCP) resources. (These should have been initialized
+during the GCP setup, see
 https://pitt-broker.readthedocs.io/en/latest/installation.html#setting-up-gcp.)
 Buckets and datasets must exist (with appropriate permissions) prior to
 invoking this module. Tables are created automatically and on-the-fly if they
@@ -39,21 +40,25 @@ Module Documentation
 import logging
 import os
 from google.cloud import bigquery
+from google.cloud import pubsub
+from google.cloud.pubsub_v1.publisher.futures import Future
 
 log = logging.getLogger(__name__)
+PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
 BQ = bigquery.Client()
 
-# The bucket2table dictionary determines which BQ table the alert data will be
+# The bucket_resources dictionary determines which BQ table the alert data will be
 # uploaded to based on which GCS bucket the alert Avro file is stored in.
-PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
-streaming_bucket = '_'.join([PROJECT_ID, 'alert_avro_bucket'])
+ztf_bucket = '_'.join([PROJECT_ID, 'ztf_alert_avro_bucket'])
 testing_bucket = '_'.join([PROJECT_ID, 'testing_bucket'])
-bucket2table = {
-    streaming_bucket: { 'BQ_DATASET': 'ztf_alerts',
-                        'BQ_TABLE': 'alerts'
+bucket_resources = {
+    ztf_bucket:     { 'BQ_DATASET': 'ztf_alerts',
+                        'BQ_TABLE': 'alerts',
+                        'PS_TOPIC': 'ztf_alerts_in_BQ'
     },
     testing_bucket: {   'BQ_DATASET': 'testing_dataset',
-                        'BQ_TABLE': 'test_GCS_to_BQ'
+                        'BQ_TABLE': 'test_GCS_to_BQ',
+                        'PS_TOPIC': 'test_alerts_in_BQ'
     }
 }
 
@@ -91,16 +96,44 @@ def stream_GCS_to_BQ(data: dict, context: dict) -> str:
 
     # Run the job
     load_job.result()  # Start job, wait for it to complete, get the result
+    error_result = load_job.error_result
 
-    return load_job.error_result
+    # Publish PubSub message if BQ upload was successful
+    if error_result is None:
+        topic = bucket_resources[bucket_name]['PS_TOPIC']
+        publish_pubsub(topic, file_name)
+
+    return error_result
 
 
 def get_BQ_TABLE_ID(bucket_name: str) -> str:
     """ Returns the ID of the BQ table associated with the GCS bucket_name.
     """
 
-    BQ_DATASET = bucket2table[bucket_name]['BQ_DATASET']
-    BQ_TABLE = bucket2table[bucket_name]['BQ_TABLE']
+    BQ_DATASET = bucket_resources[bucket_name]['BQ_DATASET']
+    BQ_TABLE = bucket_resources[bucket_name]['BQ_TABLE']
     BQ_TABLE_ID = '.'.join([PROJECT_ID, BQ_DATASET, BQ_TABLE])
 
     return BQ_TABLE_ID
+
+
+def publish_pubsub(topic: str, message: str) -> Future:
+    """Publish a PubSub alert
+
+    Args:
+        message: The message to publish
+
+    Returns:
+        The Id of the published message
+    """
+
+    # Configure PubSub topic
+    publisher = pubsub.PublisherClient()
+    topic_path = publisher.topic_path(PROJECT_ID, topic)
+
+    # Publish
+    log.debug(f'Publishing message: {message}')
+    message_data = message.encode('UTF-8')
+    future = publisher.publish(topic_path, data=message_data)
+
+    return future.result()
