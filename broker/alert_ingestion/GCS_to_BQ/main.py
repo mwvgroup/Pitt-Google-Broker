@@ -12,9 +12,9 @@ Usage Example
 -------------
 
 First, check that the buckets (GCS), datasets (BQ), tables (BQ), and topics (PS)
-referenced in the ``bucket_resources`` dictionary (below) point to the appropriate
-Google Cloud Platform (GCP) resources. (These should have been initialized
-during the GCP setup, see
+referenced in the ``bucket_resources`` dictionary (below) point to the
+appropriate Google Cloud Platform (GCP) resources. (These should have been
+initialized during the GCP setup, see
 https://pitt-broker.readthedocs.io/en/latest/installation.html#setting-up-gcp.)
 Buckets and datasets must exist (with appropriate permissions) prior to
 invoking this module. Tables are created automatically and on-the-fly if they
@@ -29,7 +29,9 @@ https://cloud.google.com/functions/docs/calling/storage.
 .. code-block:: bash
    :linenos:
 
-   gcloud functions deploy stream_GCS_to_BQ --runtime python37 --set-env-vars GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT} --trigger-resource <YOUR_TRIGGER_BUCKET_NAME> --trigger-event google.storage.object.finalize
+   gcloud functions deploy stream_GCS_to_BQ --runtime python37 --set-env-vars
+   GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT} --trigger-resource
+   <YOUR_TRIGGER_BUCKET_NAME> --trigger-event google.storage.object.finalize
 
 The script ``broker/deploy_cloudfnc.sh`` automates the deployment.
 
@@ -47,19 +49,19 @@ log = logging.getLogger(__name__)
 PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
 BQ = bigquery.Client()
 
-# The bucket_resources dictionary determines which BQ table the alert data will be
-# uploaded to based on which GCS bucket the alert Avro file is stored in.
+# The bucket_resources dictionary determines which BQ table the alert data will
+# be uploaded to based on which GCS bucket the alert Avro file is stored in.
 ztf_bucket = '_'.join([PROJECT_ID, 'ztf_alert_avro_bucket'])
 testing_bucket = '_'.join([PROJECT_ID, 'testing_bucket'])
 bucket_resources = {
-    ztf_bucket:     { 'BQ_DATASET': 'ztf_alerts',
-                        'BQ_TABLE': 'alerts',
-                        'PS_TOPIC': 'ztf_alerts_in_BQ'
-    },
-    testing_bucket: {   'BQ_DATASET': 'testing_dataset',
-                        'BQ_TABLE': 'test_GCS_to_BQ',
-                        'PS_TOPIC': 'test_alerts_in_BQ'
-    }
+    ztf_bucket:     {'BQ_DATASET': 'ztf_alerts',
+                     'BQ_TABLE': 'alerts',
+                     'PS_TOPIC': 'ztf_alerts_in_BQ'
+                     },
+    testing_bucket: {'BQ_DATASET': 'testing_dataset',
+                     'BQ_TABLE': 'test_GCS_to_BQ',
+                     'PS_TOPIC': 'test_alerts_in_BQ'
+                     }
 }
 
 
