@@ -12,11 +12,12 @@ To test a new survey version:
     (e.g., ``ztf_3.3_originalfilename.avro``).
     2. Register the test alert's path to the ``test_alert_path`` dictionary
     with a key formatted as f'{survey}_{version}'.
-    3. Create new test functions using the following as templates:
-        1. ``test_data_unchanged_ztf_3_3()``: Change the name of the function
-        and the `survey` and `version` variables.
-        2. ``test_BQupload_ztf_3_3``: Change the name of the function and the
-        `survey` and `version` variables.
+    3. Create new test functions. Use the following functions as templates and
+    change the function name and the ``survey`` and ``version`` variables.
+        1. ``test_data_unchanged_ztf_3_3()``
+        2. ``test_BQupload_ztf_3_3()``
+        3. ``test_guess_schema_version_ztf_3_3`()`
+        4. ``test_guess_schema_survey_ztf_3_3()``
 
 Module Documentation
 --------------------
@@ -28,6 +29,7 @@ from typing import BinaryIO
 from unittest import TestCase
 from google.cloud import bigquery
 
+from broker import exceptions
 from broker.alert_ingestion import consume
 from broker.alert_ingestion.gen_valid_schema import _load_Avro
 
@@ -64,6 +66,13 @@ def run_consume_fix_schema(path: Path, temp_file: BinaryIO):
 
     temp_file.seek(0)
 
+def load_Avro_bytes(path: Path) -> BinaryIO:
+    """ Loads an Avro file to a bytes object and returns it.
+    """
+
+    with open(path, 'rb') as f:
+        bytes = f.read()
+        return bytes
 
 class AlertFormattingDataUnchanged(TestCase):
     """Test data we retrieve from file before / after formatting with
@@ -149,42 +158,47 @@ class AlertFormattedForBigQuery(TestCase):
         # print(f'Loaded {job.output_rows} rows into {self.dataset_id}:{self.table_id}')
 
 
+class SchemaVersionGuessing(TestCase):
+    """Test functions for guessing schema versions from alert data"""
+
+    def test_guess_schema_version_ztf_3_3(self):
+        """Tests that guess_schema_version() returns correct version for an
+        alert with a known version.
+        """
+
+        # load the alert as a bytes object
+        survey, version = 'ztf', '3.3'
+        path = test_alert_path[f'{survey}_{version}']
+        alert_bytes = load_Avro_bytes(path)
+
+        # extract the version and check that it is as expected
+        try:
+            schema_version = consume.guess_schema_version(alert_bytes)
+        except exceptions.SchemaParsingError as e:
+            self.fail(str(e))
+        else:
+            msg = f'guess_schema_version() failed for {survey} version {version}'
+            self.assertEqual(version, schema_version, msg)
 
 
-# class SchemaVersionGuessing(TestCase):
-#     """Test functions for guessing schema versions from alert data"""
-#
-#     def test_guess_schema_version_known_versions(self):
-#         """Test guess_schema_version returns correct versions for simulated data"""
-#
-#         self.fail()
-#
-#     def test_guess_schema_version_raises(self):
-#         """Test guess_schema_version raises an error on failure to determine version"""
-#
-#         self.fail()
-#
-#
-# class SchemasurveyGuessing(TestCase):
-#     """Test functions for guessing survey names from alert data"""
-#
-#     def test_guess_schema_survey_known_surveys(self):
-#         """Test guess_schema_survey returns correct survey for simulated data"""
-#
-#         self.fail()
-#
-#     def test_guess_schema_survey_raises(self):
-#         """Test guess_schema_survey raises an error on failure to determine survey"""
-#
-#         self.fail()
-#
-#
-# class FormatGenericAlert(TestCase):
-#     """Test ``format_alert_schema`` can handle multiple survey / schema
-#     version combos
-#     """
-#
-#     def test_ztf(self):
-#         """Test ``format_alert_schema`` handles known ZTF schema versions"""
-#
-#         self.fail()
+class SchemaSurveyGuessing(TestCase):
+    """Test functions for guessing schema survey from alert data"""
+
+    def test_guess_schema_survey_ztf_3_3(self):
+        """Tests that guess_schema_survey() returns correct survey for an
+        alert with a known survey.
+        """
+
+        # load the alert as a bytes object
+        survey, version = 'ztf', '3.3'
+        path = test_alert_path[f'{survey}_{version}']
+        alert_bytes = load_Avro_bytes(path)
+
+        # extract the survey and check that it is as expected
+        try:
+            schema_survey = consume.guess_schema_survey(alert_bytes)
+        except exceptions.SchemaParsingError as e:
+            self.fail(str(e))
+        else:
+            msg = f"guess_schema_survey() failed for {survey} version {version}"
+            self.assertEqual(survey, schema_survey, msg)
