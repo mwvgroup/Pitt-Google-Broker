@@ -313,7 +313,7 @@ class GCSKafkaConsumer(Consumer):
         )
 
 
-def guess_schema_version(alert_bytes: bytes) -> float:
+def guess_schema_version(alert_bytes: bytes) -> str:
     """Retrieve the ZTF schema version
 
     Args:
@@ -330,7 +330,7 @@ def guess_schema_version(alert_bytes: bytes) -> float:
         log.error(err_msg)
         raise exceptions.SchemaParsingError(err_msg)
 
-    return version_match.group(2)
+    return version_match.group(2).decode()
 
 def guess_schema_survey(alert_bytes: bytes) -> str:
     """Retrieve the ZTF schema version
@@ -349,4 +349,4 @@ def guess_schema_survey(alert_bytes: bytes) -> str:
         log.error(err_msg)
         raise exceptions.SchemaParsingError(err_msg)
 
-    return survey_match.group(2)
+    return survey_match.group(2).decode()
