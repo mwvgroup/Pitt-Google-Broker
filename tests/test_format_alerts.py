@@ -29,7 +29,7 @@ from unittest import TestCase
 from google.cloud import bigquery
 
 from broker.alert_ingestion import consume
-from broker.alert_ingestion.valid_schemas.gen_valid_schema import _load_Avro
+from broker.alert_ingestion.gen_valid_schema import _load_Avro
 
 
 dataset_id = 'dataset_for_testing'
