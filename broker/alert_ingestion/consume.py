@@ -51,6 +51,7 @@ Module Documentation
 
 import logging
 import os
+import re
 from pathlib import Path
 from tempfile import SpooledTemporaryFile
 from warnings import warn
@@ -58,6 +59,8 @@ import pickle
 import fastavro
 
 from confluent_kafka import Consumer, KafkaException
+
+from broker import exceptions
 
 if not os.getenv('GPB_OFFLINE', False):
     from google.cloud import pubsub, storage
@@ -271,7 +274,7 @@ class GCSKafkaConsumer(Consumer):
         log.info('Starting consumer.run ...')
         try:
             while True:
-                msg = self.consume(num_messages=1, timeout=5)
+                msg = self.consume(num_messages=1, timeout=5)[0]
                 if msg is None:
                     continue
 
@@ -320,15 +323,14 @@ def guess_schema_version(alert_bytes: bytes) -> float:
         The schema version
     """
 
-    version_regex_pattern = b"(schema_vsn=')([0-9]*\.[0-9]*)(')"
-    version_match = re.match(version_regex_pattern, alert_bytes)
+    version_regex_pattern = b'("version":\s")([0-9]*\.[0-9]*)(")'
+    version_match = re.search(version_regex_pattern, alert_bytes)
     if version_match is None:
         err_msg = f'Could not guess schema version for alert {alert_bytes}'
         log.error(err_msg)
-        raise SchemaParsingError(err_msg)
+        raise exceptions.SchemaParsingError(err_msg)
 
     return version_match.group(2)
-
 
 def guess_schema_survey(alert_bytes: bytes) -> str:
     """Retrieve the ZTF schema version
@@ -340,11 +342,11 @@ def guess_schema_survey(alert_bytes: bytes) -> str:
         The survey name
     """
 
-    survey_regex_pattern = b"(survey=')(\S*)(')"
-    survey_match = re.match(survey_regex_pattern, alert_bytes)
+    survey_regex_pattern = b'("namespace":\s")(\S*)(")'
+    survey_match = re.search(survey_regex_pattern, alert_bytes)
     if survey_match is None:
         err_msg = f'Could not guess survey name for alert {alert_bytes}'
         log.error(err_msg)
-        raise SchemaParsingError(err_msg)
+        raise exceptions.SchemaParsingError(err_msg)
 
-    return survey_match.groups(2).decode()
+    return survey_match.group(2)
