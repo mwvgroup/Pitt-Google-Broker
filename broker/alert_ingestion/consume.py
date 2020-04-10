@@ -57,14 +57,13 @@ from tempfile import SpooledTemporaryFile
 from warnings import warn
 import pickle
 import fastavro
-
 from confluent_kafka import Consumer, KafkaException
+
+from broker import exceptions
 
 if not os.getenv('GPB_OFFLINE', False):
     from google.cloud import pubsub, storage
     from google.cloud.pubsub_v1.publisher.futures import Future
-
-from broker import exceptions
 
 log = logging.getLogger(__name__)
 
@@ -331,6 +330,7 @@ def guess_schema_version(alert_bytes: bytes) -> str:
         raise exceptions.SchemaParsingError(err_msg)
 
     return version_match.group(2).decode()
+
 
 def guess_schema_survey(alert_bytes: bytes) -> str:
     """Retrieve the ZTF schema version

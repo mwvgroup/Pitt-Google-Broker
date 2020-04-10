@@ -66,6 +66,7 @@ def run_consume_fix_schema(path: Path, temp_file: BinaryIO):
 
     temp_file.seek(0)
 
+
 def load_Avro_bytes(path: Path) -> BinaryIO:
     """ Loads an Avro file to a bytes object and returns it.
     """
@@ -73,6 +74,7 @@ def load_Avro_bytes(path: Path) -> BinaryIO:
     with open(path, 'rb') as f:
         bytes = f.read()
         return bytes
+
 
 class AlertFormattingDataUnchanged(TestCase):
     """Test data we retrieve from file before / after formatting with
