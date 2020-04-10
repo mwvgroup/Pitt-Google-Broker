@@ -331,7 +331,6 @@ def guess_schema_version(alert_bytes: bytes) -> str:
 
     return version_match.group(2).decode()
 
-
 def guess_schema_survey(alert_bytes: bytes) -> str:
     """Retrieve the ZTF schema version
 
