@@ -44,7 +44,7 @@ def _stream_ingest(data, data_set, table):
         table      (str): The name of the table
     """
 
-    project_id = os.environ['BROKER_PROJ_ID']
+    project_id = os.environ['GOOGLE_CLOUD_PROJECT']
     table_id = _get_table_id(data_set, table)
     data.to_gbq(
         table_id,

@@ -1,7 +1,7 @@
 aplpy
 astropy
 astroquery
-astrorapid
+# astrorapid
 beautifulsoup4
 deepdiff
 fastavro
@@ -12,6 +12,7 @@ pandas
 pandas-gbq
 pandavro
 requests
+six>=1.13.0
 tqdm
 
 # GCS dependencies

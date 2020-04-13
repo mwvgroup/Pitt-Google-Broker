@@ -9,12 +9,12 @@ the Large Synoptic Survey Telescope (LSST).
 import os
 from warnings import warn
 
-if not os.getenv('GPB_OFFLINE', False):
+if 'PGB_OFFLINE' not in os.environ:
     from google.cloud import logging as cloud_logging
 
     cloud_logging.Client().setup_logging()
 
-for _var in ('BROKER_PROJ_ID', 'GOOGLE_APPLICATION_CREDENTIALS'):
+for _var in ('GOOGLE_CLOUD_PROJECT', 'GOOGLE_APPLICATION_CREDENTIALS'):
     if _var not in os.environ:
         warn(
             f'Environmental variable ``{_var}`` not found. '

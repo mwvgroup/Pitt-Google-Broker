@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-"""The ``consumer`` module handles the ingestion of a Kafka alert stream into
+"""The ``consume`` module handles the ingestion of a Kafka alert stream into
 Google Cloud Storage (GCS) and defines default connection settings for
-different Kafka servers.
+different Kafka servers. If an alert's schema header needs to be corrected
+to be compliant with BigQuery's strict validation standards, that change is
+made here, before the alert is stored.
 
 Usage Example
 -------------
@@ -11,16 +13,16 @@ Usage Example
 .. code-block:: python
    :linenos:
 
-   from broker.consumer import GCSKafkaConsumer, DEFAULT_ZTF_CONFIG
+   from broker.alert_ingestion import consume
 
    # Define connection configuration using default values as a starting point
-   config = DEFAULT_ZTF_CONFIG.copy()
+   config = consume.DEFAULT_ZTF_CONFIG.copy()
    config['sasl.kerberos.keytab'] = '<Path to authentication file>'
-   config['sasl.kerberos.principal'] = '<>'
+   config['sasl.kerberos.principal'] = '<Name of principal>'
    print(config)
 
-   # Create a consumer
-   c = GCSKafkaConsumer(
+   # Create a GCS consumer object
+   c = consume.GCSKafkaConsumer(
        kafka_config=config,
        bucket_name='my-gcs-bucket-name',
        kafka_topic='my_kafka_topic_name',
@@ -31,16 +33,33 @@ Usage Example
    # Ingest alerts one at a time indefinitely
    c.run()
 
+Default Config Settings
+-----------------------
+
+Dictionaries with a subset of default configuration settings are provided as
+described below.
+
++-----------------------------------------+-----------------------------------+
+| Survey Name                             | Variable Name                     |
++=========================================+===================================+
+| Zwicky Transient Facility               | `DEFAULT_ZTF_CONFIG`              |
++-----------------------------------------+-----------------------------------+
+
 Module Documentation
 --------------------
 """
 
 import logging
 import os
+import re
+from pathlib import Path
 from tempfile import SpooledTemporaryFile
 from warnings import warn
-
+import pickle
+import fastavro
 from confluent_kafka import Consumer, KafkaException
+
+from broker import exceptions
 
 if not os.getenv('GPB_OFFLINE', False):
     from google.cloud import pubsub, storage
@@ -65,13 +84,28 @@ DEFAULT_ZTF_CONFIG = {
 
 
 class TempAlertFile(SpooledTemporaryFile):
-    """Subclass of SpooledTemporaryFile that is tied into the log"""
+    """Subclass of SpooledTemporaryFile that is tied into the log
+
+    Log warning is issued when file rolls over onto disk.
+    """
 
     def rollover(self) -> None:
         """Move contents of the spooled file from memory onto disk"""
 
         log.warning(f'Alert size exceeded max memory size: {self._max_size}')
         super().rollover()
+
+    @property
+    def readable(self):
+        return self._file.readable
+
+    @property
+    def writable(self):
+        return self._file.writable
+
+    @property
+    def seekable(self):  # necessary so that fastavro can write to the file
+        return self._file.seekable
 
 
 def _set_config_defaults(kafka_config: dict) -> dict:
@@ -102,7 +136,7 @@ def _set_config_defaults(kafka_config: dict) -> dict:
 
 
 class GCSKafkaConsumer(Consumer):
-    """Ingests data from a kafka stream into big_query"""
+    """Ingests data from a kafka stream into BigQuery"""
 
     def __init__(
             self,
@@ -142,7 +176,7 @@ class GCSKafkaConsumer(Consumer):
         log.info(f'Connected to bucket: {self.bucket.name}')
 
         # Configure PubSub topic
-        project_id = os.getenv('BROKER_PROJ_ID')
+        project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
         self.publisher = pubsub.PublisherClient()
         self.topic_path = self.publisher.topic_path(project_id, pubsub_topic)
 
@@ -156,8 +190,46 @@ class GCSKafkaConsumer(Consumer):
         log.info(f'Closing consumer: {self.__repr__()}')
         super().close()
 
-    def upload_bytes_to_bucket(self, data: bytes, destination_name: str):
-        """Uploads bytes data to a GCP storage bucket
+    @staticmethod
+    def fix_schema(temp_file: TempAlertFile, survey: str, version: str) -> None:
+        """ Rewrites the temp_file with a corrected schema header
+            so that it is valid for upload to BigQuery.
+
+        Args:
+            temp_file: Temporary file containing the alert.
+            survey: Name of the survey generating the alert.
+            version: Schema version.
+        """
+
+        # get the corrected schema if it exists, else return
+        try:
+            fpkl = f'valid_schemas/{survey}_v{version}.pkl'
+            inpath = Path(__file__).resolve().parent / fpkl
+            with inpath.open('rb') as infile:
+                valid_schema = pickle.load(infile)
+
+        except FileNotFoundError:
+            msg = f'Original schema header retained for {survey} v{version}'
+            log.debug(msg)
+            return
+
+        # load the file and get the data with fastavro
+        temp_file.seek(0)
+        data = [r for r in fastavro.reader(temp_file)]
+
+        # write the corrected file
+        temp_file.seek(0)
+        fastavro.writer(temp_file, valid_schema, data)
+        temp_file.truncate()  # removes leftover data
+        temp_file.seek(0)
+
+        log.debug(f'Schema header reformatted for {survey} version {version}')
+
+    def upload_bytes_to_bucket(self, data: bytes, destination_name: str) -> None:
+        """Uploads bytes data to a GCP storage bucket. Prior to storage,
+        corrects the schema header to be compliant with BigQuery's strict
+        validation standards if the alert is from a survey version with an
+        associated pickle file in the valid_schemas directory.
 
         Args:
             data: Data to upload
@@ -167,12 +239,17 @@ class GCSKafkaConsumer(Consumer):
         log.debug(f'Uploading {destination_name} to {self.bucket.name}')
         blob = self.bucket.blob(destination_name)
 
+        # Get the survey name and version
+        survey = guess_schema_survey(data)
+        version = guess_schema_version(data)
+
         # By default, spool data in memory to avoid IO unless data is too big
         # LSST alerts are anticipated at 80 kB, so 150 kB should be plenty
         max_alert_packet_size = 150000
-        with SpooledTemporaryFile(max_size=max_alert_packet_size, mode='w+b') as temp_file:
+        with TempAlertFile(max_size=max_alert_packet_size, mode='w+b') as temp_file:
             temp_file.write(data)
             temp_file.seek(0)
+            self.fix_schema(temp_file, survey, version)
             blob.upload_from_file(temp_file)
 
     def publish_pubsub(self, message: str) -> Future:
@@ -196,7 +273,7 @@ class GCSKafkaConsumer(Consumer):
         log.info('Starting consumer.run ...')
         try:
             while True:
-                msg = self.consume(num_messages=1, timeout=5)
+                msg = self.consume(num_messages=1, timeout=5)[0]
                 if msg is None:
                     continue
 
@@ -233,3 +310,43 @@ class GCSKafkaConsumer(Consumer):
             f'pubsub_topic: {self.pubsub_topic}'
             ')>'
         )
+
+
+def guess_schema_version(alert_bytes: bytes) -> str:
+    """Retrieve the ZTF schema version
+
+    Args:
+        alert_bytes: An alert from ZTF or LSST
+
+    Returns:
+        The schema version
+    """
+
+    version_regex_pattern = b'("version":\s")([0-9]*\.[0-9]*)(")'
+    version_match = re.search(version_regex_pattern, alert_bytes)
+    if version_match is None:
+        err_msg = f'Could not guess schema version for alert {alert_bytes}'
+        log.error(err_msg)
+        raise exceptions.SchemaParsingError(err_msg)
+
+    return version_match.group(2).decode()
+
+
+def guess_schema_survey(alert_bytes: bytes) -> str:
+    """Retrieve the ZTF schema version
+
+    Args:
+        alert_bytes: An alert from ZTF or LSST
+
+    Returns:
+        The survey name
+    """
+
+    survey_regex_pattern = b'("namespace":\s")(\S*)(")'
+    survey_match = re.search(survey_regex_pattern, alert_bytes)
+    if survey_match is None:
+        err_msg = f'Could not guess survey name for alert {alert_bytes}'
+        log.error(err_msg)
+        raise exceptions.SchemaParsingError(err_msg)
+
+    return survey_match.group(2).decode()
