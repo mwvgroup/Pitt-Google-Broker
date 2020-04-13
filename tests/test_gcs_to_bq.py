@@ -3,6 +3,9 @@ from unittest import TestCase
 
 from broker.alert_ingestion.GCS_to_BQ import main
 
+PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
+testing_bucket = f'{PROJECT_ID}_testing_bucket'
+testing_file = 'ztf_3.3_validschema_1154446891615015011.avro'
 
 class GCS2BQ_upload(TestCase):
     """Tests the Cloud Function that listens to a GCS bucket and uploads new
@@ -16,8 +19,8 @@ class GCS2BQ_upload(TestCase):
 
         # Get info on the Avro file (with a valid schema) to be uploaded
         data = {
-                'bucket': 'ardent-cycling-243415_testing_bucket',
-                'name': 'ztf_3.3_validschema_1154446891615015011.avro'
+                'bucket': testing_bucket,
+                'name': testing_file  # must already exist in bucket
         }
         context = {}
 

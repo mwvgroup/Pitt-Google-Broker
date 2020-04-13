@@ -28,6 +28,7 @@ Module Documentation
 """
 
 import os
+from pathlib import Path
 
 if not os.getenv('GPB_OFFLINE', False):
     from google.api_core.exceptions import NotFound
@@ -41,7 +42,7 @@ _tables = ('alerts', 'test_GCS_to_BQ')
 def setup_big_query() -> None:
     """Create the necessary Big Query datasets if they do not already exist
 
-    New data sets include:
+    New datasets include:
       ``ztf_alerts``
       ``testing_dataset``
     """
@@ -52,38 +53,50 @@ def setup_big_query() -> None:
 
 
 def setup_buckets() -> None:
-    """Create new storage buckets
+    """Create new storage buckets and upload testing files.
+    Files are expected to reside in the ``tests/test_alerts`` directory.
 
-    New buckets include:
+    New buckets [files] include:
       ``<PROJECT_ID>_ztf_alert_avro_bucket``
-      ``<PROJECT_ID>_testing_bucket``
+      ``<PROJECT_ID>_testing_bucket`` [``ztf_3.3_validschema_1154446891615015011.avro``]
     """
+
+    buckets = {  # '<bucket name>': ['file name',]
+                f'{PROJECT_ID}_ztf_alert_avro_bucket': [],
+                f'{PROJECT_ID}_testing_bucket':
+                    ['ztf_3.3_validschema_1154446891615015011.avro']
+                }
 
     storage_client = storage.Client()
 
-    # Create bucket names
-    alert_avro_name = f'{PROJECT_ID}_ztf_alert_avro_bucket'
-    testing_name = f'{PROJECT_ID}_testing_bucket'
-
-    # Create buckets if the do not exist
-    for bucket_name in (alert_avro_name, testing_name):
+    for bucket_name, files in buckets.items():
+        # Create buckets if they do not exist
         try:
             storage_client.get_bucket(bucket_name)
-
         except NotFound:
             storage_client.create_bucket(bucket_name)
+
+        # Upload any files
+        for filename in files:
+            bucket = storage_client.get_bucket(bucket_name)
+            blob = bucket.blob(filename)
+            inpath = Path('tests/test_alerts') / filename
+            with inpath.open('rb') as infile:
+                blob.upload_from_file(infile)
 
 
 def setup_pubsub() -> None:
     """ Create new Pub/Sub topics and subscriptions
 
     New topics [subscriptions] include:
+        ``ztf_alert_avro_in_bucket``
         ``ztf_alerts_in_BQ``
         ``test_alerts_in_BQ``
         ``test_alerts_PS_publish`` [``test_alerts_PS_subscribe``]
     """
 
     topics = {# '<topic_name>': ['<subscription_name>', ]
+                'ztf_alert_avro_in_bucket': [],
                 'ztf_alerts_in_BQ': [],
                 'test_alerts_in_BQ': [],
                 'test_alerts_PS_publish': ['test_alerts_PS_subscribe']

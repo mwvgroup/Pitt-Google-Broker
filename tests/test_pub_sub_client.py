@@ -12,6 +12,9 @@ PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
 test_alerts_dir = Path(__file__).parent / 'test_alerts'
 test_alert_path = test_alerts_dir / 'ztf_3.3_1154308030015010004.avro'
 
+topic_name = 'test_alerts_PS_publish'
+subscription_name = 'test_alerts_PS_subscribe'
+
 
 class TestPubSub(unittest.TestCase):
     """Test the functions in ``message_service`` for correct output,
@@ -24,8 +27,6 @@ class TestPubSub(unittest.TestCase):
         Check that the input alert matches the decoded output alert.
         """
 
-        topic_name = 'test_alerts_PS_publish'
-        subscription_name = 'test_alerts_PS_subscribe'
         sample_alert_schema, sample_alert_data = _load_Avro(str(test_alert_path))
 
         psc.message_service.publish_alerts(PROJECT_ID, topic_name, sample_alert_data)
