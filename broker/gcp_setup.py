@@ -31,7 +31,7 @@ import os
 
 if not os.getenv('GPB_OFFLINE', False):
     from google.api_core.exceptions import NotFound
-    from google.cloud import bigquery, logging, storage
+    from google.cloud import bigquery, pubsub, logging, storage
 
 PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
 
@@ -75,24 +75,39 @@ def setup_buckets() -> None:
 
 
 def setup_pubsub() -> None:
-    """ Create new Pub/Sub topics
+    """ Create new Pub/Sub topics and subscriptions
 
-    New topics include:
+    New topics [subscriptions] include:
         ``ztf_alerts_in_BQ``
         ``test_alerts_in_BQ``
+        ``test_alerts_PS_publish`` [``test_alerts_PS_subscribe``]
     """
 
-    publisher = pubsub.PublisherClient()
-    topics = ['ztf_alerts_in_BQ', 'test_alerts_in_BQ']
+    topics = {# '<topic_name>': ['<subscription_name>', ]
+                'ztf_alerts_in_BQ': [],
+                'test_alerts_in_BQ': [],
+                'test_alerts_PS_publish': ['test_alerts_PS_subscribe']
+                }
 
-    for topic in topics:
+    publisher = pubsub.PublisherClient()
+    subscriber = pubsub.SubscriberClient()
+
+    for topic, subscriptions in topics.items():
         topic_path = publisher.topic_path(PROJECT_ID, topic)
 
+        # Create the topic
         try:
             publisher.get_topic(topic_path)
-
         except NotFound:
             publisher.create_topic(topic_path)
+
+        # Create any subscriptions:
+        for sub_name in subscriptions:
+            sub_path = subscriber.subscription_path(PROJECT_ID, sub_name)
+            try:
+                subscriber.get_subscription(sub_path)
+            except NotFound:
+                subscriber.create_subscription(sub_path, topic_path)
 
 
 def setup_logging_sinks() -> None:
