@@ -27,10 +27,11 @@ class TestPubSub(unittest.TestCase):
         Check that the input alert matches the decoded output alert.
         """
 
-        sample_alert_schema, sample_alert_data = _load_Avro(str(test_alert_path))
+        with open(test_alert_path, 'rb') as f:
+            sample_alert_data = f.read()
 
-        psc.message_service.publish_alerts(PROJECT_ID, topic_name, sample_alert_data)
+        psc.message_service.publish_pubsub(topic_name, sample_alert_data)
 
-        message = psc.message_service.subscribe_alerts(PROJECT_ID, subscription_name, max_alerts=1)
+        message = psc.message_service.subscribe_alerts(subscription_name, max_alerts=1)
 
         self.assertEqual(DeepDiff(sample_alert_data[0], message[0]), {})
