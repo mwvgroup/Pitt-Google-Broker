@@ -105,7 +105,7 @@ def stream_GCS_to_BQ(data: dict, context: dict) -> str:
     # Publish PubSub message if BQ upload was successful
     if error_result is None:
         topic = bucket_resources[bucket_name]['PS_TOPIC']
-        publish_pubsub(topic, file_name)
+        publish_pubsub(topic, file_name.encode('UTF-8'))
 
     return error_result
 
