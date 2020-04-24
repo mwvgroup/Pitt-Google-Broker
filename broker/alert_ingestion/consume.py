@@ -24,9 +24,10 @@ Usage Example
    # Create a GCS consumer object
    c = consume.GCSKafkaConsumer(
        kafka_config=config,
-       bucket_name='<PROJECT_ID>_ztf_alert_avro_bucket',
        kafka_topic='my_kafka_topic_name',
-       pubsub_topic='ztf_alert_avro_in_bucket',
+       bucket_name='<PROJECT_ID>_ztf_alert_avro_bucket',
+       pubsub_alert_data_topic='ztf_alert_data',
+       pubsub_in_GCS_topic='ztf_alert_avro_in_bucket',
        debug=True  # Use debug to run without updating your kafka offset
    )
 
@@ -60,6 +61,7 @@ import fastavro
 from confluent_kafka import Consumer, KafkaException
 
 from broker import exceptions
+from broker.pub_sub_client.message_service import publish_pubsub
 
 if not os.getenv('GPB_OFFLINE', False):
     from google.cloud import pubsub, storage
@@ -143,25 +145,28 @@ class GCSKafkaConsumer(Consumer):
             kafka_config: dict,
             kafka_topic: str,
             bucket_name: str,
-            pubsub_topic: str,
+            pubsub_alert_data_topic: str,
+            pubsub_in_GCS_topic: str,
             debug: bool = False):
         """Ingests data from a kafka stream and stores a copy in GCS
 
-        Storage bucket and PubSub topic must already exist and have
+        Storage bucket and PubSub topics must already exist and have
         appropriate permissions.
 
         Args:
             kafka_config: Kafka consumer configuration properties
             kafka_topic: Kafka topics to subscribe to
-            bucket_name: Name of the bucket to upload into
-            pubsub_topic: PubSub topic to publish to
+            bucket_name: Name of the CGS bucket to upload into
+            pubsub_alert_data_topic: PubSub topic for alert data
+            pubsub_in_GCS_topic: PubSub topic for "alert in GCS" notifications
             debug: Run without committing Kafka position
         """
 
         self._debug = debug
         self.kafka_topic = kafka_topic
         self.bucket_name = bucket_name
-        self.pubsub_topic = pubsub_topic
+        self.pubsub_alert_data_topic = pubsub_alert_data_topic
+        self.pubsub_in_GCS_topic = pubsub_in_GCS_topic
         self.kafka_server = kafka_config["bootstrap.servers"]
         log.info(f'Initializing consumer: {self.__repr__()}')
 
@@ -174,15 +179,6 @@ class GCSKafkaConsumer(Consumer):
         self.storage_client = storage.Client()
         self.bucket = self.storage_client.get_bucket(bucket_name)
         log.info(f'Connected to bucket: {self.bucket.name}')
-
-        # Configure PubSub topic
-        project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
-        self.publisher = pubsub.PublisherClient()
-        self.topic_path = self.publisher.topic_path(project_id, pubsub_topic)
-
-        # Raise error if topic does not exist
-        self.topic = self.publisher.get_topic(self.topic_path)
-        log.info(f'Connected to PubSub: {self.topic_path}')
 
     def close(self) -> None:
         """Close down and terminate the Kafka Consumer"""
@@ -252,21 +248,6 @@ class GCSKafkaConsumer(Consumer):
             self.fix_schema(temp_file, survey, version)
             blob.upload_from_file(temp_file)
 
-    def publish_pubsub(self, message: str) -> Future:
-        """Publish a PubSub alert
-
-        Args:
-            message: The message to publish
-
-        Returns:
-            The Id of the published message
-        """
-
-        log.debug(f'Publishing message: {message}')
-        message_data = message.encode('UTF-8')
-        future = self.publisher.publish(self.topic_path, data=message_data)
-        return future.result()
-
     def run(self) -> None:
         """Ingest kafka Messages to GCS and PubSub"""
 
@@ -289,7 +270,7 @@ class GCSKafkaConsumer(Consumer):
 
                     log.debug(f'Ingesting {file_name}')
                     self.upload_bytes_to_bucket(msg.value(), file_name)
-                    self.publish_pubsub(file_name)
+                    publish_pubsub(self.pubsub_in_GCS_topic, file_name)
                     if not self._debug:
                         self.commit()
 
@@ -307,7 +288,8 @@ class GCSKafkaConsumer(Consumer):
             f'kafka_server: {self.kafka_server}, '
             f'kafka_topic: {self.kafka_topic}, '
             f'bucket_name: {self.bucket_name}, '
-            f'pubsub_topic: {self.pubsub_topic}'
+            f'pubsub_alert_data_topic: {self.pubsub_alert_data_topic}'
+            f'pubsub_in_GCS_topic: {self.pubsub_in_GCS_topic}'
             ')>'
         )
 
