@@ -2,7 +2,6 @@
 
 import logging
 import os
-import pickle
 from google.cloud import pubsub_v1
 
 log = logging.getLogger(__name__)
