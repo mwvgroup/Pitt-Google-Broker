@@ -28,45 +28,99 @@ Module Documentation
 """
 
 import os
+from pathlib import Path
 
 if not os.getenv('GPB_OFFLINE', False):
     from google.api_core.exceptions import NotFound
-    from google.cloud import bigquery, logging, storage
+    from google.cloud import bigquery, pubsub, logging, storage
 
-_tables = ('alert', 'candidate')
+PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
+
+_tables = ('alerts', 'test_GCS_to_BQ')
 
 
 def setup_big_query() -> None:
     """Create the necessary Big Query datasets if they do not already exist
 
-    New data sets include:
+    New datasets include:
       ``ztf_alerts``
+      ``testing_dataset``
     """
 
     bigquery_client = bigquery.Client()
     bigquery_client.create_dataset('ztf_alerts', exists_ok=True)
+    bigquery_client.create_dataset('testing_dataset', exists_ok=True)
 
 
 def setup_buckets() -> None:
-    """Create new storage buckets
+    """Create new storage buckets and upload testing files.
+    Files are expected to reside in the ``tests/test_alerts`` directory.
 
-    New buckets include:
-      ``<project_id>_alert_avro_bucket
+    New buckets [files] include:
+      ``<PROJECT_ID>_ztf_alert_avro_bucket``
+      ``<PROJECT_ID>_testing_bucket`` [``ztf_3.3_validschema_1154446891615015011.avro``]
     """
+
+    buckets = {  # '<bucket name>': ['file name',]
+                f'{PROJECT_ID}_ztf_alert_avro_bucket': [],
+                f'{PROJECT_ID}_testing_bucket':
+                    ['ztf_3.3_validschema_1154446891615015011.avro']
+                }
 
     storage_client = storage.Client()
 
-    # Create bucket names
-    project_id = os.environ['GOOGLE_CLOUD_PROJECT']
-    alert_avro_name = f'{project_id}_alert_avro_bucket'
-
-    # Create buckets if the do not exist
-    for bucket_name in (alert_avro_name,):
+    for bucket_name, files in buckets.items():
+        # Create buckets if they do not exist
         try:
             storage_client.get_bucket(bucket_name)
-
         except NotFound:
             storage_client.create_bucket(bucket_name)
+
+        # Upload any files
+        for filename in files:
+            bucket = storage_client.get_bucket(bucket_name)
+            blob = bucket.blob(filename)
+            inpath = Path('tests/test_alerts') / filename
+            with inpath.open('rb') as infile:
+                blob.upload_from_file(infile)
+
+
+def setup_pubsub() -> None:
+    """ Create new Pub/Sub topics and subscriptions
+
+    New topics [subscriptions] include:
+        ``ztf_alert_avro_in_bucket``
+        ``ztf_alerts_in_BQ``
+        ``test_alerts_in_BQ``
+        ``test_alerts_PS_publish`` [``test_alerts_PS_subscribe``]
+    """
+
+    topics = {# '<topic_name>': ['<subscription_name>', ]
+                'ztf_alert_avro_in_bucket': [],
+                'ztf_alerts_in_BQ': [],
+                'test_alerts_in_BQ': [],
+                'test_alerts_PS_publish': ['test_alerts_PS_subscribe']
+                }
+
+    publisher = pubsub.PublisherClient()
+    subscriber = pubsub.SubscriberClient()
+
+    for topic, subscriptions in topics.items():
+        topic_path = publisher.topic_path(PROJECT_ID, topic)
+
+        # Create the topic
+        try:
+            publisher.get_topic(topic_path)
+        except NotFound:
+            publisher.create_topic(topic_path)
+
+        # Create any subscriptions:
+        for sub_name in subscriptions:
+            sub_path = subscriber.subscription_path(PROJECT_ID, sub_name)
+            try:
+                subscriber.get_subscription(sub_path)
+            except NotFound:
+                subscriber.create_subscription(sub_path, topic_path)
 
 
 def setup_logging_sinks() -> None:
@@ -92,16 +146,22 @@ def auto_setup() -> None:
     """Create and setup GCP products required by the ``broker`` package
 
     New data sets include:
-      ``ztf_alerts``
+        ``ztf_alerts``
+        ``testing_dataset``
 
     New buckets include:
-     ``<project_id>_logging_bucket``
-     ``<project_id>_ztf_images``
+        ``<PROJECT_ID>_ztf_alert_avro_bucket``
+        ``<PROJECT_ID>_testing_bucket``
+
+    New topics include:
+        ``ztf_alerts_in_BQ``
+        ``test_alerts_in_BQ``
 
     New sinks include:
-      ``broker_logging_sink``
+        ``broker_logging_sink``
     """
 
     setup_big_query()
     setup_buckets()
+    setup_pubsub()
     setup_logging_sinks()

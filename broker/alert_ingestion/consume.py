@@ -24,9 +24,9 @@ Usage Example
    # Create a GCS consumer object
    c = consume.GCSKafkaConsumer(
        kafka_config=config,
-       bucket_name='my-gcs-bucket-name',
+       bucket_name='<PROJECT_ID>_ztf_alert_avro_bucket',
        kafka_topic='my_kafka_topic_name',
-       pubsub_topic='my-gcs-pubsub-name',
+       pubsub_topic='ztf_alert_avro_in_bucket',
        debug=True  # Use debug to run without updating your kafka offset
    )
 
@@ -330,7 +330,6 @@ def guess_schema_version(alert_bytes: bytes) -> str:
         raise exceptions.SchemaParsingError(err_msg)
 
     return version_match.group(2).decode()
-
 
 def guess_schema_survey(alert_bytes: bytes) -> str:
     """Retrieve the ZTF schema version

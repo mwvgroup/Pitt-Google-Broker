@@ -34,7 +34,7 @@ from broker.alert_ingestion import consume
 from broker.alert_ingestion.gen_valid_schema import _load_Avro
 
 
-dataset_id = 'dataset_for_testing'
+dataset_id = 'testing_dataset'
 max_alert_size = 150000  # for creating temporary files
 test_alerts_dir = Path(__file__).parent / 'test_alerts'
 test_alert_path = {

@@ -34,7 +34,7 @@ Module Documentation
 
 from pathlib import Path
 import logging
-from typing import Tuple, BinaryIO, Union
+from typing import Tuple, List, BinaryIO, Union
 import pickle
 import json
 import fastavro
@@ -144,7 +144,7 @@ def _reverse_types(field: dict) -> dict:
     return field
 
 
-def _load_Avro(fin: Union[Path, BinaryIO]) -> Tuple[dict, dict]:
+def _load_Avro(fin: Union[Path, BinaryIO]) -> Tuple[dict, List[dict]]:
     """
     Args:
         fin   (str or file-like) : Path to, or file-like object representing,
