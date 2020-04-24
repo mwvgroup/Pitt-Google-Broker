@@ -44,7 +44,7 @@ GCP project ID and credentials path as environmental variables. In your
     export GOOGLE_APPLICATION_CREDENTIALS="PATH_TO_JSON_CREDENTIALS"
 
 The ``broker`` package will automatically check whether these variables are
-defined in its working environment. If either variable is not found, a warning
+defined in the working environment. If either variable is not found, a warning
 will be raised on import.
 
 Various features of the ``broker`` package support downloading astronomical
@@ -62,25 +62,11 @@ only whether the variable is defined. This feature is primarily used for
 building docs and running tests. The behavior of the ``broker`` package
 when using  ``GPB_OFFLINE`` should not be relied on in a production environment.
 
-Installing the Google Cloud SDK
--------------------------------
-
-The ``gcloud`` command line tool is needed to deploy a Google Cloud Function to
-listen to a file storage bucket and upload new files to a BigQuery database
-(see Setting up GCP below). This tool is part of the
-`Google Cloud SDK https://cloud.google.com/sdk/docs`_. There are several
-installation options `detailed here https://cloud.google.com/sdk/install`_.
-Once the SDK is installed, initialize ``gcloud`` by following the
-`instructions here https://cloud.google.com/sdk/docs/initializing`_.
-
 Setting up GCP
 --------------
 
 You will need to set up a handful of tools in GCP. The broker package provides
-two setup tools that automate these tasks for convenience.
-
-The following Python function sets up the GCP buckets, datasets, and logging
-sinks.
+an automated setup tool that automates these tasks for convenience.
 
 .. code-block:: python
    :linenos:

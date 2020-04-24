@@ -1,0 +1,78 @@
+Scheduling Alert Ingestion
+==========================
+
+The consumer is launched using google compute engine. Start by creating the instance that will be run.
+
+.. code-block:: bash
+
+   gcloud compute instances create-with-container consume-ztf-1 \
+       --zone=us-central1-a \  # Physical region to host machine from
+       --machine-type=f1-micro \  # Type of machine to use (impacts machine resources and cost)
+       --image-project=cos-cloud \  # The boot image / opperating system for the instance
+       --container-image=[HOSTNAME]/[PROJECT-ID]/[IMAGENAME] \  # container image name to pull onto VM instance
+       --labels=env=consume-ztf-1 \  # List of label KEY=VALUE pairs to add
+       --image=cos-stable-81-12871-69-0  # See ``gcloud compute images list`` for options
+
+   gcloud compute instances create-with-container consume-ztf-2 \
+       --zone=us-central1-a \
+       --machine-type=f1-micro \
+       --image-project=cos-cloud \
+       --container-image=[HOSTNAME]/[PROJECT-ID]/[IMAGENAME] \
+       --labels=env=consume-ztf-2 \
+       --image=cos-stable-81-12871-69-0
+
+.. note:: If you need to undo this step use the
+   ``gcloud compute instances delete [INSTANCE]`` command.
+
+Create the Pub/Sub topics to trigger starting and stopping the instance
+
+.. code-block:: bash
+
+   gcloud pubsub topics create start-instance-event
+   gcloud pubsub topics create stop-instance-event
+
+.. note:: If you need to undo this step use the
+   ``gcloud functions delete [TOPIC]`` command.
+
+Create the cloud functions to publish to PubSub
+
+.. code-block:: bash
+
+   cd broker/cloud_functions/scheduleinstance/
+
+   gcloud functions deploy startInstancePubSub \
+       --trigger-topic start-instance-event \
+       --runtime nodejs8
+
+   gcloud functions deploy stopInstancePubSub \
+       --trigger-topic stop-instance-event \
+       --runtime nodejs8
+
+Create the start job.
+
+.. code-block:: bash
+   # Reset consume-ztf-1 on odd days
+   gcloud scheduler jobs create pubsub stop-consume-ztf-1 \
+       --schedule '0 9 1-31/2 * *' \
+       --topic stop-instance-event \
+       --message-body '{"zone":"us-west1-b", "label":"env=consume-ztf-1"}' \
+       --time-zone 'America/Los_Angeles'
+
+   gcloud scheduler jobs create pubsub start-consume-ztf-1 \
+       --schedule '0 17 1-31/2 * *' \
+       --topic start-instance-event \
+       --message-body '{"zone":"us-west1-b", "label":"env=consume-ztf-1"}' \
+       --time-zone 'America/Los_Angeles'
+
+   # Reset consume-ztf-2 on even days
+   gcloud scheduler jobs create pubsub stop-consume-ztf-2 \
+       --schedule '0 0 2-30/2 * *' \
+       --topic stop-instance-event \
+       --message-body '{"zone":"us-west1-b", "label":"env=consume-ztf-2"}' \
+       --time-zone 'America/Los_Angeles'
+
+   gcloud scheduler jobs create pubsub start-consume-ztf-2 \
+       --schedule '0 0 2-30/2 * *' \
+       --topic start-instance-event \
+       --message-body '{"zone":"us-west1-b", "label":"env=consume-ztf-"}' \
+       --time-zone 'America/Los_Angeles'
