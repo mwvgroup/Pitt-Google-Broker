@@ -269,7 +269,7 @@ class GCSKafkaConsumer(Consumer):
                     file_name = f'{timestamp}.avro'
 
                     log.debug(f'Ingesting {file_name}')
-                    publish_pubsub(self.pubsub_in_GCS_topic, file_name)
+                    publish_pubsub(self.pubsub_in_GCS_topic, file_name.encode('UTF-8'))
                     publish_pubsub(self.pubsub_alert_data_topic, msg.value())
                     self.upload_bytes_to_bucket(msg.value(), file_name)
 

@@ -34,7 +34,6 @@ def subscribe_alerts(subscription_name, max_alerts=1):
     """Download, decode, and return messages from a Pub/Sub topic
 
     Args:
-        project_id          (int): The GCP project ID number
         subscription_name   (str): The Pub/Sub subcription name linked to a Pub/Sub topic
         max_alerts          (int): The maximum number of alerts to download
 
@@ -51,7 +50,7 @@ def subscribe_alerts(subscription_name, max_alerts=1):
 
     for received_message in response.received_messages:
         encoded = received_message.message.data
-        message = pickle.loads(encoded)
+        message = encoded.decode('UTF-8')
         message_list.append(message)
         ack_ids.append(received_message.ack_id)
 

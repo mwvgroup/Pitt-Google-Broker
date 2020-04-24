@@ -35,7 +35,7 @@ class TestPubSub(unittest.TestCase):
 
         self.assertIs(type(future_result), str)
 
-    @unittest.skip("subscribe_alerts() failing. Not currently used. Skipping.")
+    
     def test_input_match_output(self):
         """Publish an alert via ``publish_pubsub`` and retrieve the message
         via ``subscribe_alerts``.
