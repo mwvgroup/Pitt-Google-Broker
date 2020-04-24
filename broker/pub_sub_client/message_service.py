@@ -12,7 +12,7 @@ project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
 
 def publish_pubsub(topic_name, message):
     """Publish encoded messages to a Pub/Sub topic
-    
+
     Args:
         topic_name  (str): The Pub/Sub topic name for publishing alerts
         message     (bytes): The message to be published, already encoded
@@ -21,23 +21,23 @@ def publish_pubsub(topic_name, message):
     publisher = pubsub_v1.PublisherClient()
 
     topic_path = publisher.topic_path(project_id, topic_name)
-    
+
     topic = publisher.get_topic(topic_path)
     log.info(f'Connected to PubSub: {topic_path}')
 
     future = publisher.publish(topic_path, data=message)
-    
+
     return future.result()
 
 
-def subscribe_alerts(project_id, subscription_name, max_alerts=1):
+def subscribe_alerts(subscription_name, max_alerts=1):
     """Download, decode, and return messages from a Pub/Sub topic
-    
+
     Args:
         project_id          (int): The GCP project ID number
         subscription_name   (str): The Pub/Sub subcription name linked to a Pub/Sub topic
         max_alerts          (int): The maximum number of alerts to download
-    
+
     Returns:
         A list of downloaded and decoded messages
     """
