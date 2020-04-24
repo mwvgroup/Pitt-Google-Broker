@@ -1,31 +1,33 @@
 """Publish and retrieve messages via Pub/Sub."""
 
+import logging
+import os
 import pickle
-
 from google.cloud import pubsub_v1
 
+log = logging.getLogger(__name__)
 
-def publish_alerts(project_id, topic_name, alerts):
-    """Publish encoded, simplified messages to a Pub/Sub topic
+project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
+
+
+def publish_pubsub(topic_name, message):
+    """Publish encoded messages to a Pub/Sub topic
     
     Args:
-        project_id  (str): The GCP project ID number
         topic_name  (str): The Pub/Sub topic name for publishing alerts
-        alerts     (list): The list of ZTF alerts to be published
+        message     (bytes): The message to be published, already encoded
     """
 
     publisher = pubsub_v1.PublisherClient()
 
     topic_path = publisher.topic_path(project_id, topic_name)
+    
+    topic = publisher.get_topic(topic_path)
+    log.info(f'Connected to PubSub: {topic_path}')
 
-    for alert in alerts:
-        alert.pop("cutoutScience")
-        alert.pop("cutoutTemplate")
-        alert.pop("cutoutDifference")
-
-        pickled = pickle.dumps(alert)
-
-        publisher.publish(topic_path, data=pickled)
+    future = publisher.publish(topic_path, data=message)
+    
+    return future.result()
 
 
 def subscribe_alerts(project_id, subscription_name, max_alerts=1):
