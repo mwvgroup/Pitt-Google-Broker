@@ -71,6 +71,7 @@ Next, create the cloud functions to publish to PubSub
 Finally, create the start and end jobs.
 
 .. code-block:: bash
+
    # Reset consume-ztf-1 on odd days
    gcloud scheduler jobs create pubsub stop-consume-ztf-1 \
        --schedule '0 9 1-31/2 * *' \
@@ -94,5 +95,5 @@ Finally, create the start and end jobs.
    gcloud scheduler jobs create pubsub start-consume-ztf-2 \
        --schedule '0 0 2-30/2 * *' \
        --topic start-instance-event \
-       --message-body '{"zone":"us-west1-b", "label":"env=consume-ztf-"}' \
+       --message-body '{"zone":"us-west1-b", "label":"env=consume-ztf-2"}' \
        --time-zone 'America/Los_Angeles'
