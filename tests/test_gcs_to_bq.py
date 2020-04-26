@@ -1,7 +1,7 @@
 import os
 from unittest import TestCase
 
-from broker.alert_ingestion.GCS_to_BQ import main
+from broker.cloud_functions.GCS_to_BQ import main
 
 PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
 testing_bucket = f'{PROJECT_ID}_testing_bucket'
