@@ -16,10 +16,13 @@ authenticate a new GCP project as outlined in the following links:
 Installing the package
 ----------------------
 
-The ``broker`` package can be installed by running the ``setup.py`` file:
+To install the ``broker`` package, download the package source code from
+`GitHub`_ and run the included ``setup.py`` file:
 
 .. code-block:: bash
 
+    git clone https://github.com/mwvgroup/Pitt-Google-Broker
+    cd Pitt-Google-Broker
     python setup.py install --user
 
 Any missing dependencies should automatically be installed in your Python
@@ -91,6 +94,7 @@ deployment. Note that it may take a couple of minutes to complete.
     ./broker/deploy_cloudfnc.sh
 
 
+.. _GitHub: https://github.com/mwvgroup/Pitt-Google-Broker
 .. _Create a project: https://cloud.google.com/resource-manager/docs/creating-managing-projects
 .. _Authenticate: https://cloud.google.com/docs/authentication/getting-started
 .. _here: https://cloud.google.com/resource-manager/docs/creating-managing-projects

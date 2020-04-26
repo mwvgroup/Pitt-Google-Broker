@@ -1,10 +1,15 @@
 Deploying Docker Images to GCP
 ==============================
 
-Individual PGB services are deployed to the cloud as dedicated docker images. The Dockerfiles that define these images are stored in the PGB [GitHub Repository](https://github.com/mwvgroup/Pitt-Google-Broker) under the ``docker_files`` directory. Each Dockerfile has a corresponding script in the same directory that launches a particular PGB service when the docker container is deployed.
+Individual PGB services are deployed to the cloud as dedicated docker images.
+The Dockerfiles that define these images are stored in the PGB
+`GitHub Repository`_ under the `docker_files` directory. Each Dockerfile has a
+corresponding script in the same directory that launches a specific PGB
+service when the docker container is deployed.
 
-In the following steps we will configure GCP to store the built images for these Dockerfiles in the GCP Container Registry. This allows for easy  deployment of the images and their corresponding PGB services to various GCP products.
-
+In the following steps we will configure GCP to store the built images for
+Dockerfiles in the GCP Container Registry. This allows for easy  deployment
+of the images and their corresponding PGB services to various GCP products.
 
 Uploading an Image
 ------------------
@@ -23,7 +28,7 @@ image name:
 
 .. code-block:: bash
 
-   docker tag [IMAGENAME] [HOSTNAME]/[PROJECT-ID]/[IMAGENAME]
+   docker tag [IMAGENAME] [HOSTNAME]/[PROJECT-ID]/[IMAGENAME]:[VERSION]
 
 Finally, the image is pushed up to the cloud:
 
@@ -39,3 +44,4 @@ Configuring Automatic Image Deployment
 
 List steps here on how to automatically deploy Docker Images to GCP products.
 
+.. _GitHub Repository: https://github.com/mwvgroup/Pitt-Google-Broker

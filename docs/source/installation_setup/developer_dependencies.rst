@@ -1,32 +1,32 @@
 Developer Dependencies
 ======================
 
-This section outlines installation instructions for various project
-dependencies. You can choose to install all dependencies at once, or revisit
-the included subsections as needed.
+This section outlines the tools necessary for deploying and managing a broker
+instance in the cloud. You can choose to install all dependencies at once, or
+revisit the included subsections as needed.
 
 Google Cloud SDK
 ----------------
 
-You will need to have the ``gcloud`` command line API installed to handle
-authentication tasks when connecting and deploying services to GCP. Up to
-date installation instructions are available at
+The ``gcloud`` command line API is used to handle administrative tasks
+in the GCP. Up to date installation instructions are available at
 `https://cloud.google.com/sdk/install <https://cloud.google.com/sdk/install>`_.
 After installation is finished, ensure that ``gcloud`` is available in the
 system ``PATH``. If you already have ``gcloud`` installed, ensure that is is
-up to date using:
+up to date:
 
 .. code-block:: bash
 
    gcloud components update
 
-To authenticate your command line installation, use the ``auth`` command:
+Many sections of the documentation will also assume you have authenticated
+your command line installation and configured your project ID:
 
 .. code-block:: bash
    gcloud auth login
    gcloud config set project [PROJECT-ID]
 
-You will also need to authorize Docker to push images to the GCP Container
+You should also authorize Docker to push images to the GCP Container
 Registry where your Docker images will be stored. This is achieved by using
 the command:
 
@@ -42,10 +42,10 @@ More information on the GCP SDK can be found at
 Travis
 ------
 
-The travis command line tool is necessary for configuring Google Could
-authentication with continuous integration on 
-`travis-ci.com <https://www.travis-ci.com/>`_. 
-The travis command line tool can be installed using:
+The ``travis`` command line tool is required to configuring Google Could
+authentication when using continuous integration on
+`travis-ci.com <https://www.travis-ci.com/>`_.
+The travis command line tool can be installed using ``gem``:
 
 .. code-block:: bash
 

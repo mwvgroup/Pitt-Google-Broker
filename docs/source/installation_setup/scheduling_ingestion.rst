@@ -1,7 +1,13 @@
 Scheduling Alert Ingestion
 ==========================
 
-The consumer is launched using google compute engine. Start by creating the instance that will be run.
+This documentation demonstrates how to schedule the Pitt-Google Broker to
+automatically launch and ingest alerts. Alert consumption is run using the
+Google Compute Engine service. In order to ensure alerts are completely
+ingested for a given night, two instances are scheduled for each consumer.
+Each instance runs for ~2 days and instances are restarted on alternating days.
+
+Start by creating the instance that will be run.
 
 .. code-block:: bash
 
@@ -34,7 +40,7 @@ Create the Pub/Sub topics to trigger starting and stopping the instance
 .. note:: If you need to undo this step use the
    ``gcloud functions delete [TOPIC]`` command.
 
-Create the cloud functions to publish to PubSub
+Next, create the cloud functions to publish to PubSub
 
 .. code-block:: bash
 
@@ -48,7 +54,7 @@ Create the cloud functions to publish to PubSub
        --trigger-topic stop-instance-event \
        --runtime nodejs8
 
-Create the start job.
+Finally, create the start and end jobs.
 
 .. code-block:: bash
    # Reset consume-ztf-1 on odd days
