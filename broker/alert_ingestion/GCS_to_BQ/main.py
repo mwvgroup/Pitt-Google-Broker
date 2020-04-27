@@ -45,6 +45,8 @@ from google.cloud import bigquery
 from google.cloud import pubsub
 from google.cloud.pubsub_v1.publisher.futures import Future
 
+from broker.pub_sub_client.message_service import publish_pubsub
+
 log = logging.getLogger(__name__)
 PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
 BQ = bigquery.Client()
@@ -103,7 +105,7 @@ def stream_GCS_to_BQ(data: dict, context: dict) -> str:
     # Publish PubSub message if BQ upload was successful
     if error_result is None:
         topic = bucket_resources[bucket_name]['PS_TOPIC']
-        publish_pubsub(topic, file_name)
+        publish_pubsub(topic, file_name.encode('UTF-8'))
 
     return error_result
 
@@ -117,25 +119,3 @@ def get_BQ_TABLE_ID(bucket_name: str) -> str:
     BQ_TABLE_ID = '.'.join([PROJECT_ID, BQ_DATASET, BQ_TABLE])
 
     return BQ_TABLE_ID
-
-
-def publish_pubsub(topic: str, message: str) -> Future:
-    """Publish a PubSub alert
-
-    Args:
-        message: The message to publish
-
-    Returns:
-        The Id of the published message
-    """
-
-    # Configure PubSub topic
-    publisher = pubsub.PublisherClient()
-    topic_path = publisher.topic_path(PROJECT_ID, topic)
-
-    # Publish
-    log.debug(f'Publishing message: {message}')
-    message_data = message.encode('UTF-8')
-    future = publisher.publish(topic_path, data=message_data)
-
-    return future.result()

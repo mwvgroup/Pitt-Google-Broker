@@ -89,6 +89,7 @@ def setup_pubsub() -> None:
     """ Create new Pub/Sub topics and subscriptions
 
     New topics [subscriptions] include:
+        ``ztf_alert_data``
         ``ztf_alert_avro_in_bucket``
         ``ztf_alerts_in_BQ``
         ``test_alerts_in_BQ``
@@ -96,6 +97,7 @@ def setup_pubsub() -> None:
     """
 
     topics = {# '<topic_name>': ['<subscription_name>', ]
+                'ztf_alert_data': [],
                 'ztf_alert_avro_in_bucket': [],
                 'ztf_alerts_in_BQ': [],
                 'test_alerts_in_BQ': [],
