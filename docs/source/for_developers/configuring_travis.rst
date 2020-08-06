@@ -11,6 +11,33 @@ so that GCP services can be accessed during testing.
 .. note:: For a more extensive overview of this process, feel free to
    reference the `official Google Docs`_
 
+The Travis CLI Tool
+-------------------
+
+The ``travis`` command line tool is required to configuring Google Could
+authentication when using continuous integration on
+`travis-ci.com <https://www.travis-ci.com/>`_.
+The travis command line tool can be installed using ``gem``:
+
+.. code-block:: bash
+
+   sudo gem install travis
+
+Certain versions of Mac OSX include System Integrity Protection (SIP) which
+effects the installation of packages that use the default Ruby install
+(including `travis`). If using OS X El Capitan or later, you may need to
+install the commandline tool using:
+
+.. code-block:: bash
+
+   sudo gem install -n /usr/local/bin/ travis
+
+Once `travis` is installed, login to your user account.
+
+.. code-block:: bash
+
+   travis login --pro
+
 Downloading Credentials
 -----------------------
 

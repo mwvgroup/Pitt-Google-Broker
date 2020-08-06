@@ -3,7 +3,8 @@ Deploying a Consumer
 
 This documentation demonstrates how to schedule the Pitt-Google Broker to
 automatically launch and ingest alerts. Alert consumption is run using the
-Google Compute Engine service. In order to ensure alerts are completely
+`Google Compute Engine <https://cloud.google.com/compute>`_ service.
+In order to ensure alerts are completely
 ingested for a given night, two instances are scheduled for each consumer.
 Each instance runs for ~2 days and instances are restarted on alternating days.
 
