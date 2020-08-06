@@ -1,41 +1,41 @@
 """Publish and retrieve messages via Pub/Sub."""
 
-import pickle
-
+import logging
+import os
 from google.cloud import pubsub_v1
 
+log = logging.getLogger(__name__)
 
-def publish_alerts(project_id, topic_name, alerts):
-    """Publish encoded, simplified messages to a Pub/Sub topic
-    
+project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
+
+
+def publish_pubsub(topic_name, message):
+    """Publish encoded messages to a Pub/Sub topic
+
     Args:
-        project_id  (str): The GCP project ID number
         topic_name  (str): The Pub/Sub topic name for publishing alerts
-        alerts     (list): The list of ZTF alerts to be published
+        message     (bytes): The message to be published, already encoded
     """
 
     publisher = pubsub_v1.PublisherClient()
 
     topic_path = publisher.topic_path(project_id, topic_name)
 
-    for alert in alerts:
-        alert.pop("cutoutScience")
-        alert.pop("cutoutTemplate")
-        alert.pop("cutoutDifference")
+    topic = publisher.get_topic(topic_path)
+    log.info(f'Connected to PubSub: {topic_path}')
 
-        pickled = pickle.dumps(alert)
+    future = publisher.publish(topic_path, data=message)
 
-        publisher.publish(topic_path, data=pickled)
+    return future.result()
 
 
-def subscribe_alerts(project_id, subscription_name, max_alerts=1):
+def subscribe_alerts(subscription_name, max_alerts=1):
     """Download, decode, and return messages from a Pub/Sub topic
-    
+
     Args:
-        project_id          (int): The GCP project ID number
         subscription_name   (str): The Pub/Sub subcription name linked to a Pub/Sub topic
         max_alerts          (int): The maximum number of alerts to download
-    
+
     Returns:
         A list of downloaded and decoded messages
     """
@@ -49,7 +49,7 @@ def subscribe_alerts(project_id, subscription_name, max_alerts=1):
 
     for received_message in response.received_messages:
         encoded = received_message.message.data
-        message = pickle.loads(encoded)
+        message = encoded.decode('UTF-8')
         message_list.append(message)
         ack_ids.append(received_message.ack_id)
 
