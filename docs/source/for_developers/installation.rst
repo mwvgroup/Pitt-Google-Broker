@@ -65,33 +65,6 @@ only whether the variable is defined. This feature is primarily used for
 building docs and running tests. The behavior of the ``broker`` package
 when using  ``GPB_OFFLINE`` should not be relied on in a production environment.
 
-Setting up GCP
---------------
-
-You will need to set up a handful of tools in GCP. The broker package provides
-an automated setup tool that automates these tasks for convenience.
-
-.. code-block:: python
-   :linenos:
-
-    from broker.gcp_setup import auto_setup
-
-    # See a list of changes that will be made to your GCP project
-    help(auto_setup)
-
-    # Setup your GCP project
-    auto_setup()
-
-The ``stream_GCS_to_BQ`` function must be deployed from the command line as a
-Google Cloud Function so that it listens to the appropriate bucket(s) for new
-alert Avro files and appends the data to a BigQuery table. The Google Cloud SDK
-must be installed first (see above). The following script automates the
-deployment. Note that it may take a couple of minutes to complete.
-
-.. code-block::bash
-    :linenos:
-
-    ./broker/deploy_cloudfnc.sh
 
 
 .. _GitHub: https://github.com/mwvgroup/Pitt-Google-Broker
