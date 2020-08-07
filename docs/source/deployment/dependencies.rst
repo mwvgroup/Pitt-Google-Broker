@@ -8,6 +8,8 @@ to deploy and manage the broker instance.
 
 .. important::
 
+.. _gcloud:
+
 Google Cloud SDK
 ----------------
 
@@ -23,8 +25,8 @@ up to date:
 
    gcloud components update
 
-More information on the GCP SDK can be found at 
-`https://cloud.google.com/sdk/gcloud/reference 
+More information on the GCP SDK can be found at
+`https://cloud.google.com/sdk/gcloud/reference
 <https://cloud.google.com/sdk/gcloud/reference>`_.
 
 Docker

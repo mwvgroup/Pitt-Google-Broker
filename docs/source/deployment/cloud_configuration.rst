@@ -46,7 +46,7 @@ Deploying the ``stream_GCS_to_BQ`` Cloud Function
 The ``stream_GCS_to_BQ`` function must be deployed from the command line as a
 Google Cloud Function so that it listens to the appropriate bucket(s) for new
 alert Avro files and appends the data to a BigQuery table. The Google Cloud SDK
-must be installed first (see :doc:`dependencies.rst`). The following script automates the
+must be installed first (see :ref:`_gcloud`). The following script automates the
 deployment. Note that it may take a couple of minutes to complete.
 
 .. code-block::bash
