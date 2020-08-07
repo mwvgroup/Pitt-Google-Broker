@@ -8,12 +8,6 @@ In order to ensure alerts are completely
 ingested for a given night, two instances are scheduled for each consumer.
 Each instance runs for ~2 days and instances are restarted on alternating days.
 
-The ``stream_GCS_to_BQ`` function must be deployed from the command line as a
-Google Cloud Function so that it listens to the appropriate bucket(s) for new
-alert Avro files and appends the data to a BigQuery table. The Google Cloud SDK
-must be installed first (see above). The following script automates the
-deployment. Note that it may take a couple of minutes to complete.
-
 .. code-block::bash
     :linenos:
 
