@@ -25,7 +25,7 @@ corresponding Dockerfile. This is accomplished by using the `build` command:
 
 .. code-block:: bash
 
-   docker build -t [IMAGE NAME] -f [DOCKERFILE NAME] [DIRECTORY PATH OF DOCKERFILE]
+   sudo docker build -t [IMAGE NAME] -f [DOCKERFILE NAME] [DIRECTORY PATH OF DOCKERFILE]
 
 Next the docker image needs to be tagged with the name of the GCP
 Container Registry associated with your project. The tag name is a combination
@@ -34,7 +34,7 @@ For those unfamiliar with host names, the `gcr.io` host is recommended:
 
 .. code-block:: bash
 
-   docker tag [IMAGE NAME] [HOSTNAME]/[PROJECT-ID]/[IMAGE NAME]:[VERSION]
+   sudo docker tag [IMAGE NAME] [HOSTNAME]/[PROJECT-ID]/[IMAGE NAME]:[VERSION]
 
 The version number can be chosen arbitrarily, however it is strongly recommended
 to choose a consistent versioning scheme. If working within a version controlled
@@ -48,6 +48,10 @@ most recent commit for that file. This hash value can be retrieved as follows:
 
 Uploading an Image
 ------------------
+
+.. important:: The container registry automatically creates storage buckets
+   to store uploaded images. This means you must have ``Storage Admin``
+   permissions in order to upload new images.
 
 Images can be uploaded to the cloud using the ``docker`` command line utility
 as follows:

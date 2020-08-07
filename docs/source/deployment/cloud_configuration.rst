@@ -26,8 +26,16 @@ the project Id noted earlier:
 Setting up GCP
 --------------
 
-You will need to set up a handful of tools in GCP. The broker package provides
-an automated setup tool that automates these tasks for convenience.
+You will need to set up a handful of tools in GCP. This includes enabling
+various API's for use in your GCP project
+
+.. code-block: bash
+
+    gcloud services enable containerregistry.googleapis.com
+
+With the API's enabled, the broker package provides
+an automated setup tool that creates various recourses required
+for the broker to run.
 
 .. code-block:: python
    :linenos:
