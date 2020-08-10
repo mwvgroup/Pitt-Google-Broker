@@ -24,7 +24,7 @@ Start by creating the instance that will be run.
        --zone=us-central1-a \  # Physical region to host machine from
        --machine-type=f1-micro \  # Type of machine to use (impacts machine resources and cost)
        --image-project=cos-cloud \  # The boot image / opperating system for the instance
-       --container-image=[HOSTNAME]/[PROJECT-ID]/[IMAGENAME] \  # container image name to pull onto VM instance
+       --container-image=[HOSTNAME]/[PROJECT-ID]/[IMAGE NAME]:[VERSION] \  # container image name to pull onto VM instance
        --labels=env=consume-ztf-1 \  # List of label KEY=VALUE pairs to add
        --image=cos-stable-81-12871-69-0  # See ``gcloud compute images list`` for options
 
@@ -32,7 +32,7 @@ Start by creating the instance that will be run.
        --zone=us-central1-a \
        --machine-type=f1-micro \
        --image-project=cos-cloud \
-       --container-image=[HOSTNAME]/[PROJECT-ID]/[IMAGENAME] \
+       --container-image=[HOSTNAME]/[PROJECT-ID]/[IMAGE NAME]:[VERSION] \
        --labels=env=consume-ztf-2 \
        --image=cos-stable-81-12871-69-0
 
