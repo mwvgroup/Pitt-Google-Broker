@@ -2,9 +2,9 @@
 
 # Create 2 instances of the consumer
 
-gcloud compute instances create-with-container consume-ztf-1 --zone=us-central1-a --machine-type=f1-micro --image-project=cos-cloud --container-image=gcr.io/ardent-cycling-243415/consume_ztf --labels=env=consume-ztf-1 --image=cos-stable-81-12871-69-0
+gcloud compute instances create-with-container consume-ztf-1 --zone=us-central1-a --machine-type=f1-micro --image-project=cos-cloud --container-image=gcr.io/ardent-cycling-243415/consume_ztf:b43d5f0e534d9d7795d0ceb12e18bead854072c9 --labels=env=consume-ztf-1 --image=cos-stable-81-12871-1174-0
 
-gcloud compute instances create-with-container consume-ztf-2 --zone=us-central1-a --machine-type=f1-micro --image-project=cos-cloud --container-image=gcr.io/ardent-cycling-243415/consume_ztf --labels=env=consume-ztf-2 --image=cos-stable-81-12871-69-0
+gcloud compute instances create-with-container consume-ztf-2 --zone=us-central1-a --machine-type=f1-micro --image-project=cos-cloud --container-image=gcr.io/ardent-cycling-243415/consume_ztf:b43d5f0e534d9d7795d0ceb12e18bead854072c9 --labels=env=consume-ztf-2 --image=cos-stable-81-12871-1174-0
 
 
 # Create the Pub/Sub topics to trigger starting and stopping the instance
