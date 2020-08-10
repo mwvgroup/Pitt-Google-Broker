@@ -30,9 +30,10 @@ ztf_topic = f'ztf_{now.year}{now.month:02d}{now.day:02d}_programid1'
 # Create a consumer
 c = GCSKafkaConsumer(
     kafka_config=config,
-    bucket_name='ardent-cycling-243415-ztf-avro-files',
+    bucket_name='ardent-cycling-243415_ztf_alert_avro_bucket',
     kafka_topic=ztf_topic,
-    pubsub_topic='ztf-avro-status'
+    pubsub_alert_data_topic='ztf_alert_data',
+    pubsub_in_GCS_topic='ztf_alert_avro_in_bucket'
 )
 
 if __name__ == '__main__':
