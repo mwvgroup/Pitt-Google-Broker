@@ -6,11 +6,13 @@ from pathlib import Path
 
 from setuptools import find_packages, setup
 
-with open('requirements.txt') as f:
+package_dir = Path(__file__).resolve().parent
+req_path = package_dir / 'requirements.txt'
+with req_path.open() as f:
     requirements = f.read().splitlines()
 
 # Get package version
-init_path = Path(__file__).resolve().parent / 'broker/__init__.py'
+init_path = package_dir / 'broker/__init__.py'
 with open(init_path, 'r') as f:
     source = f.read()
 
