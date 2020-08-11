@@ -1,4 +1,4 @@
-# Based on Alpine linux instead of Ubuntu to reduce image size
+# Slim used to reduce image size
 FROM python:3.7-slim
 
 # Configure Environment variables
@@ -9,7 +9,7 @@ ENV ztf_server "public2.alerts.ztf.uw.edu:9094"
 ENV ztf_principle "pitt-reader@KAFKA.SECURE"
 ENV ztf_keytab_path "pitt-reader.user.keytab"
 
-# Copy credential and runtime files
+# Copy credentials and runtime files
 COPY GCPauth.json GCPauth.json
 COPY krb5.conf krb5.conf
 COPY pitt-reader.user.keytab pitt-reader.user.keytab
@@ -17,12 +17,15 @@ COPY consume_ztf.py consume_ztf.py
 
 # Install utils for fetching remote source code
 RUN apt-get update && \
-    apt-get install -y wget git librdkafka-dev python-dev gcc && \
+    apt-get install -y git librdkafka-dev python-dev gcc && \
     apt-get clean
 
 # Get broker source code and install dependencies
-RUN git clone --single-branch --branch master --depth 1 https://github.com/mwvgroup/Pitt-Google-Broker && rm -rf Pitt-Google-Broker/.git
-RUN pip install -r Pitt-Google-Broker/requirements.txt
+RUN git clone --single-branch --branch master --depth 1 https://github.com/mwvgroup/Pitt-Google-Broker && \
+    rm -rf Pitt-Google-Broker/.git
+
+RUN pip install -r Pitt-Google-Broker/requirements.txt && \
+    pip cache purge
 
 # Launch the ZTF consumer
 CMD [ "python", "consume_ztf.py" ]
