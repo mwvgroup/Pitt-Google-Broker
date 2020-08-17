@@ -4,13 +4,11 @@ FROM python:3.7-slim
 # Configure Environment variables
 ENV PYTHONPATH "Pitt-Google-Broker/:${PYTHONPATH}"
 ENV GOOGLE_CLOUD_PROJECT "ardent-cycling-243415"
-ENV GOOGLE_APPLICATION_CREDENTIALS "GCPauth.json"
 ENV ztf_server "public2.alerts.ztf.uw.edu:9094"
 ENV ztf_principle "pitt-reader@KAFKA.SECURE"
 ENV ztf_keytab_path "pitt-reader.user.keytab"
 
 # Copy credentials and runtime files
-COPY GCPauth.json GCPauth.json
 COPY krb5.conf krb5.conf
 COPY pitt-reader.user.keytab pitt-reader.user.keytab
 COPY consume_ztf.py consume_ztf.py

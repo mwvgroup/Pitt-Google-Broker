@@ -26,7 +26,9 @@ Start by creating the instance that will be run.
        --image-project=cos-cloud \  # The boot image / opperating system for the instance
        --container-image=[HOSTNAME]/[PROJECT-ID]/[IMAGE NAME]:[VERSION] \  # container image name to pull onto VM instance
        --labels=env=consume-ztf-1 \  # List of label KEY=VALUE pairs to add
-       --image=cos-stable-81-12871-69-0  # See ``gcloud compute images list`` for options
+       --image=cos-stable-81-12871-69-0 \  # See ``gcloud compute images list`` for options
+       --service-account=[SERVICE_ACCOUNT_EMAIL] \
+       --scopes=cloud-platform
 
    gcloud compute instances create-with-container consume-ztf-2 \
        --zone=us-central1-a \
@@ -35,6 +37,8 @@ Start by creating the instance that will be run.
        --container-image=[HOSTNAME]/[PROJECT-ID]/[IMAGE NAME]:[VERSION] \
        --labels=env=consume-ztf-2 \
        --image=cos-stable-81-12871-69-0
+       --service-account=[SERVICE_ACCOUNT_EMAIL] \
+       --scopes=cloud-platform
 
 .. note:: If you need to undo this step use the
    ``gcloud compute instances delete [INSTANCE]`` command.
