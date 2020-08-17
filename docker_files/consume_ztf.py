@@ -13,7 +13,7 @@ config = {
     'bootstrap.servers': os.environ['ztf_server'],
     'group.id': 'group',
     'session.timeout.ms': 6000,
-    'enable.auto.commit': 'FALSE',
+    'enable.auto.commit': 'False',
     'sasl.kerberos.kinit.cmd': 'kinit -t "%{sasl.kerberos.keytab}" -k %{sasl.kerberos.principal}',
     'sasl.kerberos.service.name': 'kafka',
     'security.protocol': 'SASL_PLAINTEXT',
