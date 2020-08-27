@@ -6,9 +6,9 @@ echo "WARNING: Make sure you have updated the values of [IMAGE NAME] and [VERSIO
 
 # Create 2 instances of the consumer
 
-gcloud compute instances create-with-container consume-ztf-1 --zone=us-central1-a --machine-type=f1-micro --image-project=cos-cloud --container-image=gcr.io/ardent-cycling-243415/consume_ztf:5a1ddf883efa0ad121d0f6584e1e73039b3727e4 --labels=env=consume-ztf-1 --image=cos-stable-81-12871-1185-0 --service-account=591409139500-compute@developer.gserviceaccount.com --scopes=cloud-platform
+gcloud compute instances create-with-container consume-ztf-1 --zone=us-central1-a --machine-type=f1-micro --image-project=cos-cloud --container-image=gcr.io/ardent-cycling-243415/consume_ztf:5b4068358afbf88c34b7cb0aa48e68553482eb2f --labels=env=consume-ztf-1 --image=cos-stable-81-12871-1190-0 --service-account=591409139500-compute@developer.gserviceaccount.com --scopes=cloud-platform
 
-gcloud compute instances create-with-container consume-ztf-2 --zone=us-central1-a --machine-type=f1-micro --image-project=cos-cloud --container-image=gcr.io/ardent-cycling-243415/consume_ztf:5a1ddf883efa0ad121d0f6584e1e73039b3727e4 --labels=env=consume-ztf-2 --image=cos-stable-81-12871-1185-0 --service-account=591409139500-compute@developer.gserviceaccount.com --scopes=cloud-platform
+gcloud compute instances create-with-container consume-ztf-2 --zone=us-central1-a --machine-type=f1-micro --image-project=cos-cloud --container-image=gcr.io/ardent-cycling-243415/consume_ztf:5b4068358afbf88c34b7cb0aa48e68553482eb2f --labels=env=consume-ztf-2 --image=cos-stable-81-12871-1190-0 --service-account=591409139500-compute@developer.gserviceaccount.com --scopes=cloud-platform
 
 
 # Create the Pub/Sub topics to trigger starting and stopping the instance
