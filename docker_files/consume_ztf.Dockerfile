@@ -15,8 +15,7 @@ COPY pitt-reader.user.keytab pitt-reader.user.keytab
 
 # Install utils for fetching remote source code
 RUN apt-get update && \
-    apt-get install -y git librdkafka-dev python-dev gcc && \
-    apt-get install krb5-user python3-kafka python3-confluent-kafka && \
+    apt-get install -y git librdkafka-dev python-dev gcc krb5-user python3-kafka python3-confluent-kafka && \
     apt-get clean
 
 # Get broker source code and install dependencies
