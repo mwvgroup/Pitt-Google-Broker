@@ -10,7 +10,7 @@ ENV ztf_keytab_path "pitt-reader.user.keytab"
 
 # Copy credentials and runtime files
 COPY docker_files/consume_ztf.py docker_files/consume_ztf.py
-COPY krb5.conf krb5.conf
+COPY krb5.conf /etc/krb5.conf
 COPY pitt-reader.user.keytab pitt-reader.user.keytab
 
 # Install utils for fetching remote source code
