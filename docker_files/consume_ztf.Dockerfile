@@ -11,11 +11,12 @@ ENV ztf_keytab_path "pitt-reader.user.keytab"
 # Copy credentials and runtime files
 COPY docker_files/consume_ztf.py docker_files/consume_ztf.py
 COPY krb5.conf /etc/krb5.conf
+# COPY krb5.conf krb5.conf
 COPY pitt-reader.user.keytab pitt-reader.user.keytab
 
 # Install utils for fetching remote source code
 RUN apt-get update && \
-    apt-get install -y git librdkafka-dev python-dev gcc krb5-user python3-kafka python3-confluent-kafka && \
+    apt-get install -y git python-dev gcc krb5-user python3-kafka python3-confluent-kafka librdkafka-dev && \
     apt-get clean
 
 # Get broker source code and install dependencies
