@@ -9,9 +9,9 @@ ENV ztf_principle "pitt-reader@KAFKA.SECURE"
 ENV ztf_keytab_path "pitt-reader.user.keytab"
 
 # Copy credentials and runtime files
+COPY docker_files/consume_ztf.py docker_files/consume_ztf.py
 COPY krb5.conf krb5.conf
 COPY pitt-reader.user.keytab pitt-reader.user.keytab
-COPY consume_ztf.py consume_ztf.py
 
 # Install utils for fetching remote source code
 RUN apt-get update && \
