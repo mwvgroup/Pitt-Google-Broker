@@ -26,4 +26,4 @@ RUN pip install -r Pitt-Google-Broker/requirements.txt && \
     pip cache purge
 
 # Launch the ZTF consumer
-CMD [ "python", "consume_ztf.py" ]
+CMD [ "python", "docker_files/consume_ztf.py" ]
