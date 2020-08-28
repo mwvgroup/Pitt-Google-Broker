@@ -2,9 +2,9 @@
 broker/ztf_archive/data/
 
 # Authentication keys
-docker_files/GCPauth.json
-docker_files/krb5.conf
-docker_files/pitt-reader.user.keytab
+GCPauth.json
+krb5.conf
+pitt-reader.user.keytab
 
 # OS files
 *.DS_Store
