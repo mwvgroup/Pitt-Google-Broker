@@ -17,7 +17,7 @@ COPY pitt-reader.user.keytab pitt-reader.user.keytab
 
 # Install utils for fetching remote source code
 RUN apt-get update && \
-    apt-get install -y git wget python-dev gcc krb5-user python3-kafka python3-confluent-kafka libsasl2-dev && \
+    apt-get install -y git wget python-dev gcc krb5-user python3-kafka python3-confluent-kafka libsasl2-dev libsasl2-modules-gssapi-mit libsasl2-2 libsasl2-modules && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get clean
 
