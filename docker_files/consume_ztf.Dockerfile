@@ -17,7 +17,7 @@ COPY pitt-reader.user.keytab pitt-reader.user.keytab
 
 # Install utils for fetching remote source code
 RUN apt-get update && \
-    apt-get install -y git wget python-dev gcc krb5-user python3-kafka python3-confluent-kafka libsasl2-dev libsasl2-modules-gssapi-mit libsasl2-2 libsasl2-modules && \
+    apt-get install -y git wget python-dev gcc krb5-user && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get clean
 
@@ -27,6 +27,8 @@ RUN wget \
     && bash Miniconda3-latest-Linux-x86_64.sh -b \
     && rm -f Miniconda3-latest-Linux-x86_64.sh
 
+RUN conda install -c conda-forge kafka-python -y
+RUN conda install -c conda-forge python-confluent-kafka -y
 RUN conda install -c stuarteberg -c conda-forge librdkafka -y
 
 # Get broker source code and install dependencies
