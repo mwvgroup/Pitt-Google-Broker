@@ -111,7 +111,7 @@ class TempAlertFile(SpooledTemporaryFile):
 
 
 def _set_config_defaults(kafka_config: dict) -> dict:
-    """Set default values for a Kafka configuration dictionary
+    """Set default values for a Kafka configuration dictionaryk
 
     Default values:
         enable.auto.commit: False,
@@ -254,9 +254,12 @@ class GCSKafkaConsumer(Consumer):
         log.info('Starting consumer.run ...')
         try:
             while True:
-                msg = self.consume(num_messages=1, timeout=5)[0]
+                msg = self.consume(num_messages=1, timeout=1)
                 if msg is None:
+                    log.warn('msg is None')
                     continue
+
+                msg = msg[0]
 
                 if msg.error():
                     err_data = (msg.topic(), msg.partition(), msg.offset(), msg.key(), msg.error())
