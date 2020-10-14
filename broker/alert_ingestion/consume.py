@@ -255,9 +255,9 @@ class GCSKafkaConsumer(Consumer):
         try:
             while True:
 #                 msg = self.consume(num_messages=1, timeout=1)
-                msg = self.poll(timeout=1)
+                msg = self.poll(timeout=5)
                 if msg is None:
-                    log.warn('msg is None')
+#                     log.warn('msg is None')
                     continue
 
                 if msg.error():
