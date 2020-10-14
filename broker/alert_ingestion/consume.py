@@ -254,13 +254,11 @@ class GCSKafkaConsumer(Consumer):
         log.info('Starting consumer.run ...')
         try:
             while True:
-                msg = self.consume(num_messages=1, timeout=1)
-                # print(msg)
+#                 msg = self.consume(num_messages=1, timeout=1)
+                msg = self.poll(timeout=1)
                 if msg is None:
                     log.warn('msg is None')
                     continue
-
-                # msg = msg[0]
 
                 if msg.error():
                     err_data = (msg.topic(), msg.partition(), msg.offset(), msg.key(), msg.error())
