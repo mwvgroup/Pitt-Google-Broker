@@ -198,7 +198,7 @@ def create_ztf_sync_table(
     for file_name in tqdm(release_table['file'], desc='ZTF files', disable=not verbose):
         url = requests.compat.urljoin(ZTF_URL, file_name)
         if (file_size := float(requests.head(url).headers.get('Content-Length', -99))) < 0:
-            warn(f'No file size specified for {file_name}')
+            warn(f'No file size found for {file_name}')
 
         size_list.append(file_size)
         url_list.append(url)
