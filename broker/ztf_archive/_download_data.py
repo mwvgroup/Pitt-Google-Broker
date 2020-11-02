@@ -170,16 +170,16 @@ def delete_local_data() -> None:
 
 
 def create_ztf_sync_table(
-        bucket_name: str = None,
         out_path: str = None,
+        bucket_name: str = None,
         verbose: bool = True) -> Table:
     """Create a table for uploading ZTF releases to a GCP bucket
 
     Only include files not already present in the bucket
 
     Args:
-        bucket_name (str): Name of the bucket to upload into
         out_path    (str): Optionally write table to a txt file
+        bucket_name (str): Name of the bucket to upload into
         verbose    (bool): Whether to display a progress bar (Default: True)
     """
 
@@ -188,7 +188,7 @@ def create_ztf_sync_table(
     # Get new file urls to upload
     release_table = get_remote_md5_table()
 
-    # Get existing files
+    # Drop existing files from the release table
     if bucket_name:
         storage_client = storage.Client()
         bucket = storage_client.get_bucket(bucket_name)
@@ -197,15 +197,12 @@ def create_ztf_sync_table(
         is_new = ~np.isin(release_table['file'], existing_files)
         release_table = release_table[is_new]
 
-    files = release_table['file']
-    if verbose:
-        files = tqdm(files, desc='Requesting file sizes')
-
     # Get file sizes
     url_list, size_list = [], []
+    files = tqdm(release_table['file'], desc='Requesting file sizes', disable=not verbose)
     for file_name in files:
         url = requests.compat.urljoin(ZTF_URL, file_name)
-        file_size = requests.head(url).headers['Content-Length']
+        file_size = requests.head(url).headers.get('Content-Length', 0)
         url_list.append(url)
         size_list.append(file_size)
 
