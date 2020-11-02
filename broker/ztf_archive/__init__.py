@@ -28,15 +28,3 @@ Usage Example
 Module Documentation
 --------------------
 """
-
-import os as _os
-from warnings import warn as _warn
-
-from ._download_data import *
-from ._parse_data import *
-
-if 'PGB_DATA_DIR' not in _os.environ:
-    _warn('The ZTF data directory not set in the current environment. '
-          'This can lead to duplicate data being downloaded to your machine. '
-          'Please see the documentation for instructions on setting'
-          '``PGB_DATA_DIR`` in your environment')

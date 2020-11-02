@@ -7,6 +7,7 @@ import shutil
 import tarfile
 from tempfile import TemporaryFile
 from typing import Iterable
+from warnings import warn
 
 import numpy as np
 import requests
@@ -15,8 +16,6 @@ from tqdm import tqdm
 
 from broker.ztf_archive._utils import get_ztf_data_dir
 
-ZTF_DATA_DIR = get_ztf_data_dir()
-ZTF_DATA_DIR.mkdir(exist_ok=True, parents=True)
 ZTF_URL = "https://ztf.uw.edu/alerts/public/"
 
 
@@ -44,7 +43,7 @@ def get_local_releases() -> Iterable[str]:
         An iterable of downloaded release dates from the ZTF Alerts Archive
     """
 
-    return (p.name.lstrip('ztf_public_') for p in ZTF_DATA_DIR.glob('*'))
+    return (p.name.lstrip('ztf_public_') for p in get_ztf_data_dir().glob('*'))
 
 
 def get_local_alerts() -> Iterable[int]:
@@ -54,7 +53,7 @@ def get_local_alerts() -> Iterable[int]:
         An iterable of alert ID values as ints
     """
 
-    return (int(p.stem) for p in ZTF_DATA_DIR.glob('*/*.avro'))
+    return (int(p.stem) for p in get_ztf_data_dir().glob('*/*.avro'))
 
 
 def _download_alerts_file(
@@ -120,7 +119,7 @@ def download_data_date(
     """
 
     file_name = f'ztf_public_{year}{month:02d}{day:02d}.tar.gz'
-    out_dir = ZTF_DATA_DIR / file_name.rstrip('.tar.gz')
+    out_dir = get_ztf_data_dir() / file_name.rstrip('.tar.gz')
     _download_alerts_file(file_name, out_dir, block_size, verbose)
 
 
@@ -157,7 +156,7 @@ def download_recent_data(
 
             continue
 
-        out_dir = ZTF_DATA_DIR / f_name.rstrip('.tar.gz')
+        out_dir = get_ztf_data_dir() / f_name.rstrip('.tar.gz')
         tqdm.write(f'Downloading ({i + 1}/{num_downloads}): {f_name}')
         _download_alerts_file(f_name, out_dir, block_size, verbose)
 
@@ -165,8 +164,7 @@ def download_recent_data(
 def delete_local_data() -> None:
     """Delete any locally data downloaded fro the ZTF Public Alerts Archive"""
 
-    shutil.rmtree(ZTF_DATA_DIR)
-    ZTF_DATA_DIR.mkdir(exist_ok=True, parents=True)
+    shutil.rmtree(get_ztf_data_dir())
 
 
 def create_ztf_sync_table(
@@ -187,27 +185,26 @@ def create_ztf_sync_table(
 
     # Get new file urls to upload
     release_table = get_remote_md5_table()
-
-    # Drop existing files from the release table
     if bucket_name:
-        storage_client = storage.Client()
-        bucket = storage_client.get_bucket(bucket_name)
+        bucket = storage.Client().get_bucket(bucket_name)
         existing_files = [blob.name for blob in bucket.list_blobs()]
 
+        # Drop existing files from the release table
         is_new = ~np.isin(release_table['file'], existing_files)
         release_table = release_table[is_new]
 
     # Get file sizes
     url_list, size_list = [], []
-    files = tqdm(release_table['file'], desc='Requesting file sizes', disable=not verbose)
-    for file_name in files:
+    for file_name in tqdm(release_table['file'], desc='ZTF files', disable=not verbose):
         url = requests.compat.urljoin(ZTF_URL, file_name)
-        file_size = requests.head(url).headers.get('Content-Length', 0)
-        url_list.append(url)
-        size_list.append(file_size)
+        if (file_size := float(requests.head(url).headers.get('Content-Length', -99))) < 0:
+            warn(f'No file size specified for {file_name}')
 
-    out_table = Table(
-        {'url': url_list, 'size': size_list, 'md5': release_table['md5']})
+        size_list.append(file_size)
+        url_list.append(url)
+
+    out_table = Table({'url': url_list, 'size': size_list, 'md5': release_table['md5']})
+    out_table = out_table[out_table['size'] >= 0]
 
     if out_path:
         # Format for compatibility with GCP data transfer service
