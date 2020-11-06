@@ -18,7 +18,8 @@ except Exception as e:
     warn(f'Could not package logging to GCP: {e}')
 
 required_vars = ('GOOGLE_CLOUD_PROJECT', 'GOOGLE_APPLICATION_CREDENTIALS')
-if missing_vars := [v for v in required_vars if v not in os.environ]:
+missing_vars = [v for v in required_vars if v not in os.environ]
+if missing_vars:
     warn(
         f'Environmental variables ``{missing_vars}`` not found. '
         f'Some package functionality may not be available.'
