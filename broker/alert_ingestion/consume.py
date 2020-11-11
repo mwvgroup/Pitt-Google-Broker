@@ -272,7 +272,7 @@ class GCSKafkaConsumer(Consumer):
 
                 else:
                     timestamp_kind, timestamp = msg.timestamp()
-                    file_name = f'{timestamp}.avro'
+                    file_name = f'{msg.topic()}_{timestamp}.avro'
 
                     log.info(f'Ingesting {file_name}')
                     publish_pubsub(self.pubsub_in_GCS_topic, file_name.encode('UTF-8'))
