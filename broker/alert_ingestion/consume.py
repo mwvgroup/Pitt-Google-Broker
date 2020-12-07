@@ -225,7 +225,7 @@ class GCSKafkaConsumer(Consumer):
 
         log.info(f'Schema header reformatted for {survey} version {version}')
 
-    def upload_bytes_to_bucket(self, data: bytes, destination_name: str) -> None:
+    def upload_bytes_to_bucket(self, data: bytes, destination_name: str) -> bytes:
         """Uploads bytes data to a GCP storage bucket. Prior to storage,
         corrects the schema header to be compliant with BigQuery's strict
         validation standards if the alert is from a survey version with an
@@ -234,6 +234,9 @@ class GCSKafkaConsumer(Consumer):
         Args:
             data: Data to upload
             destination_name: Name of the file to be created
+
+        Returns:
+            data with a corrected schema header (if one is necessary)
         """
 
         log.info(f'Uploading {destination_name} to {self.bucket.name}')
@@ -243,6 +246,7 @@ class GCSKafkaConsumer(Consumer):
         survey = guess_schema_survey(data)
         version = guess_schema_version(data)
 
+        # Correct the message schema, upload to GCS, and return it
         # By default, spool data in memory to avoid IO unless data is too big
         # LSST alerts are anticipated at 80 kB, so 150 kB should be plenty
         max_alert_packet_size = 150000
@@ -251,6 +255,8 @@ class GCSKafkaConsumer(Consumer):
             temp_file.seek(0)
             self.fix_schema(temp_file, survey, version)
             blob.upload_from_file(temp_file)
+            temp_file.seek(0)
+            return temp_file.read()
 
     def run(self) -> None:
         """Ingest kafka Messages to GCS and PubSub"""
@@ -275,9 +281,10 @@ class GCSKafkaConsumer(Consumer):
                     file_name = f'{msg.topic()}_{timestamp}.avro'
 
                     log.info(f'Ingesting {file_name}')
+                    msg_schema_fixed = self.upload_bytes_to_bucket(msg.value(), file_name)
+                    # returns msg.value() bytes object with schema corrected
+                    publish_pubsub(self.pubsub_alert_data_topic, msg_schema_fixed)
                     publish_pubsub(self.pubsub_in_GCS_topic, file_name.encode('UTF-8'))
-                    publish_pubsub(self.pubsub_alert_data_topic, msg.value())
-                    self.upload_bytes_to_bucket(msg.value(), file_name)
 
                     if not self._debug:
                         self.commit()
