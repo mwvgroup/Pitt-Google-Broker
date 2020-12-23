@@ -10,6 +10,7 @@ include = [
 
 requires = [
             'apache_beam[gcp]',
+            'argparse',
             'astropy',
             # 'base64', builtin
             'fastavro',
