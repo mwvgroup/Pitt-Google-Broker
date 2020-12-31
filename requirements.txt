@@ -1,7 +1,7 @@
+apache-beam[gcp]
 aplpy
 astropy
 astroquery
-# astrorapid
 beautifulsoup4
 deepdiff
 fastavro
@@ -25,7 +25,3 @@ google-cloud-storage
 google-cloud-error-reporting
 googleapis-common-protos
 google-resumable-media
-
-# Kafka dependencies
-# confluent-kafka # conda install
-# krb5  # conda install krb5
