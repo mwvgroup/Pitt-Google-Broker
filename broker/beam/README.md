@@ -1,37 +1,43 @@
-# PGB Alert Broker Beam Pipeline
+# Beam + Dataflow Data Processing Pipeline
 
-To start the job:
+See [`beam-dataflow-primer.md`](beam-dataflow-primer.md) for intros to Beam and Dataflow.
+It is interspersed with references to components of the pipeline that we deploy here.
 
-1. Install Apache Beam with GCP tools: `pip install apache-beam[gcp]`
+To start the job (which is defined in [`ztf-beam.py`](ztf-beam.py)):
 
-2. Clone this repo
+1. Clone this repo.
+
+2. Set up your environment (a Conda env is recommended). Either:
+    - Fresh/full install: Install the broker package + dependencies following [https://pitt-broker.readthedocs.io/en/latest/installation_setup/installation.html](https://pitt-broker.readthedocs.io/en/latest/installation_setup/installation.html) (Complete sections "Installing the package" and "Defining Environmental Variables")
+    - Install Beam and GCP dependencies on top of existing broker install: `pip install apache-beam[gcp]`
 
 3. `cd` to this directory (`broker/beam`)
 
 4. Set configs and start the job:
 
 ```bash
-#-- python setup
-setup_file=/Users/troyraen/Documents/PGB/repo/broker/beam/setup.py
-#-- pipeline options
-dataflow_job_name=test-argparse
-# dataflow_job_name=ztf-alert-data-ps-vizier
+#-- Set configs
 PROJECTID=ardent-cycling-243415
+# sources and sinks
+source_PS_ztf=projects/ardent-cycling-243415/topics/ztf_alert_data
+sink_BQ_originalAlert=ztf_alerts.alerts
+sink_BQ_salt2=ztf_alerts.salt2
+sink_PS_exgalTrans=projects/${PROJECTID}/topics/ztf_exgalac_trans
+sink_PS_salt2=projects/${PROJECTID}/topics/ztf_salt2
+# job configs
+dataflow_job_name=production-ztf-ps-bq-exgal-salt2
 region=us-central1
-max_num_workers=5
+max_num_workers=25
 beam_bucket=ardent-cycling-243415_dataflow-test
 staging_location=gs://${beam_bucket}/staging
 temp_location=gs://${beam_bucket}/temp
 runner=DataflowRunner
-#-- sources and sinks
-source_PS_ztf=projects/ardent-cycling-243415/topics/ztf_alert_data
-# sink_BQ_originalAlert=ztf_alerts.alerts
-sink_BQ_originalAlert=dataflow_test.ztf_alerts
-# sink_BQ_salt2=ztf_alerts.salt2
-sink_BQ_salt2=dataflow_test.salt2
-sink_PS_exgalTrans=projects/${PROJECTID}/topics/ztf_exgalac_trans
-sink_PS_salt2=projects/${PROJECTID}/topics/ztf_salt2
+# python setup file
+setup_file=/Users/troyraen/Documents/PGB/repo/broker/beam/setup.py
 
+#-- Start the Dataflow job
+# If updating a currently running job (using `--update`),
+# the `dataflow_job_name` (set above) must match the current job.
 python ztf-beam.py \
             --experiments use_runner_v2 \
             --setup_file ${setup_file} \
@@ -49,7 +55,7 @@ python ztf-beam.py \
             --sink_PS_exgalTrans ${sink_PS_exgalTrans} \
             --sink_PS_salt2 ${sink_PS_salt2} \
             --streaming \
-            # --update  # use this to update a currently running job
+            --update  # use only if updating a currently running job
 ```
 
 5. View the [Dataflow job in the GCP Console](https://console.cloud.google.com/dataflow/jobs?project=ardent-cycling-243415)
