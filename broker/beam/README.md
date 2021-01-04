@@ -3,7 +3,7 @@
 See [`beam-dataflow-primer.md`](beam-dataflow-primer.md) for intros to Beam and Dataflow.
 It is interspersed with references to components of the pipeline that we deploy here.
 
-To start the job (which is defined in [`ztf-beam.py`](ztf-beam.py)):
+To start the job (which is defined in [`ztf-proc.py`](ztf-proc.py)):
 
 1. Clone this repo.
 
@@ -38,7 +38,7 @@ setup_file=/Users/troyraen/Documents/PGB/repo/broker/beam/setup.py
 #-- Start the Dataflow job
 # If updating a currently running job (using `--update`),
 # the `dataflow_job_name` (set above) must match the current job.
-python ztf-beam.py \
+python ztf-proc.py \
             --experiments use_runner_v2 \
             --setup_file ${setup_file} \
             --runner ${runner} \

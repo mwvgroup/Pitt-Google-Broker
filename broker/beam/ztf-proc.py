@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-"""``ztf-beam`` runs a Beam pipeline (via Dataflow) which
+"""``ztf-proc`` runs a Beam pipeline (via Dataflow) which
 processes ZTF alerts. Currently it:
 
 1. Listens to the Pub/Sub stream

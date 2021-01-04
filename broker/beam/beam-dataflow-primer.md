@@ -14,7 +14,7 @@
     - [Error and exception handling](#error-and-exception-handling)
 
 
-_Note_: References in [brackets] indicate PGB-specific examples of the indicated files/functions/etc. Most of these are defined in [[`ztf-beam.py`]](./ztf-beam.py) or [[`README.md`]](./README.md).
+_Note_: References in [brackets] indicate PGB-specific examples of the indicated files/functions/etc. Most of these are defined in [[`ztf-proc.py`]](./ztf-proc.py) or [[`README.md`]](./README.md).
 
 
 ---
@@ -54,7 +54,7 @@ Much of it is quoted directly from [__Apache Beam Overview/Tutorial__](https://b
 
 ### [`Pipeline`](https://beam.apache.org/documentation/programming-guide/#creating-a-pipeline)
 - The `Pipeline` abstraction encapsulates all the data and steps in the data processing task.
-- The "driver program" [`ztf-beam.py`] creates a `Pipeline` object [`pipeline`, within `run()`] and uses it as the basis for creating the pipeline’s data (`PCollection`s) and its operations (`PTransform`s).
+- The "driver program" [`ztf-proc.py`] creates a `Pipeline` object [`pipeline`, within `run()`] and uses it as the basis for creating the pipeline’s data (`PCollection`s) and its operations (`PTransform`s).
 - The general form of a step in the pipeline is (here, brackets indicate general Beam objects, not PGB-specific objects):
     - `[Output PCollection] = [Input PCollection] | [Transform]`
 
