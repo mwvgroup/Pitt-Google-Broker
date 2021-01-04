@@ -59,14 +59,14 @@ def sink_configs(PROJECTID):
                 'write_disposition': bqdisp.WRITE_APPEND,
                 'validate': False,
                 'insert_retry_strategy': RetryStrategy.RETRY_NEVER,
-                'batch_size': 5000,
+                # 'batch_size': 5000,
             },
             'BQ_salt2': {
                 'schema': 'objectId:STRING, candid:INTEGER, success:INTEGER, ncall:INTEGER, chisq:FLOAT, ndof:INTEGER, z:FLOAT, z_err:FLOAT, t0:FLOAT, t0_err:FLOAT, x0:FLOAT, x0_err:FLOAT, x1:FLOAT, x1_err:FLOAT, c:FLOAT, c_err:FLOAT, z_z_cov:FLOAT, z_t0_cov:FLOAT, z_x0_cov:FLOAT, z_x1_cov:FLOAT, z_c_cov:FLOAT, t0_z_cov:FLOAT, t0_t0_cov:FLOAT, t0_x0_cov:FLOAT, t0_x1_cov:FLOAT, t0_c_cov:FLOAT, x0_z_cov:FLOAT, x0_t0_cov:FLOAT, x0_x0_cov:FLOAT, x0_x1_cov:FLOAT, x0_c_cov:FLOAT, x1_z_cov:FLOAT, x1_t0_cov:FLOAT, x1_x0_cov:FLOAT, x1_x1_cov:FLOAT, x1_c_cov:FLOAT, c_z_cov:FLOAT, c_t0_cov:FLOAT, c_x0_cov:FLOAT, c_x1_cov:FLOAT, c_c_cov:FLOAT, plot_lc_bytes:BYTES',
                 'create_disposition': bqdisp.CREATE_NEVER,
                 'write_disposition': bqdisp.WRITE_APPEND,
                 'insert_retry_strategy': RetryStrategy.RETRY_NEVER,
-                'batch_size': 50,
+                # 'batch_size': 50,
             },
             'PS_generic': {
                 'with_attributes': False,  # currently using bytes
