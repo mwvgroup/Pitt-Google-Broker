@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-"""``ztf-bq-sink`` runs a Beam pipeline (via Dataflow) which
+"""``beam_ztf_bq_sink`` runs a Beam pipeline (via Dataflow) which
 processes ZTF alerts. Currently it:
 
 1. Listens to the Pub/Sub stream
@@ -28,7 +28,7 @@ from apache_beam.io import ReadFromPubSub, WriteToPubSub, WriteToBigQuery
 from apache_beam.io.gcp.bigquery_tools import RetryStrategy
 from apache_beam.options.pipeline_options import PipelineOptions
 
-import beam_helpers.data_utils as dutil
+from beam_helpers import data_utils as dutil
 
 
 def sink_configs(PROJECTID):
