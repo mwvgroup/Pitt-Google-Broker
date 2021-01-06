@@ -22,15 +22,15 @@ beamdir=$(pwd)
 # export PYTHONPATH="${PYTHONPATH}:${beamdir}/beam_helpers"
 
 #-- Start the ztf processing Dataflow job
-cd ztf_proc
-python ztf-proc.py \
+cd ztf_value_added
+python beam_ztf_value_added.py \
             --experiments use_runner_v2 \
-            --setup_file ${setup_file_proc} \
+            --setup_file ${setup_file_valadd} \
             --runner ${runner} \
             --region ${region} \
             --project ${PROJECTID} \
-            --job_name ${dataflow_job_name_proc} \
-            --max_num_workers ${max_num_workers_proc} \
+            --job_name ${dataflow_job_name_valadd} \
+            --max_num_workers ${max_num_workers_valadd} \
             --staging_location ${staging_location} \
             --temp_location ${temp_location} \
             --PROJECTID ${PROJECTID} \
@@ -43,7 +43,7 @@ python ztf-proc.py \
 
 # Start the ztf -> BQ job
 cd ${beamdir} && cd ztf_bq_sink
-python ztf-bq-sink.py \
+python beam_ztf_bq_sink.py \
             --experiments use_runner_v2 \
             --setup_file ${setup_file_bqsink} \
             --runner ${runner} \
