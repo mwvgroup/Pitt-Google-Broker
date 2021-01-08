@@ -7,7 +7,7 @@
 - [original README](#ogread)
 
 ## Other useful reference docs
-- [broker/consumer/__kafka-console-connect__.md](broker/consumer/kafka_console_connect.md) 
+- [broker/consumer/__kafka-console-connect__.md](broker/consumer/kafka_console_connect.md)
 - [broker/beam/__beam_dataflow_primer__.md](broker/beam/beam_dataflow_primer.md)
 
 ---
@@ -24,6 +24,7 @@ In addition, there is a "__night conductor__" (running on a VM) that
 orchestrates the broker,
 starting up resources and jobs at night (and will shut them down in the morning, but that script isn't written yet).
 
+You can monitor the broker at the [__ZTF Stream Monitoring Dashboard__](https://console.cloud.google.com/monitoring/dashboards/builder/d8b7db8b-c875-4b93-8b31-d9f427f0c761?project=ardent-cycling-243415&dashboardBuilderState=%257B%2522editModeEnabled%2522:false%257D&timeDomain=1w).
 
 Details:
 
@@ -144,6 +145,8 @@ gcloud compute instances start ${instancename} --zone ${zone}
 gcloud compute instances stop ${instancename} --zone ${zone}
 # (night-conductor auto-shutdown to be configured later)
 ```
+
+You can check monitor the ingestion and processing at the [__ZTF Stream Monitoring Dashboard__](https://console.cloud.google.com/monitoring/dashboards/builder/d8b7db8b-c875-4b93-8b31-d9f427f0c761?project=ardent-cycling-243415&dashboardBuilderState=%257B%2522editModeEnabled%2522:false%257D&timeDomain=1w).
 
 Currently, `night-conductor` executes the following to start the night:
 1. Clears the messages from Pub/Sub subscriptions that we use to count the number of elements received and processed each night.

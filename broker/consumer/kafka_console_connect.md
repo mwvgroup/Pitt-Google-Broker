@@ -26,7 +26,7 @@ connecting to the ZTF alert stream via 2 different methods:
 The example code that follows creates a Compute Engine (CE) instance called `kafka-consumer-test` and then
 installs and configures both methods to listen to the ZTF stream.
 (ZTF auth files are required, but not provided here.)
-There is an existing CE instance called `kafka-consumer` that has been setup following this example.
+There is an existing CE instance, [`kafka-consumer`](https://console.cloud.google.com/compute/instancesDetail/zones/us-central1-a/instances/kafka-consumer?project=ardent-cycling-243415), that has been setup following this example.
 _You(*) can log into it and test or use the methods described here to connect to ZTF without having to install or configure anything_
 (see the "Run" sections below;
 you could also take advantage of the installed software and auth files, but create/configure your own _working_ directory).
