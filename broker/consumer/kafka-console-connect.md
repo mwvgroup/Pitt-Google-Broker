@@ -1,12 +1,28 @@
 # Install Kafka and Run a Consumer (2 Methods) to Listen to the ZTF Stream
-<!-- fs intro -->
+
 This document walks through installing Kafka and then
 connecting to the ZTF alert stream via 2 different methods:
 1. Console Consumer: Command-line consumer (installed with Confluent Platform) that prints alert content to `stdout`; _useful for testing the connection_.
-2. Kafka Connectors: Plugins that listen to a stream and route the message to another service. _Our consumer is a Kafka -> Pub/Sub connector that simply passes the bytes through (no data conversions)._
+2. Kafka Connectors: Plugins that listen to a stream and route the message to another service. _Our consumer is a Kafka -> Pub/Sub connector that simply passes the bytes through (no data decoding or conversions)._
 
-__Pre-configured instance__
+# ToC
+- [Pre-configured instance](#preconfig-instance)
+- [Install Kafka (Confluent Platform) manually](#manual-install)
+- [Install Kafka on a Compute Engine instance using the prepackaged, "Google Click to Deploy" stack the Google Marketplace](#gce-marketplace-install) (not recommended)
+- [Console Consumer](#cons-consumer) (useful for testing the connection)
+    - [Configure for ZTF access](#config)
+    - [__Run the Kafka Console Consumer__](#run-consumer)
+- [Kafka Connectors](#connectors) (run a consumer and route the messages to another service)
+    - [General Configuration and ZTF Authentication](#config-connect)
+    - [Pub/Sub Connector](#psconnect)
+        - [Install and Configure](#psconnect-config)
+        - [__Run the Pub/Sub Connector__](#psconnect-run)
+    - [BigQuery Connector](#bqconnect)
+---
 
+<a name="preconfig-instance"></a>
+## Pre-configured instance
+<!-- fs -->
 The example code that follows creates a Compute Engine (CE) instance called `kafka-consumer-test` and then
 installs and configures both methods to listen to the ZTF stream.
 (ZTF auth files are required, but not provided here.)
@@ -32,24 +48,9 @@ If you need permissions to access it or use `sudo`, you should be able to grant 
 I can help if you get stuck.
 
 (*) Assuming "you" are a PGB member with access to the GCP project.
+<!-- fe preconfigured instance -->
 
-<!-- fe intro -->
 ---
-
-# ToC
-- [Install Kafka (Confluent Platform) __manually__](#manual-install)
-- [Install Kafka on a Compute Engine instance using the prepackaged, "Google Click to Deploy" stack the Google Marketplace](#gce-marketplace-install) (not recommended)
-- [Console Consumer](#cons-consumer) (useful for testing the connection)
-    - [Configure for ZTF access](#config)
-    - [__Run the Kafka Console Consumer__](#run-consumer)
-- [Kafka Connectors](#connectors) (run a consumer and route the messages to another service)
-    - [General Configuration and ZTF Authentication](#config-connect)
-    - [Pub/Sub Connector](#psconnect)
-        - [Install and Configure](#psconnect-config)
-        - [__Run the Pub/Sub Connector__](#psconnect-run)
-    - [BigQuery Connector](#bqconnect)
----
-
 
 <a name="manual-install"></a>
 ## Install Kafka (Confluent Platform) manually
@@ -58,14 +59,17 @@ I can help if you get stuck.
 In some sense, installing the full platform is overkill (listening to a stream requires fewer tools than producing a stream).
 However, it's worth it:
 1) This is a (the?) standard way to install Kafka, so it becomes easier to follow online examples/tutorials and to troubleshoot with ZTF folks;
-2) The tasks we need to accomplish run smoothly using Confluent Platform
+2) The tasks we need to accomplish (testing and running connections) run smoothly using Confluent Platform
 (the same cannot be said of other methods I and we have tried); and
 3) It's easy to imagine needing some of the other components in the package down the road.
 
 Instruction Links:
-- [PrePR] add general link about creating instances
+- [`gcloud compute instances create`](https://cloud.google.com/sdk/gcloud/reference/compute/instances/create)
 - [How To Install Java with Apt on Debian 10](https://www.digitalocean.com/community/tutorials/how-to-install-java-with-apt-on-debian-10)
 - [Confluent Platform: Manual Install on Ubuntu and Debian](https://docs.confluent.io/platform/current/installation/installing_cp/deb-ubuntu.html)
+
+See [`vm_install.sh`](vm_install.sh) for a quick list of the commands required for steps 2 and 3.
+(this file is used to set up the production instance `ztf-consumer`).
 
 1. (Optional) Create a Compute Engine VM instance (Debian 10):
 
@@ -131,10 +135,12 @@ _[ToDo:] Create an "image" or a "machine image" of this VM and figure out how to
 
 <!-- fe # Install on a Google Compute Engine VM -->
 
+---
+
 <a name="cons-consumer"></a>
 # Console Consumer
 <!-- fs -->
-`kafka-console-consumer` is a consumer that prints the messages to the terminal. It is useful for testing the connection.
+`kafka-console-consumer.sh` is a command line utility that creates a consumer and prints the messages to the terminal. It is useful for testing the connection.
 
 <a name="config"></a>
 ## Configure for ZTF access
@@ -222,11 +228,12 @@ Use `control-C` to stop consuming.
 <!-- fe Run the Kafka Consumer -->
 <!-- fe Console Consumer -->
 
+---
+
 <a name="connectors"></a>
 # Kafka Connectors
 <!-- fs -->
 Kafka connectors run a Kafka consumer and route the messages to another service.
-Our broker uses a Kafka -> Pub/Sub connector that passes the bytes straight through without decoding or converting them.
 
 <a name="config-connect"></a>
 ## General Configuration and ZTF Authentication
@@ -259,6 +266,8 @@ plugin.path=/usr/local/share/kafka/plugins
 We use a Kafka-Pub/Sub connector ([`kafka-connector`](https://github.com/GoogleCloudPlatform/pubsub/tree/master/kafka-connector)) that is maintained by Pub/Sub developers.
 There is another connector managed by Confluent ([here](https://www.confluent.io/hub/confluentinc/kafka-connect-gcp-pubsub)) but it only supports a Pub/Sub _source_ (i.e., Pub/Sub -> Kafka), we need a Pub/Sub _sink_.
 
+We pass the alert bytes straight through to Pub/Sub without decoding or converting them.
+
 <a name="psconnect-config"></a>
 ### Install and Configure
 <!-- fs -->
@@ -283,9 +292,9 @@ The following instructions were pieced together from:
 The connector can be configured to run in "standalone" or "distributed" mode.
 Distributed is recommended for production environments, partly due to its fault tolerance.
 I initially tried distributed, but:
-1) I got confused about where to put the connector configs, and
-2) I'm not totally clear on what the distributed-specific worker options are and what they do.
-starting with standalone mode for the following
+a) I got confused about where to put the connector configs, and
+b) I'm not totally clear on what the distributed-specific worker options are and what they do.
+Starting with standalone mode for the following
 (but we should probably switch at some point):
 
 __Install__
@@ -394,8 +403,8 @@ and messages streaming into the Pub/Sub topic [`ztf_alert_data-kafka_consumer`](
 <!-- fs -->
 This exists and it is free (some connectors require a Confluent Enterprise License), but I haven't actually tried it.
 
-One question that I do not know the answer to (despite looking for it) is this:
-If we run two Kafka connectors, does that create two separate connections to ZTF, or do both connectors use the same incoming stream?
+One question that I haven't been able to find the answer to is this:
+_If we run two Kafka connectors, does that create two separate connections to ZTF, or do both connectors use the same incoming stream?_
 We could just install this and try it; I just haven't done it yet.
 I'm guessing it would be bad form (cost more money on both ends) to pull in two connections every night.
 
