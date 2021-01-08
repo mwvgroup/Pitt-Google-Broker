@@ -1,8 +1,6 @@
 #! /bin/bash
 
 # Set consumer VM metadata for the day's topic
-# for info on working with custom metadata, see here
-# https://cloud.google.com/compute/docs/storing-retrieving-metadata#custom
 KAFKA_TOPIC=$1  # ztf_20210105_programid1
 instancename=ztf-consumer
 zone=us-central1-a

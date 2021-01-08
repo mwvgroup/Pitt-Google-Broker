@@ -1,5 +1,5 @@
 #! /bin/bash
-# Starts the Beam/Dataflow job(s) and waits for status = RUNNING
+# Starts the Beam/Dataflow job(s)
 
 PROJECT_ID=$1
 brokerdir=$2
@@ -7,7 +7,7 @@ bucket=$3
 cd ${brokerdir}
 
 # copy the broker's Beam directory from GCS and cd in
-gsutil cp -r gs://${bucket}/beam .
+gsutil -m cp -r gs://${bucket}/beam .
 cd beam
 beamdir=$(pwd)
 
@@ -43,6 +43,8 @@ timeout 30 \
 # If we can get the previous command to return the job info
 # like it's "supposed" to
 # instead of holding the terminal,
+# (note: the jobs started from this script start less than 30 sec apart...
+# maybe it does return the job info when run from within the script.)
 # we should be able to parse out the job ID and then
 # get the job status this way:
 # gcloud dataflow jobs list --project=<PROJECT_ID> --filter="id=<JOB_ID>" --format="get(state)"

@@ -1,6 +1,6 @@
 #! /bin/bash
-# "Reset" Pub/Sub subscriptions that function as counters for
-# tracking purposes.
+# "Reset" Pub/Sub subscriptions that function as
+# counters for tracking purposes.
 # Accomplished by seeking the subscription forward to current time.
 
 PROJECT_ID=$1
