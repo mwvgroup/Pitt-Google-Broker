@@ -1,9 +1,9 @@
 # Beam + Dataflow Data Processing Pipeline
 
-See [`beam-dataflow-primer.md`](beam-dataflow-primer.md) for intros to Beam and Dataflow.
+See [`beam-dataflow-primer.md`](beam_dataflow_primer.md) for intros to Beam and Dataflow.
 It is interspersed with references to components of the pipeline that we deploy here.
 
-To start the job (which is defined in [`ztf-proc.py`](ztf-proc.py)):
+To start the job (which is defined in [`ztf_value_added/beam_ztf_value_added`](ztf_value_added/beam_ztf_value_added.py)):
 
 1. Clone this repo.
 
