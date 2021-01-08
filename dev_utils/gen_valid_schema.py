@@ -4,8 +4,7 @@
 """ The ``gen_valid_schema`` module generates a corrected alert schema from an
 Avro file. Used when the schema in the incoming alerts is not a valid schema
 under the strict requirements of BigQuery. This only needs to be done once for
-each survey version. The corrected schema is stored in a pickle file which is
-automatically used by the ``consume`` module to fix the affected alert packets
+each survey version. The corrected schema is stored in a pickle file which is used by the ``consume`` module to fix the affected alert packets
 before storing them in GCS.
 
 Usage Example
