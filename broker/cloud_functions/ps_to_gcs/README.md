@@ -1,17 +1,9 @@
-# Pub/Sub -> GCS Cloud Function for alert Avro files
+# Pub/Sub -> GCS Cloud Function for ZTF Alert Avro Files
 
-__Deploy__
-```python
-cd deploy2cloud_Aug2020/ps-to-gcs/
-# topic=troy_test_topic
-topic=ztf_alert_data
-gcloud functions deploy upload_ztf_bytes_to_bucket \
-    --runtime python37 \
-    --trigger-topic ${topic}
+The following is just my raw notes from when I set this up.
+I will clean up this document later.
 
-```
-
-__Get an alert and figure out how to parse the data/attributes:__
+__Get an alert from PS and figure out how to parse the data/attributes:__
 ```python
 from google.cloud import pubsub_v1
 import main as mn
