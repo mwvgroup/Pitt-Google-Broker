@@ -2,6 +2,7 @@
 
 # Set consumer VM metadata for the day's topic
 KAFKA_TOPIC=$1  # ztf_20210105_programid1
+bucket=$2
 instancename=ztf-consumer
 zone=us-central1-a
 PS_TOPIC=ztf_alert_data

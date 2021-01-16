@@ -18,4 +18,4 @@ bucket="${PROJECT_ID}-broker_files"
 ./start_beam_jobs.sh ${PROJECT_ID} ${brokerdir} ${bucket}
 
 #--- Start the consumer
-./start_consumer.sh ${KAFKA_TOPIC}
+./start_consumer.sh ${KAFKA_TOPIC} ${bucket}
