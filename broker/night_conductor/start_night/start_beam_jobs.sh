@@ -6,22 +6,22 @@ brokerdir=$2
 bucket=$3
 cd ${brokerdir}
 
-# copy the broker's Beam directory from GCS and cd in
+# Copy the broker's Beam directory from GCS and cd in
 gsutil -m cp -r gs://${bucket}/beam .
 cd beam
 beamdir=$(pwd)
 
-# copy beam_helpers modules to job dirs
+# Copy beam_helpers modules to job dirs so setup.py works correctly
 mkdir -p ztf_bq_sink/beam_helpers
 cp beam_helpers/__init__.py beam_helpers/data_utils.py ztf_bq_sink/beam_helpers/.
 cp -r beam_helpers ztf_value_added/.
 
-# set configs
+# Set configs
 source jobs.config ${PROJECT_ID} ${beamdir}
 
-# start the ztf-value_added job
-# the command holds the terminal, so use timeout.
-# this does _not_ cancel the dataflow job.
+# Start the ztf-value_added job.
+# - the command holds the terminal, so use timeout (does not cancel the job).
+# - send the output to a file.
 cd ztf_value_added
 timeout 30 \
     python3 beam_ztf_value_added.py \
@@ -39,19 +39,10 @@ timeout 30 \
         --sink_BQ_salt2 ${sink_BQ_salt2} \
         --sink_PS_exgalTrans ${sink_PS_exgalTrans} \
         --sink_PS_salt2 ${sink_PS_salt2} \
-        --streaming
-# If we can get the previous command to return the job info
-# like it's "supposed" to
-# instead of holding the terminal,
-# (note: the jobs started from this script start less than 30 sec apart...
-# maybe it does return the job info when run from within the script.)
-# we should be able to parse out the job ID and then
-# get the job status this way:
-# gcloud dataflow jobs list --project=<PROJECT_ID> --filter="id=<JOB_ID>" --format="get(state)"
-# Then check every N(=30?) seconds until the job is "RUNNING" or "FAILED".
-#
-# We should also store the job ID in a file in the GCS ${bucket}
-# so the conductor can use it later to stop the job.
+        --streaming \
+    &> runjob.out
+# get the Job id so we can use it to stop the job later
+jobid1=$(grep "Submitted job:" runjob.out | awk '{print $(NF)}')
 
 # Start the ztf -> BQ job
 cd ${beamdir} && cd ztf_bq_sink
@@ -69,4 +60,34 @@ timeout 30 \
         --PROJECTID ${PROJECT_ID} \
         --source_PS_ztf ${source_PS_ztf} \
         --sink_BQ_originalAlert ${sink_BQ_originalAlert} \
-        --streaming
+        --streaming \
+    &> runjob.out
+# get the Job id so we can use it to stop the job later
+jobid2=$(grep "Submitted job:" runjob.out | awk '{print $(NF)}')
+
+# collect job ids
+RUNNING_BEAM_JOBS="${jobid1} ${jobid2}"
+
+# Set RUNNING_BEAM_JOBS as metadata
+# - this will be used in end_night.sh to stop (drain) the jobs
+baseurl="http://metadata.google.internal/computeMetadata/v1"
+H="Metadata-Flavor: Google"
+instancename=$(curl "${baseurl}/instance/name" -H "${H}")
+zone=us-central1-a
+gcloud compute instances add-metadata ${instancename} --zone=${zone} \
+      --metadata RUNNING_BEAM_JOBS="${RUNNING_BEAM_JOBS}"
+
+# Make sure the jobs are running
+for jobid in "${RUNNING_BEAM_JOBS}"
+do
+    jobstate=""
+    while [ "${jobstate}" != "Running" ]
+    do
+        jobstate=$(gcloud dataflow jobs list --project="${PROJECT_ID}" --filter="id=${jobid}" --format="get(state)")
+        # if it's not running, wait before checking again
+        if [ "${jobstate}" != "Running" ]
+        then
+            sleep 30s
+        fi
+    done
+done

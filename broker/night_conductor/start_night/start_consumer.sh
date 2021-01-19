@@ -1,10 +1,13 @@
 #! /bin/bash
 
+bucket=$1
+
 # Set consumer VM metadata for the day's topic
-KAFKA_TOPIC=$1  # ztf_20210105_programid1
-bucket=$2
 instancename=ztf-consumer
 zone=us-central1-a
+baseurl="http://metadata.google.internal/computeMetadata/v1"
+H="Metadata-Flavor: Google"
+KAFKA_TOPIC=$(curl "${baseurl}/instance/attributes/KAFKA_TOPIC" -H "${H}")
 PS_TOPIC=ztf_alert_data
 gcloud compute instances add-metadata ${instancename} --zone=${zone} \
       --metadata KAFKA_TOPIC=${KAFKA_TOPIC},PS_TOPIC=${PS_TOPIC}

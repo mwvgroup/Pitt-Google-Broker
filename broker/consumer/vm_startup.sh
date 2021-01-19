@@ -11,7 +11,6 @@ cd ${workingdir}
 baseurl="http://metadata.google.internal/computeMetadata/v1"
 H="Metadata-Flavor: Google"
 PROJECT_ID=$(curl "${baseurl}/project/project-id" -H "${H}")
-instancename=$(curl "${baseurl}/instance/name" -H "${H}")
 zone=$(curl "${baseurl}/instance/zone" -H "${H}")
 PS_TOPIC=$(curl "${baseurl}/instance/attributes/PS_TOPIC" -H "${H}")
 KAFKA_TOPIC=$(curl "${baseurl}/instance/attributes/KAFKA_TOPIC" -H "${H}")
@@ -30,6 +29,6 @@ sed -i "s/KAFKA_TOPIC/${KAFKA_TOPIC}/g" ${fconfig}
 
 #--- Start the Kafka -> Pub/Sub connector
 # cd /bin
-# ./connect-standalone \
-#     ${workingdir}/psconnect-worker.properties \
-#     ${workingdir}/ps-connector.properties
+./connect-standalone \
+    ${workingdir}/psconnect-worker.properties \
+    ${workingdir}/ps-connector.properties
