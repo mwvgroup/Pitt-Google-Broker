@@ -3,7 +3,7 @@
 ## Table of Contents
 - [Broker Architecture](#broker-architecture)
 - [Setup the Broker for the First Time](#setup-the-broker-for-the-first-time)
-- [Run Daily Broker](#run-daily-broker)
+- [Run Nightly Broker](#run-nightly-broker)
 - [original README](#ogread)
 
 ## Other useful reference docs
@@ -106,6 +106,7 @@ _These must be uploaded manually and stored at the following locations:_
     1. `krb5.conf`, at VM path `/etc/krb5.conf`
     2. `pitt-reader.user.keytab`, at VM path `/home/broker/consumer/pitt-reader.user.keytab`
 You can use the `gcloud compute scp` command for this:
+
 ```bash
 gcloud compute scp \
     /path/to/local/file \
@@ -117,57 +118,76 @@ gcloud compute scp \
 
 ---
 
-# Run Daily Broker
+# Run Nightly Broker
 <!-- fs -->
 [[__ZTF Stream Monitoring Dashboard__](https://console.cloud.google.com/monitoring/dashboards/builder/d8b7db8b-c875-4b93-8b31-d9f427f0c761?project=ardent-cycling-243415&dashboardBuilderState=%257B%2522editModeEnabled%2522:false%257D&timeDomain=1w)]
 
-The set of scripts in [night_conductor](night_conductor) orchestrates the tasks required to start up the broker (shutdown to be configured later).
-We run these scripts on a dedicated Compute Engine instance, [__`night-conductor`__](https://console.cloud.google.com/compute/instancesDetail/zones/us-central1-a/instances/night-conductor?tab=details&project=ardent-cycling-243415),
-which has been configured to fetch them (and other broker files) automatically upon startup from the Cloud Storage bucket (created when during broker setup) and execute them.
-Therefore, to begin ingesting and processing alerts for the night, all we need to do is set the Kafka/ZTF topic and start `night-conductor`.
-(Currently that's not _quite_ true, I am still starting the Kafka -> Pub/Sub connector manually, but only so that I can make sure everything started up correctly first. I'll automate this soon.)
+The set of scripts in [night_conductor](broker/night_conductor/) orchestrates the tasks required to start up the broker at night and shut it down in the morning.
+We run these scripts on a dedicated Compute Engine instance, [__`night-conductor`__](https://console.cloud.google.com/compute/instancesDetail/zones/us-central1-a/instances/night-conductor?tab=details&project=ardent-cycling-243415).
+These scripts were uploaded, along with other files that run the nightly broker (e.g., Consumer and Beam jobs), to the Cloud Storage bucket [`broker_files`](https://console.cloud.google.com/storage/browser/ardent-cycling-243415-broker_files?project=ardent-cycling-243415) upon initial setup (see [Setup the Broker for the First Time](#setup-the-broker-for-the-first-time)) and are updated as the broker evolves.
+The `night-conductor` VM is configured with a startup script that downloads these scripts and other files from the bucket and executes them.
+We use Compute Engine __metadata attributes__ to pass variables to `night-conductor`'s startup script which determine the specific behavior.
+(See [Storing and retrieving instance metadata](https://cloud.google.com/compute/docs/storing-retrieving-metadata) and [Setting custom metadata](https://cloud.google.com/compute/docs/storing-retrieving-metadata#custom).)
+Then, __to start or stop the broker for the night, we simply set the metadata attribute(s) and start the `night-conductor` VM__:
 
 ```bash
 instancename=night-conductor
 zone=us-central1-a
-brokerbucket=ardent-cycling-243415-broker_files
-startupscript="gs://${brokerbucket}/night_conductor/vm_startup.sh"
-gcloud compute instances add-metadata ${instancename} \
-    --zone ${zone} --metadata startup-script-url=${startupscript}
 
+# start the night
+NIGHT=START
+KAFKA_TOPIC=ztf_20210119_programid1
+gcloud compute instances add-metadata ${instancename} --zone=${zone} \
+      --metadata NIGHT=${NIGHT},KAFKA_TOPIC=${KAFKA_TOPIC}
 gcloud compute instances start ${instancename} --zone ${zone}
+# `night-conductor` shuts down automatically when broker startup is complete
 
-# log in to the ztf-consumer vm,
-# update the topic, and
-# manually start the connector
-
-# shutdown night-conductor, it does not need to run all night
-gcloud compute instances stop ${instancename} --zone ${zone}
-# (night-conductor auto-shutdown to be configured later)
+# end the night
+NIGHT=END
+gcloud compute instances add-metadata ${instancename} --zone=${zone} \
+      --metadata NIGHT=${NIGHT}
+gcloud compute instances start ${instancename} --zone ${zone}
+# `night-conductor` shuts down automatically when broker teardown is complete
 ```
 
-You can check monitor the ingestion and processing at the [__ZTF Stream Monitoring Dashboard__](https://console.cloud.google.com/monitoring/dashboards/builder/d8b7db8b-c875-4b93-8b31-d9f427f0c761?project=ardent-cycling-243415&dashboardBuilderState=%257B%2522editModeEnabled%2522:false%257D&timeDomain=1w).
+Metadata attributes are cleared before `night-conductor` shuts down so that no unexpected behavior occurs on the next startup.
+
+You can monitor the ingestion and processing at the [__ZTF Stream Monitoring Dashboard__](https://console.cloud.google.com/monitoring/dashboards/builder/d8b7db8b-c875-4b93-8b31-d9f427f0c761?project=ardent-cycling-243415&dashboardBuilderState=%257B%2522editModeEnabled%2522:false%257D&timeDomain=1w).
+
+__Start/End Night Details:__
 
 Currently, `night-conductor` executes the following to start the night:
 1. Clears the messages from Pub/Sub subscriptions that we use to count the number of elements received and processed each night.
 2. Starts the two Dataflow jobs.
 3. Starts the [`ztf-consumer`](https://console.cloud.google.com/compute/instancesMonitoringDetail/zones/us-central1-a/instances/ztf-consumer?project=ardent-cycling-243415&tab=monitoring&duration=PT1H&pageState=%28%22duration%22:%28%22groupValue%22:%22P7D%22,%22customValue%22:null%29%29) VM (which is configured to connect to ZTF and begin ingesting upon startup).
 
-Ultimately, `night-conductor` will also stop the ingestion and processing when the night is done, but it is not set up yet.
-Shutting it down manually is easy;
-shutting it down programmatically is tricky.
-The biggest (but not the only) problem is:
-how do we know that ZTF is done issuing alerts, we have received them all, and we have completed processing them all?
+And the following to end the night:
+1. Stop the [`ztf-consumer`](https://console.cloud.google.com/compute/instancesMonitoringDetail/zones/us-central1-a/instances/ztf-consumer?project=ardent-cycling-243415&tab=monitoring&duration=PT1H&pageState=%28%22duration%22:%28%22groupValue%22:%22P7D%22,%22customValue%22:null%29%29) VM (which stops the ingestion).
+2. Stop and drain the Dataflow jobs.
 
-Staging the startup scripts and other files in a Cloud Storage bucket means that we can update broker components simply by uploading a new file to the bucket.
-All VMs pull down a fresh copy of any file(s) before executing the relevant process.
-(Cloud Functions are different and must be re-deployed to be updated.)
+__Note on staging files:__
 
-The Kafka -> Pub/Sub connector's connection to ZTF will fail (but won't exit the command) if there is not as least 1 alert in the topic (ZTF publishes to a new topic nightly), so I am still manually starting `night-conductor`.
+Staging the startup scripts and other files in a Cloud Storage bucket means that we can update these broker components simply by uploading a new file to the bucket; we do not have to build a new Docker image, repackage, or redeploy.
+All VMs pull down a fresh copy of any required file(s) before executing the relevant process.
+(Cloud Functions are different and must be re-deployed to be updated. Once deployed, they are always "on"; `night-conductor` does not manage them.)
+
+__Note on automating `night-conductor`'s startup:__
+
+[Start Night] The consumer's connection to ZTF will fail if there is not as least 1 alert in the topic (ZTF publishes to a new topic nightly).
+Even though the connection fails, the terminal/shell is not released,
+so we can't simply keep trying until the connection succeeds.
+Therefore I am still manually starting `night-conductor` to start the night after ZTF issues its first alert.
 There _should_ be a programatic way to check whether a topic is available, but I haven't been able to find it yet.
 I have a new lead, so I'll work on it more.
 
-<!-- fe Run Daily Broker -->
+[End Night] There is no programatic way to check whether ZTF has sent its last alert for the night,
+or to check whether we have received all the alerts ZTF has sent.
+Christopher Phillips at ZTF says we can assume that ZTF has sent out all of its alerts by shortly after sunrise ZTF time.
+I am still manually starting `night-conductor` to end the night.
+Over the last ~2 months (today is 1/19/21), ZTF has consistently been done issuing alerts by 9:30am ET, and our broker does not have a significant lag.
+I plan to automate starting `night-conductor` to end the night at 10am ET, but this will need to be adjusted seasonally.
+
+<!-- fe Run Nightly Broker -->
 
 
 ---
