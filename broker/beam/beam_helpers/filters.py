@@ -2,6 +2,8 @@
 # -*- coding: UTF-8 -*-
 
 """The ``filters`` module contains functions for filtering ZTF alerts.
+Note that filtering functions related to a specific analysis may reside in
+the module for that analysis (e.g., see ``salt2_utils.py``).
 
 Usage Example
 -------------
@@ -31,7 +33,7 @@ def is_extragalactic_transient(alert):
         alert (dict): dictionary of alert data from ZTF
 
     Returns:
-        is_transient (bool): whether alert is likely to be an extragalactic transient.
+        is_extragalactic_transient (bool): whether alert is likely to be an extragalactic transient.
     """
 
     dflc = _is_transient_make_dataframe(alert)
@@ -42,7 +44,6 @@ def is_extragalactic_transient(alert):
     if (candidate['distpsnr1'] is None) or (candidate['distpsnr1'] > 1.5):  # arcsec
         no_pointsource_counterpart = True
             # closest candidate == star < 1.5 arcsec away -> candidate probably star
-            # closet candidate == star > 1.5 arcsec away
     else:
         if candidate['sgscore1'] < 0.5:
             no_pointsource_counterpart = True
