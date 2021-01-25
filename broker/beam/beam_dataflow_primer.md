@@ -110,9 +110,11 @@ See also:
 - [Example: multiple_output_pardo.py](https://github.com/apache/beam/blob/master/sdks/python/apache_beam/examples/cookbook/multiple_output_pardo.py)
 
 `ParDo` (or the `DoFn` passed to it) can produce more than one output PCollection.
-The main output should be returned as normal,
+The main output should be returned as normal(*),
 additional outputs should be tagged using `apache_beam.pvalue.TaggedOutput('tag',element)`
 See the examples in the links above, and [the `FitSalt2` (`DoFn`) class in [beam_helpers/salt2_utils.py](beam_helpers/salt2_utils.py)].
+
+(*) We typically use `return` statements in our `DoFn`s, but we also have the option of using `yield` statements (making the `DoFn` a generator). However, to return _multiple outputs_ we must use `yield` statements.
 
 #### [Composite transforms](https://beam.apache.org/documentation/programming-guide/#composite-transforms)
 See also:
