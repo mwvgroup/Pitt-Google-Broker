@@ -49,7 +49,7 @@ def sink_configs(PROJECTID):
         PROJECTID (str): Google Cloud Platform project ID
 
     Returns:
-        snkconf = {'sinktype_dataDescription': {'config_name': value, }, }
+        snkconf = {'sinkResource_dataDescription': {'config_name': value, }, }
     """
     snkconf = {
             'BQ_salt2': {
@@ -69,18 +69,20 @@ def sink_configs(PROJECTID):
 
     return snkconf
 
+
 class Salt2(beam.PTransform):
     """ Composite PTransform of all Salt2-related transforms:
-    1. Extracts epochs
-    2. Filters out alerts that do not meet minimum data quality
-    3. Performs Salt2 fit
-    4. Stores a lightcurve + Salt2 fit figure in Cloud Storage
-    5. Stores fit results in BigQuery
-    6. Publishes fit results to Pub/Sub
+    1. Extract epochs
+    2. Filter out alerts that do not meet minimum data quality
+    3. Perform Salt2 fit
+    4. Store a lightcurve + Salt2 fit figure in Cloud Storage
+    5. Store fit results in BigQuery
+    6. Publish fit results to Pub/Sub
     """
-    def __init__(self, sinks, salt2_configs):
+    def __init__(self, sinks, sink_configs, salt2_configs):
         super().__init__()
         self.sinks = sinks
+        self.sink_configs = sink_configs
         self.salt2_configs = salt2_configs
 
     def expand(self, alert_PColl):
@@ -89,44 +91,46 @@ class Salt2(beam.PTransform):
             alert_PColl (PCollection[dict,]): PCollection of dictionaries
             of alert data from ZTF
         """
+        sinks = self.sinks
+        snkconf = self.sink_configs
+        s2conf = self.salt2_configs
+
         # extract the epochs and some stats
         epochInfoDicts = (alert_PColl | 'FormatForSalt2' >>
-                      beam.ParDo(s2.FormatForSalt2(self.salt2_configs))
+                      beam.ParDo(s2.FormatForSalt2(s2conf))
                      )
 
         # drop alerts that do not meet minimum data quality
         epochInfoDictsQC = (epochInfoDicts | 'filterSalt2QualityCuts' >>
-                          beam.Filter(s2.salt2_quality_cuts, self.salt2_configs)
+                          beam.Filter(s2.salt2_quality_cuts, s2conf)
                          )
 
         # fit with Salt2. Yields 2 output collections
         salt2Dicts = (epochInfoDictsQC | 'FitSalt2' >>
-                      beam.ParDo(s2.FitSalt2())
-                     ).with_outputs('salt2Fit4Figure', main='salt2FitResult')
+                      beam.ParDo(s2.FitSalt2()).with_outputs('salt2Fit4Figure', main='salt2FitResult')
+                     )
         salt2FitResult = salt2Dicts.salt2FitResult  # PCollection of dicts
         salt2Fit4Figure = salt2Dicts.salt2Fit4Figure  # PCollection of dicts
 
         # Store a lightcurve + Salt2 fit figure in Cloud Storage
         __ = (salt2Fit4Figure | 'StoreSalt2FitFigure' >>
-                beam.ParDo(s2.StoreSalt2FitFigure(self.sinks['CS_salt2']))
+                beam.ParDo(s2.StoreSalt2FitFigure(sinks['CS_salt2']))
             )
 
-        # to BQ
-        # TODO: do something with deadletters
+        # Store the fit params in BigQuery
         bqSalt2Deadletters = (salt2FitResult | 'salt2ToBQ' >>
                               WriteToBigQuery(sinks['BQ_salt2'],
                                               **snkconf['BQ_salt2'])
-                             )
+                             )  # ToDo: handle deadletters
 
-        # to PubSub
-        # TODO: do something with deadletters
+        # Announce the fit params to Pub/Sub
         salt2PS = (salt2FitResult | 'salt2FormatDictForPubSub' >>
                    beam.ParDo(dutil.formatDictForPubSub())
                   )
         psSalt2Deadletters = (salt2PS | 'salt2ToPubSub' >>
                               WriteToPubSub(sinks['PS_salt2'],
                                             **snkconf['PS_generic'])
-                             )
+                             )  # ToDo: handle deadletters
 
         return salt2FitResult
 
@@ -159,10 +163,10 @@ def run(PROJECTID, sources, sinks, pipeline_args, salt2_configs):
         psEgtDeadletters = (egtPS | 'exgalTransToPubSub' >>
                             WriteToPubSub(sinks['PS_exgalTrans'],
                                           **snkconf['PS_generic'])
-                           )
+                           )  # ToDo: handle deadletters
 
-        #-- Fit with Salt2
-        __ = adscExgalTrans | 'Salt2' >> Salt2(sinks, salt2_configs)
+        #-- Fit with Salt2, store and announce results
+        __ = adscExgalTrans | 'Salt2' >> Salt2(sinks, snkconf, salt2_configs)
 
 
 
@@ -223,8 +227,8 @@ if __name__ == "__main__":
     }
 
     salt2_configs = {
-                    'SNthresh': known_args.salt2_SNthresh,
-                    'minNdetections': known_args.salt2_minNdetections,
+                    'SNthresh': float(known_args.salt2_SNthresh),
+                    'minNdetections': int(known_args.salt2_minNdetections),
     }
 
     run(known_args.PROJECTID, sources, sinks, pipeline_args, salt2_configs)
