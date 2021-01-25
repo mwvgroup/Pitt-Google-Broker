@@ -37,8 +37,11 @@ timeout 30 \
         --PROJECTID ${PROJECT_ID} \
         --source_PS_ztf ${source_PS_ztf} \
         --sink_BQ_salt2 ${sink_BQ_salt2} \
+        --sink_CS_salt2 ${sink_CS_salt2} \
         --sink_PS_exgalTrans ${sink_PS_exgalTrans} \
         --sink_PS_salt2 ${sink_PS_salt2} \
+        --salt2_SNthresh ${salt2_SNthresh} \
+        ---salt2_minNdetections ${salt2_minNdetections} \
         --streaming \
     &> runjob.out
 # get the Job id so we can use it to stop the job later
@@ -69,7 +72,7 @@ jobid2=$(grep "Submitted job:" runjob.out | awk '{print $(NF)}')
 RUNNING_BEAM_JOBS="${jobid1} ${jobid2}"
 
 # Set RUNNING_BEAM_JOBS as metadata
-# - this will be used in end_night.sh to stop (drain) the jobs
+# this will be used by end_night.sh to stop (drain) the jobs
 baseurl="http://metadata.google.internal/computeMetadata/v1"
 H="Metadata-Flavor: Google"
 instancename=$(curl "${baseurl}/instance/name" -H "${H}")
