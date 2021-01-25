@@ -146,7 +146,7 @@ class FormatForSalt2(DoFn):
 
         epochInfo = {
                     'epochTable': Table(data),
-                    'epochStats': get_epoch_stats(epoch_dict),
+                    'epochStats': self.get_epoch_stats(epoch_dict),
         }
 
         return epochInfo
@@ -243,6 +243,8 @@ class FitSalt2(DoFn):
             salt2FitResult (dict): output of Salt2 fit, formatted for BigQuery and Pub/Sub
             salt2Fit4Figure (dict): data, model, and result; needed to do sncosmo.plot_lc()
         """
+        objectId = epochInfo['objectId']
+        candid = epochInfo['candid']
         epochTable = epochInfo['epochTable']
         epochStats = epochInfo['epochStats']
 
