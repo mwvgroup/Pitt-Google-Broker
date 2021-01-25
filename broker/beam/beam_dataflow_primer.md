@@ -8,6 +8,8 @@
     - [`PTransform`](#ptransform)
         - [`Filter`](#filter)
         - [`ParDo`](#pardo)  
+            - [Additional outputs](#additional-outputs)
+        - [Composite transforms](#composite-transforms)
 - [Dataflow](#dataflow)
     - [Setting the `DataflowRunner` and its configurations](#setting-the-dataflowrunner-and-its-configurations)
     - [Monitoring Interface](#monitoring-interface)
@@ -50,7 +52,7 @@ Batch and streaming jobs are both supported under a single programming model.
 Which type of job is run depends only on the initial data source input to the pipeline (and we must set the pipeline's `streaming` option), the rest of the programming logic and syntax is agnostic.
 
 Here we outline the essential concepts needed to program with Beam.
-Much of it is quoted directly from [__Apache Beam Overview/Tutorial__](https://beam.apache.org/documentation/programming-guide/).
+_Much of it is quoted directly from [__Apache Beam Overview/Tutorial__](https://beam.apache.org/documentation/programming-guide/)._
 
 ### [`Pipeline`](https://beam.apache.org/documentation/programming-guide/#creating-a-pipeline)
 - The `Pipeline` abstraction encapsulates all the data and steps in the data processing task.
@@ -92,13 +94,38 @@ Given a predicate, filter out all elements that don't satisfy the predicate.
     - [`ExgalTrans = alertDicts | apache_beam.Filter(is_extragalactic_transient)`]
 
 #### [`ParDo`](https://beam.apache.org/documentation/programming-guide/#pardo)
+See also:
+- [Transforms: ParDo](https://beam.apache.org/documentation/transforms/python/elementwise/pardo/)
+
 Generic parallel processing.
 1. We write a function which:
     - performs some data processing (e.g., fit the data using Salt2) on a single element of the input collection, and
     - returns a list containing zero or more elements, each of which will become an element of the output collection.
-2. We name that function `process` and wrap it in an arbitrarily-named class ([`fitSalt2`]).
+2. We name that function `process` and wrap it in an arbitrarily-named class [`fitSalt2`] (subclass of `DoFn`).
 3. We apply our function to each element of the step's input `PCollection` by passing the class to the `ParDo` transform:
     - [`salt2Dicts = ExgalTrans | apache_beam.ParDo(fitSalt2())`].
+
+##### [Additional outputs](https://beam.apache.org/documentation/programming-guide/#additional-outputs)
+See also:
+- [Example: multiple_output_pardo.py](https://github.com/apache/beam/blob/master/sdks/python/apache_beam/examples/cookbook/multiple_output_pardo.py)
+
+`ParDo` (or the `DoFn` passed to it) can produce more than one output PCollection.
+The main output should be returned as normal(*),
+additional outputs should be tagged using `apache_beam.pvalue.TaggedOutput('tag',element)`
+See the examples in the links above, and [the `FitSalt2` (`DoFn`) class in [beam_helpers/salt2_utils.py](beam_helpers/salt2_utils.py)].
+
+(*) We typically use `return` statements in our `DoFn`s, but we also have the option of using `yield` statements (making the `DoFn` a generator). However, to return _multiple outputs_ we must use `yield` statements.
+
+#### [Composite transforms](https://beam.apache.org/documentation/programming-guide/#composite-transforms)
+See also:
+- [Creating composite transforms](https://beam.apache.org/get-started/wordcount-example/#creating-composite-transforms)
+- Example in: [`ptransform_fn`](https://beam.apache.org/releases/pydoc/2.27.0/apache_beam.transforms.ptransform.html#apache_beam.transforms.ptransform.ptransform_fn)
+
+To make the pipeline structure more clear and modular,
+we can group multiple transforms into a single composite transform.
+We do this by creating a subclass of the `PTransform` class and overriding the `expand` method to specify the actual processing logic.
+We can then use this transform just as we would a built-in transform from the Beam SDK.
+See the links above and [the `Salt2` composite transform in [`ztf_value_added/beam_ztf_value_added.py`](ztf_value_added/beam_ztf_value_added.py)].
 
 <!-- fe Apache Beam -->
 
