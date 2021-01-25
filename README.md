@@ -136,7 +136,7 @@ zone=us-central1-a
 
 # start the night
 NIGHT=START
-KAFKA_TOPIC=ztf_20210119_programid1
+KAFKA_TOPIC=ztf_20210120_programid1
 gcloud compute instances add-metadata ${instancename} --zone=${zone} \
       --metadata NIGHT=${NIGHT},KAFKA_TOPIC=${KAFKA_TOPIC}
 gcloud compute instances start ${instancename} --zone ${zone}
@@ -171,21 +171,21 @@ Staging the startup scripts and other files in a Cloud Storage bucket means that
 All VMs pull down a fresh copy of any required file(s) before executing the relevant process.
 (Cloud Functions are different and must be re-deployed to be updated. Once deployed, they are always "on"; `night-conductor` does not manage them.)
 
-__Note on automating `night-conductor`'s startup:__
+__Note on triggering `night-conductor` to start/end the night:__
 
 [Start Night] The consumer's connection to ZTF will fail if there is not as least 1 alert in the topic (ZTF publishes to a new topic nightly).
 Even though the connection fails, the terminal/shell is not released,
 so we can't simply keep trying until the connection succeeds.
-Therefore I am still manually starting `night-conductor` to start the night after ZTF issues its first alert.
+Therefore I am still manually triggering `night-conductor` to start the night after ZTF issues its first alert.
 There _should_ be a programatic way to check whether a topic is available, but I haven't been able to find it yet.
 I have a new lead, so I'll work on it more.
 
 [End Night] There is no programatic way to check whether ZTF has sent its last alert for the night,
 or to check whether we have received all the alerts ZTF has sent.
 Christopher Phillips at ZTF says we can assume that ZTF has sent out all of its alerts by shortly after sunrise ZTF time.
-I am still manually starting `night-conductor` to end the night.
+I am still manually triggering `night-conductor` to end the night.
 Over the last ~2 months (today is 1/19/21), ZTF has consistently been done issuing alerts by 9:30am ET, and our broker does not have a significant lag.
-I plan to automate starting `night-conductor` to end the night at 10am ET, but this will need to be adjusted seasonally.
+I plan to automate triggering `night-conductor` to end the night at 10am ET, but this will need to be adjusted seasonally.
 
 <!-- fe Run Nightly Broker -->
 
