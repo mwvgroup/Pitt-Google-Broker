@@ -88,6 +88,12 @@ def upload_ztf_bytes_to_bucket(msg, context) -> None:
         blob.upload_from_file(temp_file)
         logger.log_text(f'Uploaded {filename} to {bucket.name}')
 
+def upload_ztf_bytes_to_bucket_test(msg, context) -> None:
+    """ Wrapper for `upload_ztf_bytes_to_bucket()`.
+    Used to deploy the Cloud Function for testing,
+    separate from the one in production.
+    """
+    upload_ztf_bytes_to_bucket(msg, context)
 
 def fix_schema(temp_file, survey, version, filename):
     """ Rewrites the temp_file with a corrected schema header
