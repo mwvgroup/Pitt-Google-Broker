@@ -14,73 +14,86 @@
 # to pass information to this script which triggers the desired behavior.
 # For example:
 #
-# To start the broker and ingest ZTF's stream for Jan. 19, 2021:
+# To start the broker using testing resources tagged with "mytest"
+# and ingest ZTF's stream for Jan. 19, 2021:
 #---
+# testid=mytest
 # NIGHT=START
 # KAFKA_TOPIC=ztf_20210119_programid1
-# instancename=night-conductor
+# nconductVM="night-conductor-${testid}"
 # zone=us-central1-a
-# gcloud compute instances add-metadata ${instancename} --zone=${zone} \
-#       --metadata NIGHT=${NIGHT},KAFKA_TOPIC=${KAFKA_TOPIC}
-# gcloud compute instances start ${instancename} --zone ${zone}
+# gcloud compute instances add-metadata "$nconductVM" --zone="$zone" \
+#       --metadata NIGHT="$NIGHT",KAFKA_TOPIC="$KAFKA_TOPIC"
+# gcloud compute instances start ${nconductVM} --zone ${zone}
 #---
 #
 # To end the night and tear down broker resources:
 #---
+# testid=mytest
 # NIGHT=END
-# instancename=night-conductor
+# nconductVM="night-conductor-${testid}"
 # zone=us-central1-a
-# gcloud compute instances add-metadata ${instancename} --zone=${zone} \
-#       --metadata NIGHT=${NIGHT}
-# gcloud compute instances start ${instancename} --zone ${zone}
+# gcloud compute instances add-metadata ${nconductVM} --zone=${zone} \
+#       --metadata NIGHT="$NIGHT"
+# gcloud compute instances start ${nconductVM} --zone ${zone}
 #---
 #
-# At the end of this script, metadata attributes are cleared
-# so that there is no unanticipated behavior the
-# next time the VM starts.
+# At the end of this script, metadata attributes are cleared so that there is
+# no unanticipated behavior the next time the VM starts.
 # Finally, the script shuts down `night-conductor`.
 #
 
+
+#--- Get metadata attributes, PROJECT_ID, and testid
+baseurl="http://metadata.google.internal/computeMetadata/v1"
+H="Metadata-Flavor: Google"
+NIGHT=$(curl "${baseurl}/instance/attributes/NIGHT" -H "${H}")
+PROJECT_ID=$(curl "${baseurl}/project/project-id" -H "${H}")
+nconductVM=$(curl "${baseurl}/instance/name" -H "${H}")
+# parse the testid from the VM name
+if [ "$nconductVM" = "night-conductor" ]; then
+    testid="False"
+else
+    testid=$(echo "$nconductVM" | awk -F "-" '{print $NF}')
+fi
+
+#--- GCP resources used in this script
+broker_bucket="${PROJECT_ID}-broker_files"
+# use test resources, if requested
+if [ "$testid" != "False" ]; then
+    broker_bucket="${broker_bucket}-${testid}"
+fi
 
 workingdir=/home/broker/night_conductor
 mkdir -p ${workingdir}
 cd ${workingdir}
 
-baseurl="http://metadata.google.internal/computeMetadata/v1"
-H="Metadata-Flavor: Google"
-PROJECT_ID=$(curl "${baseurl}/project/project-id" -H "${H}")
-bucket="${PROJECT_ID}-broker_files"
-
-# start or end the night
-NIGHT=$(curl "${baseurl}/instance/attributes/NIGHT" -H "${H}")
-
 if [ "${NIGHT}" = "START" ]
 then
     # copy broker's start_night directory from GCS and cd in
-    gsutil -m cp -r gs://${bucket}/night_conductor/start_night .
+    gsutil -m cp -r gs://${broker_bucket}/night_conductor/start_night .
     cd start_night
     chmod 744 *.sh
 
     # start up the resources, begin consuming and processing
-    ./start_night.sh ${PROJECT_ID} ${bucket}
+    ./start_night.sh ${PROJECT_ID} ${testid} ${broker_bucket}
 
 elif [ "${NIGHT}" = "END" ]
 then
     # copy broker's end_night directory from GCS and cd in
-    gsutil -m cp -r gs://${bucket}/night_conductor/end_night .
+    gsutil -m cp -r gs://${broker_bucket}/night_conductor/end_night .
     cd end_night
     chmod 744 *.sh
 
     # stop ingesting and teardown resources
-    ./end_night.sh
+    ./end_night.sh ${testid}
 fi
 
 # Wait a few minutes, then clear all metadata attributes and shutdown
-sleep 2m
+sleep 120
 
-instancename=$(curl "${baseurl}/instance/name" -H "${H}")
 zone=us-central1-a
-gcloud compute instances add-metadata ${instancename} --zone=${zone} \
+gcloud compute instances add-metadata ${nconductVM} --zone=${zone} \
       --metadata NIGHT="",KAFKA_TOPIC="",PS_TOPIC=""
 
 shutdown -h now

@@ -2,12 +2,13 @@
 # Starts the Beam/Dataflow job(s)
 
 PROJECT_ID=$1
-brokerdir=$2
-bucket=$3
-cd ${brokerdir}
+testid=$2
+brokerdir=$3
+broker_bucket=$4
 
 # Copy the broker's Beam directory from GCS and cd in
-gsutil -m cp -r gs://${bucket}/beam .
+cd ${brokerdir}
+gsutil -m cp -r gs://${broker_bucket}/beam .
 cd beam
 beamdir=$(pwd)
 
@@ -17,7 +18,7 @@ cp beam_helpers/__init__.py beam_helpers/data_utils.py ztf_bq_sink/beam_helpers/
 cp -r beam_helpers ztf_value_added/.
 
 # Set configs
-source jobs.config ${PROJECT_ID} ${beamdir}
+source jobs.config ${PROJECT_ID} ${testid} ${beamdir}
 
 # Start the ztf-value_added job.
 # - the command holds the terminal, so use timeout (does not cancel the job).

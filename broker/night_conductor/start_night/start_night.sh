@@ -3,16 +3,17 @@
 # the ZTF stream.
 
 PROJECT_ID=$1
-bucket=$2
+testid=$2
+broker_bucket=$3
 
 brokerdir=/home/broker
 mkdir -p ${brokerdir}
 
 # Reset Pub/Sub counters
-./reset_ps_counters.sh ${PROJECT_ID}
+./reset_ps_counters.sh ${PROJECT_ID} ${testid}
 
 # Start the Beam/Dataflow jobs
-./start_beam_jobs.sh ${PROJECT_ID} ${brokerdir} ${bucket}
+./start_beam_jobs.sh ${PROJECT_ID} ${testid} ${brokerdir} ${broker_bucket}
 
 # Start the consumer
-./start_consumer.sh ${bucket}
+./start_consumer.sh ${testid} ${broker_bucket}
