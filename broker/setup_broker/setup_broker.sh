@@ -1,41 +1,114 @@
 #! /bin/bash
+#
+# Create and configure GCP resources needed to run the nightly broker.
+#
+# To set up resources for _production_ broker instance, use
+#   testid=False
+#
+# To setup resources for a _testing_ broker instance tagged with "mytest", use
+#   testid=mytest
+# The testid may contain only lowercase letters and numbers
+# and must begin with a letter.
+# The testid will be appended to the names of all resources.
+#
+# To delete resources associated with a _testing_ instance tagged with "mytest", use
+#   testid=mytest
+#   teardown=True
+#
 
-# GOOGLE_CLOUD_PROJECT should exist as an environment variable
-PROJECT_ID=${GOOGLE_CLOUD_PROJECT}
-# # Set brokerdir as the parent directory of this script's directory
-# brokerdir=$(dirname "$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )")
-# # https://stackoverflow.com/questions/4774054/reliable-way-for-a-bash-script-to-get-the-full-path-to-itself
 
-# Create BigQuery, GCS, Pub/Sub and Logging resources
-python3 setup_gcp.py
+testid="${1:-test}"
+# "False" uses production resources
+# any other string will be appended to the names of all resources
+teardown="${2:-False}"
+# "True" tearsdown/deletes resources, else setup
+PROJECT_ID=$GOOGLE_CLOUD_PROJECT # get the environment variable
 
-# Upload some broker files to GCS so the VMs can use them
-bucket="${PROJECT_ID}-broker_files"
-gsutil -m cp -r ../beam gs://${bucket}
-gsutil -m cp -r ../consumer gs://${bucket}
-gsutil -m cp -r ../night_conductor gs://${bucket}
+#--- Make the user confirm the settings
+echo
+echo "setup_broker.sh will run with the following configs: "
+echo
+echo "GOOGLE_CLOUD_PROJECT = ${PROJECT_ID}"
+echo "testid = ${testid}"
+echo "teardown = ${teardown}"
+echo
+echo "Continue?  [y/N]: "
 
-# Setup the Pub/Sub notifications on ZTF Avro storage bucket
-BUCKET_NAME=${PROJECT_ID}_ztf_alert_avro_bucket
-TOPIC_NAME=projects/${PROJECT_ID}/topics/ztf_alert_avro_bucket
-format=none  # json or none; whether to deliver the payload with the PS msg
-gsutil notification create \
-            -t ${TOPIC_NAME} \
-            -e OBJECT_FINALIZE \
-            -f ${format} \
-            gs://${BUCKET_NAME}
+read continue_with_setup
+continue_with_setup="${continue_with_setup:-N}"
+if [ "$continue_with_setup" != "y" ]; then
+    echo "Exiting setup."
+    echo
+    exit
+fi
 
-# Deploy Cloud Functions
-./deploy_cloud_fncs.sh
+#--- GCP resources used directly in this script
+broker_bucket="${PROJECT_ID}-broker_files"
+avro_bucket="${PROJECT_ID}_ztf_alert_avro_bucket"
+avro_topic="projects/${PROJECT_ID}/topics/ztf_alert_avro_bucket"
+# use test resources, if requested
+# (there must be a better way to do this)
+if [ "$testid" != "False" ]; then
+    broker_bucket="${broker_bucket}-${testid}"
+    avro_bucket="${avro_bucket}-${testid}"
+    avro_topic="${avro_topic}-${testid}"
+fi
 
-# Create a firewall rule to open the port used by Kafka/ZTF
-# on any instance with the flag --tags=ztfport
-gcloud compute firewall-rules create 'ztfport' \
-    --allow=tcp:9094 \
-    --description="Allow incoming traffic on TCP port 9094" \
-    --direction=INGRESS \
-    --enable-logging
+#--- Create (or delete) BigQuery, GCS, Pub/Sub resources
+echo
+echo "Configuring BigQuery, GCS, Pub/Sub resources..."
+if [ "$testid" != "False" ]; then
+    if [ "$teardown" = "True" ]; then
+        # delete testing resources
+        python3 setup_gcp.py --testid="$testid" --teardown
+    else
+        # setup testing resources
+        python3 setup_gcp.py --testid="$testid"
+        ./create_bq_tables.sh "$PROJECT_ID" "$testid"
+    fi
+else
+    # setup production resources
+    python3 setup_gcp.py --production
+fi
 
-# Create VM instances
-./create_vms.sh ${bucket}
+if [ "$teardown" != "True" ]; then
+
+    #--- Upload some broker files to GCS so the VMs can use them
+    echo
+    echo "Uploading broker files to GCS..."
+    gsutil -m cp -r ../beam "gs://${broker_bucket}"
+    gsutil -m cp -r ../consumer "gs://${broker_bucket}"
+    gsutil -m cp -r ../night_conductor "gs://${broker_bucket}"
+
+    #--- Setup the Pub/Sub notifications on ZTF Avro storage bucket
+    echo
+    echo "Configuring Pub/Sub notifications on GCS bucket..."
+    format=none  # json or none; whether to deliver the payload with the PS msg
+    gsutil notification create \
+                -t "$avro_topic" \
+                -e OBJECT_FINALIZE \
+                -f "$format" \
+                "gs://${avro_bucket}"
+
+    #--- Create a firewall rule to open the port used by Kafka/ZTF
+    # on any instance with the flag --tags=ztfport
+    echo
+    echo "Configuring ZTF/Kafka firewall rule..."
+    gcloud compute firewall-rules create 'ztfport' \
+        --allow=tcp:9094 \
+        --description="Allow incoming traffic on TCP port 9094" \
+        --direction=INGRESS \
+        --enable-logging
+
+fi
+
+#--- Deploy Cloud Functions
+echo
+echo "Configuring Cloud Functions..."
+./deploy_cloud_fncs.sh "$testid" "$teardown"
+
+#--- Create VM instances
+echo
+echo "Configuring VMs..."
+./create_vms.sh "$broker_bucket" "$testid" "$teardown"
 # takes about 5 min to complete; waits for VMs to start up

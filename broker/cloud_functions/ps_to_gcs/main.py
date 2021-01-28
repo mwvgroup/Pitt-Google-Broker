@@ -88,7 +88,6 @@ def upload_ztf_bytes_to_bucket(msg, context) -> None:
         blob.upload_from_file(temp_file)
         logger.log_text(f'Uploaded {filename} to {bucket.name}')
 
-
 def fix_schema(temp_file, survey, version, filename):
     """ Rewrites the temp_file with a corrected schema header
         so that it is valid for upload to BigQuery.
