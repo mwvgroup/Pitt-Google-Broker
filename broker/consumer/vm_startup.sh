@@ -28,7 +28,7 @@ sed -i "s/PS_TOPIC/${PS_TOPIC}/g" ${fconfig}
 sed -i "s/KAFKA_TOPIC/${KAFKA_TOPIC}/g" ${fconfig}
 
 #--- Start the Kafka -> Pub/Sub connector
-# cd /bin
+cd /bin
 ./connect-standalone \
     ${workingdir}/psconnect-worker.properties \
     ${workingdir}/ps-connector.properties

@@ -189,7 +189,6 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--sink_CS_salt2",
-        default='ardent-cycling-243415_ztf-sncosmo',
         help="Cloud Storage bucket to store Salt2 figure.\n",
     )
     parser.add_argument(
