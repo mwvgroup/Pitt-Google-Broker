@@ -20,8 +20,9 @@ and [`ztf_bq_sink/beam_ztf_bq_sink.py`](ztf_bq_sink/beam_ztf_bq_sink.py)):
 ```bash
 #-- Set configs
 PROJECT_ID=${GOOGLE_CLOUD_PROJECT}
+testid=mytest # see broker/README.md to setup testing resources
 beamdir=$(pwd)
-source jobs.config ${PROJECT_ID} ${beamdir}
+source jobs.config ${PROJECT_ID} ${testid} ${beamdir}
 
 #-- Copy beam_helpers modules.
 # Modules in the beam_helpers directory are used by multiple jobs.
@@ -30,7 +31,7 @@ mkdir -p ztf_bq_sink/beam_helpers
 cp beam_helpers/__init__.py beam_helpers/data_utils.py ztf_bq_sink/beam_helpers/.
 cp -r beam_helpers ztf_value_added/.
 
-#-- Start the ztf processing Dataflow job
+#-- Start the ztf value-added processing Dataflow job
 cd ztf_value_added
 python3 beam_ztf_value_added.py \
             --experiments use_runner_v2 \
