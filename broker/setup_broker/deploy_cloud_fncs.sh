@@ -1,29 +1,35 @@
 #! /bin/bash
 # Deploys or deletes broker Cloud Functions
-# This script will not (is not configured to) delete Cloud Functions that are in production
+# This script will not delete Cloud Functions that are in production
 
-testrun="${1:-True}" # "True" uses test resources, else production resources
-teardown="${2:-False}" # "True" tearsdown/deletes resources, else setup
+testid="${1:-test}"
+# "False" uses production resources
+# any other string will be appended to the names of all resources
+teardown="${2:-False}"
+# "True" tearsdown/deletes resources, else setup
 
 #--- GCP resources used in this script
 trigger_topic="ztf_alert_data"
-PS_to_GCS_fnc="upload_ztf_bytes_to_bucket"
-if [ "$testrun" = "True" ]; then
-    trigger_topic="${trigger_topic}-test"
-    PS_to_GCS_fnc="${PS_to_GCS_fnc}_test"
+PS_to_GCS_fnc_name="upload_ztf_bytes_to_bucket"
+# use test resources, if requested
+if [ "$testid" != "False" ]; then
+    trigger_topic="${trigger_topic}-${testid}"
+    PS_to_GCS_fnc_name="${PS_to_GCS_fnc_name}_${testid}"
 fi
 
 #--- Pub/Sub -> Cloud Storage Avro cloud function
+PS_to_GCS_fnc="upload_ztf_bytes_to_bucket"
 if [ "$teardown" = "True" ]; then
     # ensure that we do not teardown production resources
-    if [ "$testrun" = "True" ]; then
-        gcloud functions delete "$PS_to_GCS_fnc"
+    if [ "$testid" != "False" ]; then
+        gcloud functions delete "$PS_to_GCS_fnc_name"
     fi
 else # Deploy
     OGdir=$(pwd)
     cd .. && cd cloud_functions
     cd ps_to_gcs
-    gcloud functions deploy "$PS_to_GCS_fnc" \
+    gcloud functions deploy "$PS_to_GCS_fnc_name" \
+        --entry-point "$PS_to_GCS_fnc" \
         --runtime python37 \
         --trigger-topic "$trigger_topic"
     cd $OGdir  # not sure if this is necessary

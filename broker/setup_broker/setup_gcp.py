@@ -22,18 +22,20 @@ Teardown:
 Use the ``teardown`` keyword argument to delete resources.
 This is intended to be used on non-production resources (currently, test resources).
 To avoid deleting resources used in production, this option should not be
-used with ``testrun=False`` (see below).
+used with ``testid=False`` (see below).
 To ensure that this is not done by accident, every function that can delete
 resources first calls the function ``_do_not_delete_production_resources``,
 which throws an error if it receives this combination of arguments.
 
 Production or Testing Resources:
+(See Usage Examples below.)
 The default behavior is to operate on _testing_ resources, since they will be
 setup/torndown much more frequently than production resources.
+To control the tag that is appended to resource names, use the ``testid`` argument (e.g., ``testid=mytest``).
 To operate on production resources:
 - from the command line, use the ``--production`` argument
-- in Python, use ``testrun=False``
-See Usage Examples below.
+- in Python, use ``testid=False``
+
 
 Usage Examples
 -------------
@@ -47,10 +49,10 @@ From command line:
     python3 setup_gcp.py --production
 
     # Setup test resources
-    python3 setup_gcp.py --testrun
+    python3 setup_gcp.py --testid=mytest
 
     # Teardown test resources
-    python3 setup_gcp.py --testrun --teardown
+    python3 setup_gcp.py --testid=mytest --teardown
 
 In Python:
 
@@ -59,16 +61,16 @@ In Python:
 
    from broker import gcp_setup
 
-   testrun = True
+   testid = 'mytest'
    teardown = False
 
    # Run individual tasks
-   gcp_setup.setup_bigquery(testrun=testrun, teardown=teardown)
-   gcp_setup.setup_buckets(testrun=testrun, teardown=teardown)
-   gcp_setup.setup_pubsub(testrun=testrun, teardown=teardown)
+   gcp_setup.setup_bigquery(testid=testid, teardown=teardown)
+   gcp_setup.setup_buckets(testid=testid, teardown=teardown)
+   gcp_setup.setup_pubsub(testid=testid, teardown=teardown)
 
    # Run all tasks
-   gcp_setup.auto_setup(testrun=testrun, teardown=teardown)
+   gcp_setup.auto_setup(testid=testid, teardown=teardown)
 
 
 Module Documentation
@@ -86,20 +88,22 @@ from google.cloud import bigquery, pubsub_v1, logging, storage
 PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
 
 
-def _resources(service, testrun=True):
+def _resources(service, testid='test'):
     """ Names the GCP resources to be setup/torn down.
 
     Args:
         service (str): which GCP service resources to return.
-        testrun (bool): whether to return resource names appended with "-test"
-        (or "_test" if "-" is not allowed, e.g., datasets.)
+        testid (False or str): False: Use production resources.
+                                str: Use test resources. (This string is
+                                appended to the resource names.)
     """
 
     if service == 'BQ':
         datasets = ['ztf_alerts', ]
 
-        if testrun:
-            datasets = [f'{d}_test' for d in datasets]
+        # append the testid
+        if testid is not False:
+            datasets = [f'{d}_{testid}' for d in datasets]
         return datasets
 
     if service == 'GCS':
@@ -116,8 +120,9 @@ def _resources(service, testrun=True):
         # Note that if you want to upload an entire directory, it is easier to
         # use the commandline tool `gsutil`. See ``setup_broker.sh``.
 
-        if testrun:
-            buckets = {f'{key}-test': val for key, val in buckets.items()}
+        # append the testid
+        if testid is not False:
+            buckets = {f'{key}-{testid}': val for key, val in buckets.items()}
         return buckets
 
     if service == 'PS':
@@ -125,63 +130,73 @@ def _resources(service, testrun=True):
                 'ztf_alert_avro_bucket':
                     ['ztf_alert_avro_bucket-counter'],
                 'ztf_alert_data':
-                    ['ztf_alert_data-counter'],
+                    ['ztf_alert_data-counter', 'ztf_alert_data-test_seeder', ],
                 'ztf_exgalac_trans':
                     ['ztf_exgalac_trans-counter'],
                 'ztf_salt2':
                     ['ztf_salt2-counter'],
         }
 
-        if testrun:
-            topics = {f'{key}-test': val for key, val in topics.items()}
+        # append the testid
+        if testid is not False:
+            topics = {f'{key}-{testid}': val for key, val in topics.items()}
             for key, val in topics.items():
-                topics[key] = [f'{v}-test' for v in val]
+                topics[key] = [f'{v}-{testid}' for v in val]
         return topics
 
-def _do_not_delete_production_resources(testrun=True, teardown=True):
+def _do_not_delete_production_resources(testid='test', teardown=True):
     """ If the user is requesting to delete resources used in production,
     throw an error.
 
     Args:
-        testrun (bool): whether to use test resources
+        testid (False or str): False: Use production resources.
+                                str: Use test resources. (This string is
+                                appended to the resource names.)
         teardown (bool): if True, delete resources rather than setting them up
     """
-    if teardown and not testrun:
-        msg = (f'\nReceived teardown={teardown} and testrun={testrun}.\n'
+    if teardown and not testid:
+        msg = (f'\nReceived teardown={teardown} and testid={testid}.\n'
                f'Exiting to prevent the teardown of production resources.\n')
         raise ValueError(msg)
 
-def _confirm_options(testrun, teardown):
+def _confirm_options(testid, teardown):
     """ Require the user to confirm options that determine
     the behavior of this script.
 
     Args:
-        testrun (bool): whether to use test resources
+        testid (False or str): False: Use production resources.
+                                str: Use test resources. (This string is
+                                appended to the resource names.)
         teardown (bool): if True, delete resources rather than setting them up
     """
     behavior = 'DELETE' if teardown else 'SETUP'
-    resources = 'TEST' if testrun else 'PRODUCTION'
-    msg = (f'\nsetup_gcp will {behavior} all {resources} resources.\n'
+    if not testid:
+        resources = 'PRODUCTION resources'
+    else:
+        resources = f'TEST resources tagged with "{testid}"'
+    msg = (f'\nsetup_gcp will {behavior} all bq, gcs, and ps {resources}.\n'
             'Continue?  [Y/n]:  ')
     continue_with_setup = input(msg) or 'Y'
 
-    if continue_with_setup is not 'Y':
+    if continue_with_setup not in ['Y', 'y']:
         msg = 'Exiting setup_gcp.py'
         sys.exit(msg)
 
 
-def setup_bigquery(testrun=True, teardown=False) -> None:
+def setup_bigquery(testid='test', teardown=False) -> None:
     """Create the necessary Big Query datasets if they do not already exist
     Args:
-        testrun (bool): whether to use test resources
+        testid (False or str): False: Use production resources.
+                                str: Use test resources. (This string is
+                                appended to the resource names.)
         teardown (bool): if True, delete resources rather than setting them up
 
     New datasets include:
       ``ztf_alerts``
     """
-    _do_not_delete_production_resources(testrun=testrun, teardown=teardown)
+    _do_not_delete_production_resources(testid=testid, teardown=teardown)
 
-    datasets = _resources('BQ', testrun=testrun)
+    datasets = _resources('BQ', testid=testid)
     bigquery_client = bigquery.Client()
 
     for dataset in datasets:
@@ -195,17 +210,19 @@ def setup_bigquery(testrun=True, teardown=False) -> None:
             bigquery_client.create_dataset(dataset, exists_ok=True)
             print(f'Created dataset (skipped if previously existed): {dataset}')
 
-def setup_buckets(testrun=True, teardown=False) -> None:
+def setup_buckets(testid='test', teardown=False) -> None:
     """Create new storage buckets and upload testing files.
     Files are expected to reside in the ``tests/test_alerts`` directory.
 
     Args:
-        testrun (bool): whether to use test resources
+        testid (False or str): False: Use production resources.
+                                str: Use test resources. (This string is
+                                appended to the resource names.)
         teardown (bool): if True, delete resources rather than setting them up
     """
-    _do_not_delete_production_resources(testrun=testrun, teardown=teardown)
+    _do_not_delete_production_resources(testid=testid, teardown=teardown)
 
-    buckets = _resources('GCS', testrun=testrun)
+    buckets = _resources('GCS', testid=testid)
     storage_client = storage.Client()
 
     for bucket_name, files in buckets.items():
@@ -238,15 +255,17 @@ def setup_buckets(testrun=True, teardown=False) -> None:
                     blob.upload_from_file(infile)
                 print(f'Uploaded {inpath} to {bucket_name}')
 
-def setup_pubsub(testrun=True, teardown=False) -> None:
+def setup_pubsub(testid='test', teardown=False) -> None:
     """ Create new Pub/Sub topics and subscriptions.
     Args:
-        testrun (bool): whether to use test resources
+        testid (False or str): False: Use production resources.
+                                str: Use test resources. (This string is
+                                appended to the resource names.)
         teardown (bool): if True, delete resources rather than setting them up
     """
-    _do_not_delete_production_resources(testrun=testrun, teardown=teardown)
+    _do_not_delete_production_resources(testid=testid, teardown=teardown)
 
-    topics = _resources('PS', testrun=testrun)
+    topics = _resources('PS', testid=testid)
     publisher = pubsub_v1.PublisherClient()
     subscriber = pubsub_v1.SubscriberClient()
 
@@ -289,20 +308,22 @@ def setup_pubsub(testrun=True, teardown=False) -> None:
                     subscriber.create_subscription(name=sub_path, topic=topic_path)
                     print(f'Created subscription {sub_name}')
 
-def auto_setup(testrun=True, teardown=False) -> None:
+def auto_setup(testid='test', teardown=False) -> None:
     """Create and setup GCP products required by the ``broker`` package.
 
     Args:
-        testrun (bool): whether to use test resources
+        testid (False or str): False: Use production resources.
+                                str: Use test resources. (This string is
+                                appended to the resource names.)
         teardown (bool): if True, delete resources rather than setting them up
 
     """
-    _do_not_delete_production_resources(testrun=testrun, teardown=teardown)
-    _confirm_options(testrun, teardown)  # make user confirm script behavior
+    _do_not_delete_production_resources(testid=testid, teardown=teardown)
+    _confirm_options(testid, teardown)  # make user confirm script behavior
 
-    setup_bigquery(testrun=testrun, teardown=teardown)
-    setup_buckets(testrun=testrun, teardown=teardown)
-    setup_pubsub(testrun=testrun, teardown=teardown)
+    setup_bigquery(testid=testid, teardown=teardown)
+    setup_buckets(testid=testid, teardown=teardown)
+    setup_pubsub(testid=testid, teardown=teardown)
 
 
 if __name__ == "__main__":
@@ -315,23 +336,22 @@ if __name__ == "__main__":
         default=False,
         help="Delete resources rather than creating them.\n",
     )
-    # testrun
-    # when calling this script, use one of --testrun (default) or --production
+    # testid
+    # when calling this script, use one of `--testid=<mytestid>` or `--production`
     parser.add_argument(
-        '--testrun',
-        dest='testrun',
-        action='store_true',
-        default=True,
-        help='Use test resources.\n',
+        '--testid',  # set testid = <mytestid>
+        dest='testid',
+        default='test',
+        help='Setup testing resources tagged with this ID. Example useage `--testid=mytest`\n',
     )
     parser.add_argument(
-        '--production',
-        dest='testrun',
+        '--production',  # set testid = False
+        dest='testid',
         action='store_false',
-        default=True,
+        default='test',
         help='Use production resources.\n',
     )
 
     known_args, __ = parser.parse_known_args()
 
-    auto_setup(testrun=known_args.testrun, teardown=known_args.teardown)
+    auto_setup(testid=known_args.testid, teardown=known_args.teardown)
