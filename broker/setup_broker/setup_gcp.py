@@ -100,6 +100,13 @@ def _resources(service, testid='test'):
 
     if service == 'BQ':
         datasets = ['ztf_alerts', ]
+        # We only create datasets here, not tables.
+        # To create a table, we must provide a schema.
+        # This is non-trivial for the main "alerts" table
+        # which has a nested schema.
+        # The simplest thing to do is to use the commandline tool `bq`
+        # to copy the schema from an existing table.
+        # See ``create_bq_tables.sh``
 
         # append the testid
         if testid is not False:
@@ -130,7 +137,7 @@ def _resources(service, testid='test'):
                 'ztf_alert_avro_bucket':
                     ['ztf_alert_avro_bucket-counter'],
                 'ztf_alert_data':
-                    ['ztf_alert_data-counter', 'ztf_alert_data-test_seeder', ],
+                    ['ztf_alert_data-counter', 'ztf_alert_data-reservoir', ],
                 'ztf_exgalac_trans':
                     ['ztf_exgalac_trans-counter'],
                 'ztf_salt2':
