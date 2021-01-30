@@ -1,6 +1,6 @@
 # Creating and Using a Broker Instance for Testing
 
-The following instructions will walk you through deploying an instance of the v0.2 broker code to GCP so that you can test the broker and its components.
+The following instructions will walk you through deploying an instance of the v0.3 broker code to GCP so that you can test the broker and its components.
 
 See the repo's main [../README.md](../README.md) for a description of the broker architecture and links to the production resources.
 
@@ -9,15 +9,20 @@ Table of Contents:
     - [Setup and utilize a _testing_ instance of the broker](#setup-and-utilize-a-testing-instance-of-the-broker)
     - [Setup a _production_ instance of the broker](#setup-a-production-instance-of-the-broker)
 - [Detailed Workflow with code examples](#detailed-workflow-with-code-examples)
-    - [Setup a testing instance](#setup-a-testing-instance)
-    - [Run your tests](#run-your-tests)
-        - [Example: Run the broker](#example-run-the-broker)
-    - [Teardown the testing instance](#teardown-the-testing-instance)
-    - [Leave the testing instance inactive](#leave-the-testing-instance-inactive)
+    - [1. Setup a testing instance](#1-setup-a-testing-instance)
+    - [2. Run your tests](#2-run-your-tests)
+        - [Where to view your resources](#where-to-view-your-resources)
+        - [Example: Run the broker]().
+            - [End-to-End](#end-to-end). In this section you can:
+                - Connect to ZTF's _live stream_
+                - Connect to a ZTF _stream from a previous night_ (this will _flood_ the broker with alerts)
+            - [Use the consumer simulator](#use-the-consumer-simulator) (this bypasses the broker's consumer, and is the only option by which you can _control the flow_ of alerts into the broker)
+    - [3. Option a: Leave the testing instance inactive](#3a-leave-the-testing-instance-inactive)
+    - [3. Option b: Teardown the testing instance](#3b-teardown-the-testing-instance)
 
-## Overview
+# Overview
 
-### Setup and utilize a _testing_ instance of the broker
+## Setup and utilize a _testing_ instance of the broker
 <!-- fs -->
 In this tutorial, we will create and deploy a _testing_ instance of the broker which you can play around with without touching any of the GCP resources or code that is running nightly in _production_.
 We do this by creating new GCP resources (VMs, Pub/Sub streams, buckets, etc.) from the source code in this branch, which have their names tagged with a user-defined string, the "testid".
@@ -55,7 +60,7 @@ See below for the specific code, but essentially you execute the `setup_broker.s
 
 <!-- fe Create, deploy, and utilize a testing instance of the broker -->
 
-### Setup a _production_ instance of the broker
+## Setup a _production_ instance of the broker
 <!-- fs -->
 Strictly speaking, this tutorial is not intended to cover this topic, but the only difference between a testing and production instance of the broker is the presence/absence of a tag (string) appended to the names of all GCP resources that created for, and used by, the broker instance.
 So, I will cover some relevant items here.
@@ -75,16 +80,18 @@ This is one layer of security, but we should still look into protecting those re
 <!-- fe Create and deploy a production instance of the broker -->
 
 
-## Detailed Workflow with code examples
+# Detailed Workflow with code examples
 <!-- fs -->
 To test the broker, you should perform these 3 steps:
-1. __Setup__ your own instance of the broker for testing.
-2. __Run your tests__ using the instance you created in step 1.
-3. __Teardown__ the broker instance when you are done (i.e., delete the GCP resources created in step 1)
+1. [__Setup a testing instance__](#1-setup-a-testing-instance). Setup your own instance of the broker for testing.
+2. [__Run your tests__](#2-run-your-tests) using the instance you created in step 1.
+3. [__Option a: Leave the testing instance inactive__](#3a-leave-the-testing-instance-inactive). Use this option if you are done for the day, but you want to come back to the same broker testing instance later. These are instructions to _stop/shutdown_ your GCP testing resources so that we do not pay for them to sit idle.
+3. [__Option b: Teardown the testing instance__](#3b-teardown-the-testing-instance) when you are completely done with it (i.e., delete the GCP resources created in step 1).
 
-You can also leave the testing instance inactive, just be sure to shutdown all VMs and end all Dataflow jobs.
+__Note: All resources that are hyperlinked in what follows are _production_ resources.
+The testing resources you create will have the same names with your chosen testid appended (and joined by either "-" or "\_").__
 
-### Setup a testing instance
+## 1. Setup a testing instance
 <!-- fs -->
 If you don't have GCP command line tools like `gcloud` and `gsutil` installed, follow the instructions in step 2 of [../README.md](../README.md#setup-the-broker-for-the-first-time).
 Activate your virtual environment if needed.
@@ -111,9 +118,6 @@ testid="mytest"
 ./setup_broker.sh $testid
 # this script is described in the text below
 ```
-
-Resources linked below are _production_ resources.
-The testing resources you create will have the same names with your chosen testid appended (and joined by either "-" or "_").
 
 `setup_broker.sh` does the following:
 
@@ -146,28 +150,98 @@ gcloud compute scp /local/path "ztf-consumer-${testid}:/vm/path" --zone="$CE_zon
 
 <!-- fe Setup a testing instance -->
 
-### Run your tests
+## 2. Run your tests
 <!-- fs -->
 You can alter your testing instance of the broker at-will, and use it to execute any type of testing that you'd like.
 
-Here, we use it to walk through the process of actually running the broker to ingest/store/process the ZTF alert stream.
+In the example below, we use it to walk through the process of actually running the broker to ingest/store/process the ZTF alert stream.
 
-#### Example: Run the broker
+If you would just rather __start an *individual* component of the broker__, here are some options:
+- Look in [night_conductor/start_night/start_night.sh](night_conductor/start_night/start_night.sh) to see how `night-conductor` starts that component and mimic it. In most cases, you can simply call a shell script and pass in a few variables.
+- Start a Dataflow job manually by following [beam/README.md](beam/README.md).
+- Start the VMs manually:
+```bash
+# start both VMs setup by setup_broker.sh
+testid=mytest
+consumerVM="ztf-consumer-${testid}"
+nconductVM="night-conductor-${testid}"
+zone=us-central1-a
+gcloud compute instances start "$consumerVM" "$nconductVM" --zone="$zone"
+# we have not set any metadata attributes (see below for an explanation),
+# so the VMs won't do anything except startup.
+```
+
+### Where to view your resources
+<!-- fs -->
+Here are links/instructions on viewing your resources in the GCP Console.
+Some concepts are explained in detail in the following "Run the broker" example (e.g., metadata attributes are important).
+
+[__VM instances__](https://console.cloud.google.com/compute/instances?project=ardent-cycling-243415&instancessize=50). Click on the name of one of your VMs (`night-conductor-{testid}` or `ztf-consumer-{testid}`). From here you can:
+- _start/stop_ the instance
+- access the _logs_
+- view and edit the _metadata attributes_
+- view and edit _other configs_
+- click a button to `ssh` into the instance
+- view performance stats and live _monitoring charts_
+
+[__Pub/Sub topics__](https://console.cloud.google.com/cloudpubsub/topic/list?project=ardent-cycling-243415) and [__Pub/Sub subscriptions__](https://console.cloud.google.com/cloudpubsub/subscription/list?project=ardent-cycling-243415). Click on a topic/subscription. From here you can:
+- view and edit topic/subscription details
+- view live _monitoring charts_
+
+[__Dataflow jobs__](https://console.cloud.google.com/dataflow/jobs?project=ardent-cycling-243415). Click on a job name. From here you can:
+- start/stop (cancel/drain) the job
+- view details about the job
+- view and interact with the _graph (DAG) that represents the pipeline_ PCollections and Transforms. Click on a node to view details about that step, including live _throughput charts_.
+- view a page of live _monitoring charts_ (click "JOB METRICS" tab at the top)
+- access the _logs_. Click "LOGS" at the top, you will see tabs for "JOB LOGS", "WORKER LOGS", and "DIAGNOSTICS". Note that if you select a step in the DAG graph you will only see logs related to that step (unselect the step to view logs for the full job). It's easiest to view the logs if you open them in the Logs Viewer by clicking the icon.
+
+[__Cloud Functions__](https://console.cloud.google.com/functions/list?project=ardent-cycling-243415). Click on a function name. From here you can:
+- view live _monitoring charts_
+- view and edit job details
+- view the source code
+- view the logs
+- test the function (I've never used this option)
+
+<!-- fe Where to view your resources -->
+
+### [Example] Run the broker
+<!-- fs -->
+This example will walk you through running the broker to ingest, store, and process an alert stream.
+
+You have three options for _ingesting alerts_ into the broker:
+1. Connect to ZTF's __live stream__. Obviously, this can only be done at night (Pacific Time) when there is a live stream to connect to.
+2. Connect to a ZTF __stream from a previous night__. This will __*flood*__ the broker with alerts! See below for a heads up on what to expect. You can connect to any ZTF topic _within the last 7 days_ that _contains at least 1 alert_.
+3. Use the __consumer simulator__ to __*control the flow*__ of alerts into the broker. This will bypass the broker's consumer component.
+
+__I recommend option 3, unless you specifically want to test the consumer.__ The workflow will split below, depending on which ingestion option you want.
+
+__Night Conductor__
 
 The broker employs the [`night-conductor`](https://console.cloud.google.com/compute/instancesDetail/zones/us-central1-a/instances/night-conductor?tab=details&project=ardent-cycling-243415) VM to orchestrate starting and ending the night.
-Its _startup script_, [night_conductor/vm_startup.sh](night_conductor/vm_startup.sh), contains the required logic to start and stop GCP resources.
-(Note that the startup script is staged in the bucket [ardent-cycling-243415-broker_files](https://console.cloud.google.com/storage/browser/ardent-cycling-243415-broker_files?project=ardent-cycling-243415&pageState=%28%22StorageObjectListTable%22:%28%22f%22:%22%255B%255D%22%29%29&prefix=&forceOnObjectsSortingFiltering=false) along with other files used to run the broker.)
+This VM runs the set of scripts in the [night_conductor/](night_conductor/) directory.
+Its _startup script_, [night_conductor/vm_startup.sh](night_conductor/vm_startup.sh) (which calls the other scripts), contains the required logic to start and stop broker components/GCP resources.
+(Note that this set of scripts is staged in the bucket [ardent-cycling-243415-broker_files](https://console.cloud.google.com/storage/browser/ardent-cycling-243415-broker_files?project=ardent-cycling-243415&pageState=%28%22StorageObjectListTable%22:%28%22f%22:%22%255B%255D%22%29%29&prefix=&forceOnObjectsSortingFiltering=false) along with files used by other components to run the broker.)
 
-To control the behavior of the script, we pass arguments to it by setting _metadata attributes_ on `night-conductor` prior to starting the VM.
+To control the behavior of the startup script, we pass arguments to it by setting _metadata attributes_ on `night-conductor` prior to starting the VM.
 Metadata attributes are cleared before the VM shuts down so that no unexpected behavior occurs on the next startup.
 
+- To run the broker end-to-end, proceed with the following section, [End-to-End](#end-to-end) .
+- To bypass the broker's consumer and use the consumer simulator, skip to [Use the consumer simulator](#use-the-consumer-simulator)
+
+#### __End-to-End__
+<!-- fs -->
+Here we connect to a ZTF alert stream and run the broker, end-to-end.
+We do this using the broker's "night conductor" (see above for a description).
+
 To start the broker for the night, we must set a metadata attribute with the name of the _ZTF/Kafka topic_ the consumer should subscribe to.
-ZTF publishes alerts to a new topic each night, and our consumer's connection to the Kafka stream will fail if there is not at least one alert in the topic.
+ZTF publishes alerts to a _new_ topic each night.
 The syntax for the topic name is `ztf_yyyymmdd_programid1`.
-If you want to test this during the day, you can connect to any topic _within the last 7 days_ that contains at least 1 alert.
-You can check [ztf.uw.edu/alerts/public/](https://ztf.uw.edu/alerts/public/).
+You can connect to a live stream (if one is currently available) or to a topic from a previous night within the last 7 days.
+__Before you connect to a previous night, please see the note below about _flooding_ the broker with alerts,__ and consider using the consumer _simulator_ instead (see next section).
+
+Note: Our consumer's connection to the Kafka stream will fail _if there is not at least 1 alert in the topic_. The VM running the consumer will hang while trying to connect, and will require a _reboot_.
+For topics from previous nights, you can check [ztf.uw.edu/alerts/public/](https://ztf.uw.edu/alerts/public/).
 `tar` files larger than 74 (presumably in bytes) indicate dates with >0 alerts.
-See below for what to expect if you let it consume an active night's worth of alerts as fast as it can.
 
 ```bash
 testid=mytest
@@ -182,6 +256,7 @@ KAFKA_TOPIC=ztf_20210120_programid1 # ztf_yyyymmdd_programid1
 # must be within the last 7 days and contain at least 1 alert
 gcloud compute instances add-metadata "$instancename" --zone="$zone" \
         --metadata NIGHT="$NIGHT",KAFKA_TOPIC="$KAFKA_TOPIC"
+# the night conductor VM will get the testid by parsing its own instance name
 
 # the startup script should already be set, but we can make sure
 startupscript="gs://${broker_bucket}/night_conductor/vm_startup.sh"
@@ -190,8 +265,7 @@ gcloud compute instances add-metadata "$instancename" --zone "$zone" \
 
 # start the VM to trigger the startup script
 gcloud compute instances start "$instancename" --zone "$zone"
-# night-conductor will get the testid by parsing its own instance name
-# night-conductor shuts down automatically when broker startup is complete
+# the VM will shut itself down automatically when broker startup is complete
 
 #--- The broker will start ingesting the ZTF stream
 #    and storing/processing the data.
@@ -202,20 +276,21 @@ NIGHT=END
 gcloud compute instances add-metadata "$instancename" --zone="$zone" \
       --metadata NIGHT="$NIGHT"
 
-# start the VM to trigger the startup script
+# start the VM to trigger the startup script that will shutdown the broker
 gcloud compute instances start "$instancename" --zone "$zone"
-# night-conductor will get the testid by parsing its own instance name
-# the night-conductor VM shuts down automatically when broker shutdown is complete
+# the VM will shut itself down automatically when broker shutdown is complete
 ```
 
 __Start Night Details:__
 
 Currently, `night-conductor` executes the following to start the night:
-1. Clears the messages from Pub/Sub subscriptions that we use to count the number of elements received and processed each night.
+1. Clears the messages from Pub/Sub subscriptions that we use to count the number of elements received and processed each night. Your subscription instances will have names like `<topic_name>-counter-<testid>`.
 2. Deploys the two Dataflow jobs and waits for their status to change to "Running".
-3. Starts the [`ztf-consumer`](https://console.cloud.google.com/compute/instancesMonitoringDetail/zones/us-central1-a/instances/ztf-consumer?project=ardent-cycling-243415&tab=monitoring&duration=PT1H&pageState=%28%22duration%22:%28%22groupValue%22:%22P7D%22,%22customValue%22:null%29%29) VM, which is configured with a startup script to connect to ZTF and begin ingesting.
+3. Starts the `ztf-consumer-<testid>` VM, which is configured with a startup script to connect to ZTF and begin ingesting.
 
 Cloud Functions are always "on"; `night-conductor` does not manage them.
+
+__Note on connecting to a previous night's topic (i.e., _flooding_ the broker with alerts):__
 
 Based on my experience, _what to expect if you allow the broker to ingest a ZTF topic that already contains 200,000 - 400,000 alerts (a typical, active night) as fast as it can_:
 - The consumer should ingest and publish all of the alerts to the `ztf_alert_data` Pub/Sub topic within about 30 minutes.
@@ -223,7 +298,8 @@ Based on my experience, _what to expect if you allow the broker to ingest a ZTF 
 - The BigQuery storage component (Dataflow job) will likely get bogged down and take >10 hours to process all of the alerts. I recommend just cancelling the job. This component performs reasonably at the live-stream rate, but it tends to struggle when flooded with alerts. In general, it is the component with the largest lag times and number of dropped alerts. It could use some TLC, or a complete reconfiguring.
 - The value-added processing component (Dataflow job) should process all of the alerts within a few hours.
 
-Note on triggering `night-conductor` to start the night:
+__Note on _triggering_ `night-conductor` to start the night:__
+
 The consumer's connection to ZTF will fail if there is not as least 1 alert in the topic, but the terminal/shell is not released,
 so we can't simply keep trying until the connection succeeds.
 Therefore I am still manually triggering `night-conductor` to start the night after ZTF issues its first alert.
@@ -245,16 +321,150 @@ I am still manually triggering `night-conductor` to end the night.
 Over the last ~2 months (today is 1/19/21), ZTF has consistently been done issuing alerts by 9:30am ET, and our broker does not have a significant lag.
 I plan to automate triggering `night-conductor` to end the night at 10am ET, but this will need to be adjusted seasonally.
 
+<!-- fe End-to-End -->
+
+#### Use the consumer simulator
+<!-- fs -->
+By using our "consumer simulator", you can feed alerts into your broker without connecting to a ZTF stream. This option bypasses the broker's consumer and gives you a lot more control over the ingestion. It is useful if:
+- there is not a ZTF stream available that suites your needs; and/or
+- you want to _control the flow of alerts_ into the system.
+
+The ingestion rate of the _broker's_ consumer is at the mercy of ZTF. A ZTF live stream is ingested at the same rate at which ZTF publishes the alerts. A ZTF stream from a previous night will be ingested as fast as possible. In the second case, alerts _flood_ into the system. Most (but not all) broker components handle this without much trouble, but this is not a reasonable way run our tests unless we specifically want to see how the broker handles an extreme rate of incoming alerts (which we will want to do at some point, in preparation for LSST).
+
+To run the broker using the consumer simulator, we:
+1. [Start the broker](#start-the-broker) using `night-conductor` with the metadata attribute that holds the ZTF/Kafka topic set to `NONE`. This instructs `night-conductor` to _skip_ booting up the consumer VM.
+2. [Run the consumer simulator](#run-the-consumer-simulator):
+Use the `ztf_consumer_sim` python module to feed alerts into the `ztf_alert_data-{testid}` Pub/Sub topic that all _non-consumer_ components use to ingest alerts. The code for the module is nested under the `dev_utils` package at the top level of the repo: [../dev_utils/consumer_sims/ztf_consumer_sim.py](../dev_utils/consumer_sims/ztf_consumer_sim.py).
+3. [Shutdown the broker](#shutdown-the-broker) ("end the night") using `night-conductor`. (This stops the broker components so that they are inactive and we do not continue paying for them; it does not delete your broker instance.)
+
+##### Start the broker
+
+```bash
+testid=mytest
+instancename="night-conductor-${testid}"
+zone=us-central1-a
+broker_bucket="${GOOGLE_CLOUD_PROJECT}-broker_files-${testid}"
+
+#--- Start the broker without the consumer
+# set the attributes
+NIGHT="START"
+KAFKA_TOPIC="NONE" # tell night-conductor to skip booting up consumer VM
+gcloud compute instances add-metadata "$instancename" --zone="$zone" \
+        --metadata NIGHT="$NIGHT",KAFKA_TOPIC="$KAFKA_TOPIC"
+# night-conductor will get the testid by parsing its own instance name
+
+# the startup script should already be set, but we can make sure
+startupscript="gs://${broker_bucket}/night_conductor/vm_startup.sh"
+gcloud compute instances add-metadata "$instancename" --zone "$zone" \
+        --metadata startup-script-url="$startupscript"
+
+# start the VM to trigger the startup script
+gcloud compute instances start "$instancename" --zone "$zone"
+# night-conductor shuts down automatically when broker startup is complete
+
+#--- After a few minutes, the broker should be ready to process alerts.
+#    Feed alerts into the system using the consumer simulator.
+
+```
+
+See the sections above on
+1) running the broker end-to-end, for a description of what the startup script will do;
+2) where to find/view your resources on the GCP Console.
+
+##### Run the consumer simulator
+Make sure your Dataflow jobs are running. Check the
+[Dataflow jobs console](https://console.cloud.google.com/dataflow/jobs?project=ardent-cycling-243415).
+The Cloud Functions are always "on" and listening to the stream.
+
+```python
+# Put the `dev_utils` directory on your path
+# I will add this to the broker's setup instructions later.
+import sys
+path_to_dev_utils = '/Users/troyraen/Documents/PGB/repo/dev_utils'
+sys.path.append(path_to_dev_utils)
+
+# import the consumer simulator
+from consumer_sims import ztf_consumer_sim as zcs
+
+
+testid = 'mytest'
+
+# publish 100 alerts to the ztf_alert_data-mytest Pub/Sub topic
+# N = 100
+N=1
+zcs.publish_stream(testid=testid, N=N)
+
+
+
+```
+
+##### Shutdown the broker
+
+```bash
+testid=mytest
+instancename="night-conductor-${testid}"
+zone=us-central1-a
+
+#--- End the night
+# set the attributes
+NIGHT=END
+gcloud compute instances add-metadata "$instancename" --zone="$zone" \
+      --metadata NIGHT="$NIGHT"
+# the night conductor VM will get the testid by parsing its own instance name
+
+# start the VM to trigger the startup script that will shutdown the broker
+gcloud compute instances start "$instancename" --zone "$zone"
+# the VM shuts down automatically when broker shutdown is complete
+```
+<!-- fe Use the consumer simulator -->
+<!-- fe Example: Run the broker -->
 <!-- fe Run your tests -->
 
-### Teardown the testing instance
+## 3a. Leave the testing instance inactive
 <!-- fs -->
-When you are done with your testing instance of the broker, delete it by running the setup script with the "teardown" argument.
+Use this option if you are done using your broker testing instance for the day, but you want to come back to the same instance later.
+These are instructions to _stop/shutdown_ your GCP testing resources so that we do not pay for them to sit idle.
+This is most important in the case of __Compute Engine VMs__ and __Dataflow jobs__ (which themselves utilize VMs).
+
+__If you followed the "Run the broker" example above, all you need to do is _trigger the night conductor to end the night_.__ Instructions are in the example.
+
+__Stop VMs manually:__
+
+```bash
+# stop both VMs setup by setup_broker.sh
+testid=mytest
+consumerVM="ztf-consumer-${testid}"
+nconductVM="night-conductor-${testid}"
+zone=us-central1-a
+gcloud compute instances stop "$consumerVM" "$nconductVM" --zone="$zone"
+```
+
+Note: GCP also gives you the option to "suspend" (rather than "stop") the VM.
+This is the equivalent of shutting the lid on your laptop; you can come back to it in the same state as when you left it. Charges _are_ incurred for VMs in the "suspend" state, but _not_ for VMs in the "stop" state.
+
+__Stop Dataflow jobs manually:__
+
+To stop/drain/cancel a Dataflow job from the commandline, you would need to look up the job ID assigned by Dataflow at runtime.
+It's easier to stop the job manually from the [Dataflow console](https://console.cloud.google.com/dataflow/jobs?project=ardent-cycling-243415).
+- Select your job, then select "Stop"
+- You will be given the option to "Drain" or "Cancel"
+    - Drain: stop ingesting alerts, but finish processing the alerts that are already in the pipeline.
+    - Cancel: stop the job immediately. Ingestion stops and alerts already in the pipeline are dropped.
+
+__Start things up again:__
+
+Follow instructions in the section [Run your tests](#2-run-your-tests).
+
+<!-- fe Leave the testing instance inactive -->
+
+## 3b. Teardown the testing instance
+<!-- fs -->
+When you are completely done with your testing instance of the broker, __delete it__ by running the broker's setup script with the "teardown" argument set to `True`.
 
 ```bash
 cd Pitt-Google-Broker/broker/setup_broker
 
-# Teardown all test resources with the testid "mytest"
+# Teardown/delete all test resources with the testid "mytest"
 testid="mytest"
 teardown="True"
 ./setup_broker.sh $testid $teardown
@@ -263,25 +473,5 @@ teardown="True"
 This will delete all GCP resources tagged with the testid.
 
 <!-- fe Teardown the testing instance -->
-
-### Leave the testing instance inactive
-<!-- fs -->
-You can leave the testing resources inactive, but please shutdown all VMs and stop all Dataflow jobs so that we don't incur a cost for them to sit idle.
-If you followed the example above to run the broker, triggering the night conductor to end the night will accomplish this.
-To do it manually:
-
-```bash
-# stop both VMs
-testid=mytest
-consumerVM="ztf-consumer-${testid}"
-nconductVM="night-conductor-${testid}"
-zone=us-central1-a
-gcloud compute instances stop "$consumerVM" "$nconductVM" --zone="$zone"
-```
-
-To stop/drain/cancel a Dataflow job from the command line, you would need to look up the job ID assigned by Dataflow at runtime.
-It's easier to stop the job manually from the [Dataflow console](https://console.cloud.google.com/dataflow/jobs?project=ardent-cycling-243415).
-
-<!-- fe Leave the testing instance inactive -->
 
 <!-- fe Detailed Workflow with code examples -->
