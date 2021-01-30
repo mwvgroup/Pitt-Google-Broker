@@ -2,6 +2,7 @@
 
 testid=$1
 broker_bucket=$2
+KAFKA_TOPIC=$3
 
 #--- GCP resources used in this script
 PS_TOPIC=ztf_alert_data
@@ -12,9 +13,6 @@ if [ "$testid" != "False" ]; then
 fi
 
 # Set consumer VM metadata for the day's topic
-baseurl="http://metadata.google.internal/computeMetadata/v1"
-H="Metadata-Flavor: Google"
-KAFKA_TOPIC=$(curl "${baseurl}/instance/attributes/KAFKA_TOPIC" -H "${H}")
 zone=us-central1-a
 gcloud compute instances add-metadata ${consumerVM} --zone=${zone} \
       --metadata KAFKA_TOPIC=${KAFKA_TOPIC},PS_TOPIC=${PS_TOPIC}
