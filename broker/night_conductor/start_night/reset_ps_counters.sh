@@ -20,6 +20,7 @@ else
     "ztf_exgalac_trans-counter-${testid}" \
     "ztf_salt2-counter-${testid}" \
     )
+fi
 
 now=$(date)
 prfx="projects/${PROJECT_ID}/subscriptions/"

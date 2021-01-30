@@ -9,10 +9,14 @@ broker_bucket=$3
 brokerdir=/home/broker
 mkdir -p ${brokerdir}
 
-# Reset Pub/Sub counters
+#--- Reset Pub/Sub counters
+echo
+echo "Resetting Pub/Sub counters..."
 ./reset_ps_counters.sh ${PROJECT_ID} ${testid}
 
-# Start the Beam/Dataflow jobs
+#--- Start the Beam/Dataflow jobs
+echo
+echo "Starting Dataflow Beam jobs..."
 ./start_beam_jobs.sh ${PROJECT_ID} ${testid} ${brokerdir} ${broker_bucket}
 
 # Start the consumer

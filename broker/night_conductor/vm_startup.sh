@@ -38,9 +38,10 @@
 # gcloud compute instances start ${nconductVM} --zone ${zone}
 #---
 #
-# At the end of this script, metadata attributes are cleared so that there is
+# At the end of this script, if NIGHT=START or NIGHT=STOP then
+# metadata attributes are cleared so that there is
 # no unanticipated behavior the next time the VM starts.
-# Finally, the script shuts down `night-conductor`.
+# Then the script shuts down `night-conductor`.
 #
 
 
@@ -70,7 +71,8 @@ cd ${workingdir}
 
 if [ "${NIGHT}" = "START" ]
 then
-    # copy broker's start_night directory from GCS and cd in
+    # replace broker's start_night directory with GCS files and cd in
+    rm -r start_night
     gsutil -m cp -r gs://${broker_bucket}/night_conductor/start_night .
     cd start_night
     chmod 744 *.sh
@@ -80,7 +82,8 @@ then
 
 elif [ "${NIGHT}" = "END" ]
 then
-    # copy broker's end_night directory from GCS and cd in
+    # replace broker's end_night directory with GCS files and cd in
+    rm -r end_night
     gsutil -m cp -r gs://${broker_bucket}/night_conductor/end_night .
     cd end_night
     chmod 744 *.sh
@@ -90,10 +93,13 @@ then
 fi
 
 # Wait a few minutes, then clear all metadata attributes and shutdown
-sleep 120
+# skip this if not starting/stoping the night (so we can turn it on to debug)
+if [ "${NIGHT}" = "START" ] || [ "${NIGHT}" = "END" ]; then
+    sleep 120
 
-zone=us-central1-a
-gcloud compute instances add-metadata ${nconductVM} --zone=${zone} \
-      --metadata NIGHT="",KAFKA_TOPIC="",PS_TOPIC=""
+    zone=us-central1-a
+    gcloud compute instances add-metadata ${nconductVM} --zone=${zone} \
+          --metadata NIGHT="",KAFKA_TOPIC="",PS_TOPIC=""
 
-shutdown -h now
+    shutdown -h now
+fi

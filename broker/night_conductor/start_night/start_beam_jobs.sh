@@ -6,8 +6,9 @@ testid=$2
 brokerdir=$3
 broker_bucket=$4
 
-# Copy the broker's Beam directory from GCS and cd in
+# Replace the broker's Beam directory with GCS files and cd in
 cd ${brokerdir}
+rm -r beam
 gsutil -m cp -r gs://${broker_bucket}/beam .
 cd beam
 beamdir=$(pwd)
@@ -24,7 +25,7 @@ source jobs.config ${PROJECT_ID} ${testid} ${beamdir}
 # - the command holds the terminal, so use timeout (does not cancel the job).
 # - send the output to a file.
 cd ztf_value_added
-timeout 30 \
+timeout 60 \
     python3 beam_ztf_value_added.py \
         --experiments use_runner_v2 \
         --setup_file ${setup_file_valadd} \
@@ -50,7 +51,7 @@ jobid1=$(grep "Submitted job:" runjob.out | awk '{print $(NF)}')
 
 # Start the ztf -> BQ job
 cd ${beamdir} && cd ztf_bq_sink
-timeout 30 \
+timeout 60 \
     python3 beam_ztf_bq_sink.py \
         --experiments use_runner_v2 \
         --setup_file ${setup_file_bqsink} \
