@@ -16,7 +16,7 @@
     - [Error and exception handling](#error-and-exception-handling)
 
 
-_Note_: References in [brackets] indicate PGB-specific examples of the indicated files/functions/etc. Most of these can be found in [[`ztf_value_added/beam_ztf_value_added.py`](ztf_value_added/beam_ztf_value_added.py)] or [[`README.md`](README.md)].
+__*Note*: References in [brackets] indicate PGB-specific examples of the indicated files/functions/etc. Most of these can be found in [[`ztf_value_added/beam_ztf_value_added.py`](ztf_value_added/beam_ztf_value_added.py)] or [[`README.md`](README.md)].__
 
 
 ---

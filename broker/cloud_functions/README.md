@@ -5,7 +5,9 @@ Source code for each function is stored in a dedicated directory
 and is accompanied by a bash script that deploys the cloud function
 to the Google Cloud Platform.
 
-For more information on cloud functions, see: https://cloud.google.com/functions
+For more information on cloud functions, see:
+- [Cloud Functions](https://cloud.google.com/functions)
+- [Cloud Functions Execution Environment](https://cloud.google.com/functions/docs/concepts/exec)
 
 | Function | Description |
 |---|---|
