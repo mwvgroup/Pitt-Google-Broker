@@ -43,7 +43,7 @@ def publish_stream(
     print(f"\nPublishing {Nbatches} batches, each with {alerts_per_batch} alerts, at a rate of 1 batch per {pbeN} {pbeU} (plus processing time).\n")
 
     # publish the stream
-    do_publish_stream(testid, alerts_per_batch, Nbatches, publish_batch_every, sub_id, topic_id)
+    do_publish_stream(testid, alerts_per_batch, Nbatches, publish_batch_every, sub_id, topic_id, nack)
 
 
 def do_publish_stream(
