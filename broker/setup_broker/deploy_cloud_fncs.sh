@@ -28,9 +28,12 @@ else # Deploy
     OGdir=$(pwd)
     cd .. && cd cloud_functions
     cd ps_to_gcs
+
     gcloud functions deploy "$PS_to_GCS_fnc_name" \
         --entry-point "$PS_to_GCS_fnc" \
         --runtime python37 \
-        --trigger-topic "$trigger_topic"
+        --trigger-topic "$trigger_topic" \
+        --set-env-vars TESTID="$testid"
+        
     cd $OGdir  # not sure if this is necessary
 fi
