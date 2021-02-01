@@ -182,31 +182,40 @@ Some concepts are explained in detail in the following "Run the broker" example 
 - view and edit the _metadata attributes_
 - view and edit _other configs_
 - click a button to `ssh` into the instance
-- view performance stats and live _monitoring charts_
+- view performance stats and live* _monitoring charts_
 
 [__Pub/Sub topics__](https://console.cloud.google.com/cloudpubsub/topic/list?project=ardent-cycling-243415) and [__Pub/Sub subscriptions__](https://console.cloud.google.com/cloudpubsub/subscription/list?project=ardent-cycling-243415). Click on a topic/subscription. From here you can:
 - view and edit topic/subscription details
-- view live _monitoring charts_
+- view live* _monitoring charts_
 
 [__Dataflow jobs__](https://console.cloud.google.com/dataflow/jobs?project=ardent-cycling-243415). Click on a job name. From here you can:
 - start/stop (cancel/drain) the job
 - view details about the job
 - view and interact with the _graph (DAG) that represents the pipeline_ PCollections and Transforms. Click on a node to view details about that step, including live _throughput charts_.
-- view a page of live _monitoring charts_ (click "JOB METRICS" tab at the top)
+- view a page of live* _monitoring charts_ (click "JOB METRICS" tab at the top)
 - access the _logs_. Click "LOGS" at the top, you will see tabs for "JOB LOGS", "WORKER LOGS", and "DIAGNOSTICS". Note that if you select a step in the DAG graph you will only see logs related to that step (unselect the step to view logs for the full job). It's easiest to view the logs if you open them in the Logs Viewer by clicking the icon.
 
 [__Cloud Functions__](https://console.cloud.google.com/functions/list?project=ardent-cycling-243415). Click on a function name. From here you can:
-- view live _monitoring charts_
+- view live* _monitoring charts_
 - view and edit job details
 - view the source code
 - view the logs
 - test the function (I've never used this option)
+
+[__BigQuery__](https://console.cloud.google.com/bigquery?project=ardent-cycling-243415). Expand the list under our project name (LHS), then expand a dataset, then click on a table name.
+
+[__Storage Buckets__](https://console.cloud.google.com/storage/browser?project=ardent-cycling-243415). Click on the name of a bucket.
+
+* Live monitoring charts have some lag time.
 
 <!-- fe Where to view your resources -->
 
 ### [Example] Run the broker
 <!-- fs -->
 This example will walk you through running the broker to ingest, store, and process an alert stream.
+__Before you begin, make sure your VMs are stopped__. 
+(If you have just set up your testing instance, your VMs are running.)
+You can do this from the Console (see [Where to view your resources](#where-to-view-your-resources)) or the command line (see [Leave the testing instance inactive](#3a-leave-the-testing-instance-inactive)).
 
 You have three options for _ingesting alerts_ into the broker:
 1. Connect to ZTF's __live stream__. Obviously, this can only be done at night (Pacific Time) when there is a live stream to connect to.
@@ -327,15 +336,49 @@ I plan to automate triggering `night-conductor` to end the night at 10am ET, but
 <!-- fs -->
 By using our "consumer simulator", you can feed alerts into your broker without connecting to a ZTF stream. This option bypasses the broker's consumer and gives you a lot more control over the ingestion. It is useful if:
 - there is not a ZTF stream available that suites your needs; and/or
-- you want to _control the flow of alerts_ into the system.
+- you want to __*control the flow of alerts*__ into the system.
 
-The ingestion rate of the _broker's_ consumer is at the mercy of ZTF. A ZTF live stream is ingested at the same rate at which ZTF publishes the alerts. A ZTF stream from a previous night will be ingested as fast as possible. In the second case, alerts _flood_ into the system. Most (but not all) broker components handle this without much trouble, but this is not a reasonable way run our tests unless we specifically want to see how the broker handles an extreme rate of incoming alerts (which we will want to do at some point, in preparation for LSST).
+The ingestion rate of the _broker's_ consumer is at the mercy of ZTF. A ZTF live stream is ingested at the same rate at which ZTF publishes the alerts. A ZTF stream from a previous night will be ingested as fast as possible. In the second case, alerts _flood_ into the system. Most (but not all) broker components handle this without much trouble, but in general, this is not a reasonable way to run our tests.
 
-To run the broker using the consumer simulator, we:
+__How it works__:
+
+The module's code is at [../dev_utils/consumer_sims/ztf_consumer_sim.py](../dev_utils/consumer_sims/ztf_consumer_sim.py)
+
+The consumer simulator publishes alerts to the `ztf_alert_data-{testid}` Pub/Sub topic, from which all non-consumer components of the broker get the alerts.
+The user can set the:
+- `alertRate`: desired rate at which alerts are published
+- `runTime`: desired length of time for which the simulator publishes alerts
+- `publish_batch_every`: interval of time the simulator sleeps between publishing batches of alerts
+
+The simulator publishs alerts in batches, so the desired alert rate and run time both get converted. 
+Rounding occurs so that an integer number of batches are published, each containing the same integer number of alerts. 
+Therefore the _alert publish rate and the length of time for which the simulator runs may not be exactly equal to the `alertRate` and `runTime`_ respectively.
+If you want one or both to be exact, choose an appropriate combination of variables.
+
+_[`ztf_alert_data-reservoir`](https://console.cloud.google.com/cloudpubsub/subscription/detail/ztf_alert_data-reservoir?project=ardent-cycling-243415)_:
+
+The simulator's _source_ of alerts is the Pub/Sub _subscription_ `ztf_alert_data-reservoir` (attached to the _topic_ `ztf_alert_data`). 
+All users of the consumer simulator access the _same_ reservoir by default(*).
+__Please be courteous, and do not drain the reservoir__(**).
+Alerts expire from the subscription after 7 days (max allowed by Pub/Sub), so if ZTF has not produced many alerts in the last week, the reservoir will be low. 
+On the bright side, the alerts coming from the simulator/reservoir will always be recent.
+_You can check the number of alerts currently in the reservoir by viewing the subscription in the GCP Console_ (click the link above, look for "Unacked message count")
+
+(*) An equivalent subscription reservoir is created for your testing instance, but it is not pre-filled with alerts.
+However, once you _do_ have alerts in your testing instance, you can use a keyword argument to point the simulator's source subscription to your own reservoir. 
+This will create a closed loop wherein the same set of alerts will flow from your reservoir, into your `ztf_alert_data-{testid}` topic, and back into your reservoir (which is a subscription on that topic).
+In this way, you can access an __infinite source of (non-unique) alerts__.
+(You can also publish alerts to an arbitary topic via a keyword.)
+
+(**) To facilitate this, in addition to using your own reservoir, you have the option to "nack" messages, which tells the subscriber _not_ to acknowledge the messages. As a result, the alerts will not disappear from the reservoir; the subscriber will redeliver the messages at an arbitrary time in the future (to you or someone else).
+
+__Workflow__:
 1. [Start the broker](#start-the-broker) using `night-conductor` with the metadata attribute that holds the ZTF/Kafka topic set to `NONE`. This instructs `night-conductor` to _skip_ booting up the consumer VM.
 2. [Run the consumer simulator](#run-the-consumer-simulator):
 Use the `ztf_consumer_sim` python module to feed alerts into the `ztf_alert_data-{testid}` Pub/Sub topic that all _non-consumer_ components use to ingest alerts. The code for the module is nested under the `dev_utils` package at the top level of the repo: [../dev_utils/consumer_sims/ztf_consumer_sim.py](../dev_utils/consumer_sims/ztf_consumer_sim.py).
 3. [Shutdown the broker](#shutdown-the-broker) ("end the night") using `night-conductor`. (This stops the broker components so that they are inactive and we do not continue paying for them; it does not delete your broker instance.)
+
+Code follows.
 
 ##### Start the broker
 
@@ -372,34 +415,89 @@ See the sections above on
 2) where to find/view your resources on the GCP Console.
 
 ##### Run the consumer simulator
-Make sure your Dataflow jobs are running. Check the
+Before starting this section, make sure your Dataflow jobs are running (if desired). Check the
 [Dataflow jobs console](https://console.cloud.google.com/dataflow/jobs?project=ardent-cycling-243415).
-The Cloud Functions are always "on" and listening to the stream.
+When deployed, these jobs create _new_ subscriptions to the `ztf_alert_data-{testid}` Pub/Sub topic, so _they will miss any alerts published to that topic prior to their deployment_.
+(The Cloud Functions, by contrast, are always "on" and listening to the stream.)
+
+You may need to update to the latest version (2.2.0) of the PubSub API: `pip install google-cloud-pubsub --upgrade`
 
 ```python
-# Put the `dev_utils` directory on your path
+#--- Put the `dev_utils` directory on your path
 # I will add this to the broker's setup instructions later.
 import sys
-path_to_dev_utils = '/Users/troyraen/Documents/PGB/repo/dev_utils'
+# path_to_dev_utils = '/Users/troyraen/Documents/PGB/repo/dev_utils'
+path_to_dev_utils = '/home/troy_raen_pitt/Pitt-Google-Broker/dev_utils'
 sys.path.append(path_to_dev_utils)
 
-# import the consumer simulator
+#--- import the simulator
 from consumer_sims import ztf_consumer_sim as zcs
 
+#--- set some variables to use later
+N = 10
+aRate = 600
 
+#--- Set desired alert rate. Examples:
+alertRate = (aRate, 'perMin')  # (int, str)
+    # unit (str) options: 'perSec', 'perMin', 'perHr', 'perNight'(=per 10 hrs)
+alertRate = (N, 'once')
+    # publish N alerts simultaneously, one time
+alertRate = 'ztf-active-avg'
+    # = (250000, 'perNight'). avg rate of an active night
+alertRate = 'ztf-max' 
+    # = (5000, 'perMin'). max publish rate (approx) that ZTF spikes to
+
+#--- Set desired amount of time the simulator runs
+runTime = (N, 'min')  # (int, str) 
+    # unit (str) options: 'sec', 'min', 'hr', 'night'(=10 hrs)
+    # if alertRate "units" == 'once', setting runTime has no effect
+
+#--- Set the rate at which batches are published (optional)
+publish_batch_every = (5, 'sec')  # (int, str)
+    # only str option is 'sec'
+# In practice: the simulator publishes a batch, then sleeps for a time publish_batch_every.
+# If you set a number that is too low, processing time will rival sleep time,
+# and the actual publish rate and run time may be quite different than expected.
+# I have only tested the default setting, which is (5, 'sec').
+
+#--- Run the simulator (examples)
 testid = 'mytest'
 
-# publish 100 alerts to the ztf_alert_data-mytest Pub/Sub topic
-# N = 100
-N=1
-zcs.publish_stream(testid=testid, N=N)
+# publish N alerts, 1 time
+alertRate = (N, 'once')
+zcs.publish_stream(testid, alertRate)
 
+# publish alerts for N minutes, at the average rate of an active ZTF night
+alertRate = 'ztf-active-avg'
+runTime = (N, 'min')
+zcs.publish_stream(testid, alertRate, runTime)
 
+# publish for N minutes, at avg rate of 30 alerts/sec, at a publish rate of 1 batch/min
+alertRate = (30, 'perSec')
+runTime = (N, 'min')
+publish_batch_every = (60, 'sec')
+zcs.publish_stream(testid, alertRate, runTime, publish_batch_every)
 
+# Connect the simulator to your own reservoir,
+# creating a closed loop between your data stream and reservoir.
+# (Assumes you previously tapped the main reservoir and ingested at least 1 alert.)
+sub_id = f'ztf_alert_data-reservoir-{testid}'
+zcs.publish_stream(testid, alertRate, runTime, sub_id=sub_id)
+
+# Connect the simulator to a different sink (topic).
+# By default, the simulator publishes to the topic `ztf_alert_data-{testid}`,
+# but you can publish to an arbitrary topic (which must already exist).
+topic_id = f'troy_test_topic'
+zcs.publish_stream(testid, alertRate, runTime, topic_id=topic_id)
+
+# nack the messages so that they do not disappear from the reservoir
+nack = True
+zcs.publish_stream(testid, alertRate, runTime, nack=nack)
 ```
 
 ##### Shutdown the broker
 
+Trigger `night-conductor` to end the night.
 ```bash
 testid=mytest
 instancename="night-conductor-${testid}"
