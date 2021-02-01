@@ -3,7 +3,7 @@
 See [`beam-dataflow-primer.md`](beam_dataflow_primer.md) for intros to Beam and Dataflow.
 It is interspersed with references to components of the pipeline(s) that we deploy here.
 
-To start the jobs (defined in
+To manually start the jobs (defined in
 [`ztf_value_added/beam_ztf_value_added.py`](ztf_value_added/beam_ztf_value_added.py)
 and [`ztf_bq_sink/beam_ztf_bq_sink.py`](ztf_bq_sink/beam_ztf_bq_sink.py)):
 
@@ -15,7 +15,7 @@ and [`ztf_bq_sink/beam_ztf_bq_sink.py`](ztf_bq_sink/beam_ztf_bq_sink.py)):
 
 3. `cd` to this directory (`broker/beam`)
 
-4. Set configs and start the job:
+4. Set configs and start the jobs:
 
 ```bash
 #-- Set configs

@@ -10,15 +10,18 @@ https://cloud.google.com/functions/docs/tutorials/pubsub#functions-prepare-envir
 for a tutorial.
 """
 
+import base64
+import fastavro
 from google.cloud import logging
 from google.cloud import storage
-import base64
-import re
+import os
 from pathlib import Path
-from tempfile import SpooledTemporaryFile
 import pickle
-import fastavro
+import re
+from tempfile import SpooledTemporaryFile
 
+PROJECT_ID = os.getenv('GCP_PROJECT')
+TESTID = os.getenv('TESTID')
 
 # connect to the cloud logger
 logging_client = logging.Client()
@@ -26,7 +29,9 @@ log_name = 'ps-to-gcs-cloudfnc'
 logger = logging_client.logger(log_name)
 
 # bucket to store the Avro files
-bucket_name = 'ardent-cycling-243415_ztf_alert_avro_bucket'
+bucket_name = f'{PROJECT_ID}_ztf_alert_avro_bucket'
+if TESTID != "False":
+    bucket_name = f'{bucket_name}-{TESTID}'
 storage_client = storage.Client()
 bucket = storage_client.get_bucket(bucket_name)
 
