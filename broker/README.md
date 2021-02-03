@@ -103,8 +103,11 @@ export GOOGLE_CLOUD_PROJECT=ardent-cycling-243415
 #--- The Compute Engine VMs must be assigned to a specific zone.
 # We currently use the same zone for all instances.
 # The default is us-central1-a,
-# but it can controlled explicitly by setting an environment variable
-export CE_zone=us-central1-a
+# but it can controlled explicitly by setting an environment variable.
+# This variable has not been fully implemented in other components of the
+# broker (the zone is hardcoded in some places) yet.
+# Therefore I do not recommend changing this yet.
+# export CE_zone=us-central1-a
 
 #--- Get the current broker repo/branch and navigate to the setup directory
 git clone https://github.com/mwvgroup/Pitt-Google-Broker
@@ -213,7 +216,7 @@ Some concepts are explained in detail in the following "Run the broker" example 
 ### [Example] Run the broker
 <!-- fs -->
 This example will walk you through running the broker to ingest, store, and process an alert stream.
-__Before you begin, make sure your VMs are stopped__. 
+__Before you begin, make sure your VMs are stopped__.
 (If you have just set up your testing instance, your VMs are running.)
 You can do this from the Console (see [Where to view your resources](#where-to-view-your-resources)) or the command line (see [Leave the testing instance inactive](#3a-leave-the-testing-instance-inactive)).
 
@@ -350,22 +353,22 @@ The user can set the:
 - `runTime`: desired length of time for which the simulator publishes alerts
 - `publish_batch_every`: interval of time the simulator sleeps between publishing batches of alerts
 
-The simulator publishs alerts in batches, so the desired alert rate and run time both get converted. 
-Rounding occurs so that an integer number of batches are published, each containing the same integer number of alerts. 
+The simulator publishs alerts in batches, so the desired alert rate and run time both get converted.
+Rounding occurs so that an integer number of batches are published, each containing the same integer number of alerts.
 Therefore the _alert publish rate and the length of time for which the simulator runs may not be exactly equal to the `alertRate` and `runTime`_ respectively.
 If you want one or both to be exact, choose an appropriate combination of variables.
 
 _[`ztf_alert_data-reservoir`](https://console.cloud.google.com/cloudpubsub/subscription/detail/ztf_alert_data-reservoir?project=ardent-cycling-243415)_:
 
-The simulator's _source_ of alerts is the Pub/Sub _subscription_ `ztf_alert_data-reservoir` (attached to the _topic_ `ztf_alert_data`). 
+The simulator's _source_ of alerts is the Pub/Sub _subscription_ `ztf_alert_data-reservoir` (attached to the _topic_ `ztf_alert_data`).
 All users of the consumer simulator access the _same_ reservoir by default(*).
 __Please be courteous, and do not drain the reservoir__(**).
-Alerts expire from the subscription after 7 days (max allowed by Pub/Sub), so if ZTF has not produced many alerts in the last week, the reservoir will be low. 
+Alerts expire from the subscription after 7 days (max allowed by Pub/Sub), so if ZTF has not produced many alerts in the last week, the reservoir will be low.
 On the bright side, the alerts coming from the simulator/reservoir will always be recent.
 _You can check the number of alerts currently in the reservoir by viewing the subscription in the GCP Console_ (click the link above, look for "Unacked message count")
 
 (*) An equivalent subscription reservoir is created for your testing instance, but it is not pre-filled with alerts.
-However, once you _do_ have alerts in your testing instance, you can use a keyword argument to point the simulator's source subscription to your own reservoir. 
+However, once you _do_ have alerts in your testing instance, you can use a keyword argument to point the simulator's source subscription to your own reservoir.
 This will create a closed loop wherein the same set of alerts will flow from your reservoir, into your `ztf_alert_data-{testid}` topic, and back into your reservoir (which is a subscription on that topic).
 In this way, you can access an __infinite source of (non-unique) alerts__.
 (You can also publish alerts to an arbitary topic via a keyword.)
@@ -444,11 +447,11 @@ alertRate = (N, 'once')
     # publish N alerts simultaneously, one time
 alertRate = 'ztf-active-avg'
     # = (250000, 'perNight'). avg rate of an active night
-alertRate = 'ztf-max' 
+alertRate = 'ztf-max'
     # = (5000, 'perMin'). max publish rate (approx) that ZTF spikes to
 
 #--- Set desired amount of time the simulator runs
-runTime = (N, 'min')  # (int, str) 
+runTime = (N, 'min')  # (int, str)
     # unit (str) options: 'sec', 'min', 'hr', 'night'(=10 hrs)
     # if alertRate "units" == 'once', setting runTime has no effect
 
