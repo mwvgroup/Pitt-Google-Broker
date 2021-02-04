@@ -83,7 +83,7 @@ gcloud compute instances add-metadata ${instancename} --zone=${zone} \
       --metadata RUNNING_BEAM_JOBS="${RUNNING_BEAM_JOBS}"
 
 # Make sure the jobs are running
-for jobid in "${RUNNING_BEAM_JOBS}"
+for jobid in $RUNNING_BEAM_JOBS
 do
     jobstate=""
     while [ "${jobstate}" != "Running" ]
