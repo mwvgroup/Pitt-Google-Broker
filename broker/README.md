@@ -445,10 +445,10 @@ alertRate = (aRate, 'perMin')  # (int, str)
     # unit (str) options: 'perSec', 'perMin', 'perHr', 'perNight'(=per 10 hrs)
 alertRate = (N, 'once')
     # publish N alerts simultaneously, one time
-alertRate = 'ztf-active-avg'
-    # = (250000, 'perNight'). avg rate of an active night
-alertRate = 'ztf-max'
-    # = (5000, 'perMin'). max publish rate (approx) that ZTF spikes to
+alertRate = 'ztf-active-avg'  # = (300000, 'perNight')
+    # avg rate for an avg, active night (range 150,000 - 450,000 perNight)
+alertRate = 'ztf-live-max'  # = (125, 'perSec')
+    # approx max incoming rate seen from live ZTF stream
 
 #--- Set desired amount of time the simulator runs
 runTime = (N, 'min')  # (int, str)

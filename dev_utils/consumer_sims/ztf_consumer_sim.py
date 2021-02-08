@@ -257,23 +257,31 @@ def convert_rate_to_publish_unit(alertRate, publish_unit='sec'):
 
 def convert_rate_to_tuple(alertRate):
 
-    # make sure we have a type that has been configured
-    if type(alertRate)!=str:
-        if type(alertRate) != tuple:
-            msg = 'alertRate must be a tuple or a string'
-            raise ValueError(msg)
+    if type(alertRate) == tuple:
+        # type == tuple, so just return it
+        aRate = alertRate
 
-        else:
-            # type == tuple, so just return it
-            aRate = alertRate
+    elif type(alertRate) == str:
+        aRate = convert_rate_string_to_tuple(alertRate)
+        # returns tuple or raises ValueError
 
-    # convert strings to tuples
-    elif alertRate=='ztf-active-avg':
-        aRate = (250000, 'perNight')
-    elif alertRate == 'ztf-max':
-        aRate = (5000, 'perMin')
     else:
-        msg = f"'ztf-active-avg' and 'ztf-max' are the only strings currently configured for the alertRate"
+        msg = 'alertRate must be a tuple or a string'
+        raise ValueError(msg)
+
+    return aRate
+
+def convert_rate_string_to_tuple(alertRate):
+    # convert strings to tuples
+
+    if alertRate=='ztf-active-avg':
+        aRate = (300000, 'perNight')
+
+    elif alertRate == 'ztf-live-max':
+        aRate = (125, 'perSec')
+
+    else:
+        msg = f"'ztf-active-avg' and 'ztf-live-max' are the only strings currently configured for the alertRate"
         raise ValueError(msg)
 
     return aRate
