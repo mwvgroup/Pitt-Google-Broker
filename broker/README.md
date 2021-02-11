@@ -105,8 +105,11 @@ export GOOGLE_CLOUD_PROJECT=ardent-cycling-243415
 #--- The Compute Engine VMs must be assigned to a specific zone.
 # We currently use the same zone for all instances.
 # The default is us-central1-a,
-# but it can controlled explicitly by setting an environment variable
-export CE_ZONE=us-central1-a
+# but it can controlled explicitly by setting an environment variable.
+# This variable has not been fully implemented in other components of the
+# broker (the zone is hardcoded in some places) yet.
+# Therefore I do not recommend changing this yet.
+# export CE_ZONE=us-central1-a
 
 #--- Get the current broker repo/branch and navigate to the setup directory
 git clone https://github.com/mwvgroup/Pitt-Google-Broker
@@ -448,10 +451,10 @@ alertRate = (aRate, 'perMin')  # (int, str)
     # unit (str) options: 'perSec', 'perMin', 'perHr', 'perNight'(=per 10 hrs)
 alertRate = (N, 'once')
     # publish N alerts simultaneously, one time
-alertRate = 'ztf-active-avg'
-    # = (300000, 'perNight'). avg rate of an active night
-alertRate = 'ztf-live-max'
-    # = (200, 'perSec'). approximate max incoming rate seen from ZTF
+alertRate = 'ztf-active-avg'  # = (300000, 'perNight')
+    # avg rate for an avg, active night (range 150,000 - 450,000 perNight)
+alertRate = 'ztf-live-max'  # = (200, 'perSec')
+    # approx max incoming rate seen from live ZTF stream
 
 #--- Set desired amount of time the simulator runs
 runTime = (N, 'min')  # (int, str)

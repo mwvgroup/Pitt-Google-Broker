@@ -89,6 +89,10 @@ do
     while [ "${jobstate}" != "Running" ]
     do
         jobstate=$(gcloud dataflow jobs list --project="${PROJECT_ID}" --filter="id=${jobid}" --format="get(state)")
+
+        echo "jobid = ${jobid}"
+        echo "jobstate = ${jobstate}"
+
         # if it's not running, wait before checking again
         if [ "${jobstate}" != "Running" ]
         then

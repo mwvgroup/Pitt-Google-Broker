@@ -40,7 +40,7 @@ def publish_stream(
 
     # tell the user about the rates
     print(f"\nReceived desired alertRate={aRate_tuple}, runTime={runTime}.")
-    print(f"\nPublishing {Nbatches} batches, each with {alerts_per_batch} alerts, at a rate of 1 batch per {pbeN} {pbeU} (plus processing time).\n")
+    print(f"\nPublishing:\n\t{Nbatches} batches\n\teach with {alerts_per_batch} alerts\n\tat a rate of 1 batch per {pbeN} {pbeU} (plus processing time)\n\tfor a total of {Nbatches*alerts_per_batch} alerts")
 
     # publish the stream
     do_publish_stream(testid, alerts_per_batch, Nbatches, publish_batch_every, sub_id, topic_id, nack)
@@ -257,21 +257,29 @@ def convert_rate_to_publish_unit(alertRate, publish_unit='sec'):
 
 def convert_rate_to_tuple(alertRate):
 
-    # make sure we have a type that has been configured
-    if type(alertRate)!=str:
-        if type(alertRate) != tuple:
-            msg = 'alertRate must be a tuple or a string'
-            raise ValueError(msg)
+    if type(alertRate) == tuple:
+        # type == tuple, so just return it
+        aRate = alertRate
 
-        else:
-            # type == tuple, so just return it
-            aRate = alertRate
+    elif type(alertRate) == str:
+        aRate = convert_rate_string_to_tuple(alertRate)
+        # returns tuple or raises ValueError
 
+    else:
+        msg = 'alertRate must be a tuple or a string'
+        raise ValueError(msg)
+
+    return aRate
+
+def convert_rate_string_to_tuple(alertRate):
     # convert strings to tuples
-    elif alertRate=='ztf-active-avg':
+
+    if alertRate=='ztf-active-avg':
         aRate = (300000, 'perNight')
+
     elif alertRate == 'ztf-live-max':
         aRate = (200, 'perSec')
+
     else:
         msg = f"'ztf-active-avg' and 'ztf-live-max' are the only strings currently configured for the alertRate"
         raise ValueError(msg)
