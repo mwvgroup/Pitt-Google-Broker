@@ -1,13 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-"""This module is intended to be deployed as a
-Google Cloud Function with a Pub/Sub trigger.
-It will listen to the Pub/Sub stream containing the original alert packet
-and store each alert as an Avro file in Cloud Storage.
-See
-https://cloud.google.com/functions/docs/tutorials/pubsub#functions-prepare-environment-python
-for a tutorial.
+"""This module stores the alert data as an Avro file in Cloud Storage,
+fixing the schema first, if necessary.
 """
 
 import base64
@@ -19,6 +14,9 @@ from pathlib import Path
 import pickle
 import re
 from tempfile import SpooledTemporaryFile
+
+from exceptions import SchemaParsingError
+
 
 PROJECT_ID = os.getenv('GCP_PROJECT')
 TESTID = os.getenv('TESTID')
@@ -34,6 +32,10 @@ if TESTID != "False":
     bucket_name = f'{bucket_name}-{TESTID}'
 storage_client = storage.Client()
 bucket = storage_client.get_bucket(bucket_name)
+
+# By default, spool data in memory to avoid IO unless data is too big
+# LSST alerts are anticipated at 80 kB, so 150 kB should be plenty
+max_alert_packet_size = 150000
 
 class TempAlertFile(SpooledTemporaryFile):
     """Subclass of SpooledTemporaryFile that is tied into the log
@@ -59,6 +61,17 @@ class TempAlertFile(SpooledTemporaryFile):
     def seekable(self):  # necessary so that fastavro can write to the file
         return self._file.seekable
 
+def run(msg, context) -> None:
+    """ Entry point for the Cloud Function
+    Args:
+        msg (dict): Pub/Sub message. `data` field contains the alert.
+             `attributes` field contains custom attributes.
+        context (google.cloud.functions.Context): The Cloud Functions event
+         metadata. The `event_id` field contains the Pub/Sub message ID. The
+         `timestamp` field contains the publish time.
+    """
+    upload_ztf_bytes_to_bucket(msg, context)
+
 def upload_ztf_bytes_to_bucket(msg, context) -> None:
     """Uploads the msg data bytes to a GCP storage bucket. Prior to storage,
     corrects the schema header to be compliant with BigQuery's strict
@@ -83,9 +96,6 @@ def upload_ztf_bytes_to_bucket(msg, context) -> None:
     survey = guess_schema_survey(data)
     version = guess_schema_version(data)
 
-    # By default, spool data in memory to avoid IO unless data is too big
-    # LSST alerts are anticipated at 80 kB, so 150 kB should be plenty
-    max_alert_packet_size = 150000
     with TempAlertFile(max_size=max_alert_packet_size, mode='w+b') as temp_file:
         temp_file.write(data)
         temp_file.seek(0)
@@ -164,11 +174,3 @@ def guess_schema_survey(alert_bytes: bytes) -> str:
         raise SchemaParsingError(err_msg)
 
     return survey_match.group(2).decode()
-
-class CloudConnectionError(Exception):
-    """Error connecting to one or more Google Cloud services"""
-    pass
-
-class SchemaParsingError(Exception):
-    """Error parsing or guessing properties of an alert schema"""
-    pass

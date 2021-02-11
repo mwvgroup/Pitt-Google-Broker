@@ -8,6 +8,7 @@ to the Google Cloud Platform.
 For more information on cloud functions, see:
 - [Cloud Functions](https://cloud.google.com/functions)
 - [Cloud Functions Execution Environment](https://cloud.google.com/functions/docs/concepts/exec)
+- [Cloud Pub/Sub Tutorial](https://cloud.google.com/functions/docs/tutorials/pubsub) 
 
 | Function | Description |
 |---|---|

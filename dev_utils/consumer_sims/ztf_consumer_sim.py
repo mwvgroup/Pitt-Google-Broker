@@ -278,7 +278,7 @@ def convert_rate_string_to_tuple(alertRate):
         aRate = (300000, 'perNight')
 
     elif alertRate == 'ztf-live-max':
-        aRate = (125, 'perSec')
+        aRate = (200, 'perSec')
 
     else:
         msg = f"'ztf-active-avg' and 'ztf-live-max' are the only strings currently configured for the alertRate"

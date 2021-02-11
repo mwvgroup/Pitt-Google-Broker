@@ -10,30 +10,32 @@ teardown="${2:-False}"
 
 #--- GCP resources used in this script
 trigger_topic="ztf_alert_data"
-PS_to_GCS_fnc_name="upload_ztf_bytes_to_bucket"
+ps_to_gcs_CF_name="upload_ztf_bytes_to_bucket"
 # use test resources, if requested
 if [ "$testid" != "False" ]; then
     trigger_topic="${trigger_topic}-${testid}"
-    PS_to_GCS_fnc_name="${PS_to_GCS_fnc_name}_${testid}"
+    ps_to_gcs_CF_name="${ps_to_gcs_CF_name}_${testid}"
 fi
 
 #--- Pub/Sub -> Cloud Storage Avro cloud function
-PS_to_GCS_fnc="upload_ztf_bytes_to_bucket"
+ps_to_gcs_entry_point="run"
+
 if [ "$teardown" = "True" ]; then
     # ensure that we do not teardown production resources
     if [ "$testid" != "False" ]; then
-        gcloud functions delete "$PS_to_GCS_fnc_name"
+        gcloud functions delete "$ps_to_gcs_CF_name"
     fi
+
 else # Deploy
     OGdir=$(pwd)
     cd .. && cd cloud_functions
     cd ps_to_gcs
 
-    gcloud functions deploy "$PS_to_GCS_fnc_name" \
-        --entry-point "$PS_to_GCS_fnc" \
+    gcloud functions deploy "$ps_to_gcs_CF_name" \
+        --entry-point "$ps_to_gcs_entry_point" \
         --runtime python37 \
         --trigger-topic "$trigger_topic" \
         --set-env-vars TESTID="$testid"
-        
+
     cd $OGdir  # not sure if this is necessary
 fi

@@ -68,63 +68,11 @@ Details:
     - [Instructions in our current docs](https://pitt-broker.readthedocs.io/en/latest/installation_setup/installation.html). We would need to follow pieces of the "Installation" and "Defining Environmental Variables" sections. Our project is already setup, so leaving out most of the details for now.
 
 2. Install GCP tools on your machine:
-    - [Google Cloud SDK](https://cloud.google.com/sdk/docs/install): Follow the instructions at the link. (This installs `gcloud`, `gsutil` and `bq` command line tools)
+    - [Google Cloud SDK](https://cloud.google.com/sdk/docs/install): Follow the instructions at the link. (This installs `gcloud`, `gsutil` and `bq` command line tools). I use a minimum version of Google Cloud SDK 323.0.0.
     - [Cloud Client Libraries for Python](https://cloud.google.com/python/docs/reference): Each service requires a different library; the ones we need are (I hope) all listed in the `requirements.txt` in this directory. Install them with (e.g., ) `pip install -r requirements.txt`.
 
 3. Follow instructions in [broker/README.md](broker/README.md) to complete the setup.
 <!-- fe Setup the Broker -->
-
----
-
-# Run Nightly Broker
-<!-- fs -->
-[[__ZTF Stream Monitoring Dashboard__](https://console.cloud.google.com/monitoring/dashboards/builder/d8b7db8b-c875-4b93-8b31-d9f427f0c761?project=ardent-cycling-243415&dashboardBuilderState=%257B%2522editModeEnabled%2522:false%257D&timeDomain=1w)]
-
-Instructions moved to [broker/README.md](broker/README.md).
-
-
-
-<!-- fe Run Nightly Broker -->
-
----
-
-# Note on Resources for Test Runs
-<!-- fs -->
-All broker scripts and modules that connect to GCP resources contain a
-__"testid"__ switch that controls the resource names.
-Passing a string (the "testid") to the `testid` argument creates and/or
-connects to resources tagged with the testid (resource names are appended with
-"-testid" or "_testid").
-This allows us to create/deploy/run resources and jobs for testing purposes
-without interfering with the broker in production.
-
-The setup scripts in [broker/setup_broker](broker/setup_broker) also contain a
-__"teardown"__ switch that will delete _testing_ resources.
-They are explicitly configured to prevent the deletion of _production_ resources.
-
-In general:
-
-To use __production__ resources, pass `testid=False`.
-
-To use __testing__ resources tagged with `mytest`, pass `testid=mytest`.
-
-Example Usage:
-
-```bash
-cd Pitt-Google-Broker/broker/setup_broker
-
-# Setup all broker resources for a testing instance with the testid "mytest"
-testid="mytest"
-./setup_broker.sh $testid
-
-# Teardown all test resources with the testid "mytest"
-testid="mytest"
-teardown="True"
-./setup_broker.sh $testid $teardown
-
-```
-
-<!-- fe Note on Resources for Test Runs -->
 
 ---
 <a name="ogread"></a>

@@ -76,9 +76,10 @@ if [ "$teardown" != "True" ]; then
     #--- Upload some broker files to GCS so the VMs can use them
     echo
     echo "Uploading broker files to GCS..."
-    gsutil -m cp -r ../beam "gs://${broker_bucket}"
-    gsutil -m cp -r ../consumer "gs://${broker_bucket}"
-    gsutil -m cp -r ../night_conductor "gs://${broker_bucket}"
+    o="GSUtil:parallel_process_count=1" # disable multiprocessing for Macs
+    gsutil -m -o "$o" cp -r ../beam "gs://${broker_bucket}"
+    gsutil -m -o "$o" cp -r ../consumer "gs://${broker_bucket}"
+    gsutil -m -o "$o" cp -r ../night_conductor "gs://${broker_bucket}"
 
     #--- Setup the Pub/Sub notifications on ZTF Avro storage bucket
     echo

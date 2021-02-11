@@ -93,7 +93,9 @@ The testing resources you create will have the same names with your chosen testi
 
 ## 1. Setup a testing instance
 <!-- fs -->
-If you don't have GCP command line tools like `gcloud` and `gsutil` installed, follow the instructions in step 2 of [../README.md](../README.md#setup-the-broker-for-the-first-time).
+Follow the setup instructions in [../README.md](../README.md#setup-the-broker-for-the-first-time).
+Most of step 1 should be done already, however, make sure your `GOOGLE_APPLICATION_CREDENTIALS` environment variable points to valid GCP credentials.
+In step 2 you will install the needed tools/libraries.
 Activate your virtual environment if needed.
 
 ```bash
@@ -107,14 +109,13 @@ export GOOGLE_CLOUD_PROJECT=ardent-cycling-243415
 # This variable has not been fully implemented in other components of the
 # broker (the zone is hardcoded in some places) yet.
 # Therefore I do not recommend changing this yet.
-# export CE_zone=us-central1-a
+# export CE_ZONE=us-central1-a
 
 #--- Get the current broker repo/branch and navigate to the setup directory
 git clone https://github.com/mwvgroup/Pitt-Google-Broker
-git fetch
+cd Pitt-Google-Broker
 git checkout u/tjr/broker-v0.2
-git pull
-cd Pitt-Google-Broker/broker/setup_broker
+cd broker/setup_broker
 
 #--- Setup a testing instance of the broker, tagged with "mytest"
 testid="mytest"
@@ -122,9 +123,13 @@ testid="mytest"
 # this script is described in the text below
 ```
 
+It may ask you to authenticate yourself using `gcloud auth login`;
+follow the instructions.
+
 `setup_broker.sh` does the following:
 
 1. Create and configure GCP resources in BigQuery, Cloud Storage, and Pub/Sub.
+If you don't have a `bigqueryrc` config file setup it will walk you through creating one.
 
 2. Upload the [beam](beam/), [consumer](consumer/), and [night_conductor](night_conductor/) directories to the Cloud Storage bucket [ardent-cycling-243415-broker_files](https://console.cloud.google.com/storage/browser/ardent-cycling-243415-broker_files?project=ardent-cycling-243415&pageState=%28%22StorageObjectListTable%22:%28%22f%22:%22%255B%255D%22%29%29&prefix=&forceOnObjectsSortingFiltering=false). The VMs will fetch a new copy of these files before running the relevant process. This provides us with the flexibility to update individual broker processes/components (except Cloud Functions) by simply uploading a new version of the relevant file(s) to the bucket; we do not have to build a new Docker image, repackage, or redeploy.
 
@@ -148,7 +153,8 @@ _These must be obtained independently and uploaded to the VM manually, stored at
 
 You can use the `gcloud compute scp` command for this:
 ```bash
-gcloud compute scp /local/path "ztf-consumer-${testid}:/vm/path" --zone="$CE_zone"
+gcloud compute scp krb5.conf "ztf-consumer-${testid}:/etc/krb5.conf" --zone="$CE_ZONE"
+gcloud compute scp pitt-reader.user.keytab "ztf-consumer-${testid}:/home/broker/consumer/pitt-reader.user.keytab" --zone="$CE_ZONE"
 ```
 
 <!-- fe Setup a testing instance -->
@@ -447,7 +453,7 @@ alertRate = (N, 'once')
     # publish N alerts simultaneously, one time
 alertRate = 'ztf-active-avg'  # = (300000, 'perNight')
     # avg rate for an avg, active night (range 150,000 - 450,000 perNight)
-alertRate = 'ztf-live-max'  # = (125, 'perSec')
+alertRate = 'ztf-live-max'  # = (200, 'perSec')
     # approx max incoming rate seen from live ZTF stream
 
 #--- Set desired amount of time the simulator runs
@@ -571,7 +577,7 @@ teardown="True"
 ./setup_broker.sh $testid $teardown
 ```
 
-This will delete all GCP resources tagged with the testid.
+This will delete all GCP resources tagged with the testid. You will be prompted several times to confirm.
 
 <!-- fe Teardown the testing instance -->
 
