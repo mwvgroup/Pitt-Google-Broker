@@ -11,7 +11,7 @@
 ###
 
 # NOT SURE OF THE RIGHT WAY TO GET INTO THIS DIRECTORY:
-cd broker/alert_ingestion/GCS_to_BQ
+cd broker/cloud_functions/GCS_to_BQ
 
 # deploy stream_GCS_to_BQ() to listen to the ztf_alert_avro_bucket
 bucket="${GOOGLE_CLOUD_PROJECT}_ztf_alert_avro_bucket"

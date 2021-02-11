@@ -6,14 +6,14 @@
 import os
 from datetime import datetime
 
-from broker.consumer import GCSKafkaConsumer
+from broker.alert_ingestion.consume import GCSKafkaConsumer
 
 # Define connection configuration using default values as a starting point
 config = {
     'bootstrap.servers': os.environ['ztf_server'],
     'group.id': 'group',
     'session.timeout.ms': 6000,
-    'enable.auto.commit': 'FALSE',
+    'enable.auto.commit': 'False',
     'sasl.kerberos.kinit.cmd': 'kinit -t "%{sasl.kerberos.keytab}" -k %{sasl.kerberos.principal}',
     'sasl.kerberos.service.name': 'kafka',
     'security.protocol': 'SASL_PLAINTEXT',
@@ -30,9 +30,10 @@ ztf_topic = f'ztf_{now.year}{now.month:02d}{now.day:02d}_programid1'
 # Create a consumer
 c = GCSKafkaConsumer(
     kafka_config=config,
-    bucket_name='ardent-cycling-243415-ztf-avro-files',
+    bucket_name='ardent-cycling-243415_ztf_alert_avro_bucket',
     kafka_topic=ztf_topic,
-    pubsub_topic='ztf-avro-status'
+    pubsub_alert_data_topic='ztf_alert_data',
+    pubsub_in_GCS_topic='ztf_alert_avro_in_bucket'
 )
 
 if __name__ == '__main__':

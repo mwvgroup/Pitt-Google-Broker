@@ -21,7 +21,7 @@ def publish_pubsub(topic_name, message):
 
     topic_path = publisher.topic_path(project_id, topic_name)
 
-    topic = publisher.get_topic(topic_path)
+    # topic = publisher.get_topic(topic_path)
     log.info(f'Connected to PubSub: {topic_path}')
 
     future = publisher.publish(topic_path, data=message)

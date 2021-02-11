@@ -27,5 +27,5 @@ googleapis-common-protos
 google-resumable-media
 
 # Kafka dependencies
-confluent-kafka
+# confluent-kafka # conda install
 # krb5  # conda install krb5

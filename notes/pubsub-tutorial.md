@@ -180,3 +180,26 @@ Via GCP Console Commands:
  gcloud pubsub subscriptions pull --auto-ack my-sub
  ```
 The keyword `--limit=#` can be added between `--auto-ack` and `my_sub` to limit the number of messages you pull.
+
+## Ordering Messages
+Pub/Sub attempts to deliver a message to a subscriber once and in order, but this cannot be guaranteed. A new feature called **message ordering** has been implemented to help resolve this issue, with documentation on [publishing](https://cloud.google.com/pubsub/docs/publisher#using_ordering_keys) and more general info [here](https://cloud.google.com/pubsub/docs/ordering). Unfortunately, this is in beta for a handful of the APIs and in a closed alpha for others, including python (as of 8/6/2020). Updating your install of `google-cloud-pubsub` to the lastest version (8/62020: 1.7.0) will download code that has support for the new keyword, but it will not allow you to use the keyword when publishing. The following instructions are for future reference when these features become available, either in beta or through general availability.
+
+First, enable message ordering for the subscription.
+
+By GCP GUI: 
+
+- When creating the subscription, select the checkbox to enable message ordering.
+- Edit an existing subscription's settings and check the box to enable message ordering.
+
+By GCP Console Commands:
+
+```
+gcloud beta pubsub subscriptions create my-sub --topic my-topic --enable-message-ordering
+```
+
+Then, when publishing a message, include a `message_ordering` keyword to your `publisher.publish` call. This should be a string. All messages that have the same `message_ordering` argument will then be compared by date, and the oldest messages among that group will be sent first.
+> Note: Pub/Sub will only compare messages that have the *same* argument for the `message_ordering` keyword. It will also preferentially send the **oldest** messages among those it compares!
+The addition of the keyword should look something like this:
+``` python
+publisher.publish(topic_path, data=data, message_ordering='orderstring')
+```

@@ -51,6 +51,7 @@ Module Documentation
 """
 
 import logging
+import google.cloud.logging
 import os
 import re
 from pathlib import Path
@@ -67,7 +68,10 @@ if not os.getenv('GPB_OFFLINE', False):
     from google.cloud import pubsub, storage
     from google.cloud.pubsub_v1.publisher.futures import Future
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(__name__)  # python root logger
+client = google.cloud.logging.Client()  # google cloud logger
+client.get_default_handler()
+client.setup_logging()  # this connects cloud log to root log
 
 DEFAULT_ZTF_CONFIG = {
     'bootstrap.servers': 'public2.alerts.ztf.uw.edu:9094',
@@ -111,7 +115,7 @@ class TempAlertFile(SpooledTemporaryFile):
 
 
 def _set_config_defaults(kafka_config: dict) -> dict:
-    """Set default values for a Kafka configuration dictionary
+    """Set default values for a Kafka configuration dictionaryk
 
     Default values:
         enable.auto.commit: False,
@@ -168,7 +172,7 @@ class GCSKafkaConsumer(Consumer):
         self.pubsub_alert_data_topic = pubsub_alert_data_topic
         self.pubsub_in_GCS_topic = pubsub_in_GCS_topic
         self.kafka_server = kafka_config["bootstrap.servers"]
-        log.info(f'Initializing consumer: {self.__repr__()}')
+        log.debug(f'Initializing consumer: {self.__repr__()}')
 
         # Connect to Kafka stream
         # Enforce NO auto commit, correct log handling
@@ -178,12 +182,12 @@ class GCSKafkaConsumer(Consumer):
         # Connect to Google Cloud Storage
         self.storage_client = storage.Client()
         self.bucket = self.storage_client.get_bucket(bucket_name)
-        log.info(f'Connected to bucket: {self.bucket.name}')
+        log.debug(f'Connected to bucket: {self.bucket.name}')
 
     def close(self) -> None:
         """Close down and terminate the Kafka Consumer"""
 
-        log.info(f'Closing consumer: {self.__repr__()}')
+        log.debug(f'Closing consumer: {self.__repr__()}')
         super().close()
 
     @staticmethod
@@ -219,9 +223,9 @@ class GCSKafkaConsumer(Consumer):
         temp_file.truncate()  # removes leftover data
         temp_file.seek(0)
 
-        log.debug(f'Schema header reformatted for {survey} version {version}')
+        log.info(f'Schema header reformatted for {survey} version {version}')
 
-    def upload_bytes_to_bucket(self, data: bytes, destination_name: str) -> None:
+    def upload_bytes_to_bucket(self, data: bytes, destination_name: str) -> bytes:
         """Uploads bytes data to a GCP storage bucket. Prior to storage,
         corrects the schema header to be compliant with BigQuery's strict
         validation standards if the alert is from a survey version with an
@@ -230,15 +234,19 @@ class GCSKafkaConsumer(Consumer):
         Args:
             data: Data to upload
             destination_name: Name of the file to be created
+
+        Returns:
+            data with a corrected schema header (if one is necessary)
         """
 
-        log.debug(f'Uploading {destination_name} to {self.bucket.name}')
+        log.info(f'Uploading {destination_name} to {self.bucket.name}')
         blob = self.bucket.blob(destination_name)
 
         # Get the survey name and version
         survey = guess_schema_survey(data)
         version = guess_schema_version(data)
 
+        # Correct the message schema, upload to GCS, and return it
         # By default, spool data in memory to avoid IO unless data is too big
         # LSST alerts are anticipated at 80 kB, so 150 kB should be plenty
         max_alert_packet_size = 150000
@@ -247,15 +255,19 @@ class GCSKafkaConsumer(Consumer):
             temp_file.seek(0)
             self.fix_schema(temp_file, survey, version)
             blob.upload_from_file(temp_file)
+            temp_file.seek(0)
+            return temp_file.read()
 
     def run(self) -> None:
         """Ingest kafka Messages to GCS and PubSub"""
 
-        log.info('Starting consumer.run ...')
+        log.debug('Starting consumer.run ...')
         try:
             while True:
-                msg = self.consume(num_messages=1, timeout=5)[0]
+                # msg = self.consume(num_messages=1, timeout=1)
+                msg = self.poll(timeout=1)
                 if msg is None:
+                    log.info('msg is None')
                     continue
 
                 if msg.error():
@@ -266,12 +278,13 @@ class GCSKafkaConsumer(Consumer):
 
                 else:
                     timestamp_kind, timestamp = msg.timestamp()
-                    file_name = f'{timestamp}.avro'
+                    file_name = f'{msg.topic()}_{timestamp}.avro'
 
-                    log.debug(f'Ingesting {file_name}')
+                    log.info(f'Ingesting {file_name}')
+                    msg_schema_fixed = self.upload_bytes_to_bucket(msg.value(), file_name)
+                    # returns msg.value() bytes object with schema corrected
+                    publish_pubsub(self.pubsub_alert_data_topic, msg_schema_fixed)
                     publish_pubsub(self.pubsub_in_GCS_topic, file_name.encode('UTF-8'))
-                    publish_pubsub(self.pubsub_alert_data_topic, msg.value())
-                    self.upload_bytes_to_bucket(msg.value(), file_name)
 
                     if not self._debug:
                         self.commit()

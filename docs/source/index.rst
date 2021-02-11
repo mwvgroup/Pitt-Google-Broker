@@ -1,22 +1,8 @@
 What is Pitt Broker
 ===================
 
-The **Pitt-Google Broker** is a cloud-based, alert distribution service
-designed to provide near real-time processing of data from
-large-scale astronomical surveys like the `Legacy Survey of Space and Time
-<https://www.lsst.org>`_ (LSST). LSST will deliver on order a million real-time
-alerts each night providing information on astronomical targets within 60
-seconds of observation. The **Pitt-Google Broker** is a scalable broker
-system designed to maximize the availability and usefulness of the LSST alert
-data by combining cloud-based analysis opportunities with value-added data
-products.
-
-The **Pitt-Google Broker** is designed to run on the `Google Cloud Platform
-<https://cloud.google.com>`_ (GCP) and is currently focused on processing
-alerts from the `Zwicky Transient Facility <https://www.ztf.caltech.edu>`_
-(ZTF) and the `LSST Alert Simulator
-<https://www.lsst.org/scientists/simulations/alertsim>`_ (AlertSim) as a
-testing ground.
+This documentation provides instructions on how to set up and deploy an instance
+of the Pitt-Google Broker system.
 
 .. toctree::
    :hidden:
@@ -27,13 +13,21 @@ testing ground.
 .. toctree::
    :hidden:
    :maxdepth: 1
-   :caption: Installation and Setup:
+   :caption: Deployment:
 
-   installation_setup/installation
-   installation_setup/developer_dependencies
-   installation_setup/configuring_travis
-   installation_setup/deploying_images
-   installation_setup/scheduling_ingestion
+   deployment/overview
+   deployment/dependencies
+   deployment/cloud_configuration
+   deployment/deploying_images
+   deployment/scheduling_ingestion
+
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+   :caption: Development:
+
+   for_developers/installation
+   for_developers/configuring_travis
 
 .. toctree::
    :hidden:
