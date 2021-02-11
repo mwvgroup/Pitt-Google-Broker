@@ -8,7 +8,7 @@ testid="${2:-test}"
 #   "False" uses production resources
 #   any other string will be appended to the names of all resources
 teardown="${3:-False}" # "True" tearsdown/deletes resources, else setup
-zone="${CE_zone:-us-central1-a}" # use env variable CE_zone if it exists
+zone="${CE_ZONE:-us-central1-a}" # use env variable CE_ZONE if it exists
 
 #--- GCP resources used in this script
 consumerVM="ztf-consumer"

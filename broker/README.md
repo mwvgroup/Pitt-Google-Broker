@@ -93,7 +93,9 @@ The testing resources you create will have the same names with your chosen testi
 
 ## 1. Setup a testing instance
 <!-- fs -->
-If you don't have GCP command line tools like `gcloud` and `gsutil` installed, follow the instructions in step 2 of [../README.md](../README.md#setup-the-broker-for-the-first-time).
+Follow the setup instructions in [../README.md](../README.md#setup-the-broker-for-the-first-time).
+Most of step 1 should be done already, however, make sure your `GOOGLE_APPLICATION_CREDENTIALS` environment variable points to valid GCP credentials.
+In step 2 you will install the needed tools/libraries.
 Activate your virtual environment if needed.
 
 ```bash
@@ -104,14 +106,13 @@ export GOOGLE_CLOUD_PROJECT=ardent-cycling-243415
 # We currently use the same zone for all instances.
 # The default is us-central1-a,
 # but it can controlled explicitly by setting an environment variable
-export CE_zone=us-central1-a
+export CE_ZONE=us-central1-a
 
 #--- Get the current broker repo/branch and navigate to the setup directory
 git clone https://github.com/mwvgroup/Pitt-Google-Broker
-git fetch
+cd Pitt-Google-Broker
 git checkout u/tjr/broker-v0.2
-git pull
-cd Pitt-Google-Broker/broker/setup_broker
+cd broker/setup_broker
 
 #--- Setup a testing instance of the broker, tagged with "mytest"
 testid="mytest"
@@ -119,9 +120,13 @@ testid="mytest"
 # this script is described in the text below
 ```
 
+It may ask you to authenticate yourself using `gcloud auth login`;
+follow the instructions.
+
 `setup_broker.sh` does the following:
 
 1. Create and configure GCP resources in BigQuery, Cloud Storage, and Pub/Sub.
+If you don't have a `bigqueryrc` config file setup it will walk you through creating one.
 
 2. Upload the [beam](beam/), [consumer](consumer/), and [night_conductor](night_conductor/) directories to the Cloud Storage bucket [ardent-cycling-243415-broker_files](https://console.cloud.google.com/storage/browser/ardent-cycling-243415-broker_files?project=ardent-cycling-243415&pageState=%28%22StorageObjectListTable%22:%28%22f%22:%22%255B%255D%22%29%29&prefix=&forceOnObjectsSortingFiltering=false). The VMs will fetch a new copy of these files before running the relevant process. This provides us with the flexibility to update individual broker processes/components (except Cloud Functions) by simply uploading a new version of the relevant file(s) to the bucket; we do not have to build a new Docker image, repackage, or redeploy.
 
@@ -145,7 +150,8 @@ _These must be obtained independently and uploaded to the VM manually, stored at
 
 You can use the `gcloud compute scp` command for this:
 ```bash
-gcloud compute scp /local/path "ztf-consumer-${testid}:/vm/path" --zone="$CE_zone"
+gcloud compute scp krb5.conf "ztf-consumer-${testid}:/etc/krb5.conf" --zone="$CE_ZONE"
+gcloud compute scp pitt-reader.user.keytab "ztf-consumer-${testid}:/home/broker/consumer/pitt-reader.user.keytab" --zone="$CE_ZONE"
 ```
 
 <!-- fe Setup a testing instance -->
@@ -213,7 +219,7 @@ Some concepts are explained in detail in the following "Run the broker" example 
 ### [Example] Run the broker
 <!-- fs -->
 This example will walk you through running the broker to ingest, store, and process an alert stream.
-__Before you begin, make sure your VMs are stopped__. 
+__Before you begin, make sure your VMs are stopped__.
 (If you have just set up your testing instance, your VMs are running.)
 You can do this from the Console (see [Where to view your resources](#where-to-view-your-resources)) or the command line (see [Leave the testing instance inactive](#3a-leave-the-testing-instance-inactive)).
 
@@ -350,22 +356,22 @@ The user can set the:
 - `runTime`: desired length of time for which the simulator publishes alerts
 - `publish_batch_every`: interval of time the simulator sleeps between publishing batches of alerts
 
-The simulator publishs alerts in batches, so the desired alert rate and run time both get converted. 
-Rounding occurs so that an integer number of batches are published, each containing the same integer number of alerts. 
+The simulator publishs alerts in batches, so the desired alert rate and run time both get converted.
+Rounding occurs so that an integer number of batches are published, each containing the same integer number of alerts.
 Therefore the _alert publish rate and the length of time for which the simulator runs may not be exactly equal to the `alertRate` and `runTime`_ respectively.
 If you want one or both to be exact, choose an appropriate combination of variables.
 
 _[`ztf_alert_data-reservoir`](https://console.cloud.google.com/cloudpubsub/subscription/detail/ztf_alert_data-reservoir?project=ardent-cycling-243415)_:
 
-The simulator's _source_ of alerts is the Pub/Sub _subscription_ `ztf_alert_data-reservoir` (attached to the _topic_ `ztf_alert_data`). 
+The simulator's _source_ of alerts is the Pub/Sub _subscription_ `ztf_alert_data-reservoir` (attached to the _topic_ `ztf_alert_data`).
 All users of the consumer simulator access the _same_ reservoir by default(*).
 __Please be courteous, and do not drain the reservoir__(**).
-Alerts expire from the subscription after 7 days (max allowed by Pub/Sub), so if ZTF has not produced many alerts in the last week, the reservoir will be low. 
+Alerts expire from the subscription after 7 days (max allowed by Pub/Sub), so if ZTF has not produced many alerts in the last week, the reservoir will be low.
 On the bright side, the alerts coming from the simulator/reservoir will always be recent.
 _You can check the number of alerts currently in the reservoir by viewing the subscription in the GCP Console_ (click the link above, look for "Unacked message count")
 
 (*) An equivalent subscription reservoir is created for your testing instance, but it is not pre-filled with alerts.
-However, once you _do_ have alerts in your testing instance, you can use a keyword argument to point the simulator's source subscription to your own reservoir. 
+However, once you _do_ have alerts in your testing instance, you can use a keyword argument to point the simulator's source subscription to your own reservoir.
 This will create a closed loop wherein the same set of alerts will flow from your reservoir, into your `ztf_alert_data-{testid}` topic, and back into your reservoir (which is a subscription on that topic).
 In this way, you can access an __infinite source of (non-unique) alerts__.
 (You can also publish alerts to an arbitary topic via a keyword.)
@@ -443,12 +449,12 @@ alertRate = (aRate, 'perMin')  # (int, str)
 alertRate = (N, 'once')
     # publish N alerts simultaneously, one time
 alertRate = 'ztf-active-avg'
-    # = (250000, 'perNight'). avg rate of an active night
-alertRate = 'ztf-max' 
-    # = (5000, 'perMin'). max publish rate (approx) that ZTF spikes to
+    # = (300000, 'perNight'). avg rate of an active night
+alertRate = 'ztf-live-max'
+    # = (200, 'perSec'). approximate max incoming rate seen from ZTF
 
 #--- Set desired amount of time the simulator runs
-runTime = (N, 'min')  # (int, str) 
+runTime = (N, 'min')  # (int, str)
     # unit (str) options: 'sec', 'min', 'hr', 'night'(=10 hrs)
     # if alertRate "units" == 'once', setting runTime has no effect
 
@@ -568,7 +574,7 @@ teardown="True"
 ./setup_broker.sh $testid $teardown
 ```
 
-This will delete all GCP resources tagged with the testid.
+This will delete all GCP resources tagged with the testid. You will be prompted several times to confirm.
 
 <!-- fe Teardown the testing instance -->
 
