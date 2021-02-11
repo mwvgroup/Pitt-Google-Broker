@@ -3,7 +3,7 @@
 # This script will not delete VMs that are in production
 
 
-bucket=$1 # name of GCS bucket where broker files are staged
+broker_bucket=$1 # name of GCS bucket where broker files are staged
 testid="${2:-test}"
 #   "False" uses production resources
 #   any other string will be appended to the names of all resources
@@ -29,8 +29,8 @@ if [ "$teardown" = "True" ]; then
 #--- Create resources
 else
     #--- Create and configure the ZTF Kafka Consumer VM
-    installscript="gs://${bucket}/consumer/vm_install.sh"
-    startupscript="gs://${bucket}/consumer/vm_startup.sh"
+    installscript="gs://${broker_bucket}/consumer/vm_install.sh"
+    startupscript="gs://${broker_bucket}/consumer/vm_startup.sh"
     machinetype=e2-standard-2
     gcloud compute instances create "$consumerVM" \
         --zone="$zone" \
@@ -39,15 +39,15 @@ else
         --metadata=google-logging-enabled=true,startup-script-url="$installscript" \
         --tags=ztfport # for the firewall rule to open the port
     # give the vm time to start the install before switching the startup script
-    echo "Waiting to allow ${consumerVM} to build."
+    echo "Waiting to allow the ${consumerVM} build to start."
     sleep 120
     # set the startup script
     gcloud compute instances add-metadata "$consumerVM" --zone "$zone" \
         --metadata startup-script-url="$startupscript"
 
     #--- Create and configure the Night Conductor VM
-    installscript="gs://${bucket}/night_conductor/vm_install.sh"
-    startupscript="gs://${bucket}/night_conductor/vm_startup.sh"
+    installscript="gs://${broker_bucket}/night_conductor/vm_install.sh"
+    startupscript="gs://${broker_bucket}/night_conductor/vm_startup.sh"
     machinetype=e2-standard-2
     gcloud compute instances create "$nconductVM" \
         --zone="$zone" \
@@ -55,7 +55,7 @@ else
         --scopes=cloud-platform \
         --metadata=google-logging-enabled=true,startup-script-url="$installscript"
     # give the vm time to start the install before switching the startup script
-    echo "Waiting to allow ${nconductVM} to build."
+    echo "Waiting to allow the ${nconductVM} build to start."
     sleep 120
     # set the startup script
     gcloud compute instances add-metadata "$nconductVM" --zone "$zone" \

@@ -12,7 +12,7 @@ Table of Contents:
     - [1. Setup a testing instance](#1-setup-a-testing-instance)
     - [2. Run your tests](#2-run-your-tests)
         - [Where to view your resources](#where-to-view-your-resources)
-        - [Example: Run the broker]().
+        - [Example: Run the broker](#example-run-the-broker).
             - [End-to-End](#end-to-end). In this section you can:
                 - Connect to ZTF's _live stream_
                 - Connect to a ZTF _stream from a previous night_ (this will _flood_ the broker with alerts)
@@ -123,13 +123,16 @@ testid="mytest"
 # this script is described in the text below
 ```
 
-It may ask you to authenticate yourself using `gcloud auth login`;
+Some notes:
+- It may ask you to authenticate yourself using `gcloud auth login`;
 follow the instructions.
+- __Make sure the VM install scripts have completed__ before running the broker or stopping the instances. This can take 15 minutes or longer. Navigate to the instance in the GCP Console (see [Where to view your resources](#where-to-view-your-resources) below) and click the "Monitoring" tab. The CPU utilization will fall to >1% when it is done.
+- You must __stop the VM instances *before* running the broker__ (see [Leave the testing instance inactive](#leave-the-testing-instance-inactive) below). The night conductor will start them up again.
 
 `setup_broker.sh` does the following:
 
 1. Create and configure GCP resources in BigQuery, Cloud Storage, and Pub/Sub.
-If you don't have a `bigqueryrc` config file setup it will walk you through creating one.
+If you don't have a `bigqueryrc` config file setup yet it will walk you through creating one.
 
 2. Upload the [beam](beam/), [consumer](consumer/), and [night_conductor](night_conductor/) directories to the Cloud Storage bucket [ardent-cycling-243415-broker_files](https://console.cloud.google.com/storage/browser/ardent-cycling-243415-broker_files?project=ardent-cycling-243415&pageState=%28%22StorageObjectListTable%22:%28%22f%22:%22%255B%255D%22%29%29&prefix=&forceOnObjectsSortingFiltering=false). The VMs will fetch a new copy of these files before running the relevant process. This provides us with the flexibility to update individual broker processes/components (except Cloud Functions) by simply uploading a new version of the relevant file(s) to the bucket; we do not have to build a new Docker image, repackage, or redeploy.
 
