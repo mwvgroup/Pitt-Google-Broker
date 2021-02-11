@@ -25,11 +25,11 @@ def publish_stream(
         publish_batch_every (tuple(int, str)): simulator will sleep for this amount of time between batches
         sub_id (str): source subscription (default = 'ztf_alert_data-reservoir')
         topic_id (str): sink topic (default = 'ztf_alert_data-{testid}')
-        nack (bool): If True, the subscriber will "nack" the messages causing them to stay in the reservoir 
-            and be delivered again at an arbitrary time in the future. If False, messages are acknowledged 
+        nack (bool): If True, the subscriber will "nack" the messages causing them to stay in the reservoir
+            and be delivered again at an arbitrary time in the future. If False, messages are acknowledged
             and disappear from the reservoir.
     """
-    
+
     pbeN, pbeU = publish_batch_every  # shorthand
 
     # get number of alerts to publish per batch
@@ -75,7 +75,7 @@ def do_publish_stream(
         ack_ids = [msg.ack_id for msg in response.received_messages]
         handle_acks(subscriber, sub_path, ack_ids, nack)
 
-        # increment and sleep between batches 
+        # increment and sleep between batches
         b = b+1
         time.sleep(publish_batch_every[0])
 
@@ -88,9 +88,9 @@ def setup_subscribe(alerts_per_batch, sub_id=None):
     subscriber = pubsub.SubscriberClient()
 
     if sub_id is None: sub_id = 'ztf_alert_data-reservoir'
-    
+
     sub_path = subscriber.subscription_path(PROJECT_ID, sub_id)
-    
+
     request = {
             "subscription": sub_path,
             "max_messages": alerts_per_batch,
@@ -122,7 +122,7 @@ def publish_received_messages(publisher, topic_path, sub_response):
         attrs = msg.message.attributes  # pass msg attributes through
 
         future = publisher.publish(topic_path, msg.message.data, **attrs)  # non blocking
-        
+
         future.add_done_callback(callback)  # check for errors in a separate thread
 
 def handle_acks(subscriber, sub_path, ack_ids=[], nack=False):
@@ -152,7 +152,7 @@ def callback(future):
 def convert_runTime_to_Nbatches(runTime, publish_batch_every, aRate_unit):
     if aRate_unit == 'once':
         Nbatches = 1
-    
+
     elif type(runTime) != tuple:
         msg = "runTime must be given as a tuple, unless the alertRate units are set to 'once'"
         raise ValueError(msg)
@@ -168,7 +168,7 @@ def convert_publish_runTime_to_Nbatches(publish_runTime, publish_batch_every_N):
     """
     Args:
         publish_runTime (int or float): runTime requested by user, in units used by the publisher
-        publish_batch_every_N (int): publisher will use a rate of 1 batch per publish_batch_every_N. 
+        publish_batch_every_N (int): publisher will use a rate of 1 batch per publish_batch_every_N.
         Should be in the same units as publish_runTime.
     Returns:
         Nbatches (int): number of batches the publisher should complete, rounded to an int
@@ -187,7 +187,7 @@ def convert_time_to_publish_unit(runTime, publish_unit):
     """
 
     rtN, rtU = runTime
-    
+
     # convert the time to (N, 'sec')
     if publish_unit == 'sec':
         if rtU == 'sec':
@@ -237,7 +237,7 @@ def convert_rate_to_publish_unit(alertRate, publish_unit='sec'):
     """
 
     arN, arU = alertRate
-    
+
     # convert the rate to (N, 'perSec')
     if publish_unit == 'sec':
         if arU == 'perSec':
@@ -269,11 +269,11 @@ def convert_rate_to_tuple(alertRate):
 
     # convert strings to tuples
     elif alertRate=='ztf-active-avg':
-        aRate = (250000, 'perNight')
-    elif alertRate == 'ztf-max':
-        aRate = (5000, 'perMin')
+        aRate = (300000, 'perNight')
+    elif alertRate == 'ztf-live-max':
+        aRate = (200, 'perSec')
     else:
-        msg = f"'ztf-active-avg' and 'ztf-max' are the only strings currently configured for the alertRate"
+        msg = f"'ztf-active-avg' and 'ztf-live-max' are the only strings currently configured for the alertRate"
         raise ValueError(msg)
 
     return aRate
