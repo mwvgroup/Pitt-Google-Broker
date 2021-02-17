@@ -89,7 +89,7 @@ then
     chmod 744 *.sh
 
     # stop ingesting and teardown resources
-    ./end_night.sh ${testid}
+    ./end_night.sh ${PROJECT_ID} ${testid}
 fi
 
 # Wait a few minutes, then clear all metadata attributes and shutdown
