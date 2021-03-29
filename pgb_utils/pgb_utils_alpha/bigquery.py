@@ -28,7 +28,7 @@ flatcols = ['schemavsn','publisher','candid',]
 
 #--- BigQuery Client
 user_bq_client, user_project_id = None, None
-def open_client(project_id: str):
+def create_client(project_id: str):
     """Open a BigQuery Client.
 
     Args:
@@ -39,38 +39,44 @@ def open_client(project_id: str):
 
     # make sure we have a non-empty project_id
     assert len(project_id)>0, 'You must pass a valid project_id to open a client.'
+    user_project_id = project_id
 
     # instantiate the client
-    user_project_id = project_id
-    print(f'Instantiating a BigQuery client with project_id: {user_project_id}')
+    print(f'\nInstantiating a BigQuery client with project_id: {user_project_id}\n')
     user_bq_client = bigquery.Client(project=user_project_id)
 
 def _check_client():
-    msg = ("You must open a BigQuery client first. "
-           "If you are using `query_objects()`, use the project_id argument."
-           "Otherwise, run `pgb.bigquery.open_client('your_project_id')`")
+    msg = ("You must create a BigQuery client first. "
+           "Run `pgb.bigquery.create_client('your_project_id')`")
     assert isinstance(user_bq_client, bigquery.client.Client), msg
 
-def _open_client_if_needed(project_id):
-    global user_project_id
+def _create_client_if_needed():
+    stop = False  # will be set to True if the user chooses to exit
 
     try:
         _check_client()
+
     except AssertionError:
-        # open a bigquery client
-        open_client(project_id)
-        _check_client()
-    else:
-        # if the project_id is different from the user_project_id
-        # and isn't an empty string, open a new client
-        if project_id not in [user_project_id, '']:
-            open_client(project_id)
-            _check_client()
+        # help the user open a bigquery client
+        msg = ('\nTo run queries, you must first open a BigQuery Client.\n'
+               'This can be done directly using `pgb.bigquery.create_client(project_id)`\n'
+               '\tTo run this command now, enter your Google Cloud Platform project ID.\n'
+               '\tTo exit, simply press "Enter".\n'
+               '\nProject ID: '
+        )
+        project_id = input(msg) or ''
+
+        if project_id == '':
+            stop = True  # user wants to exit rather than creating a client
+        else:
+            create_client(project_id)
+
+    return stop
 
 
 
 #--- Query for object histories
-def query_objects(columns: List[str], objectIds: Optional[list] = None, format: str = 'pandas', iterator: bool = False, project_id: str = '') -> Union[str,pd.DataFrame,bigquery.job.QueryJob,Iterator[Union[str,pd.DataFrame]]]:
+def query_objects(columns: List[str], objectIds: Optional[list] = None, format: str = 'pandas', iterator: bool = False) -> Union[str,pd.DataFrame,bigquery.job.QueryJob,Iterator[Union[str,pd.DataFrame]]]:
     """Query the alerts database for object histories.
 
     Args:
@@ -84,18 +90,17 @@ def query_objects(columns: List[str], objectIds: Optional[list] = None, format: 
         iterator: If True, iterate over the objects and return one at a time.
                   Else return the full query results together.
                   This parameter is ignored if `format` == 'query_job'.
-        project_id: User's Google Cloud Platform project ID. This is used to
-                    create a `bigquery.Client` object and is required in the
-                    first call (optional thereafter).
 
     Returns: Query results in the requested format. If `iterator` is True,
              yields one object at a time; else all results are returned together.
     """
-    # if a suitable bigquery client does not exist, instantiate one
-    _open_client_if_needed(project_id)
+    # if a bigquery client does not exist, help the user instantiate one
+    stop = _create_client_if_needed()
+    if stop:  # the user has chosen to exit rather than create a client
+        return
 
     # generate the SQL statement to query alerts db and aggregate histories
-    query = object_history_sql_query(columns, objectIds)  # str
+    query = object_history_sql_statement(columns, objectIds)  # str
 
     # print dry run results; proceed if the user confirms, else return
     do_the_query = _dry_run_and_confirm(query)
@@ -108,22 +113,52 @@ def query_objects(columns: List[str], objectIds: Optional[list] = None, format: 
     # return the results
     if format == 'query_job':
         return query_job
-    elif iterator:
-        iterate_query_objects(query_job, format)
-    else:
+    elif iterator:  # return a generator that cycles through the objects/rows
+        # return (i for i in iterate_query_objects(query_job, format))
+        return (format_history_query_results(row=row, format=format) for row in query_job)
+    else:  # format and return all rows at once
         return format_history_query_results(query_job=query_job, format=format)
 
-def iterate_query_objects(query_job: bigquery.job.QueryJob, format: str = 'pandas') -> Iterator[Union[str,pd.DataFrame]]:
-    """
-    Args:
-        query_job: Results of a query on object histories.
-        format: One of 'pandas', or 'json'. Query results will be
-                returned in this format.
-    """
-    for row in query_job:
-        yield format_history_query_results(row=row, format=format)
+# def iterate_query_objects(query_job: bigquery.job.QueryJob, format: str = 'pandas') -> Union[str,pd.DataFrame]:
+#     """Iterates through the rows of query_job and returns them in the requested format.
+#     Args:
+#         query_job: Results of a query on object histories.
+#         format: One of 'pandas', or 'json'. Query results will be
+#                 returned in this format.
+#     """
+#     # while i < query_job.result().total_rows:
+#     #     pass
+#     # for r, row in enumerate(query_job):
+#     #     yield format_history_query_results(row=row, format=format)
+#     return [format_history_query_results(row=row, format=format) for row in query_job]
 
-def object_history_sql_query(columns: List[str], objectIds: Optional[list] = None) -> str:
+def dry_run(query: str):
+    """Perform a dry run to find out how many bytes the query will process.
+    Args:
+        query: SQL query statement
+    """
+    _check_client()  # make sure we have a bigquery.client
+    global user_project_id
+
+    job_config = bigquery.QueryJobConfig(dry_run=True, use_query_cache=False)
+    query_job = user_bq_client.query(query, job_config=job_config)
+
+    nbytes, TB = query_job.total_bytes_processed, 1e12
+    pTB = nbytes/TB*100  # nbytes as a percent of 1 TB
+    print(f'\nQuery statement:')
+    print(f'\n"{query}"\n')
+    print(f'will process {nbytes} bytes of data.')
+    print(f'({pTB:.3}% of your 1 TB free monthly allotment.)')
+
+def _dry_run_and_confirm(query: str) -> bool:
+    # print dry run info
+    dry_run(query)
+    # ask user if they want to proceed
+    cont = input('Continue? [y/N]: ') or 'N'
+    do_the_query = cont in ['y','Y']
+    return do_the_query
+
+def object_history_sql_statement(columns: List[str], objectIds: Optional[list] = None) -> str:
     """Convience function that generates the SQL string needed to
     query the alerts table and aggregate data by objectId.
     When the resulting SQL query is executed, the query job will contain
@@ -187,32 +222,6 @@ def _list_aggcols_sql_statements(columns: List[str]) -> List[str]:
 
     return aggcols
 
-def dry_run(query: str):
-    """Perform a dry run to find out how many bytes the query will process.
-    Args:
-        query: SQL query statement
-    """
-    _check_client()  # make sure we have a bigquery.client
-    global user_project_id
-    print(user_project_id)
-
-    job_config = bigquery.QueryJobConfig(dry_run=True, use_query_cache=False)
-    query_job = user_bq_client.query(query, job_config=job_config)
-
-    nbytes, TB = query_job.total_bytes_processed, 1e12
-    print(f'\nQuery statement:')
-    print(f'\n"{query}"\n')
-    print(f'will process {nbytes} bytes of data.')
-    print(f'({nbytes/TB*100:.3}% of your 1 TB free monthly allotment.)')
-
-def _dry_run_and_confirm(query: str) -> bool:
-    # print dry run info
-    dry_run(query)
-    # ask user if they want to proceed
-    cont = input('Continue? [y/N]: ') or 'N'
-    do_the_query = cont in ['y','Y']
-    return do_the_query
-
 
 #--- Format query results
 def format_history_query_results(query_job: Optional[bigquery.job.QueryJob] = None, row: Optional[bigquery.table.Row] = None, format: str = 'pandas') -> Union[pd.DataFrame,str]:
@@ -222,7 +231,7 @@ def format_history_query_results(query_job: Optional[bigquery.job.QueryJob] = No
 
     Args:
         query_job: Results from a object history query job. SQL statement needed
-                   to create the job can be obtained with object_history_sql_query().
+                   to create the job can be obtained with object_history_sql_statement().
                    Must supply either query_job or row.
 
         row: A single row from query_job. Must supply either row or query_job.
@@ -327,6 +336,7 @@ def plot_lightcurve(dflc: pd.DataFrame, ax: Optional[mpl.axes.Axes]=None, days_a
 #--- Get information about PGB datasets and tables
 def get_table_info(table: Union[str,list] = 'all', dataset: str ='ztf_alerts'):
     """Retrieves and prints BigQuery table schemas.
+    Adapted from:
     Args:
         table: Name of the BigQuery table, or list of the same.
                'all' will print the info for all tables in the dataset.
@@ -343,11 +353,14 @@ def get_table_info(table: Union[str,list] = 'all', dataset: str ='ztf_alerts'):
 
     # get and print info about each table
     for t in tables:
-        print(f'\nTable: {pgb_project_id}.{dataset}.{t}')
-        df = get_table_columns(table=t)
-        print(tabulate(df, headers='keys', tablefmt='psql'))
+        df = _get_table_columns(table=t)
 
-def get_table_columns(table: str, dataset: str ='ztf_alerts') -> pd.DataFrame:
+        # print the metadata and column info
+        print(df.table_name)
+        print(tabulate(df, headers='keys', tablefmt='grid'))  # psql
+        print(f'\n{df.table_name} has {df.num_rows} rows.\n')
+
+def _get_table_columns(table: str, dataset: str ='ztf_alerts') -> pd.DataFrame:
     """Retrieves information about the columns in a BigQuery table and returns
     it as a DataFrame.
 
@@ -359,9 +372,21 @@ def get_table_columns(table: str, dataset: str ='ztf_alerts') -> pd.DataFrame:
     """
 
     bqtable = pgb_bq_client.get_table(f'{pgb_project_id}.{dataset}.{table}')
-    cols = [(s.name, s.description, s.field_type, s.mode) for s in bqtable.schema]
-    colnames = ['column_name', 'description', 'type', 'mode']
+    cols = []
+    for field in bqtable.schema:
+        cols.append((field.name, field.description, field.field_type))
+
+        if field.field_type == 'RECORD':
+            for subfield in field.fields:
+                cols.append((f'{field.name}.{subfield.name}', subfield.description, subfield.field_type))
+
+    # cols = [(s.name, s.description, s.field_type, s.mode) for s in bqtable.schema]
+    colnames = ['column_name', 'description', 'type']
     df = pd.DataFrame(cols, columns=colnames)
+
+    # add some metadata
+    df.table_name = f'{bqtable.project}.{bqtable.dataset_id}.{bqtable.table_id}'
+    df.num_rows = bqtable.num_rows
 
     return df
 
