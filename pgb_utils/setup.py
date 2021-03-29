@@ -22,9 +22,12 @@ from setuptools import setup, find_packages
 import pathlib
 
 
-here = pathlib.Path(__file__).parent.resolve()
+# here = pathlib.Path(__file__).parent.resolve()
 # Get the long description from the README file
 # long_description = (here / 'README.md').read_text(encoding='utf-8')
+
+with open('requirements.txt') as f:
+    requirements = f.read().splitlines()
 
 setup(
     name='pgb_utils_alpha',  # Required
@@ -32,10 +35,6 @@ setup(
     description='Tools to interact with Pitt-Google Broker data products and services.',
     # long_description=long_description,
     # long_description_content_type='text/markdown',
-    url='https://github.com/mwvgroup/Pitt-Google-Broker',
-    author='Troy Raen',
-    author_email='troy.raen@pitt.edu',
-
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Science/Research',
@@ -45,13 +44,18 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3 :: Only',
     ],
-
     keywords='astronomy, alert broker',
+
+    url='https://github.com/mwvgroup/Pitt-Google-Broker',
+    author='Troy Raen',
+    author_email='troy.raen@pitt.edu',
+
     packages=find_packages(),  # Required
 
     # For an analysis of "install_requires" vs pip's requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    # install_requires=['peppercorn'],  # Optional
+    install_requires=requirements
+
     # python_requires='>=3.6, <4',
 
     # If there are data files included in your packages that need to be

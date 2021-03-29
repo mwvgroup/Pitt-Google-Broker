@@ -1,0 +1,12 @@
+astropy
+# google-auth
+# google-api-core
+google-cloud-bigquery
+# google-cloud-logging
+google-cloud-pubsub
+google-cloud-storage
+matplotlib
+numpy
+pandas
+tabulate
+typing
