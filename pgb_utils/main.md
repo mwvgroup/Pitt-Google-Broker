@@ -24,6 +24,10 @@ View at: https://test.pypi.org/project/pgb-utils-alpha/0.0.1/
 
 ## Work in development ("editable") mode:
 ```bash
+conda create --name pgbtest python=3.7 pip ipython
+conda activate pgbtest
+export GOOGLE_APPLICATION_CREDENTIALS=/Users/troyraen/Documents/PGB/repo/GCPauth_pitt-google-broker-prototype-0679b75dded0.json
+
 cd /Users/troyraen/Documents/PGB/repo/pgb_utils
 python -m pip install -e .
 ```

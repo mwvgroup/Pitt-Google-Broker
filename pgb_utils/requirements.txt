@@ -1,3 +1,4 @@
+apache_beam[gcp]
 astropy
 # google-auth
 # google-api-core
