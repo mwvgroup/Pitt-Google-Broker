@@ -3,20 +3,20 @@
 """A module for Pitt-Google Broker utilities.
 Example setup.py: https://github.com/pypa/sampleproject/blob/main/setup.py
 
-This file is part of the pgb_utils_alpha software package.
+This file is part of the pgb_utils software package.
 
-The pgb_utils_alpha package is free software: you can redistribute it and/or
+The pgb_utils package is free software: you can redistribute it and/or
 modify it under the terms of the GNU General Public License as published
 by the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-The pgb_utils_alpha package is distributed in the hope that it will be useful,
+The pgb_utils package is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with pgb_utils_alpha.  If not, see <http://www.gnu.org/licenses/>."""
+along with pgb_utils.  If not, see <http://www.gnu.org/licenses/>."""
 
 from setuptools import setup, find_packages
 import pathlib
@@ -30,8 +30,8 @@ with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
 setup(
-    name='pgb_utils_alpha',  # Required
-    version='0.0.3',  # Required
+    name='pgb_utils',  # Required
+    version='0.0.4',  # Required
     description='Tools to interact with Pitt-Google Broker data products and services.',
     # long_description=long_description,
     # long_description_content_type='text/markdown',
