@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-"""``bigquery`` contains functions that facilitate querying
-Pitt-Google Broker's BigQuery databases and reading the results.
+"""``figures`` contains functions for plotting alert and history data.
 """
 
+import aplpy
+from astropy.io import fits
 from astropy.time import Time
+import gzip
+import io
 import matplotlib as mpl
 from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 from typing import Optional
+
+from . import utils as pgbu
 
 
 #--- Plot object history
@@ -65,3 +70,49 @@ def plot_lightcurve(dflc: pd.DataFrame,
     plt.ylabel('Magnitude')
     plt.legend()
     plt.title(f'objectId: {objectId}')
+
+
+#--- Plot cutouts
+def plot_stamp(stamp, fig=None, subplot=None, **kwargs):
+    """Adapted from:
+    https://github.com/ZwickyTransientFacility/ztf-avro-alert/blob/master/notebooks/Filtering_alerts.ipynb
+    """
+    with gzip.open(io.BytesIO(stamp), 'rb') as f:
+        with fits.open(io.BytesIO(f.read())) as hdul:
+            if fig is None:
+                fig = plt.figure(figsize=(4,4))
+            if subplot is None:
+                subplot = (1,1,1)
+            ffig = aplpy.FITSFigure(hdul[0],figure=fig, subplot=subplot, **kwargs)
+            # ffig.show_grayscale(stretch='arcsinh')
+            # HELP! This throws `ValueError: a must be > 0 and <= 1`
+            # Any ideas?
+            # I see this related thing: https://github.com/aplpy/aplpy/issues/420
+            # but I am using the latest version (2.0.3).
+            ffig.show_grayscale()
+    return ffig
+
+def plot_cutouts(alert_dict):
+    """Adapted from:
+    https://github.com/ZwickyTransientFacility/ztf-avro-alert/blob/master/notebooks/Filtering_alerts.ipynb
+    """
+    #fig, axes = plt.subplots(1,3, figsize=(12,4))
+    fig = plt.figure(figsize=(12,4))
+    for i, cutout in enumerate(['Science','Template','Difference']):
+        stamp = alert_dict['cutout{}'.format(cutout)]['stampData']
+        ffig = plot_stamp(stamp, fig=fig, subplot = (1,3,i+1))
+        ffig.set_title(cutout)
+
+
+#--- Plot all
+def plot_lightcurve_cutouts(alert_dict):
+    """Adapted from:
+    https://github.com/ZwickyTransientFacility/ztf-avro-alert/blob/master/notebooks/Filtering_alerts.ipynb
+    """
+    fig = plt.figure(figsize=(16,4))
+    dflc = pgbu.alert_dict_to_dataframe(alert_dict)
+    plot_lightcurve(dflc,ax = plt.subplot(1,4,1))
+    for i, cutout in enumerate(['Science','Template','Difference']):
+        stamp = alert_dict['cutout{}'.format(cutout)]['stampData']
+        ffig = plot_stamp(stamp, fig=fig, subplot = (1,4,i+2))
+        ffig.set_title(cutout)
