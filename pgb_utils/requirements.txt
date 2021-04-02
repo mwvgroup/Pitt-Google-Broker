@@ -1,5 +1,7 @@
 apache_beam[gcp]
+aplpy
 astropy
+astropy-healpix
 # google-auth
 # google-api-core
 google-cloud-bigquery

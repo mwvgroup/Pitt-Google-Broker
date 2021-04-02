@@ -5,6 +5,9 @@
 Pitt-Google Broker's data and services.
 """
 
+import pandas as pd
+
+
 def alert_dict_to_dataframe(alert):
     """ Packages an alert into a dataframe.
     Adapted from:
@@ -14,7 +17,7 @@ def alert_dict_to_dataframe(alert):
     df_prv = pd.DataFrame(alert['prv_candidates'])
     dflc = pd.concat([dfc,df_prv], ignore_index=True)
 
-    # we'll attach some metadata--not this may not be preserved after all operations
+    # we'll attach some metadata--note this may not be preserved after all operations
     # https://stackoverflow.com/questions/14688306/adding-meta-information-metadata-to-pandas-dataframe
     dflc.objectId = alert['objectId']
     dflc.candid = alert['candid']

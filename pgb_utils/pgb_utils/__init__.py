@@ -5,4 +5,4 @@
 and services.
 """
 
-from . import beam, bigquery, figures, storage
+from . import beam, bigquery, figures, storage, utils
