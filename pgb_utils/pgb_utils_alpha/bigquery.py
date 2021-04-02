@@ -12,13 +12,9 @@ from typing import List, Tuple, Optional, Union, Generator
 
 pgb_project_id = 'ardent-cycling-243415'
 
-#--- BigQuery Clients
-# create a client with our credentials to get project-level info (e.g., table schemas)
-# so the user doesn't need to instantiate their own client to get this info
-pgb_bq_client = bigquery.Client(project=pgb_project_id)
+#--- BigQuery Client
+user_bq_client, user_project_id = None, None  # module's global Client, related id
 
-# setup for a user client which will be used for db queries
-user_bq_client, user_project_id = None, None
 def create_client(project_id: str):
     """Open a BigQuery Client.
 
@@ -90,12 +86,15 @@ def _create_client_if_needed():
 #--- Get information about PGB datasets and tables
 def get_table_info(table: Union[str,list] = 'all', dataset: str ='ztf_alerts'):
     """Retrieves and prints BigQuery table schemas.
-    Adapted from:
     Args:
         table: Name of the BigQuery table or list of the same.
                'all' will print the info for all tables in the dataset.
         dataset: Name of BigQuery dataset that the table(s) belong to.
     """
+    # if a bigquery Client does not exist, help the user instantiate one
+    stop = _create_client_if_needed()
+    if stop:  # the user has chosen to exit rather than create a client
+        return
 
     # get the table names in a list
     if table == 'all':
@@ -124,8 +123,12 @@ def get_table_schema(table: str, dataset: str ='ztf_alerts') -> pd.DataFrame:
     Returns
         df: Column information from the BigQuery table schema.
     """
+    # if a bigquery Client does not exist, help the user instantiate one
+    stop = _create_client_if_needed()
+    if stop:  # the user has chosen to exit rather than create a client
+        return
 
-    bqtable = pgb_bq_client.get_table(f'{pgb_project_id}.{dataset}.{table}')
+    bqtable = user_bq_client.get_table(f'{pgb_project_id}.{dataset}.{table}')
     cols = []
     for field in bqtable.schema:
         cols.append((field.name, field.description, field.field_type))
@@ -152,12 +155,16 @@ def get_dataset_table_names(dataset: str ='ztf_alerts') -> List[str]:
     Returns:
         tables: List of table names in the dataset.
     """
+    # if a bigquery Client does not exist, help the user instantiate one
+    stop = _create_client_if_needed()
+    if stop:  # the user has chosen to exit rather than create a client
+        return
 
     query = (
         'SELECT * '
         f'FROM {pgb_project_id}.{dataset}.INFORMATION_SCHEMA.TABLES'
     )
-    query_job = pgb_bq_client.query(query)
+    query_job = user_bq_client.query(query)
     tables = [row['table_name'] for row in query_job]
     return tables
 
@@ -373,6 +380,28 @@ def query_objects(columns: List[str],
         return (format_history_query_results(row=row, format=format) for row in query_job)
     else:  # format and return all rows at once
         return format_history_query_results(query_job=query_job, format=format)
+
+# !HELP!
+# Two questions about `query_objects()`:
+
+# 1)
+# The return statement under `elif iterator:` returns a
+# GENERATOR EXPRESSION which may not be the right way to do this.
+# I'm not very familiar with creating generator functions.
+# The resulting `objects` generator can only be used once. This was
+# unexpected behavior to me.
+# I've also named the keyword "iterator" which might contribute confusion.
+# I tried using a yield statement instead, but ran into trouble because I
+# want this function to return something other than a generator when given
+# different params.
+
+# 2)
+# There are many json format options. I haven't worked with json before, so I
+# don't know the best ones to choose. I chose the defaults. The result doesn't
+# look pretty if you print it out, but has the advantage that it reads back
+# in to a dataframe nicely.
+# BTW, I chose to offer this option in the first place because ALeRCE does it
+# and it seemed easy. I don't know how useful it is.
 
 def _query_objects_check_history_column_names(columns: List[str]) -> List[str]:
     """Make sure user-submitted column names are appropriate for `query_objects()`.
