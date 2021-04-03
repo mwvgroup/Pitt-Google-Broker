@@ -4,6 +4,8 @@
 BigQuery databases and reading the results.
 """
 
+import astropy
+from astropy import coordinates as coord
 from google.cloud import bigquery
 import pandas as pd
 from tabulate import tabulate
