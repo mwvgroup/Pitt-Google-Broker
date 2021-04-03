@@ -498,3 +498,130 @@ def _format_history_row_to_df(row: Union[dict,bigquery.table.Row]):
     df.drop_duplicates(inplace=True)
     df.objectId = oid
     return df
+
+
+#--- Cone Search
+def cone_search(center: astropy.coordinates.SkyCoord,
+                radius: astropy.coordinates.Angle,
+                columns: List[str],
+                objectIds: Optional[list] = None,
+                format: str = 'pandas',
+                iterator: bool = False,
+                dry_run: bool = True,
+                ) -> Union[str,
+                           pd.DataFrame,
+                           Generator[Union[str, pd.DataFrame], None, None]]:
+    """Perform a cone search on the alerts database and return object histories.
+    This uses the coordinates of the most recent observation to determine
+    whether an object is within the cone.
+
+    Args:
+        center: Center of the cone to search within.
+        radius: Radius of the cone to search within.
+        columns: Names of history columns to select from the alerts table.
+                 The 'objectId' and 'candid' columns are automatically included
+                 and do not need to be in this list.
+        objectIds: IDs of ZTF objects to include in the query.
+        format: One of 'pandas', or 'json'. Query results will be
+                returned in this format. Duplicate observations are dropped.
+        iterator: If True, iterate over the objects and return one at a time.
+                  Else return the full query results together.
+        dry_run: If True, `pgb.bigquery.dry_run` will be called first and the
+                 user will be asked to confirm before continuing.
+
+    Returns: Query results in the requested format. If `iterator` is True,
+             returns a generator; else all results are returned together.
+    """
+    # make sure we have required columns
+    for c in ['jd', 'ra', 'dec']:
+        if c not in columns: columns.append(c)
+
+    # Performing a dry run prints the SQL query statement, which does not account
+    # for the cone search. We'll print some things to reduce user confusion.
+    if dry_run: print('\nInitiating a cone search.')
+
+    # Query the database for object histories.
+    objects = query_objects(columns,
+                            objectIds = objectIds,
+                            format = 'pandas',
+                            iterator=iterator,
+                            dry_run=dry_run
+                            )
+    # == None if user chose to abort; else DataFrame or generator of same
+    if objects is None:
+        return
+
+    if dry_run: print('\nFiltering for objects within the given cone.')
+
+    # filter out objects not in the cone and return the rest
+    objects_in_cone = _do_cone_search(objects, center, radius, format, iterator)
+    return objects_in_cone
+
+
+def _do_cone_search(objects: Union[pd.DataFrame,Generator[pd.DataFrame, None, None]],
+                    center: astropy.coordinates.SkyCoord,
+                    radius: astropy.coordinates.Angle,
+                    format: str = 'pandas',
+                    iterator: bool = False,
+                    ) -> Union[str,
+                               pd.DataFrame,
+                               Generator[Union[str, pd.DataFrame], None, None]]:
+    """Apply the cone search filter and return appropriate objects.
+    """
+
+    if iterator:  # objects is a generator, return a generator
+        return _do_cone_search_iterator(objects, center, radius, format)
+
+    else:  # objects is single df
+        return _do_cone_search_all(objects, center, radius, format)
+
+def _do_cone_search_iterator(objects: pd.DataFrame, center: astropy.coordinates.SkyCoord, radius: astropy.coordinates.Angle, format):
+    """Iterate objects, format and yield those that are in the cone.
+
+    Args:
+        objects: DataFrame containing histories of multiple objectIds.
+    """
+    for df in objects:
+        in_cone = _object_is_in_cone(df, center, radius)
+
+        if in_cone:  # format and yield
+            if format == 'json':
+                df['objectId'] = df.objectId  # else metadata is lost
+                object = df.reset_index().to_json()  # str
+            else:
+                object = df
+            yield object
+
+def _do_cone_search_all(objects: pd.DataFrame, center: astropy.coordinates.SkyCoord, radius: astropy.coordinates.Angle, format):
+    """Filter out objects not in the cone, format, and return.
+
+    Args:
+        objects: DataFrame containing histories of multiple objectIds.
+    """
+    gb = objects.groupby(level='objectId')
+    objects_in_cone = gb.filter(lambda df: _object_is_in_cone(df,center,radius))
+    if format == 'json':
+        objects_in_cone = objects_in_cone.reset_index().to_json()  # str
+    return objects_in_cone
+
+def _object_is_in_cone(object: pd.DataFrame, center: astropy.coordinates.SkyCoord, radius: astropy.coordinates.Angle):
+    """Checks whether the object's most recent observation has a position that
+    is within a cone defined by center and radius.
+
+    Args:
+        object: DataFrame containing the history of a single objectId.
+                Required columns: ['jd','ra','dec']
+
+    Returns:
+        in_cone: True if object is within radius of center, else False
+    """
+    # get the SkyCoords of the most recent observation
+    obs = object.loc[object['jd']==object['jd'].max(),:]
+    obs_coords = coord.SkyCoord(obs['ra'], obs['dec'], frame='icrs', unit='deg')
+
+    # check whether obs_coords are within the cone
+    dist = center.separation(obs_coords)
+    in_cone = dist < radius  # array with a single bool
+    in_cone = in_cone[0]
+
+    return in_cone
