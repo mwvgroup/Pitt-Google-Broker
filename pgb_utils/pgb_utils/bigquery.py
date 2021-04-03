@@ -243,8 +243,8 @@ def object_history_sql_statement(columns: List[str],
     """
     dataset = 'ztf_alerts'
     table = 'alerts'
-    objectcols = ['objectId',]
-    # make sure 'candid' is in columns. 'objectId' will be handled later.
+    objectcols = ['objectId',]  # columns unique to an object
+    # make sure 'candid' is in columns. (objectcols handled separately)
     columns = list(set(columns).union(set(['candid'])))
 
     # SELECT statement
@@ -328,6 +328,7 @@ def _dry_run_and_confirm(query: str) -> bool:
 #--- Query for object histories
 def query_objects(columns: List[str],
                   objectIds: Optional[list] = None,
+                  limit: Optional[int] = None,
                   format: str = 'pandas',
                   iterator: bool = False,
                   dry_run: bool = True
@@ -342,12 +343,15 @@ def query_objects(columns: List[str],
                  The 'objectId' and 'candid' columns are automatically included
                  and do not need to be in this list.
         objectIds: IDs of ZTF objects to include in the query.
+        limit: Limit the number of objects returned to N <= limit.
         format: One of 'pandas', 'json', or 'query_job'. Query results will be
                 returned in this format. Results returned as 'query_job' may
                 contain duplicate observations; else duplicates are dropped.
         iterator: If True, iterate over the objects and return one at a time.
                   Else return the full query results together.
                   This parameter is ignored if `format` == 'query_job'.
+        dry_run: If True, `pgb.bigquery.dry_run` will be called first and the
+                 user will be asked to confirm before continuing.
 
     Returns: Query results in the requested format. If `iterator` is True,
              yields one object at a time; else all results are returned together.
@@ -364,7 +368,7 @@ def query_objects(columns: List[str],
         return
 
     # generate the SQL statement to query alerts db and aggregate histories
-    query = object_history_sql_statement(goodcols, objectIds)  # str
+    query = object_history_sql_statement(goodcols, objectIds, limit=limit)  # str
 
     # print dry run results
     if dry_run:
@@ -382,7 +386,7 @@ def query_objects(columns: List[str],
         return (format_history_query_results(row=row, format=format) for row in query_job)
     else:  # format and return all rows at once
         return format_history_query_results(query_job=query_job, format=format)
-
+# fs
 # !HELP!
 # Two questions about `query_objects()`:
 
@@ -403,7 +407,8 @@ def query_objects(columns: List[str],
 # look pretty if you print it out, but has the advantage that it reads back
 # in to a dataframe nicely.
 # BTW, I chose to offer this option in the first place because ALeRCE does it
-# and it seemed easy. I don't know how useful it is.
+# and it seemed easy. I only assume that it is useful.
+# fe
 
 def _query_objects_check_history_column_names(columns: List[str]) -> List[str]:
     """Make sure user-submitted column names are appropriate for `query_objects()`.
