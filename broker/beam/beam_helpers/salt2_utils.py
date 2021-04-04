@@ -65,7 +65,10 @@ class FormatForSalt2(DoFn):
         epochInfo['objectId'] = alert['objectId']
         epochInfo['candid'] = alert['candid']
 
-        return [epochInfo]
+        # package with the alert so Pub/Sub can have both
+        alert_epoch_dicts = {'alert': alert, 'epochInfo': epochInfo}
+
+        return [alert_epoch_dicts]
 
     def extract_epochs(self, alert):
         """ Collects data from each observation epoch of a single alert.
@@ -201,14 +204,11 @@ class FormatForSalt2(DoFn):
         return Time(jd, format='jd').mjd
 
 
-def salt2_quality_cuts(epochInfo, salt2_configs):
+def salt2_quality_cuts(alert_epoch_dicts, salt2_configs):
     """ Filter to enforce minimum data quality before fitting with Salt2.
 
-    Example Usage:
-        epochInfoDicts | beam.Filter(salt2_quality_cuts, salt2_configs)
-
     Args:
-        epochInfo (dict): element of the PCollection returned by `beam.ParDo(FormatForSalt2())`
+        alert_epoch_dicts ({dict},{dict}): element of the PCollection returned by `beam.ParDo(FormatForSalt2())`
         salt2_configs (dict): should contain:
             salt2_configs['SNthresh'] (float): min S/N necessary to fit with Salt2
             salt2_configs['minNdetections'] (int): min number of detections necessary to fit with Salt2
@@ -216,8 +216,7 @@ def salt2_quality_cuts(epochInfo, salt2_configs):
     Returns:
         min_quality (bool): whether the epochs pass minimum data quality requirements.
     """
-
-    epochStats = epochInfo['epochStats']
+    epochStats = alert_epoch_dicts['epochInfo']['epochStats']
     SNthresh = salt2_configs['SNthresh']
     minNdetections = salt2_configs['minNdetections']
 
@@ -233,16 +232,18 @@ class FitSalt2(DoFn):
     Example usage:
         epochInfoDicts | beam.ParDo(FitSalt2())
     """
-    def process(self, epochInfo):
+    def process(self, alert_epoch_dicts):
         """ Performs a Salt2 fit on alert history.
 
         Args:
-            epochInfo (dict): element of the PCollection returned by `beam.ParDo(FormatForSalt2())`
+            alert_epoch_dicts ({dict,dict}): element of the PCollection returned by `beam.ParDo(FormatForSalt2())`
 
         Yields:
-            salt2FitResult (dict): output of Salt2 fit, formatted for BigQuery and Pub/Sub
+            salt2Fit (dict): output of Salt2 fit, formatted for BigQuery and Pub/Sub
             salt2Fit4Figure (dict): data, model, and result; needed to do sncosmo.plot_lc()
         """
+        # unpack the data
+        alert, epochInfo = alert_epoch_dicts['alert'], alert_epoch_dicts['epochInfo']
         objectId = epochInfo['objectId']
         candid = epochInfo['candid']
         epochTable = epochInfo['epochTable']
@@ -265,12 +266,18 @@ class FitSalt2(DoFn):
         except DataQualityError as dqe:
             logging.info(f'Salt2 fit failed with DataQualityError for alertID {candid}. {dqe}')
 
+        # yield results
         else:
-            # yield salt2FitResult formatted for BQ and PS to the main output
+            # yield salt2Fit formatted for BQ to the main output
             # cov_names depreciated in favor of vparam_names, but flatten_result() requires it
             result['cov_names'] = result['vparam_names']
             flatresult = dict(sncosmo.flatten_result(result))
-            yield {'objectId': objectId, 'candid': candid, **flatresult,}
+            salt2Fit = {'objectId': objectId, 'candid': candid, **flatresult,}
+            yield salt2Fit
+
+            # yield alert + salt2Fit for PS, to a tagged output
+            alert_salt2Fit = {'alert': alert, 'salt2Fit': salt2Fit}
+            yield pvalue.TaggedOutput('alert_salt2Fit', alert_salt2Fit)
 
             # yield info needed to plot lightcurve to a tagged output
             salt2Fit4Figure = {

@@ -96,20 +96,21 @@ class Salt2(beam.PTransform):
         s2conf = self.salt2_configs
 
         # extract the epochs and some stats
-        epochInfoDicts = (alert_PColl | 'FormatForSalt2' >>
+        alert_epoch_dicts = (alert_PColl | 'FormatForSalt2' >>
                       beam.ParDo(s2.FormatForSalt2(s2conf))
                      )
 
         # drop alerts that do not meet minimum data quality
-        epochInfoDictsQC = (epochInfoDicts | 'filterSalt2QualityCuts' >>
+        alert_epoch_dicts_QC = (alert_epoch_dicts | 'filterSalt2QualityCuts' >>
                           beam.Filter(s2.salt2_quality_cuts, s2conf)
                          )
 
         # fit with Salt2. Yields 2 output collections
-        salt2Dicts = (epochInfoDictsQC | 'FitSalt2' >>
-                      beam.ParDo(s2.FitSalt2()).with_outputs('salt2Fit4Figure', main='salt2FitResult')
+        salt2Dicts = (alert_epoch_dicts_QC | 'FitSalt2' >>
+                      beam.ParDo(s2.FitSalt2()).with_outputs('salt2Fit4Figure', 'alert_salt2Fit', main='salt2Fit')
                      )
-        salt2FitResult = salt2Dicts.salt2FitResult  # PCollection of dicts
+        salt2Fit = salt2Dicts.salt2Fit  # PCollection of dicts
+        alert_salt2Fit = salt2Dicts.alert_salt2Fit  # PCollection of dicts
         salt2Fit4Figure = salt2Dicts.salt2Fit4Figure  # PCollection of dicts
 
         # Store a lightcurve + Salt2 fit figure in Cloud Storage
@@ -118,13 +119,13 @@ class Salt2(beam.PTransform):
             )
 
         # Store the fit params in BigQuery
-        bqSalt2Deadletters = (salt2FitResult | 'salt2ToBQ' >>
+        bqSalt2Deadletters = (salt2Fit | 'salt2ToBQ' >>
                               WriteToBigQuery(sinks['BQ_salt2'],
                                               **snkconf['BQ_salt2'])
                              )  # ToDo: handle deadletters
 
-        # Announce the fit params to Pub/Sub
-        salt2PS = (salt2FitResult | 'salt2FormatDictForPubSub' >>
+        # Announce the fit params to Pub/Sub and include original alert
+        salt2PS = (alert_salt2Fit | 'salt2FormatDictForPubSub' >>
                    beam.ParDo(dutil.formatDictForPubSub())
                   )
         psSalt2Deadletters = (salt2PS | 'salt2ToPubSub' >>
@@ -132,7 +133,7 @@ class Salt2(beam.PTransform):
                                             **snkconf['PS_generic'])
                              )  # ToDo: handle deadletters
 
-        return salt2FitResult
+        return salt2Fit
 
 
 def run(PROJECTID, sources, sinks, pipeline_args, salt2_configs):
