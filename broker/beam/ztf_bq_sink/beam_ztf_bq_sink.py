@@ -70,21 +70,28 @@ def run(PROJECTID, sources, sinks, pipeline_args):
     with beam.Pipeline(options=pipeline_options) as pipeline:
 
         #-- Read from PS and extract data as dicts
-        PSin = (pipeline | 'ReadFromPubSub' >>
-                ReadFromPubSub(topic=sources['PS_ztf']))
-        alertDicts = (PSin | 'ExtractAlertDict' >>
-                      beam.ParDo(dutil.extractAlertDict()))
-        alertDictsSC = (alertDicts | 'StripCutouts' >>
-                        beam.ParDo(dutil.stripCutouts()))
+        alert_bytes = (
+            pipeline | 'ReadFromPubSub' >>
+            ReadFromPubSub(topic=sources['PS_ztf'])
+        )
+        full_alert_dicts = (
+            alert_bytes | 'ExtractAlertDict' >>
+            beam.ParDo(dutil.extractAlertDict())
+        )
+        alert_dicts = (
+            full_alert_dicts | 'StripCutouts' >>
+            beam.ParDo(dutil.stripCutouts())
+        )
 
         #-- Upload original alert data to BQ
         # BQ encoding error until cutouts were stripped. see StripCutouts() for more details
         # alerts with no history cannot currently be uploaded -> RETRY_NEVER
         # TODO: track deadletters, get them uploaded to bq
-        bqAdDeadletters = (alertDictsSC | 'WriteToBigQuery' >>
-                           WriteToBigQuery(sinks['BQ_originalAlert'],
-                                           **snkconf['BQ_originalAlert'])
-                          )
+        adicts_deadletters = (
+            alert_dicts | 'WriteToBigQuery' >>
+            WriteToBigQuery(sinks['BQ_originalAlert'],
+                **snkconf['BQ_originalAlert'])
+        )
 
 
 if __name__ == "__main__":  # noqa
