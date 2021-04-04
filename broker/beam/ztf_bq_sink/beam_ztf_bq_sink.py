@@ -88,9 +88,20 @@ def run(PROJECTID, sources, sinks, pipeline_args):
         # alerts with no history cannot currently be uploaded -> RETRY_NEVER
         # TODO: track deadletters, get them uploaded to bq
         adicts_deadletters = (
-            alert_dicts | 'WriteToBigQuery' >>
+            alert_dicts | 'Write Alert BigQuery' >>
             WriteToBigQuery(sinks['BQ_originalAlert'],
                 **snkconf['BQ_originalAlert'])
+        )
+
+        #-- Extract the candidate info and upload to BQ
+        cand_dicts = (
+            alert_dicts | 'extractCandidate' >>
+            beam.ParDo(dutil.extractCandidate())
+        )
+        cdicts_deadletters = (
+            cand_dicts | 'Write Candidate BigQuery' >>
+            WriteToBigQuery(sinks['BQ_candidate'],
+                **snkconf['BQ_candidate'])
         )
 
 
@@ -111,12 +122,17 @@ if __name__ == "__main__":  # noqa
         "--sink_BQ_originalAlert",
         help="BigQuery table to store original alert data.\n",
     )
+    parser.add_argument(
+        "--sink_BQ_candidate",
+        help="BigQuery table to store candidate data.\n",
+    )
 
     known_args, pipeline_args = parser.parse_known_args()
 
     sources = {'PS_ztf': known_args.source_PS_ztf}
     sinks = {
             'BQ_originalAlert': known_args.sink_BQ_originalAlert,
+            'BQ_candidate': known_args.sink_BQ_candidate,
     }
 
     run(known_args.PROJECTID, sources, sinks, pipeline_args)
