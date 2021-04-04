@@ -5,7 +5,7 @@ broker_bucket=$2
 KAFKA_TOPIC=$3
 
 #--- GCP resources used in this script
-PS_TOPIC=ztf_alert_data
+PS_TOPIC=ztf_alerts
 consumerVM=ztf-consumer
 if [ "$testid" != "False" ]; then
     PS_TOPIC="${PS_TOPIC}-${testid}"

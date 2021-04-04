@@ -32,23 +32,23 @@ Details:
 1. __ZTF Alert Stream Consumer__ (ZTF Alert: Kafka -> Pub/Sub)
     - __Compute Engine VM:__  [`ztf-consumer`](https://console.cloud.google.com/compute/instancesMonitoringDetail/zones/us-central1-a/instances/ztf-consumer?project=ardent-cycling-243415&tab=monitoring&duration=PT1H)
     - __Running__  Kafka Connect [`CloudPubSubConnector`](https://github.com/GoogleCloudPlatform/pubsub/tree/master/kafka-connector)
-    - __Publishes to__ Pub/Sub topic:  [`ztf_alert_data`](https://console.cloud.google.com/cloudpubsub/topic/detail/ztf_alert_data?project=ardent-cycling-243415)
+    - __Publishes to__ Pub/Sub topic:  [`ztf_alerts`](https://console.cloud.google.com/cloudpubsub/topic/detail/ztf_alerts?project=ardent-cycling-243415)
 
 2. __Avro File Storage__ (ZTF Alert -> Fix Schema -> GCS bucket)
     - __Cloud Function:__
  [`upload_ztf_bytes_to_bucket`](https://console.cloud.google.com/functions/details/us-central1/upload_ztf_bytes_to_bucket?project=ardent-cycling-243415&pageState=%28%22functionsDetailsCharts%22:%28%22groupValue%22:%22P1D%22,%22customValue%22:null%29%29)
-    - __Listens to__ PS topic: [`ztf_alert_data`](https://console.cloud.google.com/cloudpubsub/topic/detail/ztf_alert_data?project=ardent-cycling-243415)
+    - __Listens to__ PS topic: [`ztf_alerts`](https://console.cloud.google.com/cloudpubsub/topic/detail/ztf_alerts?project=ardent-cycling-243415)
     - __Stores in__ GCS bucket: [`ztf_alert_avro_bucket`](https://console.cloud.google.com/storage/browser/ardent-cycling-243415_ztf_alert_avro_bucket;tab=objects?forceOnBucketsSortingFiltering=false&project=ardent-cycling-243415&prefix=&forceOnObjectsSortingFiltering=false)
     - __GCS bucket triggers__ Pub/Sub topic: [`ztf_alert_avro_bucket`](https://console.cloud.google.com/cloudpubsub/topic/detail/ztf_alert_avro_bucket?project=ardent-cycling-243415)
 
 3. __BigQuery Database Storage__ (ZTF Alert -> BigQuery)
     - __Dataflow job:__ [`production-ztf-ps-bq`](https://console.cloud.google.com/dataflow/jobs?project=ardent-cycling-243415)
-    - __Listens to__ PS topic: [`ztf_alert_data`](https://console.cloud.google.com/cloudpubsub/topic/detail/ztf_alert_data?project=ardent-cycling-243415)
+    - __Listens to__ PS topic: [`ztf_alerts`](https://console.cloud.google.com/cloudpubsub/topic/detail/ztf_alerts?project=ardent-cycling-243415)
     - __Stores in__ BQ table: [`ztf_alerts.alerts`](https://console.cloud.google.com/bigquery?project=ardent-cycling-243415) (ZTF alert data)
 
 4. __Data Processing (value-added products)__ (ZTF Alert -> Extragalactic Transients Filter -> Salt2 Fit)
     - __Dataflow job:__ [`production-ztf-ps-exgal-salt2`](https://console.cloud.google.com/dataflow/jobs?project=ardent-cycling-243415)
-    - __Listens to__ PS topic: [`ztf_alert_data`](https://console.cloud.google.com/cloudpubsub/topic/detail/ztf_alert_data?project=ardent-cycling-243415)
+    - __Listens to__ PS topic: [`ztf_alerts`](https://console.cloud.google.com/cloudpubsub/topic/detail/ztf_alerts?project=ardent-cycling-243415)
     - __Stores in__ BQ table: [`ztf_alerts.salt2`](https://console.cloud.google.com/bigquery?project=ardent-cycling-243415) (Salt2 fit params)
     - __Stores in__ GCS bucket: [`ztf-sncosmo/salt2/plot_lc`](https://console.cloud.google.com/storage/browser/ardent-cycling-243415_ztf-sncosmo/salt2/plot_lc?pageState=%28%22StorageObjectListTable%22:%28%22f%22:%22%255B%255D%22%29%29&project=ardent-cycling-243415&prefix=&forceOnObjectsSortingFiltering=false) (lightcurve + Salt2 fit, png)
     - __Publishes to__ PS topics:

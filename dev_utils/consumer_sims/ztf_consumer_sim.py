@@ -23,8 +23,8 @@ def publish_stream(
         alertRate (tuple(int, str)): desired rate at which alerts will be published (e.g., (100, 'perMin'))
         runTime (tuple(int, str)): desired length of time simulator runs for (e.g., (5, 'hr'))
         publish_batch_every (tuple(int, str)): simulator will sleep for this amount of time between batches
-        sub_id (str): source subscription (default = 'ztf_alert_data-reservoir')
-        topic_id (str): sink topic (default = 'ztf_alert_data-{testid}')
+        sub_id (str): source subscription (default = 'ztf_alerts-reservoir')
+        topic_id (str): sink topic (default = 'ztf_alerts-{testid}')
         nack (bool): If True, the subscriber will "nack" the messages causing them to stay in the reservoir
             and be delivered again at an arbitrary time in the future. If False, messages are acknowledged
             and disappear from the reservoir.
@@ -87,7 +87,7 @@ def user_confirm():
 def setup_subscribe(alerts_per_batch, sub_id=None):
     subscriber = pubsub.SubscriberClient()
 
-    if sub_id is None: sub_id = 'ztf_alert_data-reservoir'
+    if sub_id is None: sub_id = 'ztf_alerts-reservoir'
 
     sub_path = subscriber.subscription_path(PROJECT_ID, sub_id)
 
@@ -109,7 +109,7 @@ def setup_publish(testid, alerts_per_batch, topic_id=None):
 
     publisher = pubsub.PublisherClient(batch_settings)
 
-    if topic_id is None: topic_id = f'ztf_alert_data-{testid}'
+    if topic_id is None: topic_id = f'ztf_alerts-{testid}'
     topic_path = publisher.topic_path(PROJECT_ID, topic_id)
 
     return (publisher, topic_path)

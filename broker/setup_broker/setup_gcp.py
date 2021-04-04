@@ -136,10 +136,10 @@ def _resources(service, testid='test'):
         topics = {  # '<topic_name>': ['<subscription_name>', ]
                 'ztf_alert_avro_bucket':
                     ['ztf_alert_avro_bucket-counter'],
-                'ztf_alert_data':
-                    ['ztf_alert_data-counter', 'ztf_alert_data-reservoir', ],
-                'ztf_alert_data_pure':
-                    ['ztf_alert_data_pure-counter', ],
+                'ztf_alerts':
+                    ['ztf_alerts-counter', 'ztf_alerts-reservoir', ],
+                'ztf_alerts_pure':
+                    ['ztf_alerts_pure-counter', ],
                 'ztf_exgalac_trans':
                     ['ztf_exgalac_trans-counter'],
                 'ztf_salt2':
