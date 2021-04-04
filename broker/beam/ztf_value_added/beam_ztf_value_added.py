@@ -145,28 +145,30 @@ def run(PROJECTID, sources, sinks, pipeline_args, salt2_configs):
     with beam.Pipeline(options=pipeline_options) as pipeline:
 
         #-- Read from PS and extract data as dicts
-        PSin = (pipeline | 'ReadFromPubSub' >>
+        alert_bytes = (pipeline | 'ReadFromPubSub' >>
                 ReadFromPubSub(topic=sources['PS_ztf']))
-        alertDicts = (PSin | 'ExtractAlertDict' >>
+        full_alert_dicts = (alert_bytes | 'ExtractAlertDict' >>
                       beam.ParDo(dutil.extractAlertDict()))
-        alertDictsSC = (alertDicts | 'StripCutouts' >>
+        alert_dicts = (full_alert_dicts | 'StripCutouts' >>
                         beam.ParDo(dutil.stripCutouts()))
 
-        #-- Filter for extragalactic transients
-        adscExgalTrans = (alertDictsSC | 'filterExgalTrans' >>
-                          beam.Filter(is_extragalactic_transient)
-                         )
+        #-- Filter for extragalactic transients and publish a PS stream
+        adicts_exgal = (
+            alert_dicts | 'filterExgalTrans' >>
+            beam.Filter(is_extragalactic_transient)
+        )
         # to PubSub
-        egtPS = (adscExgalTrans | 'exgalTransFormatDictForPubSub' >>
-                 beam.ParDo(dutil.formatDictForPubSub())
-                )
-        psEgtDeadletters = (egtPS | 'exgalTransToPubSub' >>
-                            WriteToPubSub(sinks['PS_exgalTrans'],
-                                          **snkconf['PS_generic'])
-                           )  # ToDo: handle deadletters
+        adicts_exgal_ps = (
+            adicts_exgal | 'exgalTransFormatDictForPubSub' >>
+            beam.ParDo(dutil.formatDictForPubSub())
+        )
+        adicts_exgal_ps_deadletters = (
+            adicts_exgal_ps | 'exgalTransToPubSub' >>
+            WriteToPubSub(sinks['PS_exgalTrans'], **snkconf['PS_generic'])
+       )  # ToDo: handle deadletters
 
         #-- Fit with Salt2, store and announce results
-        __ = adscExgalTrans | 'Salt2' >> Salt2(sinks, snkconf, salt2_configs)
+        __ = adicts_exgal | 'Salt2' >> Salt2(sinks, snkconf, salt2_configs)
 
 
 
