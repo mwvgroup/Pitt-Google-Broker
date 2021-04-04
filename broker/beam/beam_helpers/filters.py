@@ -76,3 +76,21 @@ def _is_transient_make_dataframe(alert):
     dflc.objectId = alert['objectId']
     dflc.candid = alert['candid']
     return dflc
+
+def is_pure(alert):
+    """Source: https://zwickytransientfacility.github.io/ztf-avro-alert/filtering.html
+
+    Quoted from the source:
+
+    ZTF alert streams contain an nearly entirely unfiltered stream of all 5-sigma (only the most obvious artefacts are rejected). Depending on your science case, you may wish to improve the purity of your sample by filtering the data on the included attributes.
+
+    Based on tests done at IPAC (F. Masci, priv. comm), the following filter delivers a relatively pure sample.
+    """
+    candidate = alert['candidate']
+    rb = ['rb'] >= 0.65  # RealBogus score
+    nbad = candidate['nbad'] = 0  # num bad pixels
+    fwhm = candidate['fwhm'] <= 5  # Full Width Half Max, SExtractor [pixels]
+    elong = candidate['elong'] <= 1.2  # major / minor axis, SExtractor
+    magdiff = abs(candidate['magdiff']) <= 0.1  # aperture - psf [mag]
+
+    return rb and nbad and fwhm and elong and magdiff

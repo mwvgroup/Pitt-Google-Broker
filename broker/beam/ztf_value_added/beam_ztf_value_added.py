@@ -38,7 +38,7 @@ from apache_beam.io.gcp.bigquery_tools import RetryStrategy
 from apache_beam.options.pipeline_options import PipelineOptions
 
 import beam_helpers.data_utils as dutil
-from beam_helpers.filters import is_extragalactic_transient
+from beam_helpers.filters import is_extragalactic_transient, is_pure
 import beam_helpers.salt2_utils as s2
 
 
@@ -152,6 +152,21 @@ def run(PROJECTID, sources, sinks, pipeline_args, salt2_configs):
         alert_dicts = (full_alert_dicts | 'StripCutouts' >>
                         beam.ParDo(dutil.stripCutouts()))
 
+        #-- Filter for purity and publish a PS stream
+        adicts_pure = (
+            alert_dicts | 'filterPurity' >>
+            beam.Filter(is_pure)
+        )
+        # to PubSub
+        adicts_pure_ps = (
+            adicts_pure | 'pureTransFormatDictForPubSub' >>
+            beam.ParDo(dutil.formatDictForPubSub())
+        )
+        adicts_pure_ps_deadletters = (
+            adicts_pure_ps | 'pureTransToPubSub' >>
+            WriteToPubSub(sinks['PS_pure'], **snkconf['PS_generic'])
+        )  # ToDo: handle deadletters
+
         #-- Filter for extragalactic transients and publish a PS stream
         adicts_exgal = (
             alert_dicts | 'filterExgalTrans' >>
@@ -194,6 +209,10 @@ if __name__ == "__main__":
         help="Cloud Storage bucket to store Salt2 figure.\n",
     )
     parser.add_argument(
+        "--sink_PS_pure",
+        help="Pub/Sub topic to announce alert stream filtered for purity..\n",
+    )
+    parser.add_argument(
         "--sink_PS_exgalTrans",
         help="Pub/Sub topic to announce extragalactic transient filter.\n",
     )
@@ -223,6 +242,7 @@ if __name__ == "__main__":
     sinks = {
             'BQ_salt2': known_args.sink_BQ_salt2,
             'CS_salt2': known_args.sink_CS_salt2,
+            'PS_pure': known_args.sink_PS_pure,
             'PS_exgalTrans': known_args.sink_PS_exgalTrans,
             'PS_salt2': known_args.sink_PS_salt2,
     }
