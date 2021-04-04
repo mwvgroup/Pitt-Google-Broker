@@ -119,7 +119,7 @@ def _resources(service, testid='test'):
                 f'{PROJECT_ID}_dataflow': [],
                 f'{PROJECT_ID}_testing_bucket':
                     ['ztf_3.3_validschema_1154446891615015011.avro'],
-                f'{PROJECT_ID}_ztf_alert_avro_bucket': [],
+                f'{PROJECT_ID}_ztf_alert_avros': [],
                 f'{PROJECT_ID}_ztf-sncosmo': [],
         }
         # Files are currently expected to reside in the
@@ -134,8 +134,8 @@ def _resources(service, testid='test'):
 
     if service == 'PS':
         topics = {  # '<topic_name>': ['<subscription_name>', ]
-                'ztf_alert_avro_bucket':
-                    ['ztf_alert_avro_bucket-counter'],
+                'ztf_alert_avros':
+                    ['ztf_alert_avros-counter'],
                 'ztf_alerts':
                     ['ztf_alerts-counter', 'ztf_alerts-reservoir', ],
                 'ztf_alerts_pure':

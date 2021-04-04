@@ -12,6 +12,6 @@ For more information on cloud functions, see:
 
 | Function | Description |
 |---|---|
-| `ps_to_gcs` | Listens to the `ztf_alerts` Pub/Sub stream and stores each alert as an Avro file in Cloud Storage bucket `ztf_alert_avro_bucket`. |
+| `ps_to_gcs` | Listens to the `ztf_alerts` Pub/Sub stream and stores each alert as an Avro file in Cloud Storage bucket `ztf_alert_avros`. |
 <!-- | `GCS_to_BQ` | Load the contents of avro files from Google Cloud Storage (GCP) into Big Query (BQ) | -->
 <!-- | `scheduleinstance` | Deploys and schedules the execution of functions for launching virtual machines that ingest ZTF data into BQ | -->

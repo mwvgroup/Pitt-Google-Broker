@@ -38,8 +38,8 @@ Details:
     - __Cloud Function:__
  [`upload_ztf_bytes_to_bucket`](https://console.cloud.google.com/functions/details/us-central1/upload_ztf_bytes_to_bucket?project=ardent-cycling-243415&pageState=%28%22functionsDetailsCharts%22:%28%22groupValue%22:%22P1D%22,%22customValue%22:null%29%29)
     - __Listens to__ PS topic: [`ztf_alerts`](https://console.cloud.google.com/cloudpubsub/topic/detail/ztf_alerts?project=ardent-cycling-243415)
-    - __Stores in__ GCS bucket: [`ztf_alert_avro_bucket`](https://console.cloud.google.com/storage/browser/ardent-cycling-243415_ztf_alert_avro_bucket;tab=objects?forceOnBucketsSortingFiltering=false&project=ardent-cycling-243415&prefix=&forceOnObjectsSortingFiltering=false)
-    - __GCS bucket triggers__ Pub/Sub topic: [`ztf_alert_avro_bucket`](https://console.cloud.google.com/cloudpubsub/topic/detail/ztf_alert_avro_bucket?project=ardent-cycling-243415)
+    - __Stores in__ GCS bucket: [`ztf_alert_avros`](https://console.cloud.google.com/storage/browser/ardent-cycling-243415_ztf_alert_avros;tab=objects?forceOnBucketsSortingFiltering=false&project=ardent-cycling-243415&prefix=&forceOnObjectsSortingFiltering=false)
+    - __GCS bucket triggers__ Pub/Sub topic: [`ztf_alert_avros`](https://console.cloud.google.com/cloudpubsub/topic/detail/ztf_alert_avros?project=ardent-cycling-243415)
 
 3. __BigQuery Database Storage__ (ZTF Alert -> BigQuery)
     - __Dataflow job:__ [`production-ztf-ps-bq`](https://console.cloud.google.com/dataflow/jobs?project=ardent-cycling-243415)
