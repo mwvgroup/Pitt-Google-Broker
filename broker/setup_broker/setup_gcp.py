@@ -138,6 +138,8 @@ def _resources(service, testid='test'):
                     ['ztf_alert_avro_bucket-counter'],
                 'ztf_alert_data':
                     ['ztf_alert_data-counter', 'ztf_alert_data-reservoir', ],
+                'ztf_alert_data_pure':
+                    ['ztf_alert_data_pure-counter', ],
                 'ztf_exgalac_trans':
                     ['ztf_exgalac_trans-counter'],
                 'ztf_salt2':
