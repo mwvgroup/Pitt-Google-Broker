@@ -8,6 +8,12 @@ Pitt-Google Broker's data and services.
 import pandas as pd
 
 
+def ztf_fid_names():
+    """Returns a dictionary mapping the ZTF `fid` (filter ID) to the common name.
+    """
+    return {1:'g', 2:'R', 3:'i'}
+
+
 def alert_dict_to_dataframe(alert):
     """ Packages an alert into a dataframe.
     Adapted from:

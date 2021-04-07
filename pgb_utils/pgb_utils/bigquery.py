@@ -70,9 +70,9 @@ def _create_client_if_needed():
     except AssertionError:
         # help the user open a bigquery client
         msg = ('\nTo run queries, you must first open a BigQuery Client.\n'
-               'This can be done directly using `pgb.bigquery.create_client(project_id)`\n'
-               '\tTo run this command now, enter your Google Cloud Platform project ID.\n'
-               '\tTo exit, simply press "Enter".\n'
+               'Enter your Google Cloud Platform project ID now '
+               'or exit (just press Enter) and run\n'
+               '`pgb.bigquery.create_client(my_project_id)`\n'
                '\nProject ID: '
         )
         project_id = input(msg) or ''
@@ -161,6 +161,8 @@ def get_dataset_table_names(dataset: str ='ztf_alerts') -> List[str]:
     stop = _create_client_if_needed()
     if stop:  # the user has chosen to exit rather than create a client
         return
+
+    print(f'Getting table names for dataset: {dataset}')
 
     query = (
         'SELECT * '
@@ -309,12 +311,12 @@ def dry_run(query: str, notify: bool = True):
     query_job = user_bq_client.query(query, job_config=job_config)
 
     if notify:
-        nbytes, TB = query_job.total_bytes_processed, 1e12
-        pTB = nbytes/TB*100  # nbytes as a percent of 1 TB
+        nbytes, TiB = query_job.total_bytes_processed, 2**40
+        pTiB = nbytes/TiB*100  # nbytes as a percent of 1 TiB
         print(f'\nQuery statement:')
         print(f'\n"{query}"\n')
         print(f'will process {nbytes} bytes of data.')
-        print(f'({pTB:.3}% of your 1 TB free monthly allotment.)')
+        print(f'({pTiB:.3}% of your 1 TB Free Tier monthly allotment.)')
 
 def _dry_run_and_confirm(query: str) -> bool:
     # print dry run info
@@ -589,7 +591,7 @@ def _do_cone_search_iterator(objects: pd.DataFrame, center: astropy.coordinates.
         objects: DataFrame containing histories of multiple objectIds.
     """
     for df in objects:
-        in_cone = _object_is_in_cone(df, center, radius)
+        in_cone = object_is_in_cone(df, center, radius)
 
         if in_cone:  # format and yield
             if format == 'json':
@@ -606,23 +608,26 @@ def _do_cone_search_all(objects: pd.DataFrame, center: astropy.coordinates.SkyCo
         objects: DataFrame containing histories of multiple objectIds.
     """
     gb = objects.groupby(level='objectId')
-    objects_in_cone = gb.filter(lambda df: _object_is_in_cone(df,center,radius))
+    objects_in_cone = gb.filter(lambda df: object_is_in_cone(df,center,radius))
     if format == 'json':
         objects_in_cone = objects_in_cone.reset_index().to_json()  # str
     return objects_in_cone
 
-def _object_is_in_cone(object: pd.DataFrame, center: astropy.coordinates.SkyCoord, radius: astropy.coordinates.Angle):
+def object_is_in_cone(object: pd.DataFrame, center: astropy.coordinates.SkyCoord, radius: astropy.coordinates.Angle):
     """Checks whether the object's most recent observation has a position that
     is within a cone defined by center and radius.
 
     Args:
         object: DataFrame containing the history of a single objectId.
                 Required columns: ['jd','ra','dec']
+        center: Center of the cone to search within.
+        radius: Radius of the cone to search within.
 
     Returns:
         in_cone: True if object is within radius of center, else False
     """
     # get the SkyCoords of the most recent observation
+    # to do: use the epoch with highest S/N instead
     obs = object.loc[object['jd']==object['jd'].max(),:]
     obs_coords = coord.SkyCoord(obs['ra'], obs['dec'], frame='icrs', unit='deg')
 

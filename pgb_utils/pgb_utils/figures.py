@@ -37,7 +37,7 @@ def plot_lightcurve(dflc: pd.DataFrame,
                   Else x-axis will be Julian date.
     """
 
-    filter_code = {1:'g', 2:'R', 3:'i'}
+    filter_code = pgbu.ztf_fid_names()  # dict
     filter_color = {1:'green', 2:'red', 3:'pink'}
 
     # set the x-axis (time) details
