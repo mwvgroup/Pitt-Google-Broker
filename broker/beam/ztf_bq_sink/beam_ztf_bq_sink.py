@@ -11,7 +11,7 @@ separate from this Beam pipeline).
 2. Drops the cutouts and loads the rest to the BigQuery alerts table.
 
 3. Extracts the candidate record and info needed for provinance and loads
-to the BigQuery candidates table.
+to the BigQuery DIASource table.
 
 Usage Example
 -------------

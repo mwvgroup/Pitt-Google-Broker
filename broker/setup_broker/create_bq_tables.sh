@@ -15,8 +15,8 @@ if [ "$testid" != "False" ]; then
     bq query --destination_table "${PROJECT_ID}:${newtable}" "$query"
 
     # create a table for the candidate data
-    oldtable="ztf_alerts.candidates"
-    newtable="ztf_alerts_${testid}.candidates"
+    oldtable="ztf_alerts.DIASource"
+    newtable="ztf_alerts_${testid}.DIASource"
     query="SELECT * FROM ${oldtable} LIMIT 0"
     bq query --destination_table "${PROJECT_ID}:${newtable}" "$query"
 
