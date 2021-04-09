@@ -1,0 +1,16 @@
+apache_beam[gcp]
+aplpy
+astropy==3.2.1
+astropy-healpix==0.6
+beautifulsoup4==4.8
+# google-auth
+# google-api-core
+google-cloud-bigquery
+# google-cloud-logging
+google-cloud-pubsub
+google-cloud-storage
+matplotlib
+numpy
+pandas
+tabulate
+typing
