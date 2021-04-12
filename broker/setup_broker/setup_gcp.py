@@ -78,8 +78,11 @@ Module Documentation
 """
 
 import argparse
+import json
 import os
 from pathlib import Path
+import shlex
+import subprocess
 import sys
 from warnings import warn
 from google.api_core.exceptions import NotFound
@@ -112,6 +115,18 @@ def _resources(service, testid='test'):
         if testid is not False:
             datasets = [f'{d}_{testid}' for d in datasets]
         return datasets
+
+    if service == 'dashboard':
+        # get resources not named elsewhere in this function
+        dataflow = ['bq-sink', 'value-added']
+        instances = ['night-conductor', 'ztf-consumer']
+        all = dataflow + instances
+
+        if testid is not False:
+            atmp = [f'{a}-{testid}' for a in all]
+            all = atmp
+
+        return all
 
     if service == 'GCS':
         buckets = {  # '<bucket-name>': ['<file-name to upload>',]
@@ -218,6 +233,75 @@ def setup_bigquery(testid='test', teardown=False) -> None:
             # Create dataset
             bigquery_client.create_dataset(dataset, exists_ok=True)
             print(f'Created dataset (skipped if previously existed): {dataset}')
+
+def setup_dashboard(testid='test', teardown=False) -> None:
+    """Create a monitoring dashboard for the broker instance.
+
+    See: https://cloud.google.com/blog/products/management-tools/cloud-monitoring-dashboards-using-an-api
+    """
+    # dashboard ID will be the last part of the "name" field of the json file
+    dashboard_id = f'broker-instance-{testid}'
+    dashboard_url = f'https://console.cloud.google.com/monitoring/dashboards/builder/{dashboard_id}?project={PROJECT_ID}'
+
+    if not teardown:
+        # create json config file
+        jpath = _setup_dashboard_json(testid)
+
+        # create the dashboard
+        gcreate = f'gcloud monitoring dashboards create --config-from-file={jpath}'
+        __ = subprocess.check_output(shlex.split(gcreate))
+
+        # tell the user where to view it
+        print('\nA new dashboard has been created for you!\nView it at:')
+        print(f'{dashboard_url}\n')
+
+    else:
+        gdelete = f'gcloud monitoring dashboards delete projects/{PROJECT_ID}/dashboards/{dashboard_id}'
+        __ = subprocess.check_output(shlex.split(gdelete))
+
+def _setup_dashboard_json(testid='test'):
+    """Create a new dashboard config json file from a template.
+    """
+
+    ftemplate = 'dashboard_template.json'
+    # open the template config file
+    with open(ftemplate, 'r') as f:
+        dstring = json.dumps(json.load(f))
+
+    # change the resource names
+    rnames = _setup_dashboard_resource_names(testid)  # {'old-name': 'new-name'}
+    for k,v in rnames.items():
+        dstring = dstring.replace(k,v)
+
+    # write the new config file
+    fname = f'dashboard-{testid}.json' if testid!=False else f'dashboard.json'
+    with open(fname, 'w') as f:
+        json.dump(json.loads(dstring), f, indent=2)
+
+    return fname
+
+def _setup_dashboard_resource_names(testid='test'):
+    """Get dict mapping resources {'old-name': 'new-name',}.
+    Relies heavily on lists and dicts being ordered (requires Python>=3.7).
+    """
+    # PS
+    psold = _resources('PS', testid=False)
+    psnew = _resources('PS', testid=testid)
+    # get topic names
+    pstopics = {old:new for old,new in zip(psold.keys(),psnew.keys())}
+    # Subscription names are topic names with a suffix appended.
+    # The topic name gets a testid appended,
+    # then we need to swap the testid with the suffix
+    # Current dashboard only uses "counter" subscriptions
+    pssubs = {f'-{testid}-counter': f'-counter-{testid}'}
+
+    # VMs and Dataflow jobs
+    oold = _resources('dashboard', testid=False)
+    onew = _resources('dashboard', testid=testid)
+    othernames = {old:new for old,new in zip(oold,onew)}
+
+    # add the testid, merge the dicts, and return
+    return {'testid': testid, **pstopics, **pssubs, **othernames}
 
 def setup_buckets(testid='test', teardown=False) -> None:
     """Create new storage buckets and upload testing files.
