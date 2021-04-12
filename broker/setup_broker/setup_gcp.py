@@ -244,7 +244,7 @@ def setup_dashboard(testid='test', teardown=False) -> None:
     """
     # dashboard ID will be the last part of the "name" field of the json file
     dashboard_id = f'broker-instance-{testid}'
-    dashboard_url = f'https://console.cloud.google.com/monitoring/dashboards/builder/{dashboard_id}?project={PROJECT_ID}'
+    dashboard_url = f'https://console.cloud.google.com/monitoring/dashboards/builder/{dashboard_id}'
 
     if not teardown:
         # create json config file
@@ -266,7 +266,7 @@ def _setup_dashboard_json(testid='test'):
     """Create a new dashboard config json file from a template.
     """
 
-    ftemplate = 'dashboard_template.json'
+    ftemplate = 'templates/dashboard.json'
     # open the template config file
     with open(ftemplate, 'r') as f:
         dstring = json.dumps(json.load(f))
@@ -277,7 +277,10 @@ def _setup_dashboard_json(testid='test'):
         dstring = dstring.replace(k,v)
 
     # write the new config file
-    fname = f'dashboard-{testid}.json' if testid!=False else f'dashboard.json'
+    if testid != False:
+        fname = f'templates/dashboard-{testid}.json'
+    else:
+        fname = f'templates/dashboard-production.json'
     with open(fname, 'w') as f:
         json.dump(json.loads(dstring), f, indent=2)
 
@@ -391,7 +394,7 @@ def setup_pubsub(testid='test', teardown=False) -> None:
             if teardown:
                 # Delete subscription
                 try:
-                    subscriber.delete_subscription(request={"subscription": sub_path})
+                    subscriber.delete_subscription(subscription=sub_path)
                 except NotFound:
                     pass
                 else:
