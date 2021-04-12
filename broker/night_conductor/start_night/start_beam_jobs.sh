@@ -40,6 +40,7 @@ timeout 60 \
         --source_PS_ztf ${source_PS_ztf} \
         --sink_BQ_salt2 ${sink_BQ_salt2} \
         --sink_CS_salt2 ${sink_CS_salt2} \
+        --sink_PS_pure ${sink_PS_pure} \
         --sink_PS_exgalTrans ${sink_PS_exgalTrans} \
         --sink_PS_salt2 ${sink_PS_salt2} \
         --salt2_SNthresh ${salt2_SNthresh} \
@@ -65,6 +66,7 @@ timeout 60 \
         --PROJECTID ${PROJECT_ID} \
         --source_PS_ztf ${source_PS_ztf} \
         --sink_BQ_originalAlert ${sink_BQ_originalAlert} \
+        --sink_BQ_diasource ${sink_BQ_diasource} \
         --streaming \
     &> runjob.out
 # get the Job id so we can use it to stop the job later
