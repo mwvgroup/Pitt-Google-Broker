@@ -9,7 +9,7 @@
         "width": 10,
         "height": 1,
         "widget": {
-          "title": "Pitt-Google Broker - testid",
+          "title": "Broker Instance - testid",
           "text": {
             "format": "RAW"
           }
@@ -17,7 +17,7 @@
       },
       {
         "xPos": 6,
-        "yPos": 24,
+        "yPos": 26,
         "width": 6,
         "height": 3,
         "widget": {
@@ -35,9 +35,6 @@
                       "groupByFields": [
                         "resource.label.\"job_name\""
                       ]
-                    },
-                    "secondaryAggregation": {
-                      "alignmentPeriod": "60s"
                     }
                   }
                 },
@@ -58,7 +55,7 @@
       },
       {
         "xPos": 6,
-        "yPos": 21,
+        "yPos": 23,
         "width": 6,
         "height": 3,
         "widget": {
@@ -76,9 +73,6 @@
                       "groupByFields": [
                         "resource.label.\"job_name\""
                       ]
-                    },
-                    "secondaryAggregation": {
-                      "alignmentPeriod": "60s"
                     }
                   }
                 },
@@ -99,7 +93,7 @@
       },
       {
         "xPos": 6,
-        "yPos": 2,
+        "yPos": 4,
         "width": 6,
         "height": 3,
         "widget": {
@@ -113,9 +107,6 @@
                     "aggregation": {
                       "alignmentPeriod": "60s",
                       "perSeriesAligner": "ALIGN_MEAN"
-                    },
-                    "secondaryAggregation": {
-                      "alignmentPeriod": "60s"
                     }
                   }
                 },
@@ -137,7 +128,7 @@
       },
       {
         "xPos": 6,
-        "yPos": 8,
+        "yPos": 10,
         "width": 6,
         "height": 3,
         "widget": {
@@ -170,7 +161,7 @@
         }
       },
       {
-        "yPos": 18,
+        "yPos": 20,
         "width": 6,
         "height": 3,
         "widget": {
@@ -224,7 +215,7 @@
         }
       },
       {
-        "yPos": 2,
+        "yPos": 4,
         "width": 6,
         "height": 3,
         "widget": {
@@ -262,7 +253,7 @@
         }
       },
       {
-        "yPos": 21,
+        "yPos": 23,
         "width": 6,
         "height": 3,
         "widget": {
@@ -276,9 +267,6 @@
                     "aggregation": {
                       "alignmentPeriod": "60s",
                       "perSeriesAligner": "ALIGN_MAX"
-                    },
-                    "secondaryAggregation": {
-                      "alignmentPeriod": "60s"
                     }
                   }
                 },
@@ -299,7 +287,7 @@
       },
       {
         "xPos": 6,
-        "yPos": 5,
+        "yPos": 7,
         "width": 6,
         "height": 3,
         "widget": {
@@ -317,9 +305,6 @@
                       "groupByFields": [
                         "resource.label.\"job_name\""
                       ]
-                    },
-                    "secondaryAggregation": {
-                      "alignmentPeriod": "60s"
                     }
                   }
                 },
@@ -340,7 +325,7 @@
         }
       },
       {
-        "yPos": 1,
+        "yPos": 3,
         "width": 6,
         "height": 1,
         "widget": {
@@ -352,7 +337,7 @@
       },
       {
         "xPos": 6,
-        "yPos": 1,
+        "yPos": 3,
         "width": 6,
         "height": 1,
         "widget": {
@@ -363,7 +348,7 @@
         }
       },
       {
-        "yPos": 5,
+        "yPos": 7,
         "width": 6,
         "height": 3,
         "widget": {
@@ -406,7 +391,7 @@
       },
       {
         "xPos": 6,
-        "yPos": 11,
+        "yPos": 13,
         "width": 6,
         "height": 3,
         "widget": {
@@ -420,9 +405,6 @@
                     "aggregation": {
                       "alignmentPeriod": "60s",
                       "perSeriesAligner": "ALIGN_MEAN"
-                    },
-                    "secondaryAggregation": {
-                      "alignmentPeriod": "60s"
                     }
                   }
                 },
@@ -443,7 +425,7 @@
         }
       },
       {
-        "yPos": 8,
+        "yPos": 10,
         "width": 6,
         "height": 3,
         "widget": {
@@ -481,7 +463,7 @@
         }
       },
       {
-        "yPos": 11,
+        "yPos": 13,
         "width": 6,
         "height": 3,
         "widget": {
@@ -520,7 +502,7 @@
       },
       {
         "xPos": 6,
-        "yPos": 15,
+        "yPos": 17,
         "width": 6,
         "height": 3,
         "widget": {
@@ -531,7 +513,7 @@
         }
       },
       {
-        "yPos": 14,
+        "yPos": 16,
         "width": 6,
         "height": 1,
         "widget": {
@@ -543,7 +525,7 @@
       },
       {
         "xPos": 6,
-        "yPos": 14,
+        "yPos": 16,
         "width": 6,
         "height": 1,
         "widget": {
@@ -554,7 +536,7 @@
         }
       },
       {
-        "yPos": 15,
+        "yPos": 17,
         "width": 6,
         "height": 3,
         "widget": {
@@ -568,9 +550,6 @@
                     "aggregation": {
                       "alignmentPeriod": "60s",
                       "perSeriesAligner": "ALIGN_MEAN"
-                    },
-                    "secondaryAggregation": {
-                      "alignmentPeriod": "60s"
                     }
                   }
                 },
@@ -591,13 +570,60 @@
       },
       {
         "xPos": 6,
-        "yPos": 18,
+        "yPos": 20,
         "width": 6,
         "height": 3,
         "widget": {
           "text": {
             "content": ".",
             "format": "RAW"
+          }
+        }
+      },
+      {
+        "yPos": 1,
+        "width": 6,
+        "height": 2,
+        "widget": {
+          "title": "night-conductor CPU utilization [MEAN]",
+          "scorecard": {
+            "timeSeriesQuery": {
+              "timeSeriesFilter": {
+                "filter": "metric.type=\"compute.googleapis.com/instance/cpu/utilization\" resource.type=\"gce_instance\" metric.label.\"instance_name\"=\"night-conductor\"",
+                "aggregation": {
+                  "alignmentPeriod": "60s",
+                  "perSeriesAligner": "ALIGN_MEAN",
+                  "crossSeriesReducer": "REDUCE_MEAN"
+                }
+              }
+            },
+            "sparkChartView": {
+              "sparkChartType": "SPARK_LINE"
+            }
+          }
+        }
+      },
+      {
+        "xPos": 6,
+        "yPos": 1,
+        "width": 6,
+        "height": 2,
+        "widget": {
+          "title": "ztf-consumer CPU utilization [MEAN]",
+          "scorecard": {
+            "timeSeriesQuery": {
+              "timeSeriesFilter": {
+                "filter": "metric.type=\"compute.googleapis.com/instance/cpu/utilization\" resource.type=\"gce_instance\" metric.label.\"instance_name\"=\"ztf-consumer\"",
+                "aggregation": {
+                  "alignmentPeriod": "60s",
+                  "perSeriesAligner": "ALIGN_MEAN",
+                  "crossSeriesReducer": "REDUCE_MEAN"
+                }
+              }
+            },
+            "sparkChartView": {
+              "sparkChartType": "SPARK_LINE"
+            }
           }
         }
       }
