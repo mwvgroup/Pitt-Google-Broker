@@ -96,14 +96,14 @@ def run(PROJECTID, sources, sinks, pipeline_args):
                 **snkconf['BQ_generic'])
         )
 
-        #-- Extract the candidate info and upload to BQ
-        cand_dicts = (
-            alert_dicts | 'extractCandidate' >>
-            beam.ParDo(dutil.extractCandidate())
+        #-- Extract the DIA source info and upload to BQ
+        dias_dicts = (
+            alert_dicts | 'extractDIASource' >>
+            beam.ParDo(dutil.extractDIASource())
         )
-        cdicts_deadletters = (
-            cand_dicts | 'Write Candidate BigQuery' >>
-            WriteToBigQuery(sinks['BQ_candidate'],
+        ddicts_deadletters = (
+            dias_dicts | 'Write DIASource BigQuery' >>
+            WriteToBigQuery(sinks['BQ_diasource'],
                 **snkconf['BQ_generic'])
         )
 
@@ -126,8 +126,8 @@ if __name__ == "__main__":  # noqa
         help="BigQuery table to store original alert data.\n",
     )
     parser.add_argument(
-        "--sink_BQ_candidate",
-        help="BigQuery table to store candidate data.\n",
+        "--sink_BQ_diasource",
+        help="BigQuery table to store DIA source data.\n",
     )
 
     known_args, pipeline_args = parser.parse_known_args()
@@ -135,7 +135,7 @@ if __name__ == "__main__":  # noqa
     sources = {'PS_ztf': known_args.source_PS_ztf}
     sinks = {
             'BQ_originalAlert': known_args.sink_BQ_originalAlert,
-            'BQ_candidate': known_args.sink_BQ_candidate,
+            'BQ_diasource': known_args.sink_BQ_diasource,
     }
 
     run(known_args.PROJECTID, sources, sinks, pipeline_args)

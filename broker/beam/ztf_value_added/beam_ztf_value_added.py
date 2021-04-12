@@ -211,7 +211,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--sink_PS_pure",
-        help="Pub/Sub topic to announce alert stream filtered for purity..\n",
+        help="Pub/Sub topic to announce alert stream filtered for purity.\n",
     )
     parser.add_argument(
         "--sink_PS_exgalTrans",

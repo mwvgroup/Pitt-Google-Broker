@@ -87,7 +87,7 @@ def is_pure(alert):
     Based on tests done at IPAC (F. Masci, priv. comm), the following filter delivers a relatively pure sample.
     """
     candidate = alert['candidate']
-    rb = ['rb'] >= 0.65  # RealBogus score
+    rb = candidate['rb'] >= 0.65  # RealBogus score
     nbad = candidate['nbad'] = 0  # num bad pixels
     fwhm = candidate['fwhm'] <= 5  # Full Width Half Max, SExtractor [pixels]
     elong = candidate['elong'] <= 1.2  # major / minor axis, SExtractor

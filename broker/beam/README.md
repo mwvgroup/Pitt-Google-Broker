@@ -47,6 +47,7 @@ python3 beam_ztf_value_added.py \
             --source_PS_ztf ${source_PS_ztf} \
             --sink_BQ_salt2 ${sink_BQ_salt2} \
             --sink_CS_salt2 ${sink_CS_salt2} \
+            --sink_PS_pure ${sink_PS_pure} \
             --sink_PS_exgalTrans ${sink_PS_exgalTrans} \
             --sink_PS_salt2 ${sink_PS_salt2} \
             --salt2_SNthresh ${salt2_SNthresh} \
@@ -71,6 +72,7 @@ python beam_ztf_bq_sink.py \
             --PROJECTID ${PROJECT_ID} \
             --source_PS_ztf ${source_PS_ztf} \
             --sink_BQ_originalAlert ${sink_BQ_originalAlert} \
+            --sink_BQ_diasource ${sink_BQ_diasource} \
             --streaming \
             --update  # use if updating a currently running job
 # Use “Ctrl + C” to regain control of the terminal.
