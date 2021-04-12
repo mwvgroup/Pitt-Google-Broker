@@ -113,7 +113,8 @@ def _resources(service, testid='test'):
 
         # append the testid
         if testid is not False:
-            datasets = [f'{d}_{testid}' for d in datasets]
+            dtmp = [f'{d}_{testid}' for d in datasets]
+            datasets = dtmp
         return datasets
 
     if service == 'dashboard':
@@ -144,7 +145,8 @@ def _resources(service, testid='test'):
 
         # append the testid
         if testid is not False:
-            buckets = {f'{key}-{testid}': val for key, val in buckets.items()}
+            btmp = {f'{key}-{testid}': val for key, val in buckets.items()}
+            buckets = btmp
         return buckets
 
     if service == 'PS':
@@ -163,9 +165,10 @@ def _resources(service, testid='test'):
 
         # append the testid
         if testid is not False:
-            topics = {f'{key}-{testid}': val for key, val in topics.items()}
-            for key, val in topics.items():
-                topics[key] = [f'{v}-{testid}' for v in val]
+            ttmp = {f'{key}-{testid}': val for key, val in topics.items()}
+            for key, val in ttmp.items():
+                ttmp[key] = [f'{v}-{testid}' for v in val]
+            topics = ttmp
         return topics
 
 def _do_not_delete_production_resources(testid='test', teardown=True):
