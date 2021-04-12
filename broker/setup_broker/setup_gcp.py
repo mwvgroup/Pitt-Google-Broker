@@ -372,7 +372,7 @@ def setup_pubsub(testid='test', teardown=False) -> None:
         if teardown:
             # Delete topic
             try:
-                publisher.delete_topic(request={"topic": topic_path})
+                publisher.delete_topic(topic=topic_path)
             except NotFound:
                 pass
             else:
