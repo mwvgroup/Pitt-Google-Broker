@@ -102,18 +102,11 @@ def _resources(service, testid='test'):
     """
 
     if service == 'BQ':
-        datasets = ['ztf_alerts', ]
-        # We only create datasets here, not tables.
-        # To create a table, we must provide a schema.
-        # This is non-trivial for the main "alerts" table
-        # which has a nested schema.
-        # The simplest thing to do is to use the commandline tool `bq`
-        # to copy the schema from an existing table.
-        # See ``create_bq_tables.sh``
+        datasets = {'ztf_alerts': ['alerts', 'DIASource', 'salt2']}
 
         # append the testid
         if testid is not False:
-            dtmp = [f'{d}_{testid}' for d in datasets]
+            dtmp = {f'{key}_{testid}': val for key, val in datasets.items()}
             datasets = dtmp
         return datasets
 
@@ -226,7 +219,7 @@ def setup_bigquery(testid='test', teardown=False) -> None:
     datasets = _resources('BQ', testid=testid)
     bigquery_client = bigquery.Client()
 
-    for dataset in datasets:
+    for dataset, tables in datasets.items():
         if teardown:
             # Delete dataset
             kwargs = {'delete_contents':True, 'not_found_ok':True}
@@ -236,6 +229,13 @@ def setup_bigquery(testid='test', teardown=False) -> None:
             # Create dataset
             bigquery_client.create_dataset(dataset, exists_ok=True)
             print(f'Created dataset (skipped if previously existed): {dataset}')
+
+            # create the tables
+            for table in tables:
+                bqmk = f'bq mk --table {PROJECT_ID}:{dataset}.{table} templates/bq_{table}_schema.json'
+                out = subprocess.check_output(shlex.split(bqmk))
+                print(f'{out}')  # should be a success message
+
 
 def setup_dashboard(testid='test', teardown=False) -> None:
     """Create a monitoring dashboard for the broker instance.
