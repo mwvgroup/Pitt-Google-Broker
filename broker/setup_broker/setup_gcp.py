@@ -420,6 +420,7 @@ def auto_setup(testid='test', teardown=False) -> None:
     setup_bigquery(testid=testid, teardown=teardown)
     setup_buckets(testid=testid, teardown=teardown)
     setup_pubsub(testid=testid, teardown=teardown)
+    setup_dashboard(testid=testid, teardown=teardown)
 
 
 if __name__ == "__main__":
