@@ -43,16 +43,23 @@ def subscribe_alerts(subscription_name, max_alerts=1):
     subscriber = pubsub_v1.SubscriberClient()
     subscription_path = subscriber.subscription_path(project_id, subscription_name)
 
-    response = subscriber.pull(subscription_path, max_messages=max_alerts)
+    request={
+        "subscription": subscription_path,
+        "max_messages": max_alerts,
+    }
+    response = subscriber.pull(request)
 
     message_list, ack_ids = [], []
 
     for received_message in response.received_messages:
-        encoded = received_message.message.data
-        message = encoded.decode('UTF-8')
+        message = received_message.message.data  # bytes
         message_list.append(message)
         ack_ids.append(received_message.ack_id)
 
-    subscriber.acknowledge(subscription_path, ack_ids)
+    request={
+        "subscription": subscription_path,
+        "ack_ids": ack_ids,
+    }
+    subscriber.acknowledge(request)
 
     return (message_list)

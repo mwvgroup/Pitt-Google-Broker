@@ -4,7 +4,7 @@
 """
 
 from concurrent.futures import TimeoutError
-from google.cloud import pubsub
+from google.cloud import pubsub_v1
 import os
 import sys
 import time
@@ -85,7 +85,7 @@ def user_confirm():
         sys.exit('Exiting consumer simulator.')
 
 def setup_subscribe(alerts_per_batch, sub_id=None):
-    subscriber = pubsub.SubscriberClient()
+    subscriber = pubsub_v1.SubscriberClient()
 
     if sub_id is None: sub_id = 'ztf_alerts-reservoir'
 
@@ -101,13 +101,13 @@ def setup_subscribe(alerts_per_batch, sub_id=None):
 def setup_publish(testid, alerts_per_batch, topic_id=None):
     # calls to publish are batched automatically
     # let's try to get all alerts into 1 publisher batch
-    batch_settings = pubsub.types.BatchSettings(max_messages=alerts_per_batch)
+    batch_settings = pubsub_v1.types.BatchSettings(max_messages=alerts_per_batch)
     # some default batch settings to be aware of:
         # max_messages = 100
         # max_bytes = 1 MB
         # max_latency = 10 ms
 
-    publisher = pubsub.PublisherClient(batch_settings)
+    publisher = pubsub_v1.PublisherClient(batch_settings)
 
     if topic_id is None: topic_id = f'ztf_alerts-{testid}'
     topic_path = publisher.topic_path(PROJECT_ID, topic_id)
