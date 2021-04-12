@@ -87,6 +87,7 @@ def upload_ztf_bytes_to_bucket(msg, context) -> None:
     """
 
     data = base64.b64decode(msg['data'])  # alert packet, bytes
+    attributes = msg['attributes']
     # Get the survey name and version
     survey = guess_schema_survey(data)
     version = guess_schema_version(data)
