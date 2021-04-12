@@ -31,8 +31,8 @@ class extractAlertDict(DoFn):
         return alertDicts
 
 
-class extractCandidate(DoFn):
-    """Extract the candidate fields and information needed for provinance
+class extractDIASource(DoFn):
+    """Extract the DIA source` fields and information needed for provinance
     from the alertDict.
     """
     def process(self, alertDict):
@@ -44,8 +44,9 @@ class extractCandidate(DoFn):
         metakeys = ['schemavsn', 'publisher', 'objectId', 'candid']
         metadict = {k:v for k,v in alertDict.items() if k in metakeys}
 
-        # get list of previous candidates' candid
-        prv_candids = np.array([pc['candid'] for pc in alertDict['prv_candidates']])
+        # get string of previous candidates' candid, comma-separated
+        tmp = [pc['candid'] for pc in alertDict['prv_candidates']]
+        prv_candids = ','.join([f'{cid}' for cid in tmp if cid is not None])
 
         # package it up and return
         candidate = {**metadict, **cand, 'prv_candidates_candids': prv_candids}
