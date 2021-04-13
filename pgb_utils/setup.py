@@ -22,19 +22,19 @@ from setuptools import setup, find_packages
 import pathlib
 
 
-# here = pathlib.Path(__file__).parent.resolve()
+here = pathlib.Path(__file__).parent.resolve()
 # Get the long description from the README file
-# long_description = (here / 'README.md').read_text(encoding='utf-8')
+long_description = (here / 'README.md').read_text(encoding='utf-8')
 
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
 setup(
     name='pgb_utils',  # Required
-    version='0.0.12',  # Required
+    version='0.1.3',  # Required
     description='Tools to interact with Pitt-Google Broker data products and services.',
-    # long_description=long_description,
-    # long_description_content_type='text/markdown',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Science/Research',
