@@ -27,7 +27,7 @@ log_name = 'ps-to-gcs-cloudfnc'
 logger = logging_client.logger(log_name)
 
 # bucket to store the Avro files
-bucket_name = f'{PROJECT_ID}_ztf_alert_avro_bucket'
+bucket_name = f'{PROJECT_ID}_ztf_alert_avros'
 if TESTID != "False":
     bucket_name = f'{bucket_name}-{TESTID}'
 storage_client = storage.Client()
@@ -87,11 +87,7 @@ def upload_ztf_bytes_to_bucket(msg, context) -> None:
     """
 
     data = base64.b64decode(msg['data'])  # alert packet, bytes
-    atrs = msg['attributes']  # custom attributes
-    filename = f"{atrs['kafka.topic']}_{atrs['kafka.timestamp']}.avro"
-
-    blob = bucket.blob(filename)
-
+    attributes = msg['attributes']
     # Get the survey name and version
     survey = guess_schema_survey(data)
     version = guess_schema_version(data)
@@ -99,11 +95,32 @@ def upload_ztf_bytes_to_bucket(msg, context) -> None:
     with TempAlertFile(max_size=max_alert_packet_size, mode='w+b') as temp_file:
         temp_file.write(data)
         temp_file.seek(0)
-        fix_schema(temp_file, survey, version, filename)
-        blob.upload_from_file(temp_file)
-        logger.log_text(f'Uploaded {filename} to {bucket.name}')
 
-def fix_schema(temp_file, survey, version, filename):
+        alert = extract_alert_dict(temp_file)
+        filename = create_filename(alert, attributes)
+        fix_schema(temp_file, alert, survey, version, filename)
+
+        blob = bucket.blob(filename)
+        blob.upload_from_file(temp_file)
+
+    logger.log_text(f'Uploaded {filename} to {bucket.name}')
+
+def create_filename(alert, attributes):
+    # alert is a single alert dict wrapped in a list
+    oid, cid = alert[0]['objectId'], alert[0]['candid']
+    topic = attributes['kafka.topic']
+    filename = f'{oid}.{cid}.{topic}.avro'
+    return filename
+
+def extract_alert_dict(temp_file):
+    """Extracts and returns the alert data as a dict wrapped in a list.
+    """
+    # load the file and get the data with fastavro
+    temp_file.seek(0)
+    alert = [r for r in fastavro.reader(temp_file)]
+    return alert
+
+def fix_schema(temp_file, alert, survey, version, filename):
     """ Rewrites the temp_file with a corrected schema header
         so that it is valid for upload to BigQuery.
 
@@ -125,13 +142,9 @@ def fix_schema(temp_file, survey, version, filename):
         logger.log_text(msg)
         return
 
-    # load the file and get the data with fastavro
-    temp_file.seek(0)
-    data = [r for r in fastavro.reader(temp_file)]
-
     # write the corrected file
     temp_file.seek(0)
-    fastavro.writer(temp_file, valid_schema, data)
+    fastavro.writer(temp_file, valid_schema, alert)
     temp_file.truncate()  # removes leftover data
     temp_file.seek(0)
 

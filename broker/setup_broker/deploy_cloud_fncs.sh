@@ -9,7 +9,7 @@ teardown="${2:-False}"
 # "True" tearsdown/deletes resources, else setup
 
 #--- GCP resources used in this script
-trigger_topic="ztf_alert_data"
+trigger_topic="ztf_alerts"
 ps_to_gcs_CF_name="upload_ztf_bytes_to_bucket"
 # use test resources, if requested
 if [ "$testid" != "False" ]; then

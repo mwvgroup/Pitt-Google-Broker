@@ -44,8 +44,8 @@ fi
 
 #--- GCP resources used directly in this script
 broker_bucket="${PROJECT_ID}-broker_files"
-avro_bucket="${PROJECT_ID}_ztf_alert_avro_bucket"
-avro_topic="projects/${PROJECT_ID}/topics/ztf_alert_avro_bucket"
+avro_bucket="${PROJECT_ID}_ztf_alert_avros"
+avro_topic="projects/${PROJECT_ID}/topics/ztf_alert_avros"
 # use test resources, if requested
 # (there must be a better way to do this)
 if [ "$testid" != "False" ]; then

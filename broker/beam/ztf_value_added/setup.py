@@ -17,6 +17,7 @@ requires = [
             'google-cloud-core>=1.4.1',
             'google-cloud-dataflow',
             'google-cloud-datastore>=1.15',
+            'google-cloud-logging',
             'google-cloud-storage',
             'iminuit==1.4.9',
             # 'io', builtin

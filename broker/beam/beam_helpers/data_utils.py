@@ -8,10 +8,11 @@ Module Documentation
 --------------------
 """
 
-import logging
-import json
-import fastavro as fa
 from apache_beam import DoFn
+import logging
+import fastavro as fa
+import json
+import numpy as np
 
 
 class extractAlertDict(DoFn):
@@ -28,6 +29,28 @@ class extractAlertDict(DoFn):
         # logging.info(f'Extracted alert data dict for candid {candid}')
         # print(f'{alertDicts[0]}')
         return alertDicts
+
+
+class extractDIASource(DoFn):
+    """Extract the DIA source` fields and information needed for provinance
+    from the alertDict.
+    """
+    def process(self, alertDict):
+        # get candidate
+        cand = alertDict['candidate']
+        del cand['candid']  # candid is repeated, drop the one nested here
+
+        # get info for provinance
+        metakeys = ['schemavsn', 'publisher', 'objectId', 'candid']
+        metadict = {k:v for k,v in alertDict.items() if k in metakeys}
+
+        # get string of previous candidates' candid, comma-separated
+        tmp = [pc['candid'] for pc in alertDict['prv_candidates']]
+        prv_candids = ','.join([f'{cid}' for cid in tmp if cid is not None])
+
+        # package it up and return
+        candidate = {**metadict, **cand, 'prv_candidates_candids': prv_candids}
+        return [candidate]
 
 
 class stripCutouts(DoFn):

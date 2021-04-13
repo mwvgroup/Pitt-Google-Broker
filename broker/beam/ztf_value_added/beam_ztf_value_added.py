@@ -38,7 +38,7 @@ from apache_beam.io.gcp.bigquery_tools import RetryStrategy
 from apache_beam.options.pipeline_options import PipelineOptions
 
 import beam_helpers.data_utils as dutil
-from beam_helpers.filters import is_extragalactic_transient
+from beam_helpers.filters import is_extragalactic_transient, is_pure
 import beam_helpers.salt2_utils as s2
 
 
@@ -96,20 +96,21 @@ class Salt2(beam.PTransform):
         s2conf = self.salt2_configs
 
         # extract the epochs and some stats
-        epochInfoDicts = (alert_PColl | 'FormatForSalt2' >>
+        alert_epoch_dicts = (alert_PColl | 'FormatForSalt2' >>
                       beam.ParDo(s2.FormatForSalt2(s2conf))
                      )
 
         # drop alerts that do not meet minimum data quality
-        epochInfoDictsQC = (epochInfoDicts | 'filterSalt2QualityCuts' >>
+        alert_epoch_dicts_QC = (alert_epoch_dicts | 'filterSalt2QualityCuts' >>
                           beam.Filter(s2.salt2_quality_cuts, s2conf)
                          )
 
         # fit with Salt2. Yields 2 output collections
-        salt2Dicts = (epochInfoDictsQC | 'FitSalt2' >>
-                      beam.ParDo(s2.FitSalt2()).with_outputs('salt2Fit4Figure', main='salt2FitResult')
+        salt2Dicts = (alert_epoch_dicts_QC | 'FitSalt2' >>
+                      beam.ParDo(s2.FitSalt2()).with_outputs('salt2Fit4Figure', 'alert_salt2Fit', main='salt2Fit')
                      )
-        salt2FitResult = salt2Dicts.salt2FitResult  # PCollection of dicts
+        salt2Fit = salt2Dicts.salt2Fit  # PCollection of dicts
+        alert_salt2Fit = salt2Dicts.alert_salt2Fit  # PCollection of dicts
         salt2Fit4Figure = salt2Dicts.salt2Fit4Figure  # PCollection of dicts
 
         # Store a lightcurve + Salt2 fit figure in Cloud Storage
@@ -118,13 +119,13 @@ class Salt2(beam.PTransform):
             )
 
         # Store the fit params in BigQuery
-        bqSalt2Deadletters = (salt2FitResult | 'salt2ToBQ' >>
+        bqSalt2Deadletters = (salt2Fit | 'salt2ToBQ' >>
                               WriteToBigQuery(sinks['BQ_salt2'],
                                               **snkconf['BQ_salt2'])
                              )  # ToDo: handle deadletters
 
-        # Announce the fit params to Pub/Sub
-        salt2PS = (salt2FitResult | 'salt2FormatDictForPubSub' >>
+        # Announce the fit params to Pub/Sub and include original alert
+        salt2PS = (alert_salt2Fit | 'salt2FormatDictForPubSub' >>
                    beam.ParDo(dutil.formatDictForPubSub())
                   )
         psSalt2Deadletters = (salt2PS | 'salt2ToPubSub' >>
@@ -132,7 +133,7 @@ class Salt2(beam.PTransform):
                                             **snkconf['PS_generic'])
                              )  # ToDo: handle deadletters
 
-        return salt2FitResult
+        return salt2Fit
 
 
 def run(PROJECTID, sources, sinks, pipeline_args, salt2_configs):
@@ -145,28 +146,45 @@ def run(PROJECTID, sources, sinks, pipeline_args, salt2_configs):
     with beam.Pipeline(options=pipeline_options) as pipeline:
 
         #-- Read from PS and extract data as dicts
-        PSin = (pipeline | 'ReadFromPubSub' >>
+        alert_bytes = (pipeline | 'ReadFromPubSub' >>
                 ReadFromPubSub(topic=sources['PS_ztf']))
-        alertDicts = (PSin | 'ExtractAlertDict' >>
+        full_alert_dicts = (alert_bytes | 'ExtractAlertDict' >>
                       beam.ParDo(dutil.extractAlertDict()))
-        alertDictsSC = (alertDicts | 'StripCutouts' >>
+        alert_dicts = (full_alert_dicts | 'StripCutouts' >>
                         beam.ParDo(dutil.stripCutouts()))
 
-        #-- Filter for extragalactic transients
-        adscExgalTrans = (alertDictsSC | 'filterExgalTrans' >>
-                          beam.Filter(is_extragalactic_transient)
-                         )
+        #-- Filter for purity and publish a PS stream
+        adicts_pure = (
+            alert_dicts | 'filterPurity' >>
+            beam.Filter(is_pure)
+        )
         # to PubSub
-        egtPS = (adscExgalTrans | 'exgalTransFormatDictForPubSub' >>
-                 beam.ParDo(dutil.formatDictForPubSub())
-                )
-        psEgtDeadletters = (egtPS | 'exgalTransToPubSub' >>
-                            WriteToPubSub(sinks['PS_exgalTrans'],
-                                          **snkconf['PS_generic'])
-                           )  # ToDo: handle deadletters
+        adicts_pure_ps = (
+            adicts_pure | 'pureTransFormatDictForPubSub' >>
+            beam.ParDo(dutil.formatDictForPubSub())
+        )
+        adicts_pure_ps_deadletters = (
+            adicts_pure_ps | 'pureTransToPubSub' >>
+            WriteToPubSub(sinks['PS_pure'], **snkconf['PS_generic'])
+        )  # ToDo: handle deadletters
+
+        #-- Filter for extragalactic transients and publish a PS stream
+        adicts_exgal = (
+            alert_dicts | 'filterExgalTrans' >>
+            beam.Filter(is_extragalactic_transient)
+        )
+        # to PubSub
+        adicts_exgal_ps = (
+            adicts_exgal | 'exgalTransFormatDictForPubSub' >>
+            beam.ParDo(dutil.formatDictForPubSub())
+        )
+        adicts_exgal_ps_deadletters = (
+            adicts_exgal_ps | 'exgalTransToPubSub' >>
+            WriteToPubSub(sinks['PS_exgalTrans'], **snkconf['PS_generic'])
+       )  # ToDo: handle deadletters
 
         #-- Fit with Salt2, store and announce results
-        __ = adscExgalTrans | 'Salt2' >> Salt2(sinks, snkconf, salt2_configs)
+        __ = adicts_exgal | 'Salt2' >> Salt2(sinks, snkconf, salt2_configs)
 
 
 
@@ -190,6 +208,10 @@ if __name__ == "__main__":
     parser.add_argument(
         "--sink_CS_salt2",
         help="Cloud Storage bucket to store Salt2 figure.\n",
+    )
+    parser.add_argument(
+        "--sink_PS_pure",
+        help="Pub/Sub topic to announce alert stream filtered for purity.\n",
     )
     parser.add_argument(
         "--sink_PS_exgalTrans",
@@ -221,6 +243,7 @@ if __name__ == "__main__":
     sinks = {
             'BQ_salt2': known_args.sink_BQ_salt2,
             'CS_salt2': known_args.sink_CS_salt2,
+            'PS_pure': known_args.sink_PS_pure,
             'PS_exgalTrans': known_args.sink_PS_exgalTrans,
             'PS_salt2': known_args.sink_PS_salt2,
     }

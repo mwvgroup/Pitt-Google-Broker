@@ -78,8 +78,11 @@ Module Documentation
 """
 
 import argparse
+import json
 import os
 from pathlib import Path
+import shlex
+import subprocess
 import sys
 from warnings import warn
 from google.api_core.exceptions import NotFound
@@ -99,19 +102,25 @@ def _resources(service, testid='test'):
     """
 
     if service == 'BQ':
-        datasets = ['ztf_alerts', ]
-        # We only create datasets here, not tables.
-        # To create a table, we must provide a schema.
-        # This is non-trivial for the main "alerts" table
-        # which has a nested schema.
-        # The simplest thing to do is to use the commandline tool `bq`
-        # to copy the schema from an existing table.
-        # See ``create_bq_tables.sh``
+        datasets = {'ztf_alerts': ['alerts', 'DIASource', 'salt2']}
 
         # append the testid
         if testid is not False:
-            datasets = [f'{d}_{testid}' for d in datasets]
+            dtmp = {f'{key}_{testid}': val for key, val in datasets.items()}
+            datasets = dtmp
         return datasets
+
+    if service == 'dashboard':
+        # get resources not named elsewhere in this function
+        dataflow = ['bq-sink', 'value-added']
+        instances = ['night-conductor', 'ztf-consumer']
+        all = dataflow + instances
+
+        if testid is not False:
+            atmp = [f'{a}-{testid}' for a in all]
+            all = atmp
+
+        return all
 
     if service == 'GCS':
         buckets = {  # '<bucket-name>': ['<file-name to upload>',]
@@ -119,7 +128,7 @@ def _resources(service, testid='test'):
                 f'{PROJECT_ID}_dataflow': [],
                 f'{PROJECT_ID}_testing_bucket':
                     ['ztf_3.3_validschema_1154446891615015011.avro'],
-                f'{PROJECT_ID}_ztf_alert_avro_bucket': [],
+                f'{PROJECT_ID}_ztf_alert_avros': [],
                 f'{PROJECT_ID}_ztf-sncosmo': [],
         }
         # Files are currently expected to reside in the
@@ -129,15 +138,18 @@ def _resources(service, testid='test'):
 
         # append the testid
         if testid is not False:
-            buckets = {f'{key}-{testid}': val for key, val in buckets.items()}
+            btmp = {f'{key}-{testid}': val for key, val in buckets.items()}
+            buckets = btmp
         return buckets
 
     if service == 'PS':
         topics = {  # '<topic_name>': ['<subscription_name>', ]
-                'ztf_alert_avro_bucket':
-                    ['ztf_alert_avro_bucket-counter'],
-                'ztf_alert_data':
-                    ['ztf_alert_data-counter', 'ztf_alert_data-reservoir', ],
+                'ztf_alert_avros':
+                    ['ztf_alert_avros-counter'],
+                'ztf_alerts':
+                    ['ztf_alerts-counter', 'ztf_alerts-reservoir', ],
+                'ztf_alerts_pure':
+                    ['ztf_alerts_pure-counter', ],
                 'ztf_exgalac_trans':
                     ['ztf_exgalac_trans-counter'],
                 'ztf_salt2':
@@ -146,9 +158,10 @@ def _resources(service, testid='test'):
 
         # append the testid
         if testid is not False:
-            topics = {f'{key}-{testid}': val for key, val in topics.items()}
-            for key, val in topics.items():
-                topics[key] = [f'{v}-{testid}' for v in val]
+            ttmp = {f'{key}-{testid}': val for key, val in topics.items()}
+            for key, val in ttmp.items():
+                ttmp[key] = [f'{v}-{testid}' for v in val]
+            topics = ttmp
         return topics
 
 def _do_not_delete_production_resources(testid='test', teardown=True):
@@ -206,7 +219,7 @@ def setup_bigquery(testid='test', teardown=False) -> None:
     datasets = _resources('BQ', testid=testid)
     bigquery_client = bigquery.Client()
 
-    for dataset in datasets:
+    for dataset, tables in datasets.items():
         if teardown:
             # Delete dataset
             kwargs = {'delete_contents':True, 'not_found_ok':True}
@@ -216,6 +229,85 @@ def setup_bigquery(testid='test', teardown=False) -> None:
             # Create dataset
             bigquery_client.create_dataset(dataset, exists_ok=True)
             print(f'Created dataset (skipped if previously existed): {dataset}')
+
+            # create the tables
+            for table in tables:
+                bqmk = f'bq mk --table {PROJECT_ID}:{dataset}.{table} templates/bq_{table}_schema.json'
+                out = subprocess.check_output(shlex.split(bqmk))
+                print(f'{out}')  # should be a success message
+
+
+def setup_dashboard(testid='test', teardown=False) -> None:
+    """Create a monitoring dashboard for the broker instance.
+
+    See: https://cloud.google.com/blog/products/management-tools/cloud-monitoring-dashboards-using-an-api
+    """
+    # dashboard ID will be the last part of the "name" field of the json file
+    dashboard_id = f'broker-instance-{testid}'
+    dashboard_url = f'https://console.cloud.google.com/monitoring/dashboards/builder/{dashboard_id}'
+
+    if not teardown:
+        # create json config file
+        jpath = _setup_dashboard_json(testid)
+
+        # create the dashboard
+        gcreate = f'gcloud monitoring dashboards create --config-from-file={jpath}'
+        __ = subprocess.check_output(shlex.split(gcreate))
+
+        # tell the user where to view it
+        print('\nA new dashboard has been created for you!\nView it at:')
+        print(f'{dashboard_url}\n')
+
+    else:
+        gdelete = f'gcloud monitoring dashboards delete projects/{PROJECT_ID}/dashboards/{dashboard_id}'
+        __ = subprocess.check_output(shlex.split(gdelete))
+
+def _setup_dashboard_json(testid='test'):
+    """Create a new dashboard config json file from a template.
+    """
+
+    ftemplate = 'templates/dashboard.json'
+    # open the template config file
+    with open(ftemplate, 'r') as f:
+        dstring = json.dumps(json.load(f))
+
+    # change the resource names
+    rnames = _setup_dashboard_resource_names(testid)  # {'old-name': 'new-name'}
+    for k,v in rnames.items():
+        dstring = dstring.replace(k,v)
+
+    # write the new config file
+    if testid != False:
+        fname = f'templates/dashboard-{testid}.json'
+    else:
+        fname = f'templates/dashboard-production.json'
+    with open(fname, 'w') as f:
+        json.dump(json.loads(dstring), f, indent=2)
+
+    return fname
+
+def _setup_dashboard_resource_names(testid='test'):
+    """Get dict mapping resources {'old-name': 'new-name',}.
+    Relies heavily on lists and dicts being ordered (requires Python>=3.7).
+    """
+    # PS
+    psold = _resources('PS', testid=False)
+    psnew = _resources('PS', testid=testid)
+    # get topic names
+    pstopics = {old:new for old,new in zip(psold.keys(),psnew.keys())}
+    # Subscription names are topic names with a suffix appended.
+    # The topic name gets a testid appended,
+    # then we need to swap the testid with the suffix
+    # Current dashboard only uses "counter" subscriptions
+    pssubs = {f'-{testid}-counter': f'-counter-{testid}'}
+
+    # VMs and Dataflow jobs
+    oold = _resources('dashboard', testid=False)
+    onew = _resources('dashboard', testid=testid)
+    othernames = {old:new for old,new in zip(oold,onew)}
+
+    # add the testid, merge the dicts, and return
+    return {'testid': testid, **pstopics, **pssubs, **othernames}
 
 def setup_buckets(testid='test', teardown=False) -> None:
     """Create new storage buckets and upload testing files.
@@ -283,7 +375,7 @@ def setup_pubsub(testid='test', teardown=False) -> None:
         if teardown:
             # Delete topic
             try:
-                publisher.delete_topic(request={"topic": topic_path})
+                publisher.delete_topic(topic=topic_path)
             except NotFound:
                 pass
             else:
@@ -302,7 +394,7 @@ def setup_pubsub(testid='test', teardown=False) -> None:
             if teardown:
                 # Delete subscription
                 try:
-                    subscriber.delete_subscription(request={"subscription": sub_path})
+                    subscriber.delete_subscription(subscription=sub_path)
                 except NotFound:
                     pass
                 else:
@@ -331,6 +423,7 @@ def auto_setup(testid='test', teardown=False) -> None:
     setup_bigquery(testid=testid, teardown=teardown)
     setup_buckets(testid=testid, teardown=teardown)
     setup_pubsub(testid=testid, teardown=teardown)
+    setup_dashboard(testid=testid, teardown=teardown)
 
 
 if __name__ == "__main__":
