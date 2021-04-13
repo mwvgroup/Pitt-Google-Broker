@@ -19,9 +19,16 @@ Module Documentation
 --------------------
 """
 
+import astropy.units as u
+from google.cloud import logging
 import numpy as np
 import pandas as pd
-import astropy.units as u
+
+
+# connect to the cloud logger. not currently used
+logging_client = logging.Client()
+log_name = 'beam-filters'
+logger = logging_client.logger(log_name)
 
 
 def is_extragalactic_transient(alert):
@@ -87,10 +94,10 @@ def is_pure(alert):
     Based on tests done at IPAC (F. Masci, priv. comm), the following filter delivers a relatively pure sample.
     """
     candidate = alert['candidate']
-    rb = candidate['rb'] >= 0.65  # RealBogus score
-    nbad = candidate['nbad'] = 0  # num bad pixels
-    fwhm = candidate['fwhm'] <= 5  # Full Width Half Max, SExtractor [pixels]
-    elong = candidate['elong'] <= 1.2  # major / minor axis, SExtractor
-    magdiff = abs(candidate['magdiff']) <= 0.1  # aperture - psf [mag]
+    rb = (candidate['rb'] >= 0.65)  # RealBogus score
+    nbad = (candidate['nbad'] == 0)  # num bad pixels
+    fwhm = (candidate['fwhm'] <= 5)  # Full Width Half Max, SExtractor [pixels]
+    elong = (candidate['elong'] <= 1.2)  # major / minor axis, SExtractor
+    magdiff = (abs(candidate['magdiff']) <= 0.1)  # aperture - psf [mag]
 
-    return rb and nbad and fwhm and elong and magdiff
+    return (rb and nbad and fwhm and elong and magdiff)
