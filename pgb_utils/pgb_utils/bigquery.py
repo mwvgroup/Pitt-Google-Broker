@@ -108,7 +108,7 @@ def get_table_info(table: Union[str,list] = 'all', dataset: str ='ztf_alerts'):
 
     # get and print info about each table
     for t in tables:
-        df = get_table_schema(table=t)
+        df = get_table_schema(table=t, dataset=dataset)
 
         # print the metadata and column info
         print(df.table_name)
@@ -169,7 +169,7 @@ def get_dataset_table_names(dataset: str ='ztf_alerts') -> List[str]:
         f'FROM {pgb_project_id}.{dataset}.INFORMATION_SCHEMA.TABLES'
     )
     query_job = user_bq_client.query(query)
-    tables = [row['table_name'] for row in query_job]
+    tables = [row['table_name'] for row in query_job].sort()
     return tables
 
 
@@ -316,7 +316,7 @@ def dry_run(query: str, notify: bool = True):
         print(f'\nQuery statement:')
         print(f'\n"{query}"\n')
         print(f'will process {nbytes} bytes of data.')
-        print(f'({pTiB:.3}% of your 1 TB Free Tier monthly allotment.)')
+        print(f'({pTiB:.3}% of your 1 TiB Free Tier monthly allotment.)')
 
 def _dry_run_and_confirm(query: str) -> bool:
     # print dry run info
@@ -388,29 +388,6 @@ def query_objects(columns: List[str],
         return (format_history_query_results(row=row, format=format) for row in query_job)
     else:  # format and return all rows at once
         return format_history_query_results(query_job=query_job, format=format)
-# fs
-# !HELP!
-# Two questions about `query_objects()`:
-
-# 1)
-# The return statement under `elif iterator:` returns a
-# GENERATOR EXPRESSION which may not be the right way to do this.
-# I'm not very familiar with creating generator functions.
-# The resulting `objects` generator can only be used once. This was
-# unexpected behavior to me.
-# I've also named the keyword "iterator" which might contribute confusion.
-# I tried using a yield statement instead, but ran into trouble because I
-# want this function to return something other than a generator when given
-# different params.
-
-# 2)
-# There are many json format options. I haven't worked with json before, so I
-# don't know the best ones to choose. I chose the defaults. The result doesn't
-# look pretty if you print it out, but has the advantage that it reads back
-# in to a dataframe nicely.
-# BTW, I chose to offer this option in the first place because ALeRCE does it
-# and it seemed easy. I only assume that it is useful.
-# fe
 
 def _query_objects_check_history_column_names(columns: List[str]) -> List[str]:
     """Make sure user-submitted column names are appropriate for `query_objects()`.

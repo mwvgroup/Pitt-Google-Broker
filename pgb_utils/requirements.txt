@@ -1,13 +1,15 @@
-apache_beam[gcp]
+# apache_beam[gcp]
+apache_beam
 aplpy
 astropy==3.2.1
 astropy-healpix==0.6
 beautifulsoup4==4.8
 # google-auth
 # google-api-core
+google-apitools
 google-cloud-bigquery
 # google-cloud-logging
-google-cloud-pubsub
+# google-cloud-pubsub
 google-cloud-storage
 matplotlib
 numpy
