@@ -1,4 +1,25 @@
-# Pitt-Google LSST Broker
+# Pitt-Google Broker
+
+Pitt-Google Broker is an astronomical alert broker that is being developed for large scale surveys of the night sky, particularly the upcoming [Vera Rubin Observatory's Legacy Survey of Space and Time](https://www.lsst.org/) (LSST).
+We currently process and serve the [Zwicky Transient Facility](https://www.ztf.caltech.edu/)'s (ZTF) nightly alert stream.
+
+## Query, Download, and Process the Data
+
+[Pitt-Google-Tutorial-Code-Samples.ipynb](pgb_utils/tutorials/Pitt-Google-Tutorial-Code-Samples.ipynb)
+
+All data is public and is hosted in the [Google Cloud](https://cloud.google.com/).
+It can be accessed using Google's [Cloud SDK](https://cloud.google.com/sdk) in many languages, including Python and from the command-line.
+In addition, Pitt-Google Broker offers the Python package `pgb_utils` which contains wrappers of Cloud SDK methods for some common use cases, and other helper functions.
+We view this package as a collection of examples demonstrating the use of the underlying methods.
+The Cloud SDK is well developed and documented, and we intend for `pgb_utils` to be an entry point to learning the methods.
+You are encouraged to view its source code and adapt/extend it for your specific use cases.
+The [`pgb_utils`](pgb_utils) directory contains tutorial notebooks that will walk you through using the available tools to access and process the data.
+Please open an Issue on GitHub or contact troy.raen@pitt.edu if you run into problems.
+
+---
+## Alert Broker Intro and Setup
+
+What follows is instructions for running the broker. Users do NOT need to run the broker in order to access the data, and should instead proceed directly to the tutorial in [`pgb_utils`](pgb_utils).
 
 - [Broker Architecture](#broker-architecture)
 - [Setup the Broker for the First Time](#setup-the-broker-for-the-first-time)

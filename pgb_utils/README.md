@@ -1,8 +1,19 @@
-# `pgb_utils`: Tools for interacting with Pitt-Google Broker
+# Query, download, and process the data
 
-See [Pitt-Google-Tutorial-Code-Samples.ipynb](https://colab.research.google.com/github/broker-workshop/tutorials/blob/main/Pitt-Google/Pitt-Google-Tutorial-Code-Samples.ipynb) for an intro on using this package to access the data.
+[Pitt-Google-Tutorial-Code-Samples.ipynb](tutorials/Pitt-Google-Tutorial-Code-Samples.ipynb)
 
-`pgb_utils` is a collection of helper functions to facilitate interaction with Pitt-Google Broker data. The tutorial will demonstrate its use. The package is essentially a set of:
+All data is public and is hosted in the [Google Cloud](https://cloud.google.com/).
+It can be accessed using Google's [Cloud SDK](https://cloud.google.com/sdk) in many languages, including Python and from the command-line.
+In addition, Pitt-Google Broker offers the Python package `pgb_utils` which contains wrappers of Cloud SDK methods for some common use cases, and other helper functions.
+We view this package as a collection of examples demonstrating the use of the underlying methods.
+The Cloud SDK is well developed and documented, and we intend for `pgb_utils` to be an entry point to learning the methods.
+You are encouraged to view its source code and adapt/extend it for your specific use cases.
+Please open an Issue on GitHub or contact troy.raen@pitt.edu if you run into problems.
+
+
+## `pgb_utils`
+
+`pgb_utils` is a collection of wrappers and helper functions to facilitate interaction with data. We view it as a set of examples for using the Cloud SDK to access and process the data. The tutorial will demonstrate its use. The package is essentially a set of:
 
 1. Convience wrappers for the [Google Cloud Python SDK](https://cloud.google.com/python/docs/reference)
 2. Helper functions for ZTF data decoding and plotting, provided by ZTF (see [Filtering_alerts.ipynb](https://github.com/ZwickyTransientFacility/ztf-avro-alert/blob/master/notebooks/Filtering_alerts.ipynb))
