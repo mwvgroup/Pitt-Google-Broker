@@ -20,15 +20,8 @@ Module Documentation
 """
 
 import astropy.units as u
-from google.cloud import logging
 import numpy as np
 import pandas as pd
-
-
-# connect to the cloud logger. not currently used
-logging_client = logging.Client()
-log_name = 'beam-filters'
-logger = logging_client.logger(log_name)
 
 
 def is_extragalactic_transient(alert):

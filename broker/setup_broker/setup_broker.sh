@@ -64,7 +64,7 @@ if [ "$testid" != "False" ]; then
     else
         # setup testing resources
         python3 setup_gcp.py --testid="$testid"
-        ./create_bq_tables.sh "$PROJECT_ID" "$testid"
+        # ./create_bq_tables.sh "$PROJECT_ID" "$testid"
     fi
 else
     # setup production resources

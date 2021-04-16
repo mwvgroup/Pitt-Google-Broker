@@ -307,7 +307,7 @@ def _setup_dashboard_resource_names(testid='test'):
     othernames = {old:new for old,new in zip(oold,onew)}
 
     # add the testid, merge the dicts, and return
-    return {'testid': testid, **pstopics, **pssubs, **othernames}
+    return {'testid': f'{testid}', **pstopics, **pssubs, **othernames}
 
 def setup_buckets(testid='test', teardown=False) -> None:
     """Create new storage buckets and upload testing files.
