@@ -45,8 +45,11 @@ class extractDIASource(DoFn):
         metadict = {k:v for k,v in alertDict.items() if k in metakeys}
 
         # get string of previous candidates' candid, comma-separated
-        tmp = [pc['candid'] for pc in alertDict['prv_candidates']]
-        prv_candids = ','.join([f'{cid}' for cid in tmp if cid is not None])
+        if 'prv_candidates' in alertDict.keys():
+            tmp = [pc['candid'] for pc in alertDict['prv_candidates']]
+            prv_candids = ','.join([f'{cid}' for cid in tmp if cid is not None])
+        else:
+            prv_candids = ''
 
         # package it up and return
         candidate = {**metadict, **cand, 'prv_candidates_candids': prv_candids}
