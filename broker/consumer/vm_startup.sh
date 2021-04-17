@@ -27,8 +27,39 @@ sed -i "s/PROJECT_ID/${PROJECT_ID}/g" ${fconfig}
 sed -i "s/PS_TOPIC/${PS_TOPIC}/g" ${fconfig}
 sed -i "s/KAFKA_TOPIC/${KAFKA_TOPIC}/g" ${fconfig}
 
-#--- Start the Kafka -> Pub/Sub connector
 cd /bin
-./connect-standalone \
+
+#--- Check until alerts start streaming into the topic
+alerts_flowing=false
+while [ "${alerts_flowing}" = false ]
+do
+    # get list of live topics and dump to file
+    # /bin/kafka-topics works, but exits with:
+        # TGT renewal thread has been interrupted and will exit.
+        # (org.apache.kafka.common.security.kerberos.KerberosLogin)""
+    # which kills the while loop. no working suggestions found online.
+    # passing the error with `|| true`
+    {
+        /bin/kafka-topics \
+            --bootstrap-server public2.alerts.ztf.uw.edu:9094 \
+            --list \
+            --command-config ${workingdir}/admin.properties \
+            > list.topics
+    } || {
+        true
+    }
+
+    # check if our topic is in the list
+    if grep -Fq "${KAFKA_TOPIC}" list.topics
+    then
+        alerts_flowing=true  # start consuming
+    else
+        # sleep 1 min, then try again
+        sleep 60s
+    fi
+done
+
+#--- Start the Kafka -> Pub/Sub connector
+/bin/connect-standalone \
     ${workingdir}/psconnect-worker.properties \
     ${workingdir}/ps-connector.properties
