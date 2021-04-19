@@ -11,7 +11,6 @@ Table of Contents:
 - [Detailed Workflow with code examples](#detailed-workflow-with-code-examples)
     - [1. Setup a testing instance](#1-setup-a-testing-instance)
     - [2. Run your tests](#2-run-your-tests)
-        - [Where to view your resources](#where-to-view-your-resources)
         - [Example: Run the broker](#example-run-the-broker).
             - [End-to-End](#end-to-end). In this section you can:
                 - Connect to ZTF's _live stream_
@@ -19,6 +18,10 @@ Table of Contents:
             - [Use the consumer simulator](#use-the-consumer-simulator) (this bypasses the broker's consumer, and is the only option by which you can _control the flow_ of alerts into the broker)
     - [3. Option a: Leave the testing instance inactive](#3a-leave-the-testing-instance-inactive)
     - [3. Option b: Teardown the testing instance](#3b-teardown-the-testing-instance)
+- [Appendix](#appendix)
+    - [What does `setup_broker.sh` do?](#what-does-setup_brokersh-do)
+    - [Where to view your testing resources](#where-to-view-your-testing-resources)
+    - [Where to look if there's a problem with `night-conductor`'s start/end night routines](#where-to-look-if-theres-a-problem-with-night-conductors-startend-night-routines)
 
 # Overview
 
@@ -126,28 +129,10 @@ testid="mytest"
 Some notes:
 - It may ask you to authenticate yourself using `gcloud auth login`;
 follow the instructions.
-- __Make sure the VM install scripts have completed__ before running the broker or stopping the instances. This can take 15 minutes or longer. Navigate to the instance in the GCP Console (see [Where to view your resources](#where-to-view-your-resources) below) and click the "Monitoring" tab. The CPU utilization will fall to >1% when it is done.
+- __Make sure the VM install scripts have completed__ before running the broker or stopping the instances. This can take __15 minutes__ or longer. Navigate to the instance in the GCP Console (see [Where to view your testing resources](#where-to-view-your-testing-resources) below) and click the "Monitoring" tab. The CPU utilization will fall to >1% when it is done.
 - You must __stop the VM instances *before* running the broker__ (see [Leave the testing instance inactive](#leave-the-testing-instance-inactive) below). The night conductor will start them up again.
 
-`setup_broker.sh` does the following:
-
-1. Create and configure GCP resources in BigQuery, Cloud Storage, and Pub/Sub.
-If you don't have a `bigqueryrc` config file setup yet it will walk you through creating one.
-
-2. Upload the [beam](beam/), [consumer](consumer/), and [night_conductor](night_conductor/) directories to the Cloud Storage bucket [ardent-cycling-243415-broker_files](https://console.cloud.google.com/storage/browser/ardent-cycling-243415-broker_files?project=ardent-cycling-243415&pageState=%28%22StorageObjectListTable%22:%28%22f%22:%22%255B%255D%22%29%29&prefix=&forceOnObjectsSortingFiltering=false). The VMs will fetch a new copy of these files before running the relevant process. This provides us with the flexibility to update individual broker processes/components (except Cloud Functions) by simply uploading a new version of the relevant file(s) to the bucket; we do not have to build a new Docker image, repackage, or redeploy.
-
-3. Configure Pub/Sub notifications (topic [`ztf_alert_avros`](https://console.cloud.google.com/cloudpubsub/topic/detail/ztf_alert_avros?project=ardent-cycling-243415)) on the GCS bucket that stores the alert Avro files (bucket [`ztf_alert_avros`](https://console.cloud.google.com/storage/browser/ardent-cycling-243415_ztf_alert_avros;tab=objects?forceOnBucketsSortingFiltering=false&project=ardent-cycling-243415&prefix=&forceOnObjectsSortingFiltering=false)).
-
-4. Create a VM firewall rule to open the port used by ZTF's Kafka stream.
-This step will _fail_ because the rule already exists and we don't need a separate rule for testing resources.
-_You can ignore it._
-
-5. Deploy the Cloud Function [`upload_ztf_bytes_to_bucket`](https://console.cloud.google.com/functions/details/us-central1/upload_ztf_bytes_to_bucket?project=ardent-cycling-243415&pageState=%28%22functionsDetailsCharts%22:%28%22groupValue%22:%22P1D%22,%22customValue%22:null%29%29) which stores alerts as Avro files in the Cloud Storage bucket [`ztf_alert_avros`](https://console.cloud.google.com/storage/browser/ardent-cycling-243415_ztf_alert_avros;tab=objects?forceOnBucketsSortingFiltering=false&project=ardent-cycling-243415&prefix=&forceOnObjectsSortingFiltering=false).
-
-6. Create and configure the Compute Engine instances
-    - [`night-conductor`](https://console.cloud.google.com/compute/instancesDetail/zones/us-central1-a/instances/night-conductor?tab=details&project=ardent-cycling-243415): we use this VM to start and stop the nightly broker.
-    - [`ztf-consumer`](https://console.cloud.google.com/compute/instancesMonitoringDetail/zones/us-central1-a/instances/ztf-consumer?project=ardent-cycling-243415&tab=monitoring&duration=PT1H&pageState=%28%22duration%22:%28%22groupValue%22:%22P7D%22,%22customValue%22:null%29%29): this VM consumes ZTF's Kafka streams and publishes the alerts to the Pub/Sub topic [`ztf_alerts`](https://console.cloud.google.com/cloudpubsub/topic/detail/ztf_alerts?project=ardent-cycling-243415).
-
+See [What does `setup_broker.sh` do?](#what-does-setup_brokersh-do) for details.
 
 The consumer VM (`ztf-consumer-mytest` in our example) requires two __authorization files__ to connect to the ZTF stream.
 _These must be obtained independently and uploaded to the VM manually, stored at the following locations:_
@@ -183,51 +168,12 @@ gcloud compute instances start "$consumerVM" "$nconductVM" --zone="$zone"
 # so the VMs won't do anything except startup.
 ```
 
-### Where to view your resources
-<!-- fs -->
-Here are links/instructions on viewing your resources in the GCP Console.
-Some concepts are explained in detail in the following "Run the broker" example (e.g., metadata attributes are important).
-
-[__VM instances__](https://console.cloud.google.com/compute/instances?project=ardent-cycling-243415&instancessize=50). Click on the name of one of your VMs (`night-conductor-{testid}` or `ztf-consumer-{testid}`). From here you can:
-- _start/stop_ the instance
-- access the _logs_
-- view and edit the _metadata attributes_
-- view and edit _other configs_
-- click a button to `ssh` into the instance
-- view performance stats and live* _monitoring charts_
-
-[__Pub/Sub topics__](https://console.cloud.google.com/cloudpubsub/topic/list?project=ardent-cycling-243415) and [__Pub/Sub subscriptions__](https://console.cloud.google.com/cloudpubsub/subscription/list?project=ardent-cycling-243415). Click on a topic/subscription. From here you can:
-- view and edit topic/subscription details
-- view live* _monitoring charts_
-
-[__Dataflow jobs__](https://console.cloud.google.com/dataflow/jobs?project=ardent-cycling-243415). Click on a job name. From here you can:
-- start/stop (cancel/drain) the job
-- view details about the job
-- view and interact with the _graph (DAG) that represents the pipeline_ PCollections and Transforms. Click on a node to view details about that step, including live _throughput charts_.
-- view a page of live* _monitoring charts_ (click "JOB METRICS" tab at the top)
-- access the _logs_. Click "LOGS" at the top, you will see tabs for "JOB LOGS", "WORKER LOGS", and "DIAGNOSTICS". Note that if you select a step in the DAG graph you will only see logs related to that step (unselect the step to view logs for the full job). It's easiest to view the logs if you open them in the Logs Viewer by clicking the icon.
-
-[__Cloud Functions__](https://console.cloud.google.com/functions/list?project=ardent-cycling-243415). Click on a function name. From here you can:
-- view live* _monitoring charts_
-- view and edit job details
-- view the source code
-- view the logs
-- test the function (I've never used this option)
-
-[__BigQuery__](https://console.cloud.google.com/bigquery?project=ardent-cycling-243415). Expand the list under our project name (LHS), then expand a dataset, then click on a table name.
-
-[__Storage Buckets__](https://console.cloud.google.com/storage/browser?project=ardent-cycling-243415). Click on the name of a bucket.
-
-* Live monitoring charts have some lag time.
-
-<!-- fe Where to view your resources -->
-
 ### [Example] Run the broker
 <!-- fs -->
 This example will walk you through running the broker to ingest, store, and process an alert stream.
 __Before you begin, make sure your VMs are stopped__.
 (If you have just set up your testing instance, your VMs are running.)
-You can do this from the Console (see [Where to view your resources](#where-to-view-your-resources)) or the command line (see [Leave the testing instance inactive](#3a-leave-the-testing-instance-inactive)).
+You can do this from the Console (see [Where to view your testing resources](#where-to-view-your-testing-resources)) or the command line (see [Leave the testing instance inactive](#3a-leave-the-testing-instance-inactive)).
 
 You have three options for _ingesting alerts_ into the broker:
 1. Connect to ZTF's __live stream__. Obviously, this can only be done at night (Pacific Time) when there is a live stream to connect to.
@@ -422,9 +368,9 @@ gcloud compute instances start "$instancename" --zone "$zone"
 
 ```
 
-See the sections above on
-1) running the broker end-to-end, for a description of what the startup script will do;
-2) where to find/view your resources on the GCP Console.
+For more information, see:
+- [Where to view your testing resources](#where-to-view-your-testing-resources)
+- [Where to look if there's a problem with `night-conductor`'s start/end night routines](#where-to-look-if-theres-a-problem-with-night-conductors-startend-night-routines)
 
 ##### Run the consumer simulator
 Before starting this section, make sure your Dataflow jobs are running (if desired). Check the
@@ -585,3 +531,85 @@ This will delete all GCP resources tagged with the testid. You will be prompted 
 <!-- fe Teardown the testing instance -->
 
 <!-- fe Detailed Workflow with code examples -->
+
+
+# Appendix
+
+## What does `setup_broker.sh` do?
+<!-- fs  -->
+Note: All resources that are hyperlinked in what follows are _production_ resources.
+The testing resources you create will have the same names with your chosen testid appended (and joined by either "-" or "\_").
+
+1. Create and configure GCP resources in BigQuery, Cloud Storage, and Pub/Sub.
+If you don't have a `bigqueryrc` config file setup yet it will walk you through creating one.
+
+2. Upload the [beam](beam/), [consumer](consumer/), and [night_conductor](night_conductor/) directories to the Cloud Storage bucket [ardent-cycling-243415-broker_files](https://console.cloud.google.com/storage/browser/ardent-cycling-243415-broker_files?project=ardent-cycling-243415&pageState=%28%22StorageObjectListTable%22:%28%22f%22:%22%255B%255D%22%29%29&prefix=&forceOnObjectsSortingFiltering=false). The VMs will fetch a new copy of these files before running the relevant process. This provides us with the flexibility to update individual broker processes/components (except Cloud Functions) by simply uploading a new version of the relevant file(s) to the bucket; we do not have to build a new Docker image, repackage, or redeploy.
+
+3. Configure Pub/Sub notifications (topic [`ztf_alert_avros`](https://console.cloud.google.com/cloudpubsub/topic/detail/ztf_alert_avros?project=ardent-cycling-243415)) on the GCS bucket that stores the alert Avro files (bucket [`ztf_alert_avros`](https://console.cloud.google.com/storage/browser/ardent-cycling-243415_ztf_alert_avros;tab=objects?forceOnBucketsSortingFiltering=false&project=ardent-cycling-243415&prefix=&forceOnObjectsSortingFiltering=false)).
+
+4. Create a VM firewall rule to open the port used by ZTF's Kafka stream.
+This step will _fail_ because the rule already exists and we don't need a separate rule for testing resources.
+_You can ignore it._
+
+5. Deploy the Cloud Function [`upload_ztf_bytes_to_bucket`](https://console.cloud.google.com/functions/details/us-central1/upload_ztf_bytes_to_bucket?project=ardent-cycling-243415&pageState=%28%22functionsDetailsCharts%22:%28%22groupValue%22:%22P1D%22,%22customValue%22:null%29%29) which stores alerts as Avro files in the Cloud Storage bucket [`ztf_alert_avros`](https://console.cloud.google.com/storage/browser/ardent-cycling-243415_ztf_alert_avros;tab=objects?forceOnBucketsSortingFiltering=false&project=ardent-cycling-243415&prefix=&forceOnObjectsSortingFiltering=false).
+
+6. Create and configure the Compute Engine instances
+    - [`night-conductor`](https://console.cloud.google.com/compute/instancesDetail/zones/us-central1-a/instances/night-conductor?tab=details&project=ardent-cycling-243415): we use this VM to start and stop the nightly broker.
+    - [`ztf-consumer`](https://console.cloud.google.com/compute/instancesMonitoringDetail/zones/us-central1-a/instances/ztf-consumer?project=ardent-cycling-243415&tab=monitoring&duration=PT1H&pageState=%28%22duration%22:%28%22groupValue%22:%22P7D%22,%22customValue%22:null%29%29): this VM consumes ZTF's Kafka streams and publishes the alerts to the Pub/Sub topic [`ztf_alerts`](https://console.cloud.google.com/cloudpubsub/topic/detail/ztf_alerts?project=ardent-cycling-243415).
+
+<!-- fe What does `setup_broker.sh` do? -->
+
+## Where to view your testing resources
+<!-- fs -->
+To view the __monitoring dashboard__ for your broker instance, replace "\<testid\>" with your testid in the following url:
+- `https://console.cloud.google.com/monitoring/dashboards/builder/broker-instance-<testid>`
+
+Here are links and instructions on finding various kinds of GCP resources in the Console.
+Some concepts are explained in detail in the following "Run the broker" example (e.g., metadata attributes are important).
+
+[__VM instances__](https://console.cloud.google.com/compute/instances?project=ardent-cycling-243415&instancessize=50). Click on the name of one of your VMs (`night-conductor-{testid}` or `ztf-consumer-{testid}`). From here you can:
+- _start/stop_ the instance
+- access the _logs_
+- view and edit the _metadata attributes_
+- view and edit _other configs_
+- click a button to `ssh` into the instance
+- view performance stats and live* _monitoring charts_
+
+[__Pub/Sub topics__](https://console.cloud.google.com/cloudpubsub/topic/list?project=ardent-cycling-243415) and [__Pub/Sub subscriptions__](https://console.cloud.google.com/cloudpubsub/subscription/list?project=ardent-cycling-243415). Click on a topic/subscription. From here you can:
+- view and edit topic/subscription details
+- view live* _monitoring charts_
+
+[__Dataflow jobs__](https://console.cloud.google.com/dataflow/jobs?project=ardent-cycling-243415). Click on a job name. From here you can:
+- start/stop (cancel/drain) the job
+- view details about the job
+- view and interact with the _graph (DAG) that represents the pipeline_ PCollections and Transforms. Click on a node to view details about that step, including live _throughput charts_.
+- view a page of live* _monitoring charts_ (click "JOB METRICS" tab at the top)
+- access the _logs_. Click "LOGS" at the top, you will see tabs for "JOB LOGS", "WORKER LOGS", and "DIAGNOSTICS". Note that if you select a step in the DAG graph you will only see logs related to that step (unselect the step to view logs for the full job). It's easiest to view the logs if you open them in the Logs Viewer by clicking the icon.
+
+[__Cloud Functions__](https://console.cloud.google.com/functions/list?project=ardent-cycling-243415). Click on a function name. From here you can:
+- view live* _monitoring charts_
+- view and edit job details
+- view the source code
+- view the logs
+- test the function (I've never used this option)
+
+[__BigQuery__](https://console.cloud.google.com/bigquery?project=ardent-cycling-243415). Expand the list under our project name (LHS), then expand a dataset, then click on a table name.
+
+[__Storage Buckets__](https://console.cloud.google.com/storage/browser?project=ardent-cycling-243415). Click on the name of a bucket.
+
+* Live monitoring charts have some lag time.
+
+<!-- fe Where to view your testing resources -->
+
+## Where to look if there's a problem with `night-conductor`'s start/end night routines
+
+For links to resources mentioned below, see [Where to view your testing resources](#where-to-view-your-testing-resources).
+
+__`night-conductor`__
+- `night-conductor`'s logs. Compare this with `night-conductor`'s scripts:
+    - [`vm_startup.sh`](broker/night_conductor/vm_startup.sh),
+    - [`start_night.sh`](broker/night_conductor/start_night/start_night.sh)
+    - [`end_night.sh`](broker/night_conductor/end_night/end_night.sh)
+
+__Dataflow jobs__
+- `start_night.sh` writes the log output from a call to start a Dataflow job in a file called `runjob.out` in the directory for the specific pipeline job. These pipeline directories can be found in `night-conductor`'s `/home/broker/beam/` directory.
