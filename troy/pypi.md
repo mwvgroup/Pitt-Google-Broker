@@ -25,7 +25,7 @@ View at: https://test.pypi.org/project/pgb-utils-alpha/0.0.1/
 
 ## Build the distribution and upload it to PyPI
 ```bash
-cd /Users/troyraen/Documents/broker/repo2/pgb_utils
+cd /Users/troyraen/Documents/PGB/repo/pgb_utils
 python3 -m build
 python3 -m twine upload dist/*
 ```
@@ -34,11 +34,11 @@ View at: https://pypi.org/project/pgb-utils/0.1.0/
 
 ## Work in development ("editable") mode:
 ```bash
-conda create --name pgbutils python=3.7 pip ipython
-conda activate pgbutils
-export GOOGLE_APPLICATION_CREDENTIALS=/Users/troyraen/Documents/broker/repo/GCP_auth_key.json
+conda create --name pgbtest python=3.7 pip ipython
+conda activate pgbtest
+export GOOGLE_APPLICATION_CREDENTIALS=/Users/troyraen/Documents/PGB/repo/GCPauth_pitt-google-broker-prototype-0679b75dded0.json
 
-cd /Users/troyraen/Documents/broker/repo2/pgb_utils
+cd /Users/troyraen/Documents/PGB/repo/pgb_utils
 python -m pip install -e .
 ```
 ```python
