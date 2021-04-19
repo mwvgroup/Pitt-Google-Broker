@@ -10,6 +10,7 @@ if [ "$testid" = "False" ]; then
     declare -a subs=(\
     "ztf_alerts-counter" \
     "ztf_alert_avros-counter" \
+    "ztf_alerts_pure-counter" \
     "ztf_exgalac_trans-counter" \
     "ztf_salt2-counter" \
     )
@@ -17,6 +18,7 @@ else
     declare -a subs=(\
     "ztf_alerts-counter-${testid}" \
     "ztf_alert_avros-counter-${testid}" \
+    "ztf_alerts_pure-counter-${testid}" \
     "ztf_exgalac_trans-counter-${testid}" \
     "ztf_salt2-counter-${testid}" \
     )
