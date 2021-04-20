@@ -3,10 +3,11 @@
 testid=$1
 broker_bucket=$2
 KAFKA_TOPIC=$3
+survey="${4:-ztf}"
 
 #--- GCP resources used in this script
-PS_TOPIC=ztf_alerts
-consumerVM=ztf-consumer
+PS_TOPIC="${survey}-alerts"
+consumerVM="${survey}-consumer"
 if [ "$testid" != "False" ]; then
     PS_TOPIC="${PS_TOPIC}-${testid}"
     consumerVM="${consumerVM}-${testid}"

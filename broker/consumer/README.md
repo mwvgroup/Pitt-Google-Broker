@@ -4,8 +4,9 @@ See [`kafka_console_connect.md`](kafka_console_connect.md)
 To start the `ztf-consumer` VM and begin ingesting a ZTF topic:
 
 ```bash
-testid=mytest # see broker/README.md to setup testing resources
-instancename="ztf-consumer-${testid}"
+survey="ztf"
+testid="mytest"
+instancename="${survey}-consumer-${testid}"
 zone=us-central1-a
 
 # Set the VM metadata

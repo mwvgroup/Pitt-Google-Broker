@@ -20,9 +20,10 @@ and [`bq_sink/bq_sink.py`](bq_sink/bq_sink.py)):
 ```bash
 #-- Set configs
 PROJECT_ID=${GOOGLE_CLOUD_PROJECT}
+survey=ztf
 testid=mytest # see broker/README.md to setup testing resources
 beamdir=$(pwd)
-source jobs.config ${PROJECT_ID} ${testid} ${beamdir}
+source jobs.config "$PROJECT_ID" "$testid" "$beamdir" "$survey"
 
 #-- Copy beam_helpers modules.
 # Modules in the beam_helpers directory are used by multiple jobs.
@@ -44,7 +45,7 @@ python3 value_added.py \
             --staging_location ${staging_location} \
             --temp_location ${temp_location} \
             --PROJECTID ${PROJECT_ID} \
-            --source_PS_ztf ${source_PS_ztf} \
+            --source_PS_alerts ${source_PS_alerts} \
             --sink_BQ_salt2 ${sink_BQ_salt2} \
             --sink_CS_salt2 ${sink_CS_salt2} \
             --sink_PS_pure ${sink_PS_pure} \
@@ -70,8 +71,8 @@ python bq_sink.py \
             --staging_location ${staging_location} \
             --temp_location ${temp_location} \
             --PROJECTID ${PROJECT_ID} \
-            --source_PS_ztf ${source_PS_ztf} \
-            --sink_BQ_originalAlert ${sink_BQ_originalAlert} \
+            --source_PS_alerts ${source_PS_alerts} \
+            --sink_BQ_alerts ${sink_BQ_alerts} \
             --sink_BQ_diasource ${sink_BQ_diasource} \
             --streaming \
             --update  # use if updating a currently running job

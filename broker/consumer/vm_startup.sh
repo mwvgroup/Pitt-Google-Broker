@@ -14,13 +14,28 @@ PROJECT_ID=$(curl "${baseurl}/project/project-id" -H "${H}")
 zone=$(curl "${baseurl}/instance/zone" -H "${H}")
 PS_TOPIC=$(curl "${baseurl}/instance/attributes/PS_TOPIC" -H "${H}")
 KAFKA_TOPIC=$(curl "${baseurl}/instance/attributes/KAFKA_TOPIC" -H "${H}")
+# parse the survey name and testid from the VM name
+consumerVM=$(curl "${baseurl}/instance/name" -H "${H}")
+survey=$(echo "$consumerVM" | awk -F "-" '{print $1}')
+if [ "$consumerVM" = "${survey}-consumer" ]; then
+    testid="False"
+else
+    testid=$(echo "$consumerVM" | awk -F "-" '{print $NF}')
+fi
+
+#--- GCP resources used in this script
+broker_bucket="${PROJECT_ID}-${survey}-broker_files"
+# use test resources, if requested
+if [ "$testid" != "False" ]; then
+    broker_bucket="${broker_bucket}-${testid}"
+fi
 
 #--- Download config files from GCS (just grab the whole bucket)
 cd ${brokerdir}
 # remove all consumer files except the keytab
 find ${workingdir} -type f -not -name 'pitt-reader.user.keytab' -delete
 # download fresh files
-gsutil -m cp -r "gs://${PROJECT_ID}-broker_files/consumer" .
+gsutil -m cp -r "gs://${broker_bucket}/consumer" .
 
 cd ${workingdir}
 

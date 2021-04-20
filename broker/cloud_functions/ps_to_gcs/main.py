@@ -28,7 +28,7 @@ log_name = 'ps-to-gcs-cloudfnc'
 logger = logging_client.logger(log_name)
 
 # bucket to store the Avro files
-bucket_name = f'{PROJECT_ID}_ztf_alert_avros'
+bucket_name = f'{PROJECT_ID}-{survey}-alert_avros'
 if TESTID != "False":
     bucket_name = f'{bucket_name}-{TESTID}'
 storage_client = storage.Client()

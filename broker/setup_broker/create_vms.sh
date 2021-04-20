@@ -8,11 +8,13 @@ testid="${2:-test}"
 #   "False" uses production resources
 #   any other string will be appended to the names of all resources
 teardown="${3:-False}" # "True" tearsdown/deletes resources, else setup
+survey="${4:-ztf}"
+# name of the survey this broker instance will ingest
 zone="${CE_ZONE:-us-central1-a}" # use env variable CE_ZONE if it exists
 
 #--- GCP resources used in this script
-consumerVM="ztf-consumer"
-nconductVM="night-conductor"
+consumerVM="${survey}-consumer"
+nconductVM="${survey}-night-conductor"
 # use test resources, if requested
 if [ "$testid" != "False" ]; then
     consumerVM="${consumerVM}-${testid}"
@@ -28,7 +30,7 @@ if [ "$teardown" = "True" ]; then
 
 #--- Create resources
 else
-    #--- Create and configure the ZTF Kafka Consumer VM
+#--- Create and configure the ZTF Kafka Consumer VM
     installscript="gs://${broker_bucket}/consumer/vm_install.sh"
     startupscript="gs://${broker_bucket}/consumer/vm_startup.sh"
     machinetype=e2-standard-2
@@ -45,7 +47,7 @@ else
     gcloud compute instances add-metadata "$consumerVM" --zone "$zone" \
         --metadata startup-script-url="$startupscript"
 
-    #--- Create and configure the Night Conductor VM
+#--- Create and configure the Night Conductor VM
     installscript="gs://${broker_bucket}/night_conductor/vm_install.sh"
     startupscript="gs://${broker_bucket}/night_conductor/vm_startup.sh"
     machinetype=e2-standard-2

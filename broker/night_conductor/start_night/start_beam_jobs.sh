@@ -5,6 +5,7 @@ PROJECT_ID=$1
 testid=$2
 brokerdir=$3
 broker_bucket=$4
+survey="${5:-ztf}"
 
 # Replace the broker's Beam directory with GCS files and cd in
 cd ${brokerdir}
@@ -19,7 +20,7 @@ cp beam_helpers/__init__.py beam_helpers/data_utils.py bq_sink/beam_helpers/.
 cp -r beam_helpers value_added/.
 
 # Set configs
-source jobs.config ${PROJECT_ID} ${testid} ${beamdir}
+source jobs.config ${PROJECT_ID} ${testid} ${beamdir} ${survey}
 
 # Start the ztf-value_added job.
 # - the command holds the terminal, so use timeout (does not cancel the job).
@@ -37,7 +38,7 @@ timeout 60 \
         --staging_location ${staging_location} \
         --temp_location ${temp_location} \
         --PROJECTID ${PROJECT_ID} \
-        --source_PS_ztf ${source_PS_ztf} \
+        --source_PS_alerts ${source_PS_alerts} \
         --sink_BQ_salt2 ${sink_BQ_salt2} \
         --sink_CS_salt2 ${sink_CS_salt2} \
         --sink_PS_pure ${sink_PS_pure} \
@@ -64,8 +65,8 @@ timeout 60 \
         --staging_location ${staging_location} \
         --temp_location ${temp_location} \
         --PROJECTID ${PROJECT_ID} \
-        --source_PS_ztf ${source_PS_ztf} \
-        --sink_BQ_originalAlert ${sink_BQ_originalAlert} \
+        --source_PS_alerts ${source_PS_alerts} \
+        --sink_BQ_alerts ${sink_BQ_alerts} \
         --sink_BQ_diasource ${sink_BQ_diasource} \
         --streaming \
     &> runjob.out

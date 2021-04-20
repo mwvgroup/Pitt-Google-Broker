@@ -6,15 +6,16 @@ baseurl="http://metadata.google.internal/computeMetadata/v1"
 H="Metadata-Flavor: Google"
 PROJECT_ID=$(curl "${baseurl}/project/project-id" -H "${H}")
 nconductVM=$(curl "${baseurl}/instance/name" -H "${H}")
-# parse the testid from the VM name
-if [ "$nconductVM" = "night-conductor" ]; then
+# parse the survey name and testid from the VM name
+survey=$(echo "$nconductVM" | awk -F "-" '{print $1}')
+if [ "$nconductVM" = "${survey}-night-conductor" ]; then
     testid="False"
 else
     testid=$(echo "$nconductVM" | awk -F "-" '{print $NF}')
 fi
 
 #--- GCP resources used in this script
-broker_bucket="${PROJECT_ID}-broker_files"
+broker_bucket="${PROJECT_ID}-${survey}-broker_files"
 # use test resources, if requested
 if [ "$testid" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
