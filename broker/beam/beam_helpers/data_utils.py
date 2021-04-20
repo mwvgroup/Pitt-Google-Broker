@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-"""The ``data_utils` module handles parsing and formatting for ZTF alerts.
+"""The ``data_utils` module handles parsing and formatting for alerts.
 
 
 Module Documentation

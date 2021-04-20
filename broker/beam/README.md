@@ -4,8 +4,8 @@ See [`beam-dataflow-primer.md`](beam_dataflow_primer.md) for intros to Beam and 
 It is interspersed with references to components of the pipeline(s) that we deploy here.
 
 To manually start the jobs (defined in
-[`ztf_value_added/beam_ztf_value_added.py`](ztf_value_added/beam_ztf_value_added.py)
-and [`ztf_bq_sink/beam_ztf_bq_sink.py`](ztf_bq_sink/beam_ztf_bq_sink.py)):
+[`value_added/value_added.py`](value_added/value_added.py)
+and [`bq_sink/bq_sink.py`](bq_sink/bq_sink.py)):
 
 1. Clone this repo.
 
@@ -27,13 +27,13 @@ source jobs.config ${PROJECT_ID} ${testid} ${beamdir}
 #-- Copy beam_helpers modules.
 # Modules in the beam_helpers directory are used by multiple jobs.
 # They need to be copied into the jobs' directories so setup.py can find them.
-mkdir -p ztf_bq_sink/beam_helpers
-cp beam_helpers/__init__.py beam_helpers/data_utils.py ztf_bq_sink/beam_helpers/.
-cp -r beam_helpers ztf_value_added/.
+mkdir -p bq_sink/beam_helpers
+cp beam_helpers/__init__.py beam_helpers/data_utils.py bq_sink/beam_helpers/.
+cp -r beam_helpers value_added/.
 
 #-- Start the ztf value-added processing Dataflow job
-cd ztf_value_added
-python3 beam_ztf_value_added.py \
+cd value_added
+python3 value_added.py \
             --experiments use_runner_v2 \
             --setup_file ${setup_file_valadd} \
             --runner ${runner} \
@@ -58,8 +58,8 @@ python3 beam_ztf_value_added.py \
 # this will _not_ cancel the job
 
 # Start the ztf -> BQ job
-cd ${beamdir} && cd ztf_bq_sink
-python beam_ztf_bq_sink.py \
+cd ${beamdir} && cd bq_sink
+python bq_sink.py \
             --experiments use_runner_v2 \
             --setup_file ${setup_file_bqsink} \
             --runner ${runner} \
