@@ -30,7 +30,7 @@ requires = [
             ]
 
 setup(
-    name = 'beam_ztf_bq_sink',
+    name = 'bq_sink',
     version = '0.0.1',
     url = 'https://github.com/mwvgroup/Pitt-Google-Broker',
     author = 'Troy Raen',

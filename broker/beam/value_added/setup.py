@@ -31,7 +31,7 @@ requires = [
             ]
 
 setup(
-    name = 'beam_ztf_value_added',
+    name = 'value_added',
     version = '0.0.1',
     url = 'https://github.com/mwvgroup/Pitt-Google-Broker',
     author = 'Troy Raen',

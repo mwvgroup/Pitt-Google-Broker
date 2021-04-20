@@ -14,9 +14,9 @@ cd beam
 beamdir=$(pwd)
 
 # Copy beam_helpers modules to job dirs so setup.py works correctly
-mkdir -p ztf_bq_sink/beam_helpers
-cp beam_helpers/__init__.py beam_helpers/data_utils.py ztf_bq_sink/beam_helpers/.
-cp -r beam_helpers ztf_value_added/.
+mkdir -p bq_sink/beam_helpers
+cp beam_helpers/__init__.py beam_helpers/data_utils.py bq_sink/beam_helpers/.
+cp -r beam_helpers value_added/.
 
 # Set configs
 source jobs.config ${PROJECT_ID} ${testid} ${beamdir}
@@ -24,9 +24,9 @@ source jobs.config ${PROJECT_ID} ${testid} ${beamdir}
 # Start the ztf-value_added job.
 # - the command holds the terminal, so use timeout (does not cancel the job).
 # - send the output to a file.
-cd ztf_value_added
+cd value_added
 timeout 60 \
-    python3 beam_ztf_value_added.py \
+    python3 value_added.py \
         --experiments use_runner_v2 \
         --setup_file ${setup_file_valadd} \
         --runner ${runner} \
@@ -51,9 +51,9 @@ timeout 60 \
 jobid1=$(grep "Submitted job:" runjob.out | awk '{print $(NF)}')
 
 # Start the ztf -> BQ job
-cd ${beamdir} && cd ztf_bq_sink
+cd ${beamdir} && cd bq_sink
 timeout 60 \
-    python3 beam_ztf_bq_sink.py \
+    python3 bq_sink.py \
         --experiments use_runner_v2 \
         --setup_file ${setup_file_bqsink} \
         --runner ${runner} \
