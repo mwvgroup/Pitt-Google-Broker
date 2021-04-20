@@ -18,9 +18,10 @@
 # and ingest ZTF's stream for Jan. 19, 2021:
 #---
 # testid=mytest
+# survey=ztf
 # NIGHT=START
 # KAFKA_TOPIC=ztf_20210119_programid1
-# nconductVM="night-conductor-${testid}"
+# nconductVM="${survey}-night-conductor-${testid}"
 # zone=us-central1-a
 # gcloud compute instances add-metadata "$nconductVM" --zone="$zone" \
 #       --metadata NIGHT="$NIGHT",KAFKA_TOPIC="$KAFKA_TOPIC"
@@ -30,8 +31,9 @@
 # To end the night and tear down broker resources:
 #---
 # testid=mytest
+# survey=ztf
 # NIGHT=END
-# nconductVM="night-conductor-${testid}"
+# nconductVM="${survey}-night-conductor-${testid}"
 # zone=us-central1-a
 # gcloud compute instances add-metadata ${nconductVM} --zone=${zone} \
 #       --metadata NIGHT="$NIGHT"
@@ -51,15 +53,16 @@ H="Metadata-Flavor: Google"
 NIGHT=$(curl "${baseurl}/instance/attributes/NIGHT" -H "${H}")
 PROJECT_ID=$(curl "${baseurl}/project/project-id" -H "${H}")
 nconductVM=$(curl "${baseurl}/instance/name" -H "${H}")
-# parse the testid from the VM name
-if [ "$nconductVM" = "night-conductor" ]; then
+# parse the survey name and testid from the VM name
+survey=$(echo "$nconductVM" | awk -F "-" '{print $1}')
+if [ "$nconductVM" = "${survey}-night-conductor" ]; then
     testid="False"
 else
     testid=$(echo "$nconductVM" | awk -F "-" '{print $NF}')
 fi
 
 #--- GCP resources used in this script
-broker_bucket="${PROJECT_ID}-broker_files"
+broker_bucket="${PROJECT_ID}-${survey}-broker_files"
 # use test resources, if requested
 if [ "$testid" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
@@ -78,7 +81,7 @@ then
     chmod 744 *.sh
 
     # start up the resources, begin consuming and processing
-    ./start_night.sh ${PROJECT_ID} ${testid} ${broker_bucket}
+    ./start_night.sh ${PROJECT_ID} ${testid} ${broker_bucket} ${survey}
 
 elif [ "${NIGHT}" = "END" ]
 then
@@ -89,7 +92,7 @@ then
     chmod 744 *.sh
 
     # stop ingesting and teardown resources
-    ./end_night.sh ${PROJECT_ID} ${testid}
+    ./end_night.sh ${PROJECT_ID} ${testid} ${survey}
 fi
 
 # Wait a few minutes, then clear all metadata attributes and shutdown

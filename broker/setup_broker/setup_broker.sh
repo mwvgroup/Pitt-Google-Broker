@@ -46,9 +46,9 @@ if [ "$continue_with_setup" != "y" ]; then
 fi
 
 #--- GCP resources used directly in this script
-broker_bucket="${PROJECT_ID}-broker_files"
-avro_bucket="${PROJECT_ID}_ztf_alert_avros"
-avro_topic="projects/${PROJECT_ID}/topics/ztf_alert_avros"
+broker_bucket="${PROJECT_ID}-${survey}-broker_files"
+avro_bucket="${PROJECT_ID}-${survey}-alert_avros"
+avro_topic="projects/${PROJECT_ID}/topics/${survey}-alert_avros"
 # use test resources, if requested
 # (there must be a better way to do this)
 if [ "$testid" != "False" ]; then
@@ -63,15 +63,15 @@ echo "Configuring BigQuery, GCS, Pub/Sub resources..."
 if [ "$testid" != "False" ]; then
     if [ "$teardown" = "True" ]; then
         # delete testing resources
-        python3 setup_gcp.py --testid="$testid" --teardown
+        python3 setup_gcp.py --survey="$survey" --testid="$testid" --teardown
     else
         # setup testing resources
-        python3 setup_gcp.py --testid="$testid"
+        python3 setup_gcp.py --survey="$survey" --testid="$testid"
         # ./create_bq_tables.sh "$PROJECT_ID" "$testid"
     fi
 else
     # setup production resources
-    python3 setup_gcp.py --production
+    python3 setup_gcp.py --survey="$survey" --production
 fi
 
 if [ "$teardown" != "True" ]; then
@@ -114,5 +114,5 @@ echo "Configuring Cloud Functions..."
 #--- Create VM instances
 echo
 echo "Configuring VMs..."
-./create_vms.sh "$broker_bucket" "$testid" "$teardown"
+./create_vms.sh "$broker_bucket" "$testid" "$teardown" "$survey"
 # takes about 5 min to complete; waits for VMs to start up

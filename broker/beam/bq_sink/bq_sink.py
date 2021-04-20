@@ -48,7 +48,7 @@ def sink_configs(PROJECTID):
     return snkconf
 
 def run(PROJECTID, sources, sinks, pipeline_args):
-    """Runs the ZTF -> BigQuery pipeline.
+    """Runs the Alerts -> BigQuery pipeline.
     """
 
     pipeline_options = PipelineOptions(pipeline_args, streaming=True)
@@ -59,7 +59,7 @@ def run(PROJECTID, sources, sinks, pipeline_args):
         #-- Read from PS and extract data as dicts
         alert_bytes = (
             pipeline | 'ReadFromPubSub' >>
-            ReadFromPubSub(topic=sources['PS_ztf'])
+            ReadFromPubSub(topic=sources['PS_alerts'])
         )
         full_alert_dicts = (
             alert_bytes | 'ExtractAlertDict' >>
@@ -76,7 +76,7 @@ def run(PROJECTID, sources, sinks, pipeline_args):
         # TODO: track deadletters, get them uploaded to bq
         adicts_deadletters = (
             alert_dicts | 'Write Alert BigQuery' >>
-            WriteToBigQuery(sinks['BQ_originalAlert'],
+            WriteToBigQuery(sinks['BQ_alerts'],
                 **snkconf['BQ_generic'])
         )
 
@@ -101,12 +101,12 @@ if __name__ == "__main__":  # noqa
         help="Google Cloud Platform project name.\n",
     )
     parser.add_argument(
-        "--source_PS_ztf",
+        "--source_PS_alerts",
         help="Pub/Sub topic to read alerts from.\n"
         '"projects/<PROJECT_NAME>/topics/<TOPIC_NAME>".',
     )
     parser.add_argument(
-        "--sink_BQ_originalAlert",
+        "--sink_BQ_alerts",
         help="BigQuery table to store original alert data.\n",
     )
     parser.add_argument(
@@ -116,9 +116,9 @@ if __name__ == "__main__":  # noqa
 
     known_args, pipeline_args = parser.parse_known_args()
 
-    sources = {'PS_ztf': known_args.source_PS_ztf}
+    sources = {'PS_alerts': known_args.source_PS_alerts}
     sinks = {
-            'BQ_originalAlert': known_args.sink_BQ_originalAlert,
+            'BQ_alerts': known_args.sink_BQ_alerts,
             'BQ_diasource': known_args.sink_BQ_diasource,
     }
 
