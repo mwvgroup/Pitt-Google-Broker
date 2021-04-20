@@ -7,10 +7,13 @@ testid="${1:-test}"
 # any other string will be appended to the names of all resources
 teardown="${2:-False}"
 # "True" tearsdown/deletes resources, else setup
+survey="${3:-ztf}"
+# name of the survey this broker instance will ingest
+# 'ztf' or 'decat'
 
 #--- GCP resources used in this script
 trigger_topic="ztf_alerts"
-ps_to_gcs_CF_name="upload_ztf_bytes_to_bucket"
+ps_to_gcs_CF_name="upload_bytes_to_bucket"
 # use test resources, if requested
 if [ "$testid" != "False" ]; then
     trigger_topic="${trigger_topic}-${testid}"
@@ -35,7 +38,7 @@ else # Deploy
         --entry-point "$ps_to_gcs_entry_point" \
         --runtime python37 \
         --trigger-topic "$trigger_topic" \
-        --set-env-vars TESTID="$testid"
+        --set-env-vars TESTID="$testid",SURVEY="$survey"
 
     cd $OGdir  # not sure if this is necessary
 fi

@@ -22,6 +22,9 @@ testid="${1:-test}"
 # any other string will be appended to the names of all resources
 teardown="${2:-False}"
 # "True" tearsdown/deletes resources, else setup
+survey="${3:-ztf}"
+# name of the survey this broker instance will ingest
+# 'ztf' or 'decat'
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT # get the environment variable
 
 #--- Make the user confirm the settings
@@ -106,7 +109,7 @@ fi
 #--- Deploy Cloud Functions
 echo
 echo "Configuring Cloud Functions..."
-./deploy_cloud_fncs.sh "$testid" "$teardown"
+./deploy_cloud_fncs.sh "$testid" "$teardown" "$survey"
 
 #--- Create VM instances
 echo
