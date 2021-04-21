@@ -28,4 +28,8 @@ apt-get install -y python3-pip
 #--- download the python requirements.txt file from GCS
 gsutil cp gs://${broker_bucket}/night_conductor/requirements.txt .
 # install
+echo "Installing requirements.txt..."
 pip3 install -r requirements.txt
+echo "Done installing requirements.txt."
+
+echo "vm_install.sh is complete"

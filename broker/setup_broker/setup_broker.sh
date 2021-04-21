@@ -32,6 +32,7 @@ echo
 echo "setup_broker.sh will run with the following configs: "
 echo
 echo "GOOGLE_CLOUD_PROJECT = ${PROJECT_ID}"
+echo "survey = ${survey}"
 echo "testid = ${testid}"
 echo "teardown = ${teardown}"
 echo
