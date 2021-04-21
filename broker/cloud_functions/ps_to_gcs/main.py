@@ -28,7 +28,7 @@ log_name = 'ps-to-gcs-cloudfnc'
 logger = logging_client.logger(log_name)
 
 # bucket to store the Avro files
-bucket_name = f'{PROJECT_ID}-{survey}-alert_avros'
+bucket_name = f'{PROJECT_ID}-{SURVEY}-alert_avros'
 if TESTID != "False":
     bucket_name = f'{bucket_name}-{TESTID}'
 storage_client = storage.Client()
@@ -99,7 +99,7 @@ def upload_bytes_to_bucket(msg, context) -> None:
         alert = extract_alert_dict(temp_file)
         filename = create_filename(alert, attributes)
         if SURVEY == 'ztf':
-            fix_schema(temp_file, alert, filename)
+            fix_schema(temp_file, alert, data, filename)
 
         blob = bucket.blob(filename)
         blob.upload_from_file(temp_file)
@@ -125,7 +125,7 @@ def extract_alert_dict(temp_file):
     alert = [r for r in fastavro.reader(temp_file)]
     return alert
 
-def fix_schema(temp_file, alert, filename):
+def fix_schema(temp_file, alert, data, filename):
     """ Rewrites the temp_file with a corrected schema header
         so that it is valid for upload to BigQuery.
 
