@@ -1,3 +1,55 @@
+Table of Contents:
+- [Schema Maps](#schema-maps)
+- [BigQuery schema json](#bigquery-schema-json)
+
+# Schema Maps
+<!-- fs -->
+```python
+from google.cloud import storage
+import os
+import yaml
+
+fztf = 'schema_maps/ztf.yaml'
+fdecat = 'schema_maps/decat.yaml'
+
+ztf = {
+    'objectId': 'objectId',
+    'source': 'candidate',
+    'sourceId': 'candid',
+    'prvSources': 'prv_candidates',
+}
+decat = {
+    'objectId': 'objectid',
+    'source': 'triggersource',
+    'sourceId': 'sourceid',
+    'prvSources': 'sources',
+}
+
+# write the files
+for smap, fname in zip([ztf, decat], [fztf, fdecat]):
+    with open(f'../broker/{fname}', "w") as f:
+        yaml.dump(smap, f, sort_keys=False)
+
+# upload the files to GCS
+PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
+SURVEY = 'ztf'
+TESTID = 'testsurveyname'
+bucket_name = f'{PROJECT_ID}-{SURVEY}-broker_files-{TESTID}'
+
+storage_client = storage.Client()
+for fname in [fztf, fdecat]:
+    with open(f'../broker/{fname}', "rb") as f:
+      # smap_in = yaml.safe_load(f)
+      blob = storage_client.bucket(bucket_name).blob(fname)
+      blob.upload_from_file(f)
+
+    with open("my-file", "rb") as my_file:
+      blob.upload_from_file(my_file)
+```
+
+
+<!-- fe # Schema Maps -->
+---
 
 # BigQuery schema json
 We need a:
