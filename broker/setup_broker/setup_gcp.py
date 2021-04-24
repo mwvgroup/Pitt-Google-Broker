@@ -318,19 +318,30 @@ def _setup_dashboard_resource_names(survey='ztf', testid='test'):
     psnew = _resources('PS', survey=survey, testid=testid)
     # get topic names
     pstopics = {old:new for old,new in zip(psold.keys(),psnew.keys())}
-    # Subscription names are topic names with a suffix appended.
+    #--- Fix some problems: (yes, this is messy)
+    # 1) The `alerts_pure` topic/subscription name gets mixed up. fix it
+    pspure = {f'-{testid}_pure': f'_pure-{testid}'}
+    # 2) Subscription names are topic names with a suffix appended.
     # The topic name gets a testid appended,
     # then we need to swap the testid with the suffix
     # Current dashboard only uses "counter" subscriptions
     pssubs = {f'-{testid}-counter': f'-counter-{testid}'}
 
     # VMs and Dataflow jobs
-    oold = _resources('dashboard', survey=survey, testid=False)
+    oold = _resources('dashboard', survey='ztf', testid=False)
     onew = _resources('dashboard', survey=survey, testid=testid)
     othernames = {old:new for old,new in zip(oold,onew)}
 
     # add the survey and testid, merge the dicts, and return
-    return {'surveyname': f'{survey}', 'testid': f'{testid}', **pstopics, **pssubs, **othernames}
+    resource_maps = {
+        'surveyname': f'{survey}',
+        'testid': f'{testid}',
+        **pstopics,
+        **pspure,
+        **pssubs,
+        **othernames
+    }
+    return resource_maps
 
 def setup_buckets(survey='ztf', testid='test', teardown=False) -> None:
     """Create new storage buckets and upload testing files.
