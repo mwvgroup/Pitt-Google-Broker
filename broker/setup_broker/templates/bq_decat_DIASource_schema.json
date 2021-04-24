@@ -102,379 +102,189 @@
     "type": "FLOAT"
   },
   {
-    "description": "Observation that triggered this alert.",
-    "mode": "NULLABLE",
-    "name": "triggersource",
-    "type": "RECORD",
-    "fields": [
-      {
-        "description": "Unique ID for observation",
-        "mode": "REQUIRED",
-        "name": "sourceid",
-        "type": "INTEGER"
-      },
-      {
-        "description": "RA of observed transient (Degrees, J2000)",
-        "mode": "REQUIRED",
-        "name": "ra",
-        "type": "FLOAT"
-      },
-      {
-        "description": "Dec of observed transient (Degrees, J2000)",
-        "mode": "REQUIRED",
-        "name": "dec",
-        "type": "FLOAT"
-      },
-      {
-        "description": "Magnitude of transient",
-        "mode": "REQUIRED",
-        "name": "mag",
-        "type": "FLOAT"
-      },
-      {
-        "description": "Error on magnitude of transient",
-        "mode": "REQUIRED",
-        "name": "magerr",
-        "type": "FLOAT"
-      },
-      {
-        "description": "Flux of transient",
-        "mode": "REQUIRED",
-        "name": "flux",
-        "type": "FLOAT"
-      },
-      {
-        "description": "Error on flux of transient",
-        "mode": "REQUIRED",
-        "name": "fluxerr",
-        "type": "FLOAT"
-      },
-      {
-        "description": "FWHM of object on difference",
-        "mode": "NULLABLE",
-        "name": "fwhm",
-        "type": "FLOAT"
-      },
-      {
-        "description": "Real/bogus score from ML filter (0..1; higher = more likely real)",
-        "mode": "REQUIRED",
-        "name": "rb",
-        "type": "FLOAT"
-      },
-      {
-        "description": "Minimum rb cut used to decide if an alert should be generated",
-        "mode": "REQUIRED",
-        "name": "rbcut",
-        "type": "FLOAT"
-      },
-      {
-        "description": "NOAO proposal ID of the exposure (from header PROPID)",
-        "mode": "REQUIRED",
-        "name": "propid",
-        "type": "STRING"
-      },
-      {
-        "description": "Filter of exposure (from header FILTER)",
-        "mode": "REQUIRED",
-        "name": "filter",
-        "type": "STRING"
-      },
-      {
-        "description": "Modified Julian Date of observation (from header MJD-OBS)",
-        "mode": "REQUIRED",
-        "name": "mjd",
-        "type": "FLOAT"
-      },
-      {
-        "description": "NOAO archive filename of the search exposure (from header DTNSANAM)",
-        "mode": "NULLABLE",
-        "name": "expname",
-        "type": "STRING"
-      },
-      {
-        "description": "Exposure time (s) (from header EXPTIME)",
-        "mode": "NULLABLE",
-        "name": "exptime",
-        "type": "FLOAT"
-      },
-      {
-        "description": "True if stack, false if individual image",
-        "mode": "REQUIRED",
-        "name": "is_stack",
-        "type": "BOOLEAN"
-      },
-      {
-        "description": "MJD of first image in stack",
-        "mode": "NULLABLE",
-        "name": "jdstartstack",
-        "type": "FLOAT"
-      },
-      {
-        "description": "MJD of last image in stack",
-        "mode": "NULLABLE",
-        "name": "jdendstack",
-        "type": "FLOAT"
-      },
-      {
-        "description": "Meadian MJD of images in stack",
-        "mode": "NULLABLE",
-        "name": "jdmed",
-        "type": "FLOAT"
-      },
-      {
-        "description": "NOAO archivfe filenames of images in this stack",
-        "mode": "REPEATED",
-        "name": "stackimages",
-        "type": "STRING"
-      },
-      {
-        "description": "Exposure times of images in stack",
-        "mode": "REPEATED",
-        "name": "stackexptimes",
-        "type": "FLOAT"
-      },
-      {
-        "description": "DECam chip number of observation",
-        "mode": "REQUIRED",
-        "name": "ccdnum",
-        "type": "INTEGER"
-      },
-      {
-        "description": "Seeing of image (arcsec), determined by pipeline",
-        "mode": "NULLABLE",
-        "name": "seeing",
-        "type": "FLOAT"
-      },
-      {
-        "description": "Uncertainty on seeing of image (arcsec)",
-        "mode": "NULLABLE",
-        "name": "seeingerr",
-        "type": "FLOAT"
-      },
-      {
-        "description": "Sigma of sky background of image",
-        "mode": "NULLABLE",
-        "name": "skysig",
-        "type": "FLOAT"
-      },
-      {
-        "description": "Zeropoint of image",
-        "mode": "NULLABLE",
-        "name": "magzp",
-        "type": "FLOAT"
-      },
-      {
-        "description": "Limiting magnitude of subtraction",
-        "mode": "NULLABLE",
-        "name": "limmag",
-        "type": "FLOAT"
-      },
-      {
-        "description": "URL to preprocessed exposure at NERSC",
-        "mode": "REQUIRED",
-        "name": "sciurl",
-        "type": "STRING"
-      },
-      {
-        "description": "URL to coadded/remapped reference exposure at NERSC",
-        "mode": "REQUIRED",
-        "name": "refurl",
-        "type": "STRING"
-      },
-      {
-        "description": "URL to difference image at NERSC",
-        "mode": "REQUIRED",
-        "name": "diffurl",
-        "type": "STRING"
-      }
-    ]
+    "description": "Unique ID for observation",
+    "mode": "REQUIRED",
+    "name": "sourceid",
+    "type": "INTEGER"
   },
   {
-    "description": "All saved observations of this candidate (w/o cutouts)",
+    "description": "RA of observed transient (Degrees, J2000)",
+    "mode": "REQUIRED",
+    "name": "source_ra",
+    "type": "FLOAT"
+  },
+  {
+    "description": "Dec of observed transient (Degrees, J2000)",
+    "mode": "REQUIRED",
+    "name": "source_dec",
+    "type": "FLOAT"
+  },
+  {
+    "description": "Magnitude of transient",
+    "mode": "REQUIRED",
+    "name": "mag",
+    "type": "FLOAT"
+  },
+  {
+    "description": "Error on magnitude of transient",
+    "mode": "REQUIRED",
+    "name": "magerr",
+    "type": "FLOAT"
+  },
+  {
+    "description": "Flux of transient",
+    "mode": "REQUIRED",
+    "name": "flux",
+    "type": "FLOAT"
+  },
+  {
+    "description": "Error on flux of transient",
+    "mode": "REQUIRED",
+    "name": "fluxerr",
+    "type": "FLOAT"
+  },
+  {
+    "description": "FWHM of object on difference",
+    "mode": "NULLABLE",
+    "name": "fwhm",
+    "type": "FLOAT"
+  },
+  {
+    "description": "Real/bogus score from ML filter (0..1; higher = more likely real)",
+    "mode": "REQUIRED",
+    "name": "rb",
+    "type": "FLOAT"
+  },
+  {
+    "description": "Minimum rb cut used to decide if an alert should be generated",
+    "mode": "REQUIRED",
+    "name": "rbcut",
+    "type": "FLOAT"
+  },
+  {
+    "description": "NOAO proposal ID of the exposure (from header PROPID)",
+    "mode": "REQUIRED",
+    "name": "propid",
+    "type": "STRING"
+  },
+  {
+    "description": "Filter of exposure (from header FILTER)",
+    "mode": "REQUIRED",
+    "name": "filter",
+    "type": "STRING"
+  },
+  {
+    "description": "Modified Julian Date of observation (from header MJD-OBS)",
+    "mode": "REQUIRED",
+    "name": "mjd",
+    "type": "FLOAT"
+  },
+  {
+    "description": "NOAO archive filename of the search exposure (from header DTNSANAM)",
+    "mode": "NULLABLE",
+    "name": "expname",
+    "type": "STRING"
+  },
+  {
+    "description": "Exposure time (s) (from header EXPTIME)",
+    "mode": "NULLABLE",
+    "name": "exptime",
+    "type": "FLOAT"
+  },
+  {
+    "description": "True if stack, false if individual image",
+    "mode": "REQUIRED",
+    "name": "is_stack",
+    "type": "BOOLEAN"
+  },
+  {
+    "description": "MJD of first image in stack",
+    "mode": "NULLABLE",
+    "name": "jdstartstack",
+    "type": "FLOAT"
+  },
+  {
+    "description": "MJD of last image in stack",
+    "mode": "NULLABLE",
+    "name": "jdendstack",
+    "type": "FLOAT"
+  },
+  {
+    "description": "Meadian MJD of images in stack",
+    "mode": "NULLABLE",
+    "name": "jdmed",
+    "type": "FLOAT"
+  },
+  {
+    "description": "NOAO archivfe filenames of images in this stack",
     "mode": "REPEATED",
-    "name": "sources",
-    "type": "RECORD",
-    "fields": [
-      {
-        "description": "Unique ID for observation",
-        "mode": "REQUIRED",
-        "name": "sourceid",
-        "type": "INTEGER"
-      },
-      {
-        "description": "RA of observed transient (Degrees, J2000)",
-        "mode": "REQUIRED",
-        "name": "ra",
-        "type": "FLOAT"
-      },
-      {
-        "description": "Dec of observed transient (Degrees, J2000)",
-        "mode": "REQUIRED",
-        "name": "dec",
-        "type": "FLOAT"
-      },
-      {
-        "description": "Magnitude of transient",
-        "mode": "REQUIRED",
-        "name": "mag",
-        "type": "FLOAT"
-      },
-      {
-        "description": "Error on magnitude of transient",
-        "mode": "REQUIRED",
-        "name": "magerr",
-        "type": "FLOAT"
-      },
-      {
-        "description": "Flux of transient",
-        "mode": "REQUIRED",
-        "name": "flux",
-        "type": "FLOAT"
-      },
-      {
-        "description": "Error on flux of transient",
-        "mode": "REQUIRED",
-        "name": "fluxerr",
-        "type": "FLOAT"
-      },
-      {
-        "description": "FWHM of object on difference",
-        "mode": "NULLABLE",
-        "name": "fwhm",
-        "type": "FLOAT"
-      },
-      {
-        "description": "Real/bogus score from ML filter (0..1; higher = more likely real)",
-        "mode": "REQUIRED",
-        "name": "rb",
-        "type": "FLOAT"
-      },
-      {
-        "description": "Minimum rb cut used to decide if an alert should be generated",
-        "mode": "REQUIRED",
-        "name": "rbcut",
-        "type": "FLOAT"
-      },
-      {
-        "description": "NOAO proposal ID of the exposure (from header PROPID)",
-        "mode": "REQUIRED",
-        "name": "propid",
-        "type": "STRING"
-      },
-      {
-        "description": "Filter of exposure (from header FILTER)",
-        "mode": "REQUIRED",
-        "name": "filter",
-        "type": "STRING"
-      },
-      {
-        "description": "Modified Julian Date of observation (from header MJD-OBS)",
-        "mode": "REQUIRED",
-        "name": "mjd",
-        "type": "FLOAT"
-      },
-      {
-        "description": "NOAO archive filename of the search exposure (from header DTNSANAM)",
-        "mode": "NULLABLE",
-        "name": "expname",
-        "type": "STRING"
-      },
-      {
-        "description": "Exposure time (s) (from header EXPTIME)",
-        "mode": "NULLABLE",
-        "name": "exptime",
-        "type": "FLOAT"
-      },
-      {
-        "description": "True if stack, false if individual image",
-        "mode": "REQUIRED",
-        "name": "is_stack",
-        "type": "BOOLEAN"
-      },
-      {
-        "description": "MJD of first image in stack",
-        "mode": "NULLABLE",
-        "name": "jdstartstack",
-        "type": "FLOAT"
-      },
-      {
-        "description": "MJD of last image in stack",
-        "mode": "NULLABLE",
-        "name": "jdendstack",
-        "type": "FLOAT"
-      },
-      {
-        "description": "Meadian MJD of images in stack",
-        "mode": "NULLABLE",
-        "name": "jdmed",
-        "type": "FLOAT"
-      },
-      {
-        "description": "NOAO archivfe filenames of images in this stack",
-        "mode": "REPEATED",
-        "name": "stackimages",
-        "type": "STRING"
-      },
-      {
-        "description": "Exposure times of images in stack",
-        "mode": "REPEATED",
-        "name": "stackexptimes",
-        "type": "FLOAT"
-      },
-      {
-        "description": "DECam chip number of observation",
-        "mode": "REQUIRED",
-        "name": "ccdnum",
-        "type": "INTEGER"
-      },
-      {
-        "description": "Seeing of image (arcsec), determined by pipeline",
-        "mode": "NULLABLE",
-        "name": "seeing",
-        "type": "FLOAT"
-      },
-      {
-        "description": "Uncertainty on seeing of image (arcsec)",
-        "mode": "NULLABLE",
-        "name": "seeingerr",
-        "type": "FLOAT"
-      },
-      {
-        "description": "Sigma of sky background of image",
-        "mode": "NULLABLE",
-        "name": "skysig",
-        "type": "FLOAT"
-      },
-      {
-        "description": "Zeropoint of image",
-        "mode": "NULLABLE",
-        "name": "magzp",
-        "type": "FLOAT"
-      },
-      {
-        "description": "Limiting magnitude of subtraction",
-        "mode": "NULLABLE",
-        "name": "limmag",
-        "type": "FLOAT"
-      },
-      {
-        "description": "URL to preprocessed exposure at NERSC",
-        "mode": "REQUIRED",
-        "name": "sciurl",
-        "type": "STRING"
-      },
-      {
-        "description": "URL to coadded/remapped reference exposure at NERSC",
-        "mode": "REQUIRED",
-        "name": "refurl",
-        "type": "STRING"
-      },
-      {
-        "description": "URL to difference image at NERSC",
-        "mode": "REQUIRED",
-        "name": "diffurl",
-        "type": "STRING"
-      }
-    ]
+    "name": "stackimages",
+    "type": "STRING"
+  },
+  {
+    "description": "Exposure times of images in stack",
+    "mode": "REPEATED",
+    "name": "stackexptimes",
+    "type": "FLOAT"
+  },
+  {
+    "description": "DECam chip number of observation",
+    "mode": "REQUIRED",
+    "name": "ccdnum",
+    "type": "INTEGER"
+  },
+  {
+    "description": "Seeing of image (arcsec), determined by pipeline",
+    "mode": "NULLABLE",
+    "name": "seeing",
+    "type": "FLOAT"
+  },
+  {
+    "description": "Uncertainty on seeing of image (arcsec)",
+    "mode": "NULLABLE",
+    "name": "seeingerr",
+    "type": "FLOAT"
+  },
+  {
+    "description": "Sigma of sky background of image",
+    "mode": "NULLABLE",
+    "name": "skysig",
+    "type": "FLOAT"
+  },
+  {
+    "description": "Zeropoint of image",
+    "mode": "NULLABLE",
+    "name": "magzp",
+    "type": "FLOAT"
+  },
+  {
+    "description": "Limiting magnitude of subtraction",
+    "mode": "NULLABLE",
+    "name": "limmag",
+    "type": "FLOAT"
+  },
+  {
+    "description": "URL to preprocessed exposure at NERSC",
+    "mode": "REQUIRED",
+    "name": "sciurl",
+    "type": "STRING"
+  },
+  {
+    "description": "URL to coadded/remapped reference exposure at NERSC",
+    "mode": "REQUIRED",
+    "name": "refurl",
+    "type": "STRING"
+  },
+  {
+    "description": "URL to difference image at NERSC",
+    "mode": "REQUIRED",
+    "name": "diffurl",
+    "type": "STRING"
+  },
+  {
+    "description": "Source IDs from previous sources in the original alert packet (sources.sourceid)",
+    "mode": "NULLABLE",
+    "name": "sources_sourceids",
+    "type": "STRING"
   }
 ]
