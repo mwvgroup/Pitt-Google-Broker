@@ -14,6 +14,28 @@ import fastavro as fa
 import json
 import numpy as np
 
+# map PGB generic names to survey schema names
+schema_maps = {  # pgb_field_name: survey_field_name
+    'ztf': {
+        'objectId':         'objectId',
+        'source':           'candidate',
+        'sourceId':         'candid',
+        'prvSources':       'prv_candidates',
+        'cutoutScience':    'cutoutScience',
+        'cutoutTemplate':   'cutoutTemplate',
+        'cutoutDifference': 'cutoutDifference',
+    },
+    'decat': {
+        'objectId':         'objectid',
+        'source':           'triggersource',
+        'sourceId':         'sourceid',
+        'prvSources':       'sources',
+        'cutoutScience':    'scicutout',
+        'cutoutTemplate':   'refcutout',
+        'cutoutDifference': 'diffcutout',
+    }
+}
+
 
 class extractAlertDict(DoFn):
     def process(self, msg):
@@ -36,6 +58,37 @@ class extractDIASource(DoFn):
     from the alertDict.
     """
     def process(self, alertDict):
+        SURVEY = self.guess_survey(alertDict)
+
+        if SURVEY == 'ztf':
+            source = self.process_ztf(alertDict)
+        elif SURVEY == 'decat':
+            source = self.process_decat(alertDict)
+
+        return source
+
+    def process_decat(self, alertDict):
+        # get source
+        dup_cols = ['ra','dec']  # names duplicated in object and source levels
+        sourcename = lambda x: x if x not in dup_cols else f'source_{x}'
+        src = {sourcename(k):v for k,v in alertDict['triggersource']}
+
+        # get info for provinance
+        notmetakeys = ['triggersource', 'sources']
+        metadict = {k:v for k,v in alertDict.items() if k not in notmetakeys}
+
+        # get string of previous sources' sourceid, comma-separated
+        if alertDict['sources'] is not None:
+            tmp = [ps['sourceid'] for ps in alertDict['sources']]
+            prv_sources = ','.join([f'{sid}' for sid in tmp if sid is not None])
+        else:
+            prv_sources = None
+
+        # package it up and return
+        source = {**metadict, **src, 'sources_sourceids': prv_sources}
+        return [source]
+
+    def process_ztf(self, alertDict):
         # get candidate
         cand = alertDict['candidate']
         del cand['candid']  # candid is repeated, drop the one nested here
@@ -55,6 +108,15 @@ class extractDIASource(DoFn):
         candidate = {**metadict, **cand, 'prv_candidates_candids': prv_candids}
         return [candidate]
 
+    def guess_survey(self, alertDict):
+        # figure out which survey this is
+        if schema_maps['ztf']['source'] in alertDict.keys():
+            SURVEY = 'ztf'
+        elif schema_maps['decat']['source'] in alertDict.keys():
+            SURVEY = 'decat'
+        else:
+            raise ValueError('Cannot guess survey from alert packet.')
+        return SURVEY
 
 class stripCutouts(DoFn):
     """before stripping the cutouts, the upload to BQ failed with the following:
@@ -66,9 +128,27 @@ class stripCutouts(DoFn):
     started on December 7, 2020 at 1:51:44 PM GMT-5
     """
     def process(self, alertDict):
-        cutouts = ['cutoutScience', 'cutoutTemplate', 'cutoutDifference']
+        SURVEY = self.guess_survey(alertDict)
+        schema_map = schema_maps[SURVEY]
+
+        cutouts = [
+            schema_map['cutoutScience'],
+            schema_map['cutoutTemplate'],
+            schema_map['cutoutDifference']
+        ]
         alertStripped = {k:v for k, v in alertDict.items() if k not in cutouts}
+
         return [alertStripped]
+
+    def guess_survey(self, alertDict):
+        # figure out which survey this is
+        if schema_maps['ztf']['source'] in alertDict.keys():
+            SURVEY = 'ztf'
+        elif schema_maps['decat']['source'] in alertDict.keys():
+            SURVEY = 'decat'
+        else:
+            raise ValueError('Cannot guess survey from alert packet.')
+        return SURVEY
 
 
 class formatDictForPubSub(DoFn):

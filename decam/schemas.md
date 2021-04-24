@@ -13,16 +13,22 @@ fztf = 'schema_maps/ztf.yaml'
 fdecat = 'schema_maps/decat.yaml'
 
 ztf = {
-    'objectId': 'objectId',
-    'source': 'candidate',
-    'sourceId': 'candid',
-    'prvSources': 'prv_candidates',
+    'objectId':         'objectId',
+    'source':           'candidate',
+    'sourceId':         'candid',
+    'prvSources':       'prv_candidates',
+    'cutoutScience':    'cutoutScience',
+    'cutoutTemplate':   'cutoutTemplate',
+    'cutoutDifference': 'cutoutDifference',
 }
 decat = {
-    'objectId': 'objectid',
-    'source': 'triggersource',
-    'sourceId': 'sourceid',
-    'prvSources': 'sources',
+    'objectId':         'objectid',
+    'source':           'triggersource',
+    'sourceId':         'sourceid',
+    'prvSources':       'sources',
+    'cutoutScience':    'scicutout',
+    'cutoutTemplate':   'refcutout',
+    'cutoutDifference': 'diffcutout',
 }
 
 # write the files
