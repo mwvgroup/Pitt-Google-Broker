@@ -12,7 +12,7 @@ survey="${3:-ztf}"
 
 #--- GCP resources used in this script
 trigger_topic="${survey}-alerts"
-ps_to_gcs_CF_name="upload_bytes_to_bucket"
+ps_to_gcs_CF_name="${survey}-upload_bytes_to_bucket"
 # use test resources, if requested
 if [ "$testid" != "False" ]; then
     trigger_topic="${trigger_topic}-${testid}"

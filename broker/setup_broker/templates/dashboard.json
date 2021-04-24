@@ -1,6 +1,6 @@
 {
   "name": "projects/591409139500/dashboards/broker-instance-surveyname-testid",
-  "displayName": "Broker Instance - surveyname - testid",
+  "displayName": "Broker Instance  |  survey: surveyname  |  test ID: testid",
   "mosaicLayout": {
     "columns": 12,
     "tiles": [
@@ -9,7 +9,7 @@
         "width": 10,
         "height": 1,
         "widget": {
-          "title": "Broker Instance - surveyname - testid",
+          "title": "Broker Instance  |  survey: surveyname  |  test ID: testid",
           "text": {
             "format": "RAW"
           }
@@ -138,7 +138,7 @@
               {
                 "timeSeriesQuery": {
                   "timeSeriesFilter": {
-                    "filter": "metric.type=\"pubsub.googleapis.com/subscription/num_undelivered_messages\" resource.type=\"pubsub_subscription\" resource.label.\"subscription_id\"=monitoring.regex.full_match(\"ztf-exgalac_trans-counter|ztf-salt2-counter\")",
+                    "filter": "metric.type=\"pubsub.googleapis.com/subscription/num_undelivered_messages\" resource.type=\"pubsub_subscription\" resource.label.\"subscription_id\"=monitoring.regex.full_match(\"ztf-alerts_pure-counter|ztf-exgalac_trans-counter|ztf-salt2-counter\")",
                     "aggregation": {
                       "alignmentPeriod": "60s",
                       "perSeriesAligner": "ALIGN_MEAN"
@@ -435,7 +435,7 @@
               {
                 "timeSeriesQuery": {
                   "timeSeriesFilter": {
-                    "filter": "metric.type=\"pubsub.googleapis.com/topic/send_message_operation_count\" resource.type=\"pubsub_topic\" resource.label.\"topic_id\"=monitoring.regex.full_match(\"ztf-exgalac_trans|ztf-salt2\")",
+                    "filter": "metric.type=\"pubsub.googleapis.com/topic/send_message_operation_count\" resource.type=\"pubsub_topic\" resource.label.\"topic_id\"=monitoring.regex.full_match(\"ztf-alerts_pure|ztf-exgalac_trans|ztf-salt2\")",
                     "aggregation": {
                       "alignmentPeriod": "60s",
                       "perSeriesAligner": "ALIGN_RATE"

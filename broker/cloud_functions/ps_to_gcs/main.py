@@ -6,6 +6,7 @@ fixing the schema first, if necessary.
 """
 
 import base64
+from exceptions import SchemaParsingError
 import fastavro
 from google.cloud import logging
 from google.cloud import storage
@@ -14,8 +15,7 @@ from pathlib import Path
 import pickle
 import re
 from tempfile import SpooledTemporaryFile
-
-from exceptions import SchemaParsingError
+import yaml
 
 
 PROJECT_ID = os.getenv('GCP_PROJECT')
