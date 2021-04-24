@@ -42,9 +42,9 @@ The following resources were renamed to prepend an arbitrary survey name (note t
 
 Dashboard snapshots:
 - [Live](https://console.cloud.google.com/monitoring/dashboards/builder/broker-instance-ztf-testsurveyname)
-- [Ingesting topic `ztf_20210420_programid1`](https://console.cloud.google.com/monitoring/dashboards/builder/broker-instance-ztf-testsurveyname?project=ardent-cycling-243415&dashboardBuilderState=%257B%2522editModeEnabled%2522:false%257D&timeDomain=1h)
+- [Ingesting topic `ztf_20210420_programid1`](https://console.cloud.google.com/monitoring/dashboards/builder/broker-instance-ztf-testsurveyname?project=ardent-cycling-243415&dashboardBuilderState=%257B%2522editModeEnabled%2522:false%257D&startTime=20210420T231539-04:00&endTime=20210420T233500-04:00)
     - everything appears to be working ~normally except the Pub/Sub -> GCS cloud function
-- [Using the consumer simulator](https://console.cloud.google.com/monitoring/dashboards/builder/broker-instance-ztf-testsurveyname?project=ardent-cycling-243415&dashboardBuilderState=%257B%2522editModeEnabled%2522:false%257D&timeDomain=1d)
+- [Using the consumer simulator](https://console.cloud.google.com/monitoring/dashboards/builder/broker-instance-ztf-testsurveyname?project=ardent-cycling-243415&dashboardBuilderState=%257B%2522editModeEnabled%2522:false%257D&startTime=20210420T235539-04:00&endTime=20210421T001500-04:00)
     - Pub/Sub -> GCS cloud function was fixed ~1/2 way through this test. It appears to have also caught up with the backlog from ingesting `ztf_20210420_programid1`
 
 Create a broker instance
