@@ -3,10 +3,7 @@
 
 from setuptools import setup, find_packages
 
-include = [
-            'beam_helpers',
-            'beam_helpers.*'
-          ]
+include = []
 
 requires = [
             'apache_beam[gcp]',
@@ -17,12 +14,13 @@ requires = [
             'google-cloud-core>=1.4.1',
             'google-cloud-dataflow',
             'google-cloud-datastore>=1.15',
-            'google-cloud-storage',
+            'google-cloud-storage==1.38.0',
             # 'iminuit==1.4.9',
             # 'io', builtin
             # 'json', builtin
             # 'matplotlib',
             # 'numpy',
+            'pgb-broker-utils',
             # 'pandas',
             # 'sncosmo==2.2.0',
             # 'tempfile', builtin
