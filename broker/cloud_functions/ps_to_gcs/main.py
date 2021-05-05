@@ -15,13 +15,15 @@ from pathlib import Path
 import pickle
 import re
 from tempfile import SpooledTemporaryFile
-import yaml
+
+from broker_utils import schema_maps  # pypi module pgb_broker_utils
 
 
 PROJECT_ID = os.getenv('GCP_PROJECT')
 TESTID = os.getenv('TESTID')
 SURVEY = os.getenv('SURVEY')
 
+schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
 storage_client = storage.Client()
 
 # connect to the cloud logger
@@ -31,17 +33,10 @@ logger = logging_client.logger(log_name)
 
 # GCP resources used in this module
 bucket_name = f'{PROJECT_ID}-{SURVEY}-alert_avros'  # store the Avro files
-broker_bucket_name = f'{PROJECT_ID}-{SURVEY}-broker_files'
-schema_file_name = f'schema_maps/{SURVEY}.yaml'
 if TESTID != "False":
     bucket_name = f'{bucket_name}-{TESTID}'
-    broker_bucket_name = f'{broker_bucket_name}-{TESTID}'
 # connect to the avro bucket
 bucket = storage_client.get_bucket(bucket_name)
-# load the schema translation file
-blob = storage_client.bucket(broker_bucket_name).get_blob(schema_file_name)
-with blob.open("rt") as f:
-    schema_map = yaml.safe_load(f)  # dict
 
 # By default, spool data in memory to avoid IO unless data is too big
 # LSST alerts are anticipated at 80 kB, so 150 kB should be plenty
@@ -106,9 +101,11 @@ def upload_bytes_to_bucket(msg, context) -> None:
         temp_file.seek(0)
 
         alert = extract_alert_dict(temp_file)
+        temp_file.seek(0)
         filename = create_filename(alert, attributes)
         if SURVEY == 'ztf':
             fix_schema(temp_file, alert, data, filename)
+        temp_file.seek(0)
 
         blob = bucket.blob(filename)
         blob.upload_from_file(temp_file)
