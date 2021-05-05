@@ -5,4 +5,5 @@
 
 fastavro
 google-cloud-logging
-google-cloud-storage
+google-cloud-storage==1.38.0
+pgb-broker-utils
