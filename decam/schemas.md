@@ -1,39 +1,60 @@
 # Schemas
 
 Table of Contents:
-- [Schema Maps](#schema-maps)
+- [Create Schema Maps](#create-schema-maps)
 - [BigQuery schema json](#bigquery-schema-json)
 - [Test the changes](#test-the-changes)
+- [Download and look at an Avro](#download-and-look-at-an-avro)
 
 ---
 
-## Schema Maps
+## Create Schema Maps
 <!-- fs -->
 ```python
 from google.cloud import storage
 import os
 import yaml
 
-fztf = 'schema_maps/ztf.yaml'
-fdecat = 'schema_maps/decat.yaml'
+fztf = 'broker_utils/schema_maps/ztf.yaml'
+fdecat = 'broker_utils/schema_maps/decat.yaml'
 
 ztf = {
+    # include some extra info
+    'SURVEY':           'ztf',
+    'FILTER_MAP':       {1: 'g', 2: 'r', 3: 'i'},
+    # primary fields, alphabetical
     'objectId':         'objectId',
+    'prvSources':       'prv_candidates',
     'source':           'candidate',
     'sourceId':         'candid',
-    'prvSources':       'prv_candidates',
+    # other fields, alphabetical
+    'cutoutDifference': 'cutoutDifference',
     'cutoutScience':    'cutoutScience',
     'cutoutTemplate':   'cutoutTemplate',
-    'cutoutDifference': 'cutoutDifference',
+    'filter':           'fid',
+    'mag':              'magpsf',
+    'magerr':           'sigmapsf',
+    'magzp':            'magzpsci',
 }
 decat = {
+    # include some extra info
+    'SURVEY':           'decat',
+    'FILTER_MAP':       {'g DECam SDSS c0001 4720.0 1520.0': 'g',
+                         'r DECam SDSS c0002 6415.0 1480.0': 'r'
+                        },
+    # primary fields, alphabetical
     'objectId':         'objectid',
+    'prvSources':       'sources',
     'source':           'triggersource',
     'sourceId':         'sourceid',
-    'prvSources':       'sources',
+    # other fields, alphabetical
+    'cutoutDifference': 'diffcutout',
     'cutoutScience':    'scicutout',
     'cutoutTemplate':   'refcutout',
-    'cutoutDifference': 'diffcutout',
+    'filter':           'filter',
+    'mag':              'mag',
+    'magerr':           'magerr',
+    'magzp':            'magzp',
 }
 
 # write the files
@@ -43,19 +64,19 @@ for smap, fname in zip([ztf, decat], [fztf, fdecat]):
 
 # upload the files to GCS
 PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
-SURVEY = 'ztf'
-TESTID = 'schema'
+SURVEY = 'decat'
+TESTID = 'testschema'
 bucket_name = f'{PROJECT_ID}-{SURVEY}-broker_files-{TESTID}'
 
 storage_client = storage.Client()
 for fname in [fztf, fdecat]:
     with open(f'../broker/{fname}', "rb") as f:
-      # smap_in = yaml.safe_load(f)
-      blob = storage_client.bucket(bucket_name).blob(fname)
-      blob.upload_from_file(f)
+        # smap_in = yaml.safe_load(f)
+        blob = storage_client.bucket(bucket_name).blob(fname)
+        blob.upload_from_file(f)
 
     with open("my-file", "rb") as my_file:
-      blob.upload_from_file(my_file)
+        blob.upload_from_file(my_file)
 ```
 
 
@@ -146,8 +167,7 @@ Run the broker, connected to a real DECAT topic
 ```bash
 # start the night
 NIGHT="START"
-KAFKA_TOPIC="decat_test_only"
-# KAFKA_TOPIC="decat_20210411_2021A-0113"
+KAFKA_TOPIC="decat_20210414_2021A-0113"
 gcloud compute instances add-metadata "$nconductVM" --zone="$zone" \
         --metadata NIGHT="$NIGHT",KAFKA_TOPIC="$KAFKA_TOPIC"
 gcloud compute instances start "$nconductVM" --zone "$zone"
@@ -157,7 +177,6 @@ NIGHT="END"
 gcloud compute instances add-metadata "$nconductVM" --zone="$zone" \
         --metadata NIGHT="$NIGHT"
 gcloud compute instances start "$nconductVM" --zone "$zone"
-
 ```
 
 Run the broker with the consumer simulator
@@ -197,11 +216,36 @@ gcloud compute instances start "$nconductVM" --zone "$zone"
 
 Delete the broker instance
 ```bash
-survey="decat"  # make sure the original case still works properly
+survey="decat"
 testid="testschema"
 teardown="True"
 ./setup_broker.sh "$testid" "$teardown" "$survey"
 ```
 
-
 <!-- fe Test the changes -->
+---
+
+
+## Download and look at an Avro
+<!-- fs -->
+(Requires that we have already ingested an alert to the `alert_avros` bucket.)
+
+```python
+from broker_utils import gcp_utils as bgu
+from broker_utils import data_utils as bdu
+
+# download a file
+filename = 'DC21baaa.570349.decat_20210414_2021A-0113.avro'
+survey, testid = 'decat', 'testschema'
+bucket_id = f'{survey}-alert_avros-{testid}'
+localdir = '/Users/troyraen/Documents/PGB/repotest/decam'
+bgu.cs_download_file(localdir, bucket_id, filename)
+
+# load the file to a dict
+alertDict = bdu.alert_avro_to_dict(f'{localdir}/{filename}')
+
+# load the dict to BigQuery
+table_id = f'{survey}_alerts_{testid}.alerts'
+bgu.bq_insert_rows(table_id, [alertDict])
+```
+<!-- fe Download and look at an Avro -->
