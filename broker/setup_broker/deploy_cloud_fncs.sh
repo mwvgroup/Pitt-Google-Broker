@@ -16,7 +16,7 @@ ps_to_gcs_CF_name="${survey}-upload_bytes_to_bucket"
 # use test resources, if requested
 if [ "$testid" != "False" ]; then
     trigger_topic="${trigger_topic}-${testid}"
-    ps_to_gcs_CF_name="${ps_to_gcs_CF_name}_${testid}"
+    ps_to_gcs_CF_name="${ps_to_gcs_CF_name}-${testid}"
 fi
 
 #--- Pub/Sub -> Cloud Storage Avro cloud function

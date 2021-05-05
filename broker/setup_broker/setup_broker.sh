@@ -84,7 +84,7 @@ if [ "$teardown" != "True" ]; then
     gsutil -m -o "$o" cp -r ../beam "gs://${broker_bucket}"
     gsutil -m -o "$o" cp -r ../consumer "gs://${broker_bucket}"
     gsutil -m -o "$o" cp -r ../night_conductor "gs://${broker_bucket}"
-    gsutil -m -o "$o" cp -r ../schema_maps "gs://${broker_bucket}"
+    gsutil -m -o "$o" cp -r ../broker_utils/schema_maps "gs://${broker_bucket}"
 
     #--- Setup the Pub/Sub notifications on ZTF Avro storage bucket
     echo

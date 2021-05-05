@@ -245,9 +245,14 @@ def setup_bigquery(survey='ztf', testid='test', teardown=False) -> None:
 
             # create the tables
             for table in tables:
-                bqmk = f'bq mk --table {PROJECT_ID}:{dataset}.{table} templates/bq_{survey}_{table}_schema.json'
-                out = subprocess.check_output(shlex.split(bqmk))
-                print(f'{out}')  # should be a success message
+                table_id = f'{PROJECT_ID}.{dataset}.{table}'
+                try:
+                    bigquery_client.get_table(table_id)
+                    print(f'Skipping existing table: {table_id}.')
+                except NotFound:
+                    bqmk = f'bq mk --table {PROJECT_ID}:{dataset}.{table} templates/bq_{survey}_{table}_schema.json'
+                    out = subprocess.check_output(shlex.split(bqmk))
+                    print(f'{out}')  # should be a success message
 
 def setup_dashboard(survey='ztf', testid='test', teardown=False) -> None:
     """Create a monitoring dashboard for the broker instance.
@@ -271,12 +276,23 @@ def setup_dashboard(survey='ztf', testid='test', teardown=False) -> None:
         # create json config file
         jpath = _setup_dashboard_json(survey=survey, testid=testid)
 
+        # if the dashboard already exists, delete it so we can make a new one
+        gdescribe = f'gcloud monitoring dashboards describe {dashboard_id}'
+        try:
+            dboard = subprocess.check_output(shlex.split(gdescribe),
+                                             stderr=subprocess.DEVNULL)
+        except:
+            pass
+        else:
+            gdelete = f'gcloud monitoring dashboards delete projects/{PROJECT_ID}/dashboards/{dashboard_id} --quiet'
+            __ = subprocess.check_output(shlex.split(gdelete))
+
         # create the dashboard
-        gcreate = f'gcloud monitoring dashboards create --config-from-file={jpath}'
-        __ = subprocess.check_output(shlex.split(gcreate))
+        gboard = f'gcloud monitoring dashboards create --config-from-file={jpath}'
+        __ = subprocess.check_output(shlex.split(gboard))
 
         # tell the user where to view it
-        print('\nA new dashboard has been created for you!\nView it at:')
+        print('\nA monitoring dashboard has been created for you!\nView it at:')
         print(f'{dashboard_url}\n')
 
     else:
