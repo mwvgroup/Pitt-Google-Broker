@@ -1,0 +1,16 @@
+SURVEY: ztf
+FILTER_MAP:
+  1: g
+  2: r
+  3: i
+objectId: objectId
+prvSources: prv_candidates
+source: candidate
+sourceId: candid
+cutoutDifference: cutoutDifference
+cutoutScience: cutoutScience
+cutoutTemplate: cutoutTemplate
+filter: fid
+mag: magpsf
+magerr: sigmapsf
+magzp: magzpsci
