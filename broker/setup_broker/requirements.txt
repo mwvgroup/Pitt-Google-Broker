@@ -3,4 +3,4 @@ google-api-core
 google-cloud-bigquery
 google-cloud-logging
 google-cloud-pubsub
-google-cloud-storage
+google-cloud-storage==1.38.0
