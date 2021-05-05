@@ -45,6 +45,8 @@ python3 value_added.py \
             --staging_location ${staging_location} \
             --temp_location ${temp_location} \
             --PROJECTID ${PROJECT_ID} \
+            --SURVEY ${survey} \
+            --TESTID ${testid} \
             --source_PS_alerts ${source_PS_alerts} \
             --sink_BQ_salt2 ${sink_BQ_salt2} \
             --sink_CS_salt2 ${sink_CS_salt2} \
@@ -71,6 +73,8 @@ python bq_sink.py \
             --staging_location ${staging_location} \
             --temp_location ${temp_location} \
             --PROJECTID ${PROJECT_ID} \
+            --SURVEY ${survey} \
+            --TESTID ${testid} \
             --source_PS_alerts ${source_PS_alerts} \
             --sink_BQ_alerts ${sink_BQ_alerts} \
             --sink_BQ_diasource ${sink_BQ_diasource} \

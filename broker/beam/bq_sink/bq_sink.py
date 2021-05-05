@@ -15,8 +15,13 @@ from apache_beam.io import ReadFromPubSub, WriteToPubSub, WriteToBigQuery
 from apache_beam.io.gcp.bigquery_tools import RetryStrategy
 from apache_beam.options.pipeline_options import PipelineOptions
 
-from beam_helpers import data_utils as dutil
+from broker_utils import beam_transforms as bbt
+from broker_utils import schema_maps as bsm
 
+
+def load_schema_map(SURVEY, TESTID):
+    # load the schema map from the broker bucket in Cloud Storage
+    return bsm.load_schema_map(SURVEY, TESTID)
 
 def sink_configs(PROJECTID):
     """Configuration dicts for all pipeline sinks.
@@ -25,17 +30,15 @@ def sink_configs(PROJECTID):
         PROJECTID (str): Google Cloud Platform project ID
 
     Returns:
-        snkconf = {'sinktype_dataDescription': {'config_name': value, }, }
+        sink_configs = {'sinktype_dataDescription': {'config_name': value, }, }
     """
-    snkconf = {
+    sink_configs = {
             'BQ_generic': {
-                # 'schema': 'SCHEMA_AUTODETECT',
                 'project': PROJECTID,
                 'create_disposition': bqdisp.CREATE_NEVER,
                 'write_disposition': bqdisp.WRITE_APPEND,
                 'validate': False,
                 'insert_retry_strategy': RetryStrategy.RETRY_ON_TRANSIENT_ERROR,
-                # 'batch_size': 5000,
             },
             'PS_generic': {
                 'with_attributes': False,  # currently using bytes
@@ -45,14 +48,12 @@ def sink_configs(PROJECTID):
             },
     }
 
-    return snkconf
+    return sink_configs
 
-def run(PROJECTID, sources, sinks, pipeline_args):
+def run(schema_map, sources, sinks, sink_configs, pipeline_args):
     """Runs the Alerts -> BigQuery pipeline.
     """
-
     pipeline_options = PipelineOptions(pipeline_args, streaming=True)
-    snkconf = sink_configs(PROJECTID)
 
     with beam.Pipeline(options=pipeline_options) as pipeline:
 
@@ -63,33 +64,28 @@ def run(PROJECTID, sources, sinks, pipeline_args):
         )
         full_alert_dicts = (
             alert_bytes | 'ExtractAlertDict' >>
-            beam.ParDo(dutil.extractAlertDict())
+            beam.ParDo(bbt.ExtractAlertDict())
         )
         alert_dicts = (
             full_alert_dicts | 'StripCutouts' >>
-            beam.ParDo(dutil.stripCutouts())
+            beam.ParDo(bbt.StripCutouts(schema_map))
         )
 
         #-- Upload original alert data to BQ
-        # BQ encoding error until cutouts were stripped. see StripCutouts() for more details
-        # alerts with no history cannot currently be uploaded -> RETRY_NEVER
-        # TODO: track deadletters, get them uploaded to bq
         adicts_deadletters = (
             alert_dicts | 'Write Alert BigQuery' >>
-            WriteToBigQuery(sinks['BQ_alerts'],
-                **snkconf['BQ_generic'])
-        )
+            WriteToBigQuery(sinks['BQ_alerts'], **sink_configs['BQ_generic'])
+        )  # TODO: track deadletters, get them uploaded to bq
 
         #-- Extract the DIA source info and upload to BQ
         dias_dicts = (
             alert_dicts | 'extractDIASource' >>
-            beam.ParDo(dutil.extractDIASource())
+            beam.ParDo(bbt.ExtractDIASource(schema_map))
         )
         ddicts_deadletters = (
             dias_dicts | 'Write DIASource BigQuery' >>
-            WriteToBigQuery(sinks['BQ_diasource'],
-                **snkconf['BQ_generic'])
-        )
+            WriteToBigQuery(sinks['BQ_diasource'], **sink_configs['BQ_generic'])
+        )  # TODO: track deadletters, get them uploaded to bq
 
 
 if __name__ == "__main__":  # noqa
@@ -99,6 +95,14 @@ if __name__ == "__main__":  # noqa
     parser.add_argument(
         "--PROJECTID",
         help="Google Cloud Platform project name.\n",
+    )
+    parser.add_argument(
+        "--SURVEY",
+        help="Survey this broker instance is associated with.\n",
+    )
+    parser.add_argument(
+        "--TESTID",
+        help="testid this broker instance is associated with.\n",
     )
     parser.add_argument(
         "--source_PS_alerts",
@@ -116,10 +120,12 @@ if __name__ == "__main__":  # noqa
 
     known_args, pipeline_args = parser.parse_known_args()
 
+    schema_map = load_schema_map(known_args.SURVEY, known_args.TESTID)
     sources = {'PS_alerts': known_args.source_PS_alerts}
     sinks = {
             'BQ_alerts': known_args.sink_BQ_alerts,
             'BQ_diasource': known_args.sink_BQ_diasource,
     }
+    sink_configs = sink_configs(known_args.PROJECTID)
 
-    run(known_args.PROJECTID, sources, sinks, pipeline_args)
+    run(schema_map, sources, sinks, sink_configs, pipeline_args)

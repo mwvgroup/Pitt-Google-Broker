@@ -36,10 +36,17 @@ from apache_beam.io import ReadFromPubSub, WriteToPubSub, WriteToBigQuery
 from apache_beam.io.gcp.bigquery_tools import RetryStrategy
 from apache_beam.options.pipeline_options import PipelineOptions
 
-import beam_helpers.data_utils as dutil
-from beam_helpers.filters import is_extragalactic_transient, is_pure
-import beam_helpers.salt2_utils as s2
+from broker_utils import beam_transforms as bbt
+from broker_utils import schema_maps as bsm
 
+from transforms import filters as tf
+from transforms import salt2 as ts2
+
+
+
+def load_schema_map(SURVEY, TESTID):
+    # load the schema map from the broker bucket in Cloud Storage
+    return bsm.load_schema_map(SURVEY, TESTID)
 
 def sink_configs(PROJECTID):
     """Configuration dicts for all pipeline sinks.
@@ -48,15 +55,14 @@ def sink_configs(PROJECTID):
         PROJECTID (str): Google Cloud Platform project ID
 
     Returns:
-        snkconf = {'sinkResource_dataDescription': {'config_name': value, }, }
+        sink_configs = {'sinkResource_dataDescription': {'config_name': value, }, }
     """
-    snkconf = {
+    sink_configs = {
             'BQ_salt2': {
-                'schema': 'objectId:STRING, candid:INTEGER, success:INTEGER, ncall:INTEGER, chisq:FLOAT, ndof:INTEGER, z:FLOAT, z_err:FLOAT, t0:FLOAT, t0_err:FLOAT, x0:FLOAT, x0_err:FLOAT, x1:FLOAT, x1_err:FLOAT, c:FLOAT, c_err:FLOAT, z_z_cov:FLOAT, z_t0_cov:FLOAT, z_x0_cov:FLOAT, z_x1_cov:FLOAT, z_c_cov:FLOAT, t0_z_cov:FLOAT, t0_t0_cov:FLOAT, t0_x0_cov:FLOAT, t0_x1_cov:FLOAT, t0_c_cov:FLOAT, x0_z_cov:FLOAT, x0_t0_cov:FLOAT, x0_x0_cov:FLOAT, x0_x1_cov:FLOAT, x0_c_cov:FLOAT, x1_z_cov:FLOAT, x1_t0_cov:FLOAT, x1_x0_cov:FLOAT, x1_x1_cov:FLOAT, x1_c_cov:FLOAT, c_z_cov:FLOAT, c_t0_cov:FLOAT, c_x0_cov:FLOAT, c_x1_cov:FLOAT, c_c_cov:FLOAT, plot_lc_bytes:BYTES',
+                # 'schema': 'objectId:STRING, candid:INTEGER, success:INTEGER, ncall:INTEGER, chisq:FLOAT, ndof:INTEGER, z:FLOAT, z_err:FLOAT, t0:FLOAT, t0_err:FLOAT, x0:FLOAT, x0_err:FLOAT, x1:FLOAT, x1_err:FLOAT, c:FLOAT, c_err:FLOAT, z_z_cov:FLOAT, z_t0_cov:FLOAT, z_x0_cov:FLOAT, z_x1_cov:FLOAT, z_c_cov:FLOAT, t0_z_cov:FLOAT, t0_t0_cov:FLOAT, t0_x0_cov:FLOAT, t0_x1_cov:FLOAT, t0_c_cov:FLOAT, x0_z_cov:FLOAT, x0_t0_cov:FLOAT, x0_x0_cov:FLOAT, x0_x1_cov:FLOAT, x0_c_cov:FLOAT, x1_z_cov:FLOAT, x1_t0_cov:FLOAT, x1_x0_cov:FLOAT, x1_x1_cov:FLOAT, x1_c_cov:FLOAT, c_z_cov:FLOAT, c_t0_cov:FLOAT, c_x0_cov:FLOAT, c_x1_cov:FLOAT, c_c_cov:FLOAT, plot_lc_bytes:BYTES',
                 'create_disposition': bqdisp.CREATE_NEVER,
                 'write_disposition': bqdisp.WRITE_APPEND,
-                'insert_retry_strategy': RetryStrategy.RETRY_NEVER,
-                # 'batch_size': 50,
+                'insert_retry_strategy': RetryStrategy.RETRY_ON_TRANSIENT_ERROR,
             },
             'PS_generic': {
                 'with_attributes': False,  # currently using bytes
@@ -66,7 +72,7 @@ def sink_configs(PROJECTID):
             },
     }
 
-    return snkconf
+    return sink_configs
 
 
 class Salt2(beam.PTransform):
@@ -78,8 +84,9 @@ class Salt2(beam.PTransform):
     5. Store fit results in BigQuery
     6. Publish fit results to Pub/Sub
     """
-    def __init__(self, sinks, sink_configs, salt2_configs):
+    def __init__(self, schema_map, sinks, sink_configs, salt2_configs):
         super().__init__()
+        self.schema_map = schema_map
         self.sinks = sinks
         self.sink_configs = sink_configs
         self.salt2_configs = salt2_configs
@@ -90,100 +97,111 @@ class Salt2(beam.PTransform):
             alert_PColl (PCollection[dict,]): PCollection of dictionaries
             of alert data
         """
+        schema_map = self.schema_map
         sinks = self.sinks
-        snkconf = self.sink_configs
+        sink_configs = self.sink_configs
         s2conf = self.salt2_configs
 
         # extract the epochs and some stats
-        alert_epoch_dicts = (alert_PColl | 'FormatForSalt2' >>
-                      beam.ParDo(s2.FormatForSalt2(s2conf))
-                     )
+        alert_epoch_dicts = (
+            alert_PColl | 'FormatForSalt2' >>
+            beam.ParDo(ts2.FormatForSalt2(schema_map, s2conf))
+        )
 
         # drop alerts that do not meet minimum data quality
-        alert_epoch_dicts_QC = (alert_epoch_dicts | 'filterSalt2QualityCuts' >>
-                          beam.Filter(s2.salt2_quality_cuts, s2conf)
-                         )
+        alert_epoch_dicts_QC = (
+            alert_epoch_dicts | 'filterSalt2QualityCuts' >>
+            beam.Filter(ts2.salt2_quality_cuts, s2conf)
+        )
 
         # fit with Salt2. Yields 2 output collections
-        salt2Dicts = (alert_epoch_dicts_QC | 'FitSalt2' >>
-                      beam.ParDo(s2.FitSalt2()).with_outputs('salt2Fit4Figure', 'alert_salt2Fit', main='salt2Fit')
-                     )
+        salt2Dicts = (
+            alert_epoch_dicts_QC | 'FitSalt2' >>
+            beam.ParDo(ts2.FitSalt2(schema_map)).with_outputs('salt2Fit4Figure', 'alert_salt2Fit', main='salt2Fit')
+        )
         salt2Fit = salt2Dicts.salt2Fit  # PCollection of dicts
         alert_salt2Fit = salt2Dicts.alert_salt2Fit  # PCollection of dicts
         salt2Fit4Figure = salt2Dicts.salt2Fit4Figure  # PCollection of dicts
 
         # Store a lightcurve + Salt2 fit figure in Cloud Storage
-        __ = (salt2Fit4Figure | 'StoreSalt2FitFigure' >>
-                beam.ParDo(s2.StoreSalt2FitFigure(sinks['CS_salt2']))
-            )
+        __ = (
+            salt2Fit4Figure | 'StoreSalt2FitFigure' >>
+            beam.ParDo(ts2.StoreSalt2FitFigure(sinks['CS_salt2']))
+        )
 
         # Store the fit params in BigQuery
-        bqSalt2Deadletters = (salt2Fit | 'salt2ToBQ' >>
-                              WriteToBigQuery(sinks['BQ_salt2'],
-                                              **snkconf['BQ_salt2'])
-                             )  # ToDo: handle deadletters
+        bqSalt2Deadletters = (
+            salt2Fit | 'salt2ToBQ' >>
+            WriteToBigQuery(sinks['BQ_salt2'], **sink_configs['BQ_salt2'])
+        )  # ToDo: handle deadletters
 
         # Announce the fit params to Pub/Sub and include original alert
-        salt2PS = (alert_salt2Fit | 'salt2FormatDictForPubSub' >>
-                   beam.ParDo(dutil.formatDictForPubSub())
-                  )
-        psSalt2Deadletters = (salt2PS | 'salt2ToPubSub' >>
-                              WriteToPubSub(sinks['PS_salt2'],
-                                            **snkconf['PS_generic'])
-                             )  # ToDo: handle deadletters
+        salt2PS = (
+            alert_salt2Fit | 'salt2FormatDictForPubSub' >>
+            beam.ParDo(bbt.FormatDictForPubSub())
+        )
+        psSalt2Deadletters = (
+            salt2PS | 'salt2ToPubSub' >>
+            WriteToPubSub(sinks['PS_salt2'], **sink_configs['PS_generic'])
+        )  # ToDo: handle deadletters
 
         return salt2Fit
 
 
-def run(PROJECTID, sources, sinks, pipeline_args, salt2_configs):
+def run(schema_map, sources, sinks, sink_configs, pipeline_args, salt2_configs):
     """Runs the Beam pipeline.
     """
-
     pipeline_options = PipelineOptions(pipeline_args, streaming=True)
-    snkconf = sink_configs(PROJECTID)
 
     with beam.Pipeline(options=pipeline_options) as pipeline:
 
         #-- Read from PS and extract data as dicts
-        alert_bytes = (pipeline | 'ReadFromPubSub' >>
-                ReadFromPubSub(topic=sources['PS_alerts']))
-        full_alert_dicts = (alert_bytes | 'ExtractAlertDict' >>
-                      beam.ParDo(dutil.extractAlertDict()))
-        alert_dicts = (full_alert_dicts | 'StripCutouts' >>
-                        beam.ParDo(dutil.stripCutouts()))
+        alert_bytes = (
+            pipeline | 'ReadFromPubSub' >>
+            ReadFromPubSub(topic=sources['PS_alerts'])
+        )
+        full_alert_dicts = (
+            alert_bytes | 'ExtractAlertDict' >>
+            beam.ParDo(bbt.ExtractAlertDict())
+        )
+        alert_dicts = (
+            full_alert_dicts | 'StripCutouts' >>
+            beam.ParDo(bbt.StripCutouts(schema_map))
+        )
 
-        #-- Filter for purity and publish a PS stream
+        #-- Filter for purity and publish a Pub/Sub stream
         adicts_pure = (
             alert_dicts | 'filterPurity' >>
-            beam.Filter(is_pure)
+            beam.Filter(tf.is_pure, schema_map)
         )
-        # to PubSub
         adicts_pure_ps = (
             adicts_pure | 'pureTransFormatDictForPubSub' >>
-            beam.ParDo(dutil.formatDictForPubSub())
+            beam.ParDo(bbt.FormatDictForPubSub())
         )
         adicts_pure_ps_deadletters = (
             adicts_pure_ps | 'pureTransToPubSub' >>
-            WriteToPubSub(sinks['PS_pure'], **snkconf['PS_generic'])
+            WriteToPubSub(sinks['PS_pure'], **sink_configs['PS_generic'])
         )  # ToDo: handle deadletters
 
-        #-- Filter for extragalactic transients and publish a PS stream
+        #-- Filter for extragalactic transients and publish a Pub/Sub stream
         adicts_exgal = (
             alert_dicts | 'filterExgalTrans' >>
-            beam.Filter(is_extragalactic_transient)
+            beam.Filter(tf.is_extragalactic_transient, schema_map)
         )
-        # to PubSub
         adicts_exgal_ps = (
             adicts_exgal | 'exgalTransFormatDictForPubSub' >>
-            beam.ParDo(dutil.formatDictForPubSub())
+            beam.ParDo(bbt.FormatDictForPubSub())
         )
         adicts_exgal_ps_deadletters = (
             adicts_exgal_ps | 'exgalTransToPubSub' >>
-            WriteToPubSub(sinks['PS_exgalTrans'], **snkconf['PS_generic'])
+            WriteToPubSub(sinks['PS_exgalTrans'], **sink_configs['PS_generic'])
        )  # ToDo: handle deadletters
 
         #-- Fit with Salt2, store and announce results
-        __ = adicts_exgal | 'Salt2' >> Salt2(sinks, snkconf, salt2_configs)
+        __ = (
+            adicts_exgal | 'Salt2' >>
+            Salt2(schema_map, sinks, sink_configs, salt2_configs)
+        )
 
 
 
@@ -194,6 +212,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "--PROJECTID",
         help="Google Cloud Platform project name.\n",
+    )
+    parser.add_argument(
+        "--SURVEY",
+        help="Survey this broker instance is associated with.\n",
+    )
+    parser.add_argument(
+        "--TESTID",
+        help="testid this broker instance is associated with.\n",
     )
     parser.add_argument(
         "--source_PS_alerts",
@@ -238,6 +264,7 @@ if __name__ == "__main__":
 
     known_args, pipeline_args = parser.parse_known_args()
 
+    schema_map = load_schema_map(known_args.SURVEY, known_args.TESTID)
     sources = {'PS_alerts': known_args.source_PS_alerts}
     sinks = {
             'BQ_salt2': known_args.sink_BQ_salt2,
@@ -246,10 +273,10 @@ if __name__ == "__main__":
             'PS_exgalTrans': known_args.sink_PS_exgalTrans,
             'PS_salt2': known_args.sink_PS_salt2,
     }
-
+    sink_configs = sink_configs(known_args.PROJECTID)
     salt2_configs = {
                     'SNthresh': float(known_args.salt2_SNthresh),
                     'minNdetections': int(known_args.salt2_minNdetections),
     }
 
-    run(known_args.PROJECTID, sources, sinks, pipeline_args, salt2_configs)
+    run(schema_map, sources, sinks, sink_configs, pipeline_args, salt2_configs)
