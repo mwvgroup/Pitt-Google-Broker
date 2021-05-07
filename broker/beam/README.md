@@ -19,18 +19,12 @@ and [`bq_sink/bq_sink.py`](bq_sink/bq_sink.py)):
 
 ```bash
 #-- Set configs
+survey=ztf  # use the same survey used in broker setup
+testid=mytest  # use the same testid used in broker setup
 PROJECT_ID=${GOOGLE_CLOUD_PROJECT}
-survey=ztf
-testid=mytest # see broker/README.md to setup testing resources
 beamdir=$(pwd)
-source jobs.config "$PROJECT_ID" "$testid" "$beamdir" "$survey"
 
-#-- Copy beam_helpers modules.
-# Modules in the beam_helpers directory are used by multiple jobs.
-# They need to be copied into the jobs' directories so setup.py can find them.
-mkdir -p bq_sink/beam_helpers
-cp beam_helpers/__init__.py beam_helpers/data_utils.py bq_sink/beam_helpers/.
-cp -r beam_helpers value_added/.
+source jobs.config "$PROJECT_ID" "$testid" "$beamdir" "$survey"
 
 #-- Start the ztf value-added processing Dataflow job
 cd value_added
@@ -56,9 +50,9 @@ python3 value_added.py \
             --salt2_SNthresh ${salt2_SNthresh} \
             --salt2_minNdetections ${salt2_minNdetections} \
             --streaming \
-            --update  # use if updating a currently running job; job_name must match current job
-# Use “Ctrl + C” to regain control of the terminal.
-# this will _not_ cancel the job
+            --update  # use only if updating a currently running job
+
+# Once the job starts, use “Ctrl + C” to regain control of the terminal.
 
 # Start the ztf -> BQ job
 cd ${beamdir} && cd bq_sink
@@ -79,10 +73,9 @@ python bq_sink.py \
             --sink_BQ_alerts ${sink_BQ_alerts} \
             --sink_BQ_diasource ${sink_BQ_diasource} \
             --streaming \
-            --update  # use if updating a currently running job
-# Use “Ctrl + C” to regain control of the terminal.
-# this will _not_ cancel the job
-cd ${beamdir}
+            --update  # use only if updating a currently running job
+
+# Once the job starts, use “Ctrl + C” to regain control of the terminal.
 ```
 
-5. View the [Dataflow job(s) in the GCP Console](https://console.cloud.google.com/dataflow/jobs?project=ardent-cycling-243415)
+5. View the [Dataflow job(s) in the GCP Console](https://console.cloud.google.com/dataflow/jobs)
