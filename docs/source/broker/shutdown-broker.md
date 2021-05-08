@@ -12,7 +12,7 @@ If you started the broker using the night conductor VM, you can also use it to s
 
 ## Stopping Broker Components Individually
 
-Generally, see the equivalent section in [Run the Broker](run-broker.md#stopping-broker-components-individually).
+Generally, see the equivalent section in [Run the Broker](run-broker.md#starting-and-stopping-components-individually).
 
 ### Dataflow Jobs
 

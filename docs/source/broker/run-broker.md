@@ -72,15 +72,17 @@ gcloud compute instances start "$instancename" --zone "$zone"
 
 Here are some options:
 
-Generally: Use night conductor's scripts. In most cases, you can simply call a shell script and pass in a few variables. See especially those called by [vm_startup.sh](../../../broker/night_conductor/vm_startup.sh):
+__Generally__: Use night conductor's scripts. In most cases, you can simply call a shell script and pass in a few variables. See especially those called by [vm_startup.sh](../../../broker/night_conductor/vm_startup.sh):
 - [start_night.sh](../../../broker/night_conductor/start_night/start_night.sh)
 - [end_night.sh](../../../broker/night_conductor/end_night/end_night.sh)
 
-Dataflow:
+__Cloud Functions__ - update/redeploy: run the `deploy_cloud_fncs.sh` script, see [here](view-resources.md#cf)
+
+__Dataflow__:
 - start/update jobs: see [beam/README.md](../../../broker/beam/README.md).
 - stop jobs: see [shutdown-broker.md](shutdown-broker.md)
 
-VMs - start/stop: see [View and Access Resources](view-resources.md)
+__VMs__ - start/stop: see [View and Access Resources](view-resources.md)
 
 ---
 

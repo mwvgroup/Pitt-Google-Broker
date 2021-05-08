@@ -29,7 +29,7 @@ All resources have a __name stub__ that we use to generically identify the resou
 See [Broker Overview](broker-overview.md) for a list.
 For example, the name stub of the consumer VM is `consumer`.
 The names of resources belonging to a given broker instance will have the survey prepended and the testid appended (unless the testid is `False`, in which case it is omitted).
-The character `-` separates the stub from the keywords, except in rare cases where it is restricted by GCP naming rules, and then `_` is used.
+The character `-` separates the stub from the keywords, except in rare cases (BigQuery datasets) where it is restricted by GCP naming rules, and then `_` is used.
 So a broker instance set up with `survey = 'ztf'` and `testid = 'mytestid'` will have a consumer VM named `ztf-consumer-mytestid`.
 
 Note that Cloud Storage buckets also have the project ID prepended, for uniqueness across GCP.

@@ -60,8 +60,8 @@ Click on a function name. From here you can:
 - test the function
 
 See also:
-- [Create and deploy a Cloud Function using the `gcloud` command-line tool](https://cloud.google.com/functions/docs/quickstart)
 - [`broker/setup_broker/deploy_cloud_fncs.sh`](../../../broker/setup_broker/deploy_cloud_fncs.sh). You can re-run this script to update the broker's Cloud Function(s).
+- [Create and deploy a Cloud Function using the `gcloud` command-line tool](https://cloud.google.com/functions/docs/quickstart)
 
 ---
 
