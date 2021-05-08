@@ -67,7 +67,7 @@ class FormatForSalt2(DoFn):
 
         # add some metadata
         epochInfo['objectId'] = alert[schema_map['objectId']]
-        epochInfo['sourceId'] = alert[schema_map['sourceId']]
+        epochInfo['sourceId'] = alert[schema_map['source']][schema_map['sourceId']]
 
         # package with the alert so Pub/Sub can have both
         alert_epoch_dicts = {'alert': alert, 'epochInfo': epochInfo}
@@ -195,8 +195,8 @@ class FormatForSalt2(DoFn):
         maxSN = np.max(SN)
 
         # to constrain t0, find mjd of first epoch with S/N > SNthresh
-        if maxSN > SNthresh:
-            first_SN_above_thresh = np.where(SN>SNthresh)[0][0]
+        if maxSN >= SNthresh:
+            first_SN_above_thresh = np.where(SN>=SNthresh)[0][0]
             t0_guess = epoch_dict['mjd'][first_SN_above_thresh]
         else:
             t0_guess = None
