@@ -1,160 +1,150 @@
-By using our "consumer simulator", you can feed alerts into your broker without connecting to a ZTF stream. This option bypasses the broker's consumer and gives you a lot more control over the ingestion. It is useful if:
-- there is not a ZTF stream available that suites your needs; and/or
-- you want to __*control the flow of alerts*__ into the system.
+# Consumer Simulator
 
-The ingestion rate of the _broker's_ consumer is at the mercy of ZTF. A ZTF live stream is ingested at the same rate at which ZTF publishes the alerts. A ZTF stream from a previous night will be ingested as fast as possible. In the second case, alerts _flood_ into the system. Most (but not all) broker components handle this without much trouble, but in general, this is not a reasonable way to run our tests.
+The consumer simulator is a Python module that pulls alerts[*](#notes) from a Pub/Sub subscription and republishes them to a topic.
+By publishing to your broker instance's `alerts` topic (see [here](broker-instance-keywords.md) for naming info), you can bypass the consumer and feed alerts into your instance at a controlled rate.
+This is the only way to control the flow of incoming alerts and is especially useful in testing.
 
-__How it works__:
+- [Install](#install)
+- [Code Examples](#code-examples)
+- [Arguments and Options](#arguments-and-options)
+- [Workflow: Testing a Broker Instance](#workflow-testing-a-broker-instance)
+- [How Does the Consumer Simulator Work?](#how-does-the-consumer-simulator-work)
+    - [Reservoir Subscriptions](#reservoir-subscriptions)
+---
 
-The module's code is at [../dev_utils/consumer_sims/ztf_consumer_sim.py](../dev_utils/consumer_sims/ztf_consumer_sim.py)
+## Install
 
-The consumer simulator publishes alerts to the `ztf_alerts-{testid}` Pub/Sub topic, from which all non-consumer components of the broker get the alerts.
-The user can set the:
-- `alertRate`: desired rate at which alerts are published
-- `runTime`: desired length of time for which the simulator publishes alerts
-- `publish_batch_every`: interval of time the simulator sleeps between publishing batches of alerts
-
-The simulator publishs alerts in batches, so the desired alert rate and run time both get converted.
-Rounding occurs so that an integer number of batches are published, each containing the same integer number of alerts.
-Therefore the _alert publish rate and the length of time for which the simulator runs may not be exactly equal to the `alertRate` and `runTime`_ respectively.
-If you want one or both to be exact, choose an appropriate combination of variables.
-
-_[`ztf_alerts-reservoir`](https://console.cloud.google.com/cloudpubsub/subscription/detail/ztf_alerts-reservoir?project=ardent-cycling-243415)_:
-
-The simulator's _source_ of alerts is the Pub/Sub _subscription_ `ztf_alerts-reservoir` (attached to the _topic_ `ztf_alerts`).
-All users of the consumer simulator access the _same_ reservoir by default(*).
-__Please be courteous, and do not drain the reservoir__(**).
-Alerts expire from the subscription after 7 days (max allowed by Pub/Sub), so if ZTF has not produced many alerts in the last week, the reservoir will be low.
-On the bright side, the alerts coming from the simulator/reservoir will always be recent.
-_You can check the number of alerts currently in the reservoir by viewing the subscription in the GCP Console_ (click the link above, look for "Unacked message count")
-
-(*) An equivalent subscription reservoir is created for your testing instance, but it is not pre-filled with alerts.
-However, once you _do_ have alerts in your testing instance, you can use a keyword argument to point the simulator's source subscription to your own reservoir.
-This will create a closed loop wherein the same set of alerts will flow from your reservoir, into your `ztf_alerts-{testid}` topic, and back into your reservoir (which is a subscription on that topic).
-In this way, you can access an __infinite source of (non-unique) alerts__.
-(You can also publish alerts to an arbitary topic via a keyword.)
-
-(**) To facilitate this, in addition to using your own reservoir, you have the option to "nack" messages, which tells the subscriber _not_ to acknowledge the messages. As a result, the alerts will not disappear from the reservoir; the subscriber will redeliver the messages at an arbitrary time in the future (to you or someone else).
-
-__Workflow__:
-1. [Start the broker](#start-the-broker) using `night-conductor` with the metadata attribute that holds the ZTF/Kafka topic set to `NONE`. This instructs `night-conductor` to _skip_ booting up the consumer VM.
-2. [Run the consumer simulator](#run-the-consumer-simulator):
-Use the `ztf_consumer_sim` python module to feed alerts into the `ztf_alerts-{testid}` Pub/Sub topic that all _non-consumer_ components use to ingest alerts. The code for the module is nested under the `dev_utils` package at the top level of the repo: [../dev_utils/consumer_sims/ztf_consumer_sim.py](../dev_utils/consumer_sims/ztf_consumer_sim.py).
-3. [Shutdown the broker](#shutdown-the-broker) ("end the night") using `night-conductor`. (This stops the broker components so that they are inactive and we do not continue paying for them; it does not delete your broker instance.)
-
-Code follows.
-
-##### Start the broker
+The consumer simulator is part of the `pgb-broker-utils` Python package. Install it with:
 
 ```bash
-testid=mytest
-instancename="night-conductor-${testid}"
-zone=us-central1-a
-broker_bucket="${GOOGLE_CLOUD_PROJECT}-broker_files-${testid}"
-
-#--- Start the broker without the consumer
-# set the attributes
-NIGHT="START"
-KAFKA_TOPIC="NONE" # tell night-conductor to skip booting up consumer VM
-gcloud compute instances add-metadata "$instancename" --zone="$zone" \
-        --metadata NIGHT="$NIGHT",KAFKA_TOPIC="$KAFKA_TOPIC"
-# night-conductor will get the testid by parsing its own instance name
-
-# the startup script should already be set, but we can make sure
-startupscript="gs://${broker_bucket}/night_conductor/vm_startup.sh"
-gcloud compute instances add-metadata "$instancename" --zone "$zone" \
-        --metadata startup-script-url="$startupscript"
-
-# start the VM to trigger the startup script
-gcloud compute instances start "$instancename" --zone "$zone"
-# night-conductor shuts down automatically when broker startup is complete
-
-#--- After a few minutes, the broker should be ready to process alerts.
-#    Feed alerts into the system using the consumer simulator.
-
+pip install pgb-broker-utils
 ```
 
-For more information, see:
-- [View and Access Resources](#view-and-access-resources)
-- [Where to look if there's a problem with `night-conductor`'s start/end night routines](#where-to-look-if-theres-a-problem-with-night-conductors-startend-night-routines)
+---
 
-##### Run the consumer simulator
-Before starting this section, make sure your Dataflow jobs are running (if desired). Check the
-[Dataflow jobs console](https://console.cloud.google.com/dataflow/jobs?project=ardent-cycling-243415).
-When deployed, these jobs create _new_ subscriptions to the `ztf_alerts-{testid}` Pub/Sub topic, so _they will miss any alerts published to that topic prior to their deployment_.
-(The Cloud Functions, by contrast, are always "on" and listening to the stream.)
+## Code Examples
 
-You may need to update to the latest version (2.2.0) of the PubSub API: `pip install google-cloud-pubsub --upgrade`
+See also: [Arguments and Options](#arguments-and-options)
 
 ```python
-#--- Put the `dev_utils` directory on your path
-# I will add this to the broker's setup instructions later.
-import sys
-# path_to_dev_utils = '/Users/troyraen/Documents/PGB/repo/dev_utils'
-path_to_dev_utils = '/home/troy_raen_pitt/Pitt-Google-Broker/dev_utils'
-sys.path.append(path_to_dev_utils)
+from broker_utils import consumer_sim as bcs
 
-#--- import the simulator
-from consumer_sims import ztf_consumer_sim as zcs
+survey, testid = 'ztf', 'mytest'  # replace with the keywords for your instance
+instance = (survey, testid)
 
-#--- set some variables to use later
-N = 10
-aRate = 600
 
-#--- Set desired alert rate. Examples:
-alertRate = (aRate, 'perMin')  # (int, str)
-    # unit (str) options: 'perSec', 'perMin', 'perHr', 'perNight'(=per 10 hrs)
-alertRate = (N, 'once')
-    # publish N alerts simultaneously, one time
-alertRate = 'ztf-active-avg'  # = (300000, 'perNight')
-    # avg rate for an avg, active night (range 150,000 - 450,000 perNight)
-alertRate = 'ztf-live-max'  # = (200, 'perSec')
-    # approx max incoming rate seen from live ZTF stream
+# Publish 10 alerts simultaneously, 1 time
+alert_rate = (10, 'once')
+bcs.publish_stream(alert_rate, instance)
 
-#--- Set desired amount of time the simulator runs
-runTime = (N, 'min')  # (int, str)
-    # unit (str) options: 'sec', 'min', 'hr', 'night'(=10 hrs)
-    # if alertRate "units" == 'once', setting runTime has no effect
+# Publish alerts at the average rate of an active ZTF night for 30 minutes
+alert_rate = 'ztf-active-avg'
+runtime = (30, 'min')
+bcs.publish_stream(alert_rate, instance, runtime=runtime)
 
-#--- Set the rate at which batches are published (optional)
-publish_batch_every = (5, 'sec')  # (int, str)
-    # only str option is 'sec'
-# In practice: the simulator publishes a batch, then sleeps for a time publish_batch_every.
-# If you set a number that is too low, processing time will rival sleep time,
-# and the actual publish rate and run time may be quite different than expected.
-# I have only tested the default setting, which is (5, 'sec').
-
-#--- Run the simulator (examples)
-testid = 'mytest'
-
-# publish N alerts, 1 time
-alertRate = (N, 'once')
-zcs.publish_stream(testid, alertRate)
-
-# publish alerts for N minutes, at the average rate of an active ZTF night
-alertRate = 'ztf-active-avg'
-runTime = (N, 'min')
-zcs.publish_stream(testid, alertRate, runTime)
-
-# publish for N minutes, at avg rate of 30 alerts/sec, at a publish rate of 1 batch/min
-alertRate = (30, 'perSec')
-runTime = (N, 'min')
+# Publish alerts at the average rate of 30 alerts/sec for 15 minutes,
+# at a publish rate of 1 batch/min
+alert_rate = (30, 'perSec')
+runtime = (15, 'min')
 publish_batch_every = (60, 'sec')
-zcs.publish_stream(testid, alertRate, runTime, publish_batch_every)
+bcs.publish_stream(alert_rate, instance, runtime=runtime, publish_batch_every=publish_batch_every)
 
-# Connect the simulator to your own reservoir,
-# creating a closed loop between your data stream and reservoir.
-# (Assumes you previously tapped the main reservoir and ingested at least 1 alert.)
-sub_id = f'ztf_alerts-reservoir-{testid}'
-zcs.publish_stream(testid, alertRate, runTime, sub_id=sub_id)
+# Connect to the instance's own reservoir, creating a closed loop of alerts
+sub_id = f'{survey}-alerts-reservoir-{testid}'
+alert_rate = (10, 'once')
+bcs.publish_stream(alert_rate, instance, sub_id=sub_id)
 
-# Connect the simulator to a different sink (topic).
-# By default, the simulator publishes to the topic `ztf_alerts-{testid}`,
-# but you can publish to an arbitrary topic (which must already exist).
-topic_id = f'troy_test_topic'
-zcs.publish_stream(testid, alertRate, runTime, topic_id=topic_id)
-
-# nack the messages so that they do not disappear from the reservoir
-nack = True
-zcs.publish_stream(testid, alertRate, runTime, nack=nack)
+# Pull from an arbitrary subscription and publish to an arbitrary topic
+sub_id = 'your-subscription-id'  # replace with a valid subscription
+topic_id = 'your-topic-id'  # replace with a valid topic
+alert_rate = (10, 'once')
+bcs.publish_stream(alert_rate, sub_id=sub_id, topic_id=topic_id)
 ```
+
+---
+
+## Arguments and Options
+
+- __`alert_rate`__: `(int, str)` or `str`. Required. Desired rate at which to publish alerts.
+    - if `(int, str)`:
+        - `int` (1st arg). Number of alerts to be published per unit time.
+        - `str` (2nd arg). Rate unit. One of:
+            - `once`
+            - `perSec`
+            - `perMin`
+            - `perHr`
+            - `perNight` = per 10 hrs
+    - if `str`: One of:
+        - `ztf-active-avg` = (300000, 'perNight'). The approximate average rate of an active night from ZTF.
+        - `ztf-live-max` = (200, 'perSec'). The approximate maximum incoming rate seen in the live ZTF stream.
+
+- __`instance`__: `(str, str)` = `(survey, testid)`. Optional, default `None`. Keywords of the broker instance. Used to determine the subscription and topic. If `None`, both `sub_id` and `topic_id` must be valid names. If both `instance` and `sub_id`/`topic_id` are passed, `sub_id`/`topic_id` will prevail.
+
+- __`runtime`__: `(int, str)`. Required unless `alert_rate` unit is `once`. Desired length of time the simulator runs for.
+    - `int` (1st arg). Number of units of time the simulator runs.
+    - `str` (2nd arg). Run time unit. One of:
+        - `sec`
+        - `min`
+        - `hr`
+        - `night` = 10 hrs
+
+- __`publish_batch_every`__: `(int, str)`. Optional. Default `(5,'sec')`. The simulator will sleep for this amount of time between batches.
+    - `int` (1st arg). Number of units of time the simulator sleeps for.
+    - `str` (2nd arg). Sleep time unit. One of:
+        - `sec`
+
+- __`sub_id`__: `str`. Optional. Name of the Pub/Sub subscription from which to pull alerts. If `None`, `instance` must contain valid keywords, and then the production instance reservoir `{survey}-alerts-reservoir` will be used.
+
+- __`topic_id`__: `str`. Optional. Name of the Pub/Sub topic to which alerts will be published. If `None`, `instance` must contain valid keywords, and then the topic `{survey}-alerts-{testid}` will be used.
+
+- __`nack`__: `bool`. Optional. Default `False`. Whether to "nack" (not acknowledge) the messages. If `True`, messages are published to the topic, but they are not dropped from the subscription and so will be delivered again at an arbitrary time in the future.
+
+Note: The actual publish rate and total number of alerts published may not be exactly as requested since alerts are published in batches with a (1) fixed number of alerts per batch, and (2) fixed batch publish rate. Both numbers are determined by the input arguments, but some rounding occurs.
+
+---
+
+## Workflow: Testing a Broker Instance
+
+1. [Start the broker instance](run-broker.md#start-the-broker) with the attribute `KAFKA_TOPIC` set to `NONE`. This will start up everything except the consumer VM.
+2. [Run the consumer simulator](#code-examples).
+3. Make changes and updates to the instance components, as desired.
+4. Repeat steps 2 and 3, as desired.
+5. [Stop the broker instance](run-broker.md#stop-the-broker).
+
+See also:
+- [View and Access Resources](view-resources.md)
+- [Starting and Stopping Components Individually](run-broker.md#starting-and-stopping-components-individually)
+
+---
+
+## How Does the Consumer Simulator Work?
+
+The consumer simulator simply pulls messages from a Pub/Sub subscription and republishes them to a Pub/Sub topic at given rate for a given length of time.
+By connecting to a ["reservoir" subscription](#reservoir-subscriptions) that contains suitable alerts, and publishing to your instance's `alerts` Pub/Sub topic, you can bypass your instance's consumer and control the flow of alerts entering your broker.
+
+Many options are available; see [Arguments and Options](#arguments-and-options).
+
+The simulator publishes alerts in batches, so the input arguments get converted to appropriate values.
+Therefore, the _actual_ total number of alerts published, publish rate, and length of run time may not be exactly equal to what the user requests.
+Rounding occurs so that an integer number of batches are published, each containing the same integer number of alerts.
+If you want one or both to be exact, choose an appropriate combination of variables.
+
+### Reservoir Subscriptions
+
+Every broker instance has a Pub/Sub subscription with the name stub `alerts-reservoir` that is a subscription to its `alerts` topic.
+Every alert entering the instance ends up in this reservoir where it is held until pulled (and acknowledged) or for 7 days, whichever comes first.
+
+You can pull alerts from the reservoir of any instance to which you have access.
+By default, the consumer simulator pulls from the [production instance](broker-instance-keywords.md#production-vs-testing-instances) of the survey associated with the topic to which it is publishing, since it is assumed to contain the largest number of suitable alerts.
+You can check the number of alerts in a reservoir ("unacked message count") by viewing the subscription in the GCP Console (see [here](view-resources.md#ps)).
+
+If you pull from the reservoir of the same instance to which you are publishing, you create a _closed loop_.
+In this way, you can access an __infinite__ source of non-unique alerts.
+Of course, this requires that you have previously fed alerts into your broker instance by some other method so that your reservoir is not empty.
+
+Another way to access an infinite source is by "nack"-ing messages, which tells the subscriber "n"ot to "ack"nowledge the messages, meaning they do not get dropped from the reservoir.
+
+---
+<a name="notes"></a>
+
+\* The consumer simulator actually does not care what the contents of the Pub/Sub messages are. It can be used to pull messages from any subscription and publish them to any topic.

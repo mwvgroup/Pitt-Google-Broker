@@ -1,6 +1,7 @@
 apache-beam[gcp]==2.25.0
 fastavro
 google-cloud-storage==1.38.0
+google-cloud-pubsub==2.2.0
 numpy
 pandas
 PyYAML==5.3.1
