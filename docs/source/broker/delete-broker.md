@@ -1,21 +1,24 @@
-When you are done with it, please teardown (delete) your testing instance of the broker.
-See below for the specific code, but essentially you execute the `setup_broker.sh` script with the `teardown` flag set to `True`.
+# Delete a Broker Instance
 
-The "teardown" options that can be triggered in the setup scripts are specifically configured to _prevent_ a user from deleting _production_ resources, even if the user intentionally tries to do so.
-This is one layer of security, but we should still look into protecting those resources in other ways (e.g., make backups of databases and buckets, find out which resources can be configured directly to prevent deletion and configure them).
-
-
-## 3b. Teardown the testing instance
-
-When you are completely done with your testing instance of the broker, __delete it__ by running the broker's setup script with the "teardown" argument set to `True`.
+To delete or "teardown" a broker instance means to permanently delete all resources and data associated with that instance.
+Testing instances should be deleted when they are no longer needed.
+Production instances must be deleted manually; the automated script used below is specifically configured to _prevent_ their deletion.
+If you setup any resources manually, the script used below does not know about them so delete them manually.
 
 ```bash
-cd Pitt-Google-Broker/broker/setup_broker
+survey=ztf  # use the same survey used in broker setup
+testid=mytest  # use the same testid used in broker setup
+teardown=True
 
-# Teardown/delete all test resources with the testid "mytest"
-testid="mytest"
-teardown="True"
-./setup_broker.sh $testid $teardown
+# to use a local setup_broker.sh script, cd into the directory
+# cd Pitt-Google-Broker/broker/setup_broker  
+
+# otherwise, download and use the script from the instance's bucket
+bucket="${GOOGLE_CLOUD_PROJECT}-${survey}-broker_files-${testid}"
+fsetup="setup_broker/setup_broker.sh"
+gsutil cp "gs://${bucket}/${fsetup}" .
+
+# delete everything associated with the instance
+./setup_broker.sh "$testid" "$teardown" "$survey"
+# you will be prompted several times to confirm
 ```
-
-This will delete all GCP resources tagged with the testid. You will be prompted several times to confirm.

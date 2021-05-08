@@ -4,9 +4,9 @@
 - [Run the Broker](#run-the-broker)
     - [Start the Broker](#start-the-broker)
     - [Stop the Broker](#stop-the-broker)
-    - [Starting and Stopping Broker Components Individually](#starting-and-stopping-broker-components-individually)
+    - [Starting and Stopping Components Individually](#starting-and-stopping-components-individually)
 - [Options for Ingesting Alerts](#options-for-ingesting-alerts)
-    - [Kafka Topics](#kafka-topics)
+    - [Kafka Topic Syntax](#kafka-topic-syntax)
 - [What Does Night Conductor Do?](#what-does-night-conductor-do)
     - [Start Night](#start-night)
     - [End Night](#end-night)
@@ -68,17 +68,17 @@ gcloud compute instances start "$instancename" --zone "$zone"
 # this triggers night conductor's startup script `vm_startup.sh`.
 ```
 
-### Starting and Stopping Broker Components Individually
+### Starting and Stopping Components Individually
 
 Here are some options:
 
-Generally: Use night conductor's scripts. In most cases, you can simply call a shell script and pass in a few variables. See especially those called by [vm_startup.sh](../broker/night_conductor/vm_startup.sh):
-- [start_night.sh](../broker/night_conductor/start_night/start_night.sh)
-- [end_night.sh](../broker/night_conductor/end_night/end_night.sh)
+Generally: Use night conductor's scripts. In most cases, you can simply call a shell script and pass in a few variables. See especially those called by [vm_startup.sh](../../../broker/night_conductor/vm_startup.sh):
+- [start_night.sh](../../../broker/night_conductor/start_night/start_night.sh)
+- [end_night.sh](../../../broker/night_conductor/end_night/end_night.sh)
 
 Dataflow:
-- start/update jobs: see [beam/README.md](../broker/beam/README.md).
-- stop jobs: see [shutdown-broker.md](shutdown-broker.md) 
+- start/update jobs: see [beam/README.md](../../../broker/beam/README.md).
+- stop jobs: see [shutdown-broker.md](shutdown-broker.md)
 
 VMs - start/stop: see [View and Access Resources](view-resources.md)
 
@@ -89,13 +89,13 @@ VMs - start/stop: see [View and Access Resources](view-resources.md)
 You have three options to get alerts into the broker.
 Production instances typically use #1; testing instances typically use #3.
 
-1. Connect to a __live stream__. Obviously, this can only be done at night when there is a live stream to connect to. If there are no alerts in the topic, the consumer will poll repeatedly for available topics and begin ingesting when its assigned topic becomes active. See [Kafka Topics](#kafka-topics) below.
+1. Connect to a __live stream__. Obviously, this can only be done at night when there is a live stream to connect to. If there are no alerts in the topic, the consumer will poll repeatedly for available topics and begin ingesting when its assigned topic becomes active. See [Kafka Topic Syntax](#kafka-topic-syntax) below.
 
-2. Connect to a __stream from a previous night__ (within the last 7 days). This is not recommended since alerts will *flood* into the broker as the consumer ingests as fast as it can. For ZTF, you can check [ztf.uw.edu/alerts/public/](https://ztf.uw.edu/alerts/public/); `tar` files larger than 74 (presumably in bytes) indicate dates with >0 alerts. See also: [Kafka Topics](#kafka-topics).
+2. Connect to a __stream from a previous night__ (within the last 7 days). This is not recommended since alerts will *flood* into the broker as the consumer ingests as fast as it can. For ZTF, you can check [ztf.uw.edu/alerts/public/](https://ztf.uw.edu/alerts/public/); `tar` files larger than 74 (presumably in bytes) indicate dates with >0 alerts. See also: [Kafka Topic Syntax](#kafka-topic-syntax).
 
 3. Use the __consumer simulator__ to *control the flow* of alerts into the broker. See [Consumer Simulator](consumer-simulator.md) for details. When starting the broker, use metadata attribute `KAFKA_TOPIC=NONE` to leave the consumer VM off.
 
-### Kafka Topics
+### Kafka Topic Syntax
 
 Topic name syntax:
 
@@ -113,7 +113,7 @@ Upon startup, it runs the set of scripts in the `night_conductor` directory of t
 To control the behavior, we pass arguments by setting __metadata attributes__ on the VM, prior to starting it up.
 These attributes include:
 - `NIGHT`: `START` or `END`. See the following sections for details.
-- `KAFKA_TOPIC`: a [valid topic](#kafka-topics) or `NONE`.
+- `KAFKA_TOPIC`: a [valid topic](#kafka-topic-syntax) or `NONE`.
 If `NONE`, night conductor will not start the consumer VM; use this if (e.g.,) you want to use the [consumer simulator](consumer-simulator.md).
 Otherwise, night conductor will set `KAFKA_TOPIC` as a metadata attribute on the consumer VM and start it.
 This attribute has no effect if `NIGHT=END`.

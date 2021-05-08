@@ -43,7 +43,7 @@ See also:
     - [Python Client for Google BigQuery](https://googleapis.dev/python/bigquery/latest/index.html)
     - [Command-line tool `bq`](https://cloud.google.com/bigquery/docs/reference/bq-cli-reference)  
 - Load a row into a table: `broker_utils.gcp_utils` (Python)
-- Query the database instructions: [Pitt-Google-Tutorial.ipynb](../pgb_utils/tutorials/Pitt-Google-Tutorial.ipynb)
+- Query the database instructions: [Pitt-Google-Tutorial.ipynb](../../../pgb_utils/tutorials/Pitt-Google-Tutorial.ipynb)
     - using `pgb-utils` (Python; see source code for the Google Cloud SDK commands)
     - using the Google Cloud command-line tool `bq`
 
@@ -61,7 +61,7 @@ Click on a function name. From here you can:
 
 See also:
 - [Create and deploy a Cloud Function using the `gcloud` command-line tool](https://cloud.google.com/functions/docs/quickstart)
-- [`../broker/setup_broker/deploy_cloud_fncs.sh`](../broker/setup_broker/deploy_cloud_fncs.sh). You can re-run this script to update the broker's Cloud Function(s).
+- [`broker/setup_broker/deploy_cloud_fncs.sh`](../../../broker/setup_broker/deploy_cloud_fncs.sh). You can re-run this script to update the broker's Cloud Function(s).
 
 ---
 
@@ -75,7 +75,7 @@ See also:
     - [Python Client for Google Cloud Storage](https://googleapis.dev/python/storage/latest/index.html)
     - [Command-line tool `gsutil`](https://cloud.google.com/storage/docs/quickstart-gsutil)  
 - Upload and download files: `broker_utils.gcp_utils` (Python)
-- Tutorial: [Pitt-Google-Tutorial.ipynb](../pgb_utils/tutorials/Pitt-Google-Tutorial.ipynb)
+- Tutorial: [Pitt-Google-Tutorial.ipynb](../../../pgb_utils/tutorials/Pitt-Google-Tutorial.ipynb)
     - using the Google Cloud SDK (Python and command line)
 
 ---
@@ -139,7 +139,9 @@ Click on a job name. From here you can:
 - view a page of live* _monitoring charts_ (click "JOB METRICS" tab at the top)
 - access the _logs_. Click "LOGS" at the top, you will see tabs for "JOB LOGS", "WORKER LOGS", and "DIAGNOSTICS". Note that if you select a step in the graph you will only see logs related to that step (unselect the step to view logs for the full job). It's easiest to view the logs if you open them in the Logs Viewer by clicking the icon.
 
-To start or update a job from the command line, see [../broker/beam/README.md](../broker/beam/README.md)
+To start or update a job from the command line, see [broker/beam/README.md](../../../broker/beam/README.md)
+
+To stop a job, see [shutdown-broker.md](shutdown-broker.md).
 
 ---
 

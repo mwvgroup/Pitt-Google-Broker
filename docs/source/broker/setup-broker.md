@@ -5,6 +5,7 @@
     - [Upload Kafka Authentication Files](#upload-kafka-authentication-files)
     - [Shutdown the VMs](#shutdown-the-vms)
 - [What does `setup_broker.sh` do?](#what-does-setup_brokersh-do)
+
 ---
 
 ## Prerequisites
@@ -15,6 +16,8 @@ First, complete [setup-gcp.md](setup-gcp.md) to setup your Google Cloud project 
 export GOOGLE_CLOUD_PROJECT=ardent-cycling-243415
 export GOOGLE_APPLICATION_CREDENTIALS=<path/to/GCP/credentials.json>
 ```
+
+---
 
 ## Setup a Broker Instance
 ```bash

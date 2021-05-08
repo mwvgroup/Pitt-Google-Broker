@@ -20,7 +20,7 @@ To view the resources, see [View and Access Resources](view-resources.md).
 Resource name stubs are given below in brackets [].
 For a given broker instance, the actual resource names will have the survey keyword prepended, and the testid keyword appended.
 The character `-` separates the stub from the keywords (unless it is restricted by GCP naming rules, in which case `_` is used).
-For example, a broker instance set up with `survey = 'ztf'` and `testid = mytestid` will have a consumer VM named `ztf-consumer-mytestid`.
+For example, a broker instance set up with `survey=ztf` and `testid=mytestid` will have a consumer VM named `ztf-consumer-mytestid`.
 See [Broker Instance Keywords](broker-instance-keywords.md) for details.
 Note that Cloud Storage buckets also have the project ID prepended, for uniqueness across GCP.
 
