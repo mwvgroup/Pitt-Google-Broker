@@ -23,7 +23,7 @@ def load_schema_map(SURVEY, TESTID):
     # load the schema map from the broker bucket in Cloud Storage
     return bsm.load_schema_map(SURVEY, TESTID)
 
-def sink_configs(PROJECTID):
+def sink_configs(PROJECTID, SURVEY):
     """Configuration dicts for all pipeline sinks.
 
     Args:
@@ -47,6 +47,9 @@ def sink_configs(PROJECTID):
                 'timestamp_attribute': None
             },
     }
+
+    if SURVEY == 'decat':
+        sink_configs['BQ_generic']['insert_retry_strategy'] = RetryStrategy.RETRY_NEVER
 
     return sink_configs
 
@@ -126,6 +129,6 @@ if __name__ == "__main__":  # noqa
             'BQ_alerts': known_args.sink_BQ_alerts,
             'BQ_diasource': known_args.sink_BQ_diasource,
     }
-    sink_configs = sink_configs(known_args.PROJECTID)
+    sink_configs = sink_configs(known_args.PROJECTID, known_args.SURVEY)
 
     run(schema_map, sources, sinks, sink_configs, pipeline_args)

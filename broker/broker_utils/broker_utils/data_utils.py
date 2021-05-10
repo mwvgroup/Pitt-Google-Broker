@@ -4,6 +4,7 @@
 survey and broker data.
 """
 
+from astropy.time import Time
 import fastavro
 import numpy as np
 import pandas as pd
@@ -32,14 +33,14 @@ def alert_dict_to_dataframe(alert_dict: dict, schema_map: dict) -> pd.DataFrame:
     """ Packages an alert into a dataframe.
     Adapted from: https://github.com/ZwickyTransientFacility/ztf-avro-alert/blob/master/notebooks/Filtering_alerts.ipynb
     """
-    dfc = pd.DataFrame(alert[schema_map['source']], index=[0])
-    df_prv = pd.DataFrame(alert[schema_map['prvSources']])
+    dfc = pd.DataFrame(alert_dict[schema_map['source']], index=[0])
+    df_prv = pd.DataFrame(alert_dict[schema_map['prvSources']])
     dflc = pd.concat([dfc,df_prv], ignore_index=True)
 
     # we'll attach some metadata--not this may not be preserved after all operations
     # https://stackoverflow.com/questions/14688306/adding-meta-information-metadata-to-pandas-dataframe
-    dflc.objectId = alert[schema_map['objectId']]
-    dflc.sourceId = alert[schema_map['sourceId']]
+    dflc.objectId = alert_dict[schema_map['objectId']]
+    dflc.sourceId = alert_dict[schema_map['sourceId']]
     return dflc
 
 def mag_to_flux(mag: float, zeropoint: float, magerr: float) -> Tuple[float,float]:

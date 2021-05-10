@@ -8,17 +8,15 @@ from google.cloud import pubsub_v1
 import os
 import sys
 import time
-from typing import Tuple, Union
+from typing import Optional, Tuple, Union
 from warnings import warn
 
-import pub_sub_client.message_service as psms
-
-PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
+PROJECT_ID = 'ardent-cycling-243415'
 
 
 def publish_stream(
     alert_rate: Union[Tuple[int,str],str],
-    instance: [Optional[Tuple[str,str]] = None,
+    instance: Optional[Tuple[str,str]] = None,
     runtime: Optional[Tuple[int,str]] = None,
     publish_batch_every: Tuple[int,str] = (5,'sec'),
     sub_id: Optional[str] = None,
@@ -83,8 +81,8 @@ def _do_publish_stream(
     # setup for subscription pulls and publishing
     subscriber, sub_path, request = _setup_subscribe(alerts_per_batch, instance, sub_id)
     publisher, topic_path = _setup_publish(alerts_per_batch, instance, topic_id)
-    print(f"\nThis will\n\tPull alerts from subscription: {sub_path}")
-    print(f"and\n\tPublish alerts to topic: {topic_path}\n")
+    print(f"\nThis will\n\tPull from subscription: {sub_path}")
+    print(f"and\n\tPublish to topic: {topic_path}\n")
 
     # make the user confirm
     _user_confirm()
@@ -93,7 +91,8 @@ def _do_publish_stream(
     b = 0
     while b < Nbatches:
         # get alerts from reservoir
-        response = subscriber.pull(request=request)
+        # response = subscriber.pull(request=request)  # for pubsub2+
+        response = subscriber.pull(**request)
 
         # publish alerts to topic, raise exception on failure
         _publish_received_messages(publisher, topic_path, response)
@@ -164,20 +163,18 @@ def _handle_acks(subscriber, sub_path, ack_ids=[], nack=False):
     """ If nack is False, acknowledge messages, else nack them so they stay in the reservoir.
     """
     if not nack:
-        subscriber.acknowledge(
-            request={
-                "subscription": sub_path,
-                "ack_ids": ack_ids,
-            }
-        )
+        request={
+            "subscription": sub_path,
+            "ack_ids": ack_ids,
+        }
+        subscriber.acknowledge(**request)
     else:
-        subscriber.modify_ack_deadline(
-            request={
-                "subscription": sub_path,
-                "ack_ids": ack_ids,
-                "ack_deadline_seconds": 0,
-            }
-        )
+        request={
+            "subscription": sub_path,
+            "ack_ids": ack_ids,
+            "ack_deadline_seconds": 0,
+        }
+        subscriber.modify_ack_deadline(**request)
 
 def _callback(future):
     # Publishing failures are automatically retried, except for errors that do not warrant retries.

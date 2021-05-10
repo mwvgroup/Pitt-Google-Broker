@@ -16,7 +16,7 @@ import pickle
 import re
 from tempfile import SpooledTemporaryFile
 
-from broker_utils import schema_maps  # pypi module pgb_broker_utils
+from broker_utils import schema_maps
 
 
 PROJECT_ID = os.getenv('GCP_PROJECT')
@@ -175,22 +175,3 @@ def guess_schema_version(alert_bytes: bytes) -> str:
         raise SchemaParsingError(err_msg)
 
     return version_match.group(2).decode()
-
-# def guess_schema_survey(alert_bytes: bytes) -> str:
-#     """Retrieve the ZTF schema version
-#
-#     Args:
-#         alert_bytes: An alert from ZTF or LSST
-#
-#     Returns:
-#         The survey name
-#     """
-#
-#     survey_regex_pattern = b'("namespace":\s")(\S*)(")'
-#     survey_match = re.search(survey_regex_pattern, alert_bytes)
-#     if survey_match is None:
-#         err_msg = f'Could not guess survey name for alert {alert_bytes}'
-#         logger.log_text(err_msg, severity='ERROR')
-#         raise SchemaParsingError(err_msg)
-#
-#     return survey_match.group(2).decode()

@@ -2,6 +2,7 @@ apache-beam[gcp]==2.25.0
 argparse
 astropy==3.2.1
 fastavro==0.22.3
+google-cloud-bigquery
 google-cloud-core>==1.4.1
 google-cloud-dataflow
 google-cloud-datastore>==1.15
@@ -12,4 +13,5 @@ numpy==1.18.2
 pandas==0.24.2
 pgb-broker-utils
 sncosmo==2.2.0
+six>=1.15  # bigquery requires
 workflow

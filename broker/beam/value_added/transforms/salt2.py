@@ -20,14 +20,13 @@ Module Documentation
 --------------------
 """
 
-from base64 import b64encode
 import logging
 from tempfile import NamedTemporaryFile
 import numpy as np
+import pandas as pd
 from apache_beam import DoFn
 from apache_beam import pvalue
 from astropy.table import Table
-from astropy.time import Time
 import sncosmo
 from sncosmo.fitting import DataQualityError
 from google.cloud import storage
@@ -99,6 +98,7 @@ class FormatForSalt2(DoFn):
         for n, epoch in enumerate(epochs):
             # skip if no magnitude included
             if epoch[schema_map['mag']] is None: continue
+            if pd.isna(epoch[schema_map['mag']]): continue
 
             # Gather epoch data
             if survey == 'decat':
@@ -286,7 +286,10 @@ class FitSalt2(DoFn):
             # yield salt2Fit formatted for BQ to the main output
             # cov_names depreciated in favor of vparam_names, but flatten_result() requires it
             result['cov_names'] = result['vparam_names']
-            flatresult = dict(sncosmo.flatten_result(result))
+            flattmp = dict(sncosmo.flatten_result(result))
+            lam = lambda v: None if pd.isna(v) else v  # replace nan for BigQuery
+            flatresult = {k: lam(v) for k,v in flattmp.items()}
+
             salt2Fit = {  # name fields to match BigQuery schema
                 schema_map['objectId']: objectId,
                 schema_map['sourceId']: sourceId,
