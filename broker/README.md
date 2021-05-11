@@ -1,3 +1,3 @@
 # Pitt-Google Alert Broker
 
-See the docs for descriptions and instructions.
+See the [docs](../docs/source/broker) for descriptions and instructions.

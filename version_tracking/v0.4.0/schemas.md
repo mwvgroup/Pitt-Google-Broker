@@ -1,14 +1,14 @@
 # Schemas
 
 Table of Contents:
-- [Create Schema Maps](#create-schema-maps)
+- [Create Schema Maps for `broker_utils`](#create-schema-maps-for-broker_utils)
 - [BigQuery schema json](#bigquery-schema-json)
 - [Test the changes](#test-the-changes)
 - [Download and look at an Avro](#download-and-look-at-an-avro)
 
 ---
 
-## Create Schema Maps
+## Create Schema Maps for `broker_utils`
 <!-- fs -->
 ```python
 from google.cloud import storage
@@ -225,7 +225,6 @@ teardown="True"
 
 <!-- fe Test the changes -->
 ---
-
 
 ## Download and look at an Avro
 <!-- fs -->

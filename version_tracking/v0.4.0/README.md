@@ -1,18 +1,29 @@
 # v0.4.0
 
-See also:
-- [rename-resources.md](rename-resources.md)
-- [schemas.md](schemas.md)
-- [pypi.md](pypi.md)
+- [Documentation of Changes](#documentation-of-changes)
+- [Test the Changes](#test-the-changes)
+- [Results Summary](#results-summary)  
+
+---
+
+## Documentation of Changes
+
+- PR [#60](https://github.com/mwvgroup/Pitt-Google-Broker/pull/60)
+- [rename-resources.md](rename-resources.md): accommodate generic survey
+- [schemas.md](schemas.md): create schema files for broker utils and BigQuery
+- [pypi.md](pypi.md): publish `pgb-broker-utils`
+- See also: new docs at [../../docs/source/broker](../../docs/source/broker)
+
+---
 
 ## Test the Changes
 
-See also [View and Access Resources](view-resources.md).
-
-Dashboards (linked to specific times of tests):
+__Dashboards__ (linked to specific times of tests below):
 - [ZTF: Consumer test](https://console.cloud.google.com/monitoring/dashboards/builder/broker-instance-ztf-v040?project=ardent-cycling-243415&dashboardBuilderState=%257B%2522editModeEnabled%2522:false%257D&startTime=20210509T171043-04:00&endTime=20210509T171543-04:00) (old topic, alerts flood in)
 - [ZTF: everything but Consumer](https://console.cloud.google.com/monitoring/dashboards/builder/broker-instance-ztf-v040?project=ardent-cycling-243415&dashboardBuilderState=%257B%2522editModeEnabled%2522:false%257D&startTime=20210509T155021-04:00&endTime=20210509T164021-04:00) (consumer simulator)
 - [DECAT: everything but Consumer](https://console.cloud.google.com/monitoring/dashboards/builder/broker-instance-decat-v040?project=ardent-cycling-243415&dashboardBuilderState=%257B%2522editModeEnabled%2522:false%257D&startTime=20210509T172821-04:00&endTime=20210509T180521-04:00) (consumer simulator)
+
+See also [View and Access Resources](view-resources.md).
 
 
 Create a broker instance
@@ -90,4 +101,10 @@ teardown="True"
 ./setup_broker.sh "$testid" "$teardown" "$survey"
 ```
 
-<!-- fe Test the changes -->
+---
+
+## Results Summary
+
+ZTF broker seems to run like normal, no more or different bugs/errors than normal.
+
+DECAT broker's Dataflow jobs both work (many alerts make it all the way through), but are both very buggy. May not be stable for production use. `bq_sink` has large number of errors, apparently due to `mag=NaN` (see Issue [#61](https://github.com/mwvgroup/Pitt-Google-Broker/issues/61)). `value_added` producing large number of known issues (for example, [see here](https://github.com/troyraen/PGB_testing/issues/5)).
