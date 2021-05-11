@@ -1,50 +1,5 @@
 #! /bin/bash
-#
 # Startup script for the `night-conductor` Compute Engine VM instance.
-# Orchestrates the broker to ingest and process the
-# nightly LSST/ZTF alert stream.
-#
-# This script downloads a set of scripts in the broker's
-# night_conductor GCS bucket and runs them,
-# triggering the start up or shutdown of the
-# GCP resources/jobs that ingest and process the alert stream.
-#
-# We use metadata attributes
-# (set on `night-conductor` prior to starting it, see README.md for links)
-# to pass information to this script which triggers the desired behavior.
-# For example:
-#
-# To start the broker using testing resources tagged with "mytest"
-# and ingest ZTF's stream for Jan. 19, 2021:
-#---
-# testid=mytest
-# survey=ztf
-# NIGHT=START
-# KAFKA_TOPIC=ztf_20210119_programid1
-# nconductVM="${survey}-night-conductor-${testid}"
-# zone=us-central1-a
-# gcloud compute instances add-metadata "$nconductVM" --zone="$zone" \
-#       --metadata NIGHT="$NIGHT",KAFKA_TOPIC="$KAFKA_TOPIC"
-# gcloud compute instances start ${nconductVM} --zone ${zone}
-#---
-#
-# To end the night and tear down broker resources:
-#---
-# testid=mytest
-# survey=ztf
-# NIGHT=END
-# nconductVM="${survey}-night-conductor-${testid}"
-# zone=us-central1-a
-# gcloud compute instances add-metadata ${nconductVM} --zone=${zone} \
-#       --metadata NIGHT="$NIGHT"
-# gcloud compute instances start ${nconductVM} --zone ${zone}
-#---
-#
-# At the end of this script, if NIGHT=START or NIGHT=STOP then
-# metadata attributes are cleared so that there is
-# no unanticipated behavior the next time the VM starts.
-# Then the script shuts down `night-conductor`.
-#
 
 
 #--- Get metadata attributes, PROJECT_ID, and testid

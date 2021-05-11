@@ -463,7 +463,7 @@ def setup_pubsub(survey='ztf', testid='test', teardown=False) -> None:
                     subscriber.create_subscription(name=sub_path, topic=topic_path)
                     print(f'Created subscription {sub_name}')
 
-def auto_setup(survey='ztf', testid='test', teardown=False) -> None:
+def auto_setup(survey='ztf', testid='test', teardown=False, confirmed=False) -> None:
     """Create and setup GCP products required by the ``broker`` package.
 
     Args:
@@ -474,10 +474,13 @@ def auto_setup(survey='ztf', testid='test', teardown=False) -> None:
                                 str: Use test resources. (This string is
                                 appended to the resource names.)
         teardown (bool): if True, delete resources rather than setting them up
+        confirmed (bool): if True, assumes user has already confirmed settings
+                          and tries not to ask again.
 
     """
     _do_not_delete_production_resources(survey=survey, testid=testid, teardown=teardown)
-    _confirm_options(survey, testid, teardown)  # make user confirm script behavior
+    if not confirmed:
+        _confirm_options(survey, testid, teardown)
 
     setup_bigquery(survey=survey, testid=testid, teardown=teardown)
     setup_buckets(survey=survey, testid=testid, teardown=teardown)
@@ -518,9 +521,17 @@ if __name__ == "__main__":
         default=False,
         help="Delete resources rather than creating them.\n",
     )
-
+    parser.add_argument(
+        '--confirmed',  # set testid = False
+        dest='confirmed',
+        action='store_true',
+        default=False,
+        help="User has already confirmed settings; try not to ask again.\n",
+    )
     known_args, __ = parser.parse_known_args()
 
     auto_setup(survey=known_args.survey,
                testid=known_args.testid,
-               teardown=known_args.teardown)
+               teardown=known_args.teardown,
+               confirmed=known_args.confirmed
+    )

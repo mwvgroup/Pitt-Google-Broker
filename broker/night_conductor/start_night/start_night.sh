@@ -24,9 +24,5 @@ if [ "$KAFKA_TOPIC" != "NONE" ]; then
     echo "Starting the consumer..."
     ./start_consumer.sh ${testid} ${broker_bucket} ${KAFKA_TOPIC} ${survey}
 else
-    echo
-    echo "KAFKA_TOPIC attribute is 'NONE'."
-    echo "The broker's consumer has NOT been started."
-    echo "Use the consumer simulator instead."
-    echo
+    echo "KAFKA_TOPIC attribute is 'NONE'... skipping Consumer startup."
 fi

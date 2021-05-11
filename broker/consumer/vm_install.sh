@@ -2,6 +2,12 @@
 # Installs the software required to run the Kafka Consumer.
 # Assumes a Debian 10 OS.
 
+#--- Get metadata attributes
+baseurl="http://metadata.google.internal/computeMetadata/v1"
+H="Metadata-Flavor: Google"
+consumerVM=$(curl "${baseurl}/instance/name" -H "${H}")
+zone=$(curl "${baseurl}/instance/zone" -H "${H}")
+
 #--- Install general utils
 apt-get update
 apt-get install -y wget screen software-properties-common
@@ -41,4 +47,9 @@ cd ${plugindir}
 wget https://github.com/GoogleCloudPlatform/pubsub/releases/download/${CONNECTOR_RELEASE}/pubsub-kafka-connector.jar
 echo "Done installing the Kafka -> Pub/Sub connector"
 
-echo "vm_install.sh is complete"
+#--- Set the startup script and shutdown
+startupscript="gs://${broker_bucket}/consumer/vm_startup.sh"
+gcloud compute instances add-metadata "$consumerVM" --zone "$zone" \
+    --metadata startup-script-url="$startupscript"
+echo "vm_install.sh is complete. Shutting down."
+shutdown -h now
