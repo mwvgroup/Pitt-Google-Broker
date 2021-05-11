@@ -36,6 +36,10 @@ See [What does `setup_broker.sh` do?](#what-does-setup_brokersh-do) for details.
 
 
 ### Upload Kafka Authentication Files
+
+Note: Do this before the consumer VM finishes its install and shuts itself down.
+Else, you'll need to start it again (see [here](view-resources.md#ce)).
+
 The consumer VM requires two __authorization files__ to connect to the ZTF stream.
 _These must be obtained independently and uploaded to the VM manually, stored at the following locations:_
     1. `krb5.conf`, at VM path `/etc/krb5.conf`
@@ -54,17 +58,17 @@ gcloud compute scp pitt-reader.user.keytab "${survey}-consumer-${testid}:/home/b
 
 1. Wait for VM install scripts to complete; they will take 15-20 minutes. You'll know they're done with the install scripts when the CPU utilization falls to >1% (see [View and Access Resources](view-resources.md), Dashboard or Compute Engine).
 
-2. Shutdown ("stop") both VMs using:
+~2. Shutdown ("stop") both VMs using:~ Both VMs will now shut themselves down when they are done.
 
 ```bash
-survey=ztf  # use the same survey used in broker setup
-testid=mytest  # use the same testid used in broker setup
-
-zone=us-central1-a
-consumerVM="${survey}-consumer-${testid}"
-nconductVM="${survey}-night-conductor-${testid}"
-
-gcloud compute instances stop "$consumerVM" "$nconductVM" --zone="$zone"
+# survey=ztf  # use the same survey used in broker setup
+# testid=mytest  # use the same testid used in broker setup
+#
+# zone=us-central1-a
+# consumerVM="${survey}-consumer-${testid}"
+# nconductVM="${survey}-night-conductor-${testid}"
+#
+# gcloud compute instances stop "$consumerVM" "$nconductVM" --zone="$zone"
 ```
 
 Both VMs must be stopped before triggering `night-conductor` to run the broker, else it will not work.

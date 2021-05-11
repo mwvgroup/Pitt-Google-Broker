@@ -1,5 +1,5 @@
 # PyPI setup for pgb-utils
-<!-- fs -->
+
 - [Packaging Python Projects](https://packaging.python.org/tutorials/packaging-projects/)
 - [Packaging and distributing projects](https://packaging.python.org/guides/distributing-packages-using-setuptools/)
 - [Example Project](https://github.com/pypa/sampleproject)
@@ -27,7 +27,7 @@ Install with: `python3 -m pip install --index-url https://test.pypi.org/simple/ 
 
 ## Build the distribution and upload it to PyPI
 ```bash
-cd /Users/troyraen/Documents/PGB/repotest/broker/broker_utils
+cd /Users/troyraen/Documents/PGB/repo3/broker/broker_utils
 python3 -m build
 python3 -m twine upload dist/*
 ```
@@ -48,4 +48,3 @@ python -m pip install -e .
 import pgb_utils as pgb
 
 ```
-<!-- fe PyPI setup -->

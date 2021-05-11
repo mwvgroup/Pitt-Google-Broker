@@ -130,7 +130,8 @@ bq rm --table "${projectid}:${dataset}.salt2"
 ## Test the changes
 <!-- fs -->
 Dashboard snapshots:
-- [Live](https://console.cloud.google.com/monitoring/dashboards/builder/broker-instance-decat-testschema)
+- [DECAT Live](https://console.cloud.google.com/monitoring/dashboards/builder/broker-instance-decat-testschema)
+- [ZTF Live](https://console.cloud.google.com/monitoring/dashboards/builder/broker-instance-ztf-testschema)
 
 Create a broker instance
 ```bash

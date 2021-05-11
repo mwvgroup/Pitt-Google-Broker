@@ -105,7 +105,7 @@ Note: The actual publish rate and total number of alerts published may not be ex
 
 ## Workflow: Testing a Broker Instance
 
-1. [Start the broker instance](run-broker.md#start-the-broker) with the attribute `KAFKA_TOPIC` set to `NONE`. This will start up everything except the consumer VM.
+1. [Start the broker instance](run-broker.md#start-the-broker) with the attribute `KAFKA_TOPIC` set to `NONE`. This will start up everything except the consumer VM. Dataflow jobs will not receive alerts published before they start, so make sure they've started.
 2. [Run the consumer simulator](#code-examples).
 3. Make changes and updates to the instance components, as desired.
 4. Repeat steps 2 and 3, as desired.
