@@ -9,7 +9,7 @@
 ---
 
 ## Prerequisites
-First, complete [setup-gcp.md](setup-gcp.md) to setup your Google Cloud project and install the SDKs. Make sure your environment variables are set:
+First, complete [intial-setup.md](intial-setup.md) to setup your Google Cloud project and install the SDKs. Make sure your environment variables are set:
 
 ```bash
 # If you installed the SDKs to a Conda environment, activate it.

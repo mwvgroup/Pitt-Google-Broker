@@ -3,7 +3,7 @@ Overview
     - [Broker Instance Keywords](broker-instance-keywords.md)
 
 Setup
-- [Setup Google Cloud](setup-gcp.md)
+- [Initial Setup](initial-setup.md) (Google Cloud and local environment)
 - [Setup the Broker](setup-broker.md)
 
 Access Resources

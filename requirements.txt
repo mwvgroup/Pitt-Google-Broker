@@ -1,0 +1,32 @@
+###
+#
+# Dependencies needed to develop and deploy the broker.
+#
+# I (Troy) suggest we direct people to install `pgb-utils` rather than offering
+# this separate requirements file. `pgb-utils` is currently optimized for a
+# Colab install which has several unique requirements, so creating this file
+# first to collect/check what is needed.
+#
+###
+
+
+apache_beam[gcp]
+# this is a very large package that will not always be needed.
+# i suggest we make it an optional extra as pgb-utils[beam]
+
+# aplpy
+astropy==3.2.1
+# astropy-healpix==0.6
+# beautifulsoup4==4.8
+# google-auth
+# google-api-core
+# google-apitools
+google-cloud-bigquery
+google-cloud-logging
+google-cloud-pubsub
+google-cloud-storage
+matplotlib
+numpy
+pandas
+# tabulate
+# typing
