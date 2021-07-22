@@ -4,7 +4,9 @@
     - [Start Night](#start-night)
     - [End Night](#end-night)
 - [Where to look if there's a problem](#where-to-look-if-theres-a-problem)
-- [Night Conductor's schedule](#night-conductors-schedule)
+
+See also
+- [Auto-schedule](auto-schedule.md)
 
 
 ## What Does Night Conductor Do?
@@ -78,42 +80,3 @@ __Dataflow jobs__
 You can see many details of the Dataflow job on the GCP Console (see link above).
 
 If there was a problem with the job's start up, look at the terminal output from the call to start the job. It is written to a file called `runjob.out` in that job's directory on the night conductor VM. So for example, look for `/home/broker/beam/value_added/runjob.out`.
-
-## Night Conductor's schedule
-
-Broker ingestion of live topics is auto-scheduled with the following process:
-
-Cloud Scheduler cron job -> Pub/Sub message -> Cloud Function -> VM startup
-
-The cron job sends a Pub/Sub message that simply contains either `'START'` or `'END'`. The Cloud Function receives this message, sets appropriate metadata attributes on the night conductor VM and starts it. When the cue is `'START'`, the Cloud Function sets the `KAFKA_TOPIC` attribute to the topic for the __current date, UTC__.
-
-Two cron jobs are scheduled, one each to start and end the night. Both processes use the same Pub/Sub topic and Cloud Function.
-
-Example: Change the time the broker starts each night.
-```bash
-survey=
-testid=
-jobname="${survey}-cue_night_conductor_START-${testid}"
-schedule='0 2 * * *'  # UTC. unix-cron format
-# https://cloud.google.com/scheduler/docs/configuring/cron-job-schedules
-
-gcloud scheduler jobs update pubsub $jobname --schedule "${schedule}"
-```
-
-Example: Pause/resume the broker's auto-schedule.
-```bash
-survey=
-testid=
-startjob="${survey}-cue_night_conductor_START-${testid}"
-endjob="${survey}-cue_night_conductor_END-${testid}"
-
-# pause the jobs
-gcloud scheduler jobs pause $startjob
-gcloud scheduler jobs pause $endjob
-
-# resume the jobs
-gcloud scheduler jobs resume $startjob
-gcloud scheduler jobs resume $endjob
-```
-
-By default, the cron jobs of a Testing instance are paused immediately after creation so that the instance does not run automatically.

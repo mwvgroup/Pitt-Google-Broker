@@ -23,7 +23,7 @@ See [Shutdown the VMs](setup-broker.md#shutdown-the-vms) in Setup a Broker Insta
 
 See the following sections to run components manually and test the broker (mostly used for Testing instances).
 
-See [Night Conductor's schedule](night-conductor.md#night-conductors-schedule) for information about running the broker on an auto-schedule to ingest live alert streams (mostly used for Production instances).
+See [Auto-schedule](auto-schedule.md) for information about running the broker on an auto-schedule to ingest live alert streams (mostly used for Production instances).
 
 ### Start the Broker
 

@@ -56,6 +56,8 @@ Note that Cloud Storage buckets also have the project ID prepended, for uniquene
             - Cloud Scheduler cron jobs [`cue_night_conductor_START`] and [`cue_night_conductor_END`]
             - Pub/Sub topic [`cue_night_conductor`]
             - Cloud Function [`cue_night_conductor`]
+        - Broker's __response to the auto-scheduler's cue__ is checked by:
+            - Cloud Function [`check_cue_response`]
 
 ---
 

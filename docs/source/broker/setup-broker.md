@@ -95,4 +95,4 @@ See [Broker Instance Keywords](broker-instance-keywords.md) for details.
 This step will _fail_ because the rule already exists and we don't need a separate rule for testing resources.
 _You can ignore it._
 
-7. Deploy Cloud Functions [`upload_bytes_to_bucket`] and [`cue_night_conductor`].
+7. Deploy Cloud Functions [`upload_bytes_to_bucket`], [`cue_night_conductor`], and [`check_cue_response`].
