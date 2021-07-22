@@ -81,17 +81,18 @@ Generally, stop the VMs when they're not actively in use so they don't incur cha
 Resource name stubs are given below in brackets [].
 See [Broker Instance Keywords](broker-instance-keywords.md) for details.
 
-1. Create and configure GCP resources in BigQuery, Cloud Storage, and Pub/Sub.
-You may be asked to authenticate yourself using `gcloud auth login`; follow the instructions. If you don't have a `bigqueryrc` config file setup yet it will walk you through creating one.
+1. Create and configure GCP resources in BigQuery, Cloud Storage, Dashboard, and Pub/Sub. Print a URL to the instance's Dashboard for the user. (You may be asked to authenticate yourself using `gcloud auth login`; follow the instructions. If you don't have a `bigqueryrc` config file setup yet it will walk you through creating one.)
 
 2. Upload the [beam](beam/), [broker_utils/schema_maps](broker_utils/schema_maps/),  [consumer](consumer/), and [night_conductor](night_conductor/) directories to the Cloud Storage bucket [`broker_files`].
 
-3. Configure Pub/Sub notifications (topic [`alert_avros`]) on the Cloud Storage bucket [`alert_avros`] that stores the alert Avro.
+3. Create and configure the Compute Engine instances [`night-conductor`] and [`consumer`].
 
-4. Create a VM firewall rule to open the port used by ZTF's Kafka stream.
+4. Create Cloud Scheduler cron jobs [`cue_night_conductor_START`] and [`cue_night_conductor_END`] to put [`night-conductor`] on an auto-schedule. Print the schedule and the code needed to change it. If this is a Testing instance, pause the jobs and print the code needed to resume them.
+
+5. Configure Pub/Sub notifications (topic [`alert_avros`]) on the Cloud Storage bucket [`alert_avros`] that stores the alert Avro.
+
+6. Create a VM firewall rule to open the port used by ZTF's Kafka stream.
 This step will _fail_ because the rule already exists and we don't need a separate rule for testing resources.
 _You can ignore it._
 
-5. Deploy the Cloud Function [`upload_bytes_to_bucket`] which stores alerts as Avro files in the Cloud Storage bucket [`alert_avros`].
-
-6. Create and configure the Compute Engine instances [`night-conductor`] and [`consumer`].
+7. Deploy Cloud Functions [`upload_bytes_to_bucket`] and [`cue_night_conductor`].

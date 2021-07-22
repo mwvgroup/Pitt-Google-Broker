@@ -5,7 +5,7 @@
 
 ## Create a GCP Project
 
-Create a new Google Cloud Platform (GCP) project.
+1. Create a new Google Cloud Platform (GCP) project.
 - A. Go to the [Cloud Resource Manager](https://console.cloud.google.com/cloud-resource-manager) and click "Create Project".
 - B. Write down your Project ID as you will need it at various points.
 - C. Click "Create".
@@ -13,6 +13,8 @@ Create a new Google Cloud Platform (GCP) project.
 See [Creating and managing projects](https://cloud.google.com/resource-manager/docs/creating-managing-projects) for more information, including instructions for creating a project programatically.
 
 <img src="gcp-setup.png" alt="gcp-setup.png" width=""/>
+
+2. Enable billing and APIs for required services. [To do: find/elaborate instructions.]
 
 
 ## Setup Local Environment
@@ -67,8 +69,10 @@ gcloud iam service-accounts keys create $KEY_PATH --iam-account=$NAME@$PROJECT_I
 PROJECT_ID=my-pgb-project  # replace with your GCP Project ID
 KEY_PATH=local/path/GCP_auth_key.json  # same path as in step 3
 
+
 export GOOGLE_CLOUD_PROJECT="$PROJECT_ID"
 export GOOGLE_APPLICATION_CREDENTIALS="$KEY_PATH"
+# export CLOUDSDK_COMPUTE_ZONE=
 ```
 
 If you are using a Conda environment, you can configure the environment variables as follows:

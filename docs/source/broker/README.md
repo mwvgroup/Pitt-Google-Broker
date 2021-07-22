@@ -4,7 +4,7 @@ Overview
 
 Setup
 - [Initial Setup](initial-setup.md) (Google Cloud and local environment)
-- [Setup the Broker](setup-broker.md)
+- [Setup the Broker](setup-broker.md) (create a broker instance)
 
 Access Resources
 - [View and Access Resources](view-resources.md)

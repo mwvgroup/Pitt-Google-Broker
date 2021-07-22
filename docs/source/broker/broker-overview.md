@@ -26,33 +26,36 @@ Note that Cloud Storage buckets also have the project ID prepended, for uniquene
 
 1. __Consumer__ (Kafka -> Pub/Sub)
     - __Compute Engine VM__  [`consumer`]
-    - __Running__  the Kafka plugin [`CloudPubSubConnector`](https://github.com/GoogleCloudPlatform/pubsub/tree/master/kafka-connector)
-    - __Publishes to__ Pub/Sub topic  [`alerts`]
+        - __Runs__  the Kafka plugin [`CloudPubSubConnector`](https://github.com/GoogleCloudPlatform/pubsub/tree/master/kafka-connector)
+        - __Publishes to__ Pub/Sub topic  [`alerts`]
 
 2. __Avro File Storage__ (alert -> fix schema if needed -> Cloud Storage bucket)
-    - __Cloud Function__
- [`upload_bytes_to_bucket`]
-    - __Listens to__ PS topic [`alerts`]
-    - __Stores in__ GCS bucket [`alert_avros`]
-    - __GCS bucket triggers__ Pub/Sub topic [`alert_avros`]
+    - __Cloud Function__ [`upload_bytes_to_bucket`]
+        - __Listens to__ PS topic [`alerts`]
+        - __Stores in__ GCS bucket [`alert_avros`]
+        - __GCS bucket triggers__ Pub/Sub topic [`alert_avros`]
 
 3. __BigQuery Database Storage__ (alert -> BigQuery)
     - __Dataflow job__ [`bq-sink`]
-    - __Listens to__ PS topic [`alerts`]
-    - __Stores in__ BQ dataset [`alerts`] in tables [`alerts`] and [`DIASource`]
+        - __Listens to__ PS topic [`alerts`]
+        - __Stores in__ BQ dataset [`alerts`] in tables [`alerts`] and [`DIASource`]
 
 4. __Data Processing Pipeline__ (alert -> {filters, fitters, classifiers} -> {Cloud Storage, BigQuery, Pub/Sub})
     - __Dataflow job__ [`value-added`]
-    - __Listens to__ PS topic [`alerts`]
-    - __Stores in__ BQ dataset [`alerts`] in table [`salt2`] (Salt2 fit params)
-    - __Stores in__ GCS bucket [`sncosmo`] (lightcurve + Salt2 fit, png)
-    - __Publishes to__ PS topics
-        - [`alerts_pure`] (alerts passing the purity filter)
-        - [`exgalac_trans`] (alerts passing extragalactic transient filter)
-        - [`salt2`] (Salt2 fit params)
+        - __Listens to__ PS topic [`alerts`]
+        - __Stores in__ BQ dataset [`alerts`] in table [`salt2`] (Salt2 fit params)
+        - __Stores in__ GCS bucket [`sncosmo`] (lightcurve + Salt2 fit, png)
+        - __Publishes to__ PS topics
+            - [`alerts_pure`] (alerts passing the purity filter)
+            - [`exgalac_trans`] (alerts passing extragalactic transient filter)
+            - [`salt2`] (Salt2 fit params)
 
 5. __Night Conductor__ (orchestrates GCP resources and jobs to run the broker each night)
     - __Compute Engine VM__  [`night-conductor`]
+        - __Auto-Scheduled with__ (cron job -> Pub/Sub -> Cloud Function -> start VM):
+            - Cloud Scheduler cron jobs [`cue_night_conductor_START`] and [`cue_night_conductor_END`]
+            - Pub/Sub topic [`cue_night_conductor`]
+            - Cloud Function [`cue_night_conductor`]
 
 ---
 

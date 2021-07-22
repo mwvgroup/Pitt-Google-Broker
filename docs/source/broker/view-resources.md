@@ -3,6 +3,7 @@
 - [Dashboards](#dashboards)
 - [BigQuery](#bq)
 - [Cloud Functions](#cf)
+- [Cloud Scheduler](#csched)
 - [Cloud Storage Buckets](#cs)
 - [Compute Engine VMs](#ce)
 - [Dataflow jobs](#dataflow)
@@ -62,6 +63,15 @@ Click on a function name. From here you can:
 See also:
 - [`broker/setup_broker/deploy_cloud_fncs.sh`](../../../broker/setup_broker/deploy_cloud_fncs.sh). You can re-run this script to update the broker's Cloud Function(s).
 - [Create and deploy a Cloud Function using the `gcloud` command-line tool](https://cloud.google.com/functions/docs/quickstart)
+
+---
+
+<a name="csched"></a>
+[__Cloud Scheduler__](https://console.cloud.google.com/cloudscheduler?project=ardent-cycling-243415)
+
+From here you can
+- view job details and logs
+- create, edit, pause/resume, and delete jobs
 
 ---
 
