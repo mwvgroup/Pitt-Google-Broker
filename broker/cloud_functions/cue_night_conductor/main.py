@@ -89,7 +89,3 @@ def start_vm(request_kwargs):
     # start the vm
     request = service.instances().start(**request_kwargs)
     response = request.execute()
-
-    # check to make sure it started
-    # request = service.instances().get(**request_kwargs)
-    # response = request.execute()  # dict

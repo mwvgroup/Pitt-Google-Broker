@@ -16,12 +16,16 @@ ps_to_gcs_trigger_topic="${survey}-alerts"
 ps_to_gcs_CF_name="${survey}-upload_bytes_to_bucket"
 cue_nc_trigger_topic="${survey}-cue_night_conductor"
 cue_nc_CF_name="${survey}-cue_night_conductor"
+check_cue_trigger_topic="${cue_nc_trigger_topic}"
+check_cue_CF_name="${survey}-check_cue_response"
 # use test resources, if requested
 if [ "$testid" != "False" ]; then
     ps_to_gcs_trigger_topic="${ps_to_gcs_trigger_topic}-${testid}"
     ps_to_gcs_CF_name="${ps_to_gcs_CF_name}-${testid}"
     cue_nc_trigger_topic="${cue_nc_trigger_topic}-${testid}"
     cue_nc_CF_name="${cue_nc_CF_name}-${testid}"
+    check_cue_trigger_topic="${check_cue_trigger_topic}-${testid}"
+    check_cue_CF_name="${check_cue_CF_name}-${testid}"
 fi
 
 if [ "$teardown" = "True" ]; then
@@ -29,9 +33,10 @@ if [ "$teardown" = "True" ]; then
     if [ "$testid" != "False" ]; then
         gcloud functions delete "$ps_to_gcs_CF_name"
         gcloud functions delete "$cue_nc_CF_name"
+        gcloud functions delete "$check_cue_CF_name"
     fi
 
-else # Deploy
+else # Deploy the Cloud Functions
     OGdir=$(pwd)
 
 #--- Pub/Sub -> Cloud Storage Avro cloud function
@@ -61,4 +66,20 @@ else # Deploy
         --set-env-vars TESTID="$testid",SURVEY="$survey",ZONE="$zone"
 
     cd $OGdir
+
+#--- Check cue response cloud function
+    check_cue_entry_point="run"
+
+    cd .. && cd cloud_functions
+    cd check_cue_response
+
+    gcloud functions deploy "$check_cue_CF_name" \
+        --entry-point "$check_cue_entry_point" \
+        --runtime python37 \
+        --trigger-topic "$check_cue_trigger_topic" \
+        --set-env-vars TESTID="$testid",SURVEY="$survey",ZONE="$zone" \
+        --timeout 540s  # allow the CF to sleep without timing out
+
+    cd $OGdir
+
 fi
