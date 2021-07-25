@@ -1,4 +1,5 @@
 SURVEY: ztf
+TOPIC_SYNTAX: ztf_yyyymmdd_programid1  # replace yyyymmdd with the date
 FILTER_MAP:
   1: g
   2: r
