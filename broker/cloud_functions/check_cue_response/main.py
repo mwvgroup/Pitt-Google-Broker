@@ -18,6 +18,9 @@ TESTID = os.getenv('TESTID')
 SURVEY = os.getenv('SURVEY')
 ZONE = os.getenv('ZONE')
 
+compute_service = discovery.build('compute', 'v1')
+dataflow_service = discovery.build('dataflow', 'v1b3')
+
 # connect to the logger
 logging_client = logging.Client()
 log_name = 'check-cue-response-cloudfnc'  # same log for all broker instances
@@ -34,44 +37,49 @@ if TESTID != "False":
     bq_sink = f'{bq_sink}-{TESTID}'
     value_added = f'{value_added}-{TESTID}'
 
-compute_service = discovery.build('compute', 'v1')
-dataflow_service = discovery.build('dataflow', 'v1b3')
-
 
 def run(msg, context) -> None:
     """ Entry point for the Cloud Function
     Args:
-        msg (dict): Pub/Sub message. `data` field contains the message data.
-             `attributes` field contains custom attributes.
+        msg (dict): Pub/Sub message.
+
+                    `data` field (bytes) contains the message data. It is
+                    expected to be one of ['START', 'END'].
+
+                    `attributes` field (dict) contains the message's custom
+                    attributes.
         context (google.cloud.functions.Context): The Cloud Functions event
-         metadata. The `event_id` field contains the Pub/Sub message ID. The
-         `timestamp` field contains the publish time.
+            metadata. The `event_id` field contains the Pub/Sub message ID. The
+            `timestamp` field contains the publish time.
     """
     cue = base64.b64decode(msg['data']).decode('utf-8')  # 'START' or 'END'
+    attrs = msg['attributes']  # dict
+
     continue_checks = check_cue_value(cue)  # check that cue is an expected value
     if continue_checks:  # do the checks
-        check_cue_response(cue)
+        check_cue_response(cue, attrs)
 
 def check_cue_value(cue):
     # check that the cue is an expected value and log result
     expected_values = ['START','END']
 
     if cue in expected_values:
+        continue_checks = True
         msg = (f'Broker instance with keywords [{SURVEY},{TESTID}] received '
         f'cue = {cue}. Giving the broker time to '
         'respond, then will check its response to the cue.'
         )
         severity = 'INFO'
     else:
+        continue_checks = False
         msg = (f'Broker received cue = {cue}, which is an unexpected value. '
         'The broker is not expected to respond. No further checks will be done.')
         severity = 'CRITICAL'
     logger.log_text(msg, severity=severity)
 
-    continue_checks = True if severity =='INFO' else False
     return continue_checks
 
-def check_cue_response(cue):
+def check_cue_response(cue, attrs):
     """Check that the broker components responded appropriately to the cue.
     """
     # sleep so night-conductor has time to boot, then check it
@@ -83,7 +91,7 @@ def check_cue_response(cue):
 
     # finish the checks
     check_dataflow(cue, metadata)
-    check_consumer(cue)
+    check_consumer(cue, attrs)
 
 def check_night_conductor():
     # night-conductor should start in response to either cue
@@ -125,6 +133,9 @@ def check_dataflow(cue, metadata):
         }
         __, metadata = get_vm_info(request_kwargs)
     jobids = get_dataflow_jobids(metadata)  # list of job IDs
+
+    msg = f'night-conductor metadata: dataflow jobids: {jobids} | metadata: {metadata}'
+    logger.log_text(msg, severity='DEBUG')
 
     # get the current states
     job_states = {}  # {job name: current state}}
@@ -175,7 +186,7 @@ def get_dataflow_jobids(metadata):
     jobids = jobid_string.split(' ')  # list of job ids
     return jobids
 
-def check_consumer(cue):
+def check_consumer(cue, attrs):
     request_kwargs = {
         'project': PROJECT_ID,
         'zone': ZONE,
@@ -183,17 +194,31 @@ def check_consumer(cue):
     }
     status, metadata = get_vm_info(request_kwargs)
 
+    # determine if we expect the consumer to be running
+    expect_consumer_running = True
+    if (attrs is not None) and ('KAFKA_TOPIC' in attrs.keys()):
+        if attrs['KAFKA_TOPIC'] == 'NONE':
+            expect_consumer_running = False
+
     if cue == 'START':
         # check and log the status
         if status == 'RUNNING':
-            msg = f'{consumer} is running as expected'
-            severity = 'INFO'
-        else:
-            msg = f'{consumer} should be running, but its status = {status}'
-            severity = 'CRITICAL'
-        logger.log_text(msg, severity=severity)
+            if expect_consumer_running:
+                msg = f'{consumer} is running as expected'
+                severity = 'INFO'
+            else:
+                msg = f'{consumer} is running, but this is unexpected since KAFKA_TOPIC==NONE'
+                severity = 'DEBUG'
 
-        # in the future, may want to check the metadata as well
+        else:
+            if expect_consumer_running:
+                msg = f'{consumer} should be running, but its status = {status}'
+                severity = 'CRITICAL'
+            else:
+                msg = f'{consumer} is not running; this is expected since KAFKA_TOPIC==NONE'
+                severity = 'INFO'
+
+        logger.log_text(msg, severity=severity)
 
     elif cue == 'END':
         # check and log the status
