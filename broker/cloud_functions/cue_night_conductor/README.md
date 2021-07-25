@@ -4,7 +4,7 @@ This Cloud Function is part of the broker's auto-scheduling process, which looks
 
 Cloud Scheduler cron job -> Pub/Sub -> Cloud Function -> Night Conductor VM startup
 
-See [Auto-schedule](auto-schedule.md) for more information.
+See [Auto-scheduler](auto-scheduler.md) for more information.
 
 
 ## Links

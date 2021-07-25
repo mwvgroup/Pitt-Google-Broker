@@ -7,9 +7,12 @@ This is the only way to control the flow of incoming alerts and is especially us
 - [Install](#install)
 - [Code Examples](#code-examples)
 - [Arguments and Options](#arguments-and-options)
-- [Workflow: Testing a Broker Instance](#workflow-testing-a-broker-instance)
 - [How Does the Consumer Simulator Work?](#how-does-the-consumer-simulator-work)
     - [Reservoir Subscriptions](#reservoir-subscriptions)
+
+See also:
+- [__Workflow__: Testing a Broker Instance](test-an-instance.md)
+
 ---
 
 ## Install
@@ -100,20 +103,6 @@ bcs.publish_stream(alert_rate, sub_id=sub_id, topic_id=topic_id)
 - __`nack`__: `bool`. Optional. Default `False`. Whether to "nack" (not acknowledge) the messages. If `True`, messages are published to the topic, but they are not dropped from the subscription and so will be delivered again at an arbitrary time in the future.
 
 Note: The actual publish rate and total number of alerts published may not be exactly as requested since alerts are published in batches with a (1) fixed number of alerts per batch, and (2) fixed batch publish rate. Both numbers are determined by the input arguments, but some rounding occurs.
-
----
-
-## Workflow: Testing a Broker Instance
-
-1. [Start the broker instance](run-broker.md#start-the-broker) with the attribute `KAFKA_TOPIC` set to `NONE`. This will start up everything except the consumer VM. Dataflow jobs will not receive alerts published before they start, so make sure they've started.
-2. [Run the consumer simulator](#code-examples).
-3. Make changes and updates to the instance components, as desired.
-4. Repeat steps 2 and 3, as desired.
-5. [Stop the broker instance](run-broker.md#stop-the-broker).
-
-See also:
-- [View and Access Resources](view-resources.md)
-- [Starting and Stopping Components Individually](run-broker.md#starting-and-stopping-components-individually)
 
 ---
 

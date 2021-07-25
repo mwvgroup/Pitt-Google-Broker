@@ -7,6 +7,7 @@
 - [Cloud Storage Buckets](#cs)
 - [Compute Engine VMs](#ce)
 - [Dataflow jobs](#dataflow)
+- [Logs Explorer](#le)
 - [Pub/Sub topics and subscriptions](#ps)
 
 ---
@@ -73,6 +74,11 @@ From here you can
 - view job details and logs
 - create, edit, pause/resume, and delete jobs
 
+See also: The __auto-schedulers__ of all broker instances share the following logs:
+- [`check-cue-response-cloudfnc`](https://cloudlogging.app.goo.gl/525hswivBiZfZQEUA)
+- []()
+
+
 ---
 
 <a name="cs"></a>
@@ -120,8 +126,7 @@ gcloud compute instances add-metadata --zone="$zone" "$vm_name" \
 gcloud compute instances add-metadata --zone="$zone" "$vm_name" \
       --metadata "ATTRIBUTE1=,ATTRIBUTE2="
 
-# set startup script
-# we'll do a specific example for night-conductor
+# set startup script (specific example for night-conductor)
 survey=ztf
 testid=mytestid
 nconductVM="${survey}-night-conductor-${testid}"
@@ -152,6 +157,13 @@ Click on a job name. From here you can:
 To start or update a job from the command line, see [broker/beam/README.md](../../../broker/beam/README.md)
 
 To stop a job, see [shutdown-broker.md](shutdown-broker.md).
+
+---
+
+<a name="le"></a>
+[__Logs Explorer__](https://console.cloud.google.com/logs)
+
+View/query all (most?) logs for the project.
 
 ---
 

@@ -2,7 +2,7 @@
 
 This Cloud Function checks whether the broker responded appropriately to the auto-scheduler's cue. If it has not, "Critical" errors are raised which trigger a GCP alerting policy.
 
-This Cloud Function is triggered by the auto-scheduler's Pub/Sub topic. For reference, the auto-scheduling process looks like this (see [Auto-schedule](auto-schedule.md)):
+This Cloud Function is triggered by the auto-scheduler's Pub/Sub topic. For reference, the auto-scheduling process looks like this (see [Auto-scheduler](auto-scheduler.md)):
 
 Cloud Scheduler cron job -> Pub/Sub -> Cloud Function -> Night Conductor VM startup
 

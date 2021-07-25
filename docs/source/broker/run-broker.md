@@ -1,75 +1,84 @@
 # Run the Broker
 
-- [Prerequisites](#prerequisites)
-- [Run the Broker](#run-the-broker)
-    - [Start the Broker](#start-the-broker)
-    - [Stop the Broker](#stop-the-broker)
-    - [Starting and Stopping Components Individually](#starting-and-stopping-components-individually)
+- [Start the Broker](#start-the-broker) the easy way
+- [Stop the Broker](#stop-the-broker) the easy way
+- [Start/Stop Components Individually](#starting-and-stopping-components-individually)
 - [Options for Ingesting Alerts](#options-for-ingesting-alerts)
     - [Kafka Topic Syntax](#kafka-topic-syntax)
 
----
-
-## Prerequisites
-
-Complete [Setup a Broker Instance](setup-broker.md), and take note of the associated survey and testid keywords.
-
-Make sure the VMs are stopped.
-See [Shutdown the VMs](setup-broker.md#shutdown-the-vms) in Setup a Broker Instance.
-
----
-
-## Run the Broker
-
-See the following sections to run components manually and test the broker (mostly used for Testing instances).
-
-See [Auto-schedule](auto-schedule.md) for information about running the broker on an auto-schedule to ingest live alert streams (mostly used for Production instances).
-
-### Start the Broker
+Use this document to run a broker instance manually (typically a Testing instance).
 
 See also:
-- [Options for Ingesting Alerts](#options-for-ingesting-alerts)
-- [Consumer Simulator](consumer-simulator.md)
+- [__Workflow__: Testing a Broker Instance](test-an-instance.md)
+- [Auto-scheduler](auto-scheduler.md) to schedule a (typically Production) instance to run automatically each night.
 - [What Does Night Conductor Do?](night-conductor.md)
 
+---
+
+## Start the Broker
+
+The easiest way to start the broker is to hijack the [auto-scheduler](auto-scheduler.md) by sending a `START` message to its Pub/Sub topic and attaching an attribute that indicates the topic to be ingested (or none). In addition to cueing up all broker components, the cue-response checker will run and log* the status of each component. (*See [View and Access Resources: Cloud Scheduler](view-resources.md#csched), and note that the checks are on a time delay of up to several minutes.)
+
+__Prerequisite__: Make sure the VMs are stopped (see [View and Access Resources: Compute Engine VMs](view-resources.md#ce), includes a code sample).
+
+Command line:
 ```bash
 survey=ztf  # use the same survey used in broker setup
 testid=mytest  # use the same testid used in broker setup
 
-NIGHT=START
-KAFKA_TOPIC=ztf_20210120_programid1  # replace with a current topic to ingest
-# KAFKA_TOPIC=NONE  # leave consumer VM off; e.g., when using consumer simulator
+topic="${survey}-cue_night_conductor-${testid}"
+cue=START
+attr=KAFKA_TOPIC=NONE  # leave consumer VM off; e.g., when using consumer simulator
+# attr=topic_date=yyyymmdd  # start the consumer and ingest the topic with date yyyymmdd
 
-# set metadata attributes and start night-conductor
-instancename="${survey}-night-conductor-${testid}"
-zone=us-central1-a
-gcloud compute instances add-metadata "$instancename" --zone="$zone" \
-        --metadata NIGHT="$NIGHT",KAFKA_TOPIC="$KAFKA_TOPIC"
-gcloud compute instances start "$instancename" --zone "$zone"
-# this triggers night conductor's startup script `vm_startup.sh`.
+gcloud pubsub topics publish "$topic" --message="$cue" --attribute="$attr"
 ```
 
-### Stop the Broker
+Python:
+```python
+from pgb_utils import pubsub as pgbps
 
-See also:
-- [What Does Night Conductor Do?](night-conductor.md)
+survey='ztf'
+testid='v050'
 
+topic = f'{survey}-cue_night_conductor-{testid}'
+cue = b'START'
+attr = {'KAFKA_TOPIC': 'NONE'}  # leave consumer VM off; e.g., when using consumer simulator
+# attr={'topic_date': 'yyyymmdd'}  # start the consumer and ingest the topic with date yyyymmdd
+
+pgbps.publish(topic, cue, attrs=attr)
+```
+
+## Stop the Broker
+
+The easiest way to stop the broker is to hijack the [auto-scheduler](auto-scheduler.md) by sending an `END` message to its Pub/Sub topic. In addition to stopping up all broker components, the cue-response checker will run and log* the status of each component. (*See [View and Access Resources: Cloud Scheduler](view-resources.md#csched), and note that the checks are on a time delay of up to several minutes.)
+
+Command line:
 ```bash
 survey=ztf  # use the same survey used in broker setup
 testid=mytest  # use the same testid used in broker setup
 
-NIGHT=END
+topic="${survey}-cue_night_conductor-${testid}"
+cue=END
 
-# set metadata attributes and start night-conductor
-instancename="${survey}-night-conductor-${testid}"
-zone=us-central1-a
-gcloud compute instances add-metadata "$instancename" --zone="$zone" \
-      --metadata NIGHT="$NIGHT"
-gcloud compute instances start "$instancename" --zone "$zone"
-# this triggers night conductor's startup script `vm_startup.sh`.
+gcloud pubsub topics publish "$topic" --message="$cue"
 ```
 
-### Starting and Stopping Components Individually
+Python:
+```python
+from pgb_utils import pubsub as pgbps
+
+survey='ztf'
+testid='v050'
+
+topic = f'{survey}-cue_night_conductor-{testid}'
+cue = b'END'
+
+pgbps.publish(topic, cue)
+```
+
+
+## Start/Stop Components Individually
 
 Here are some options:
 
@@ -85,12 +94,48 @@ __Dataflow__:
 
 __VMs__ - start/stop: see [View and Access Resources](view-resources.md)
 
+__Night Conductor__:
+Instead of hijacking the auto-scheduler, you can control night-conductor directly:
+
+```bash
+survey=ztf  # use the same survey used in broker setup
+testid=mytest  # use the same testid used in broker setup
+
+
+#--- Start the broker
+
+NIGHT=START
+KAFKA_TOPIC=ztf_20210120_programid1  # replace with a current topic to ingest
+# KAFKA_TOPIC=NONE  # leave consumer VM off; e.g., when using consumer simulator
+
+# set metadata attributes and start night-conductor
+instancename="${survey}-night-conductor-${testid}"
+zone=us-central1-a
+gcloud compute instances add-metadata "$instancename" --zone="$zone" \
+        --metadata NIGHT="$NIGHT",KAFKA_TOPIC="$KAFKA_TOPIC"
+gcloud compute instances start "$instancename" --zone "$zone"
+# this triggers night conductor's startup script `vm_startup.sh`.
+
+
+#--- Stop the broker
+
+NIGHT=END
+
+# set metadata attributes and start night-conductor
+instancename="${survey}-night-conductor-${testid}"
+zone=us-central1-a
+gcloud compute instances add-metadata "$instancename" --zone="$zone" \
+      --metadata NIGHT="$NIGHT"
+gcloud compute instances start "$instancename" --zone "$zone"
+# this triggers night conductor's startup script `vm_startup.sh`.
+```
+
 ---
 
 ## Options for Ingesting Alerts
 
 You have three options to get alerts into the broker.
-Production instances typically use #1; testing instances typically use #3.
+Production instances typically use #1; __testing instances typically use #3__.
 
 1. Connect to a __live stream__. Obviously, this can only be done at night when there is a live stream to connect to. If there are no alerts in the topic, the consumer will poll repeatedly for available topics and begin ingesting when its assigned topic becomes active. See [Kafka Topic Syntax](#kafka-topic-syntax) below.
 

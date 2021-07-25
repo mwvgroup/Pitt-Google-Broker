@@ -6,7 +6,8 @@
 - [Where to look if there's a problem](#where-to-look-if-theres-a-problem)
 
 See also
-- [Auto-schedule](auto-schedule.md)
+- [Auto-scheduler](auto-scheduler.md)
+- [__Workflow__: Testing a Broker Instance](test-an-instance.md)
 
 
 ## What Does Night Conductor Do?
@@ -64,7 +65,16 @@ If the metadata attribute `NIGHT=END`, night conductor runs the script `end_nigh
 
 See [View and Access Resources](view-resources.md) for details like where to view logs, how to ssh into a VM, and where to view Dataflow jobs on the GCP Console.
 
-__Logs__
+__Auto-scheduler's Logs__
+
+All broker instances share the following logs, which are a good starting point:
+- [`check-cue-response-cloudfnc`](https://cloudlogging.app.goo.gl/525hswivBiZfZQEUA)
+- []()
+
+(If you started/stopped the broker manually by sending a Pub/Sub message to the auto-scheduler's topic you have hijacked its process...
+this is a good thing since it means the cue-response checks are run and logs are reported to the links above.)
+
+__Night Conductor's Logs__
 
 Compare night conductor's logs with the scripts it runs. You probably want to start with:
 - [`vm_startup.sh`](broker/night_conductor/vm_startup.sh),
