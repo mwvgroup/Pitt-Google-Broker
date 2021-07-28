@@ -23,8 +23,9 @@ __Prerequisite__: Make sure the VMs are stopped (see [View and Access Resources:
 
 Command line:
 ```bash
-survey=ztf  # use the same survey used in broker setup
-testid=mytest  # use the same testid used in broker setup
+# replace with your broker instance's keywords:
+survey=ztf
+testid=mytest
 
 topic="${survey}-cue_night_conductor-${testid}"
 cue=START
@@ -38,8 +39,9 @@ Python:
 ```python
 from pgb_utils import pubsub as pgbps
 
+# replace with your broker instance's keywords:
 survey='ztf'
-testid='v050'
+testid='mytest'
 
 topic = f'{survey}-cue_night_conductor-{testid}'
 cue = b'START'
@@ -51,12 +53,13 @@ pgbps.publish(topic, cue, attrs=attr)
 
 ## Stop the Broker
 
-The easiest way to stop the broker is to hijack the [auto-scheduler](auto-scheduler.md) by sending an `END` message to its Pub/Sub topic. In addition to stopping up all broker components, the cue-response checker will run and log* the status of each component. (*See [View and Access Resources: Cloud Scheduler](view-resources.md#csched), and note that the checks are on a time delay of up to several minutes.)
+The easiest way to stop the broker is to hijack the [auto-scheduler](auto-scheduler.md) by sending an `END` message to its Pub/Sub topic. In addition to stopping all broker components, the cue-response checker will run and log* the status of each component. (*See [View and Access Resources: Cloud Scheduler](view-resources.md#csched), and note that the checks are on a time delay of up to several minutes.)
 
 Command line:
 ```bash
-survey=ztf  # use the same survey used in broker setup
-testid=mytest  # use the same testid used in broker setup
+# replace with your broker instance's keywords:
+survey=ztf
+testid=mytest
 
 topic="${survey}-cue_night_conductor-${testid}"
 cue=END
@@ -68,8 +71,9 @@ Python:
 ```python
 from pgb_utils import pubsub as pgbps
 
+# replace with your broker instance's keywords:
 survey='ztf'
-testid='v050'
+testid='mytest'
 
 topic = f'{survey}-cue_night_conductor-{testid}'
 cue = b'END'
@@ -86,49 +90,16 @@ __Generally__: Use night conductor's scripts. In most cases, you can simply call
 - [start_night.sh](../../../broker/night_conductor/start_night/start_night.sh)
 - [end_night.sh](../../../broker/night_conductor/end_night/end_night.sh)
 
+__Night Conductor__ - Instead of hijacking the auto-scheduler, you can start/stop the broker by controling night-conductor directly.
+See [Example: Use night-conductor to start/end the night](view-resources.md#startendnight)
+
 __Cloud Functions__ - update/redeploy: run the `deploy_cloud_fncs.sh` script, see [here](view-resources.md#cf)
 
-__Dataflow__:
+__Dataflow__
 - start/update jobs: see [beam/README.md](../../../broker/beam/README.md).
 - stop jobs: see [shutdown-broker.md](shutdown-broker.md)
 
 __VMs__ - start/stop: see [View and Access Resources](view-resources.md)
-
-__Night Conductor__:
-Instead of hijacking the auto-scheduler, you can control night-conductor directly:
-
-```bash
-survey=ztf  # use the same survey used in broker setup
-testid=mytest  # use the same testid used in broker setup
-
-
-#--- Start the broker
-
-NIGHT=START
-KAFKA_TOPIC=ztf_20210120_programid1  # replace with a current topic to ingest
-# KAFKA_TOPIC=NONE  # leave consumer VM off; e.g., when using consumer simulator
-
-# set metadata attributes and start night-conductor
-instancename="${survey}-night-conductor-${testid}"
-zone=us-central1-a
-gcloud compute instances add-metadata "$instancename" --zone="$zone" \
-        --metadata NIGHT="$NIGHT",KAFKA_TOPIC="$KAFKA_TOPIC"
-gcloud compute instances start "$instancename" --zone "$zone"
-# this triggers night conductor's startup script `vm_startup.sh`.
-
-
-#--- Stop the broker
-
-NIGHT=END
-
-# set metadata attributes and start night-conductor
-instancename="${survey}-night-conductor-${testid}"
-zone=us-central1-a
-gcloud compute instances add-metadata "$instancename" --zone="$zone" \
-      --metadata NIGHT="$NIGHT"
-gcloud compute instances start "$instancename" --zone "$zone"
-# this triggers night conductor's startup script `vm_startup.sh`.
-```
 
 ---
 

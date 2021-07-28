@@ -1,6 +1,18 @@
-Overview
+__Access Data__
+
+Tutorials
+-
+
+__Broker Software Design__
+
 - [Broker Overview](broker-overview.md)
     - [Broker Instance Keywords](broker-instance-keywords.md)
+- [Night-Conductor](night-conductor.md) (orchestrates the broker's startup and shutdown)
+- [Auto-Scheduler](auto-scheduler.md) (automates startup/shutdown to ingest the live topic nightly)
+
+__Run a Broker Instance__
+
+- [Workflow: Testing a Broker Instance](test-an-instance.md)
 
 Setup
 - [Initial Setup](initial-setup.md) (Google Cloud and local environment)
@@ -12,11 +24,10 @@ Access Resources
 Run the Broker
 - [Run the Broker](run-broker.md)
     - [Consumer Simulator](consumer-simulator.md)
-- [Shutdown the Broker](shutdown-broker.md)
 
 Delete the Broker
 - [Delete the Broker](delete-broker.md)
 
-Primers
+Primers for Developers
 - [Kafka Primer: Connectors and Console](kafka-console-connect.md)
 - [Beam Dataflow Primer](beam-dataflow-primer.md)

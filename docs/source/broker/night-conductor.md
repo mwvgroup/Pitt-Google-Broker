@@ -69,7 +69,7 @@ __Auto-scheduler's Logs__
 
 All broker instances share the following logs, which are a good starting point:
 - [`check-cue-response-cloudfnc`](https://cloudlogging.app.goo.gl/525hswivBiZfZQEUA)
-- []()
+- [`cue-night-conductor-cloudfnc`](https://cloudlogging.app.goo.gl/7Uz92PiZLFF5zfNd8)
 
 (If you started/stopped the broker manually by sending a Pub/Sub message to the auto-scheduler's topic you have hijacked its process...
 this is a good thing since it means the cue-response checks are run and logs are reported to the links above.)

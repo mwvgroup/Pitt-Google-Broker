@@ -7,22 +7,28 @@
 
 1. Create a new Google Cloud Platform (GCP) project.
 - A. Go to the [Cloud Resource Manager](https://console.cloud.google.com/cloud-resource-manager) and click "Create Project".
-- B. Write down your Project ID as you will need it at various points.
+- B. Write down your Project ID for the following code.
 - C. Click "Create".
 
 See [Creating and managing projects](https://cloud.google.com/resource-manager/docs/creating-managing-projects) for more information, including instructions for creating a project programatically.
 
 <img src="gcp-setup.png" alt="gcp-setup.png" width=""/>
 
-2. Enable billing and APIs for required services. [To do: find/elaborate instructions.]
+2. Enable billing and APIs for required services.
 
+```bash
+# enable APIs
+gcloud services list --available  # check what's available
+gcloud services enable pubsub.googleapis.com  # enable pubsub
+# will need others like bigquery and storage
+```
 
 ## Setup Local Environment
 
 Broker instances _run_ 100% in the Google Cloud, as determined by the code in the `broker` package.
 You can _develop_ the code and/or _deploy_ an instance to the Cloud from your local machine. Setup your environment as follows:
 
-1. Install Google Cloud SDK command-line tools using one of the following options. Included tools: `gcloud`, `gsutil`, and `bq`. Version 323.0.0 or above is recommended.
+1. __Install Google Cloud SDK command-line tools__ using one of the following options. Included tools: `gcloud`, `gsutil`, and `bq`. Version 323.0.0 or above is recommended.
     - [install from the command line](https://cloud.google.com/sdk/docs/downloads-interactive)
     - [download the package](https://cloud.google.com/sdk/docs/install)
 
@@ -35,7 +41,7 @@ gcloud auth login  # follow the instructions to login to GCP
 gcloud config set project $PROJECT_ID  # set your project ID
 ```
 
-2. Install Python libraries for [GCP services](https://cloud.google.com/python/docs/reference) and other tools such as Pandas, Astropy, etc. as needed.
+2. __Install Python libraries__ for [GCP services](https://cloud.google.com/python/docs/reference) and other tools such as Pandas, Astropy, etc. as needed.
 You can install packages individually, or use the [`requirements.txt`](../../../requirements.txt) file. The following code creates a new [Conda](https://www.anaconda.com/) environment and installs the requirements.
 (I, Troy, suggest we have people install the `pgb-utils` package instead, but its requirements are currently optimized for Colab and need to be reconfigured.)
 
@@ -51,7 +57,7 @@ pip3 install -r requirements.txt
 __Note__: On an M1 Mac, first use Conda to install Astropy (`conda install astropy=3.2.1`), then comment the related line out of the requirements file before doing `pip install`.
 
 
-3. Create a GCP service account and download a key file for authentication using the following code. See [Getting started with authentication](https://cloud.google.com/docs/authentication/getting-started) for more information.
+3. __Create a GCP service account and download a key file__ for authentication using the following code. See [Getting started with authentication](https://cloud.google.com/docs/authentication/getting-started) for more information.
 
 ```bash
 PROJECT_ID=my-pgb-project  # replace with your GCP Project ID
@@ -63,7 +69,7 @@ gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:$NAM
 gcloud iam service-accounts keys create $KEY_PATH --iam-account=$NAME@$PROJECT_ID.iam.gserviceaccount.com
 ```
 
-4. Set environment variables
+4. __Set environment variables__
 
 ```bash
 PROJECT_ID=my-pgb-project  # replace with your GCP Project ID
@@ -96,7 +102,7 @@ echo 'unset GOOGLE_CLOUD_PROJECT' >> ./etc/conda/deactivate.d/env_vars.sh
 echo 'unset GOOGLE_APPLICATION_CREDENTIALS' >> ./etc/conda/deactivate.d/env_vars.sh
 ```
 
-5. Check that your authentication works by making an API request.
+5. __Check that your authentication works__ by making an API request.
 Here we request a list of Cloud Storage buckets (in Python):
 
 ```python
@@ -106,5 +112,5 @@ storage_client = storage.Client()
 # Make an authenticated API request
 buckets = list(storage_client.list_buckets())
 # If the request succeeded, your authentication works
-print(buckets)  # this list may be empty if you haven't created any buckets yet
+print(buckets)  # this list will be empty if you haven't created any buckets yet
 ```

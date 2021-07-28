@@ -52,7 +52,7 @@ Note that Cloud Storage buckets also have the project ID prepended, for uniquene
 
 5. __Night Conductor__ (orchestrates GCP resources and jobs to run the broker each night)
     - __Compute Engine VM__  [`night-conductor`]
-        - __Auto-Scheduled with__ (cron job -> Pub/Sub -> Cloud Function -> start VM):
+        - __Auto-Scheduled with__ (Cloud Scheduler -> Pub/Sub -> Cloud Function -> start VM):
             - Cloud Scheduler cron jobs [`cue_night_conductor_START`] and [`cue_night_conductor_END`]
             - Pub/Sub topic [`cue_night_conductor`]
             - Cloud Function [`cue_night_conductor`]

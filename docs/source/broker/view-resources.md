@@ -76,7 +76,7 @@ From here you can
 
 See also: The __auto-schedulers__ of all broker instances share the following logs:
 - [`check-cue-response-cloudfnc`](https://cloudlogging.app.goo.gl/525hswivBiZfZQEUA)
-- []()
+- [`cue-night-conductor-cloudfnc`](https://cloudlogging.app.goo.gl/7Uz92PiZLFF5zfNd8)
 
 
 ---
@@ -99,7 +99,7 @@ See also:
 <a name="ce"></a>
 [__Compute Engine VMs__](https://console.cloud.google.com/compute/instances?project=ardent-cycling-243415&instancessize=50)
 
-Click on the name of one of your VMs (`night-conductor-{testid}` or `ztf-consumer-{testid}`). From here you can:
+Click on the name of one of your VMs (`{survey}-night-conductor-{testid}` or `{survey}-consumer-{testid}`). From here you can:
 - _start/stop_ the instance
 - access the _logs_
 - view and edit the _metadata attributes_
@@ -108,6 +108,8 @@ Click on the name of one of your VMs (`night-conductor-{testid}` or `ztf-consume
 - view performance stats and live* _monitoring charts_
 
 Here are some useful shell commands:
+
+General access:
 ```bash
 vm_name=  # fill this in
 zone=us-central1-a
@@ -116,6 +118,8 @@ zone=us-central1-a
 gcloud compute instances start --zone="$zone" "$vm_name"
 # stop it
 gcloud compute instances stop --zone="$zone" "$vm_name"
+# ssh in
+gcloud compute ssh --zone="$zone" "$vm_name"
 
 # set metadata attributes
 ATTRIBUTE1=value1
@@ -125,21 +129,50 @@ gcloud compute instances add-metadata --zone="$zone" "$vm_name" \
 # unset attributes
 gcloud compute instances add-metadata --zone="$zone" "$vm_name" \
       --metadata "ATTRIBUTE1=,ATTRIBUTE2="
+```
 
-# set startup script (specific example for night-conductor)
+<a name="#startendnight"></a>
+Example: Use night-conductor to start/end the night (see also [auto-scheduler](auto-scheduler.md))
+```bash
+survey=ztf
+testid=mytest
+
+#--- Start the broker
+NIGHT=START
+KAFKA_TOPIC=NONE  # leave consumer VM off; e.g., when using consumer simulator
+# KAFKA_TOPIC=ztf_yyyymmdd_programid1  # replace with a current topic to ingest
+# set metadata attributes and start night-conductor
+instancename="${survey}-night-conductor-${testid}"
+zone=us-central1-a
+gcloud compute instances add-metadata "$instancename" --zone="$zone" \
+        --metadata NIGHT="$NIGHT",KAFKA_TOPIC="$KAFKA_TOPIC"
+gcloud compute instances start "$instancename" --zone "$zone"
+# this triggers night conductor's startup script
+
+#--- Stop the broker
+NIGHT=END
+# set metadata attributes and start night-conductor
+instancename="${survey}-night-conductor-${testid}"
+zone=us-central1-a
+gcloud compute instances add-metadata "$instancename" --zone="$zone" \
+      --metadata NIGHT="$NIGHT"
+gcloud compute instances start "$instancename" --zone "$zone"
+# this triggers night conductor's startup script
+```
+
+Example: Set night-conductor's startup script
+```bash
 survey=ztf
 testid=mytestid
 nconductVM="${survey}-night-conductor-${testid}"
 broker_bucket="${GOOGLE_CLOUD_PROJECT}-${survey}-broker_files-${testid}"
 startupscript="gs://${broker_bucket}/night_conductor/vm_startup.sh"
+# set the startup script
 gcloud compute instances add-metadata "$nconductVM" --zone "$zone" \
         --metadata startup-script-url="$startupscript"
-# unset startup script
+# unset the startup script
 gcloud compute instances add-metadata "$nconductVM" --zone "$zone" \
         --metadata startup-script-url=""
-
-# ssh in
-gcloud compute ssh --zone="$zone" "$vm_name"
 ```
 
 ---
@@ -148,15 +181,15 @@ gcloud compute ssh --zone="$zone" "$vm_name"
 [__Dataflow jobs__](https://console.cloud.google.com/dataflow/jobs)
 
 Click on a job name. From here you can:
-- start/[stop](shutdown-broker.md#dataflow-jobs) the job
 - view details about the job
+- _stop/cancel/drain_ the job
 - view and interact with the _graph that represents the pipeline_ PCollections and Transforms. Click on a node to view details about that step, including live _throughput charts_.
 - view a page of live* _monitoring charts_ (click "JOB METRICS" tab at the top)
 - access the _logs_. Click "LOGS" at the top, you will see tabs for "JOB LOGS", "WORKER LOGS", and "DIAGNOSTICS". Note that if you select a step in the graph you will only see logs related to that step (unselect the step to view logs for the full job). It's easiest to view the logs if you open them in the Logs Viewer by clicking the icon.
 
-To start or update a job from the command line, see [broker/beam/README.md](../../../broker/beam/README.md)
-
-To stop a job, see [shutdown-broker.md](shutdown-broker.md).
+Command-line access:
+- To start or update a job from the command line, see [broker/beam/README.md](../../../broker/beam/README.md)
+- Job IDs: To update or stop a Dataflow job from the command line, you would need to look up the job ID assigned by Dataflow at runtime. If the night conductor VM started the job, the job ID has been set as a metadata attribute ([how to view it](view-resources.md#ce)).
 
 ---
 
