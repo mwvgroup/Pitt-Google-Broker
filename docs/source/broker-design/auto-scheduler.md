@@ -1,10 +1,10 @@
-# Auto-schedule for the broker
+# Auto-scheduler
 
-- [Auto-scheduler](#auto-scheduler)
+- [Overview](#overview)
 - [Cue-response checker](#cue-response-checker) (checks that the broker responded appropriately to the auto-scheduler's cue.)
     - [Alerting policy](#alerting-policy)
 
-## Auto-scheduler
+## Overview
 
 Broker ingestion of live topics is auto-scheduled with the following process:
 
@@ -13,7 +13,7 @@ __Cloud Scheduler cron job -> Pub/Sub message -> Cloud Function -> night-conduct
 The cron job sends a Pub/Sub message that simply contains the cue: `START` or `END`.
 The Cloud Function receives the message, sets appropriate metadata attributes on the night conductor VM and starts it.
 
-(Note that you can start/stop the broker manually at any time by sending a message to the auto-scheduler's Pub/Sub topic. See [run-broker.md](run-broker.md).)
+(Note that you can start/stop the broker manually at any time by sending a message to the auto-scheduler's Pub/Sub topic. See [Run the Broker](../run-a-broker-instance/run-broker.md).)
 
 Two cron jobs are scheduled, one each to start and end the night.
 Both processes use the same Pub/Sub topic and Cloud Function.

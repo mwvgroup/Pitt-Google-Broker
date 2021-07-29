@@ -1,7 +1,7 @@
 # Consumer Simulator
 
 The consumer simulator is a Python module that pulls alerts[*](#notes) from a Pub/Sub subscription and republishes them to a topic.
-By publishing to your broker instance's `alerts` topic (see [here](broker-instance-keywords.md) for naming info), you can bypass the consumer and feed alerts into your instance at a controlled rate.
+By publishing to your broker instance's `alerts` topic you can bypass the consumer and feed alerts into your instance at a controlled rate.
 This is the only way to control the flow of incoming alerts and is especially useful in testing.
 
 - [Install](#install)

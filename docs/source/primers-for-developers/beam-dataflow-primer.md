@@ -1,4 +1,4 @@
-# Apache Beam + Google Dataflow Primer
+# Apache Beam + Google Dataflow
 
 - [General Links](#general-links)
 - [What are Apache Beam and Google Dataflow? (the very basics)](#what-are-apache-beam-and-google-dataflow)
@@ -16,7 +16,7 @@
     - [Error and exception handling](#error-and-exception-handling)
 
 
-__*Note*: References in [brackets] indicate PGB-specific examples of the indicated files/functions/etc. Most of these can be found in [[`value_added/value_added.py`](value_added/value_added.py)] or [[`README.md`](README.md)].__
+__*Note*: References in [brackets] indicate PGB-specific examples of the indicated files/functions/etc. Most of these can be found in the value added Beam job at code path broker/beam/value_added/value_added.py or in the associated README at broker/beam/README.md.__
 
 
 ---
@@ -112,7 +112,7 @@ See also:
 `ParDo` (or the `DoFn` passed to it) can produce more than one output PCollection.
 The main output should be returned as normal(*),
 additional outputs should be tagged using `apache_beam.pvalue.TaggedOutput('tag',element)`
-See the examples in the links above, and [the `FitSalt2` (`DoFn`) class in [beam_helpers/salt2_utils.py](beam_helpers/salt2_utils.py)].
+See the examples in the links above, and the PGB `FitSalt2` (`DoFn`) class at code path broker/beam/value_added/transforms/salt2.py.
 
 (*) We typically use `return` statements in our `DoFn`s, but we also have the option of using `yield` statements (making the `DoFn` a generator). However, to return _multiple outputs_ we must use `yield` statements.
 
@@ -125,7 +125,7 @@ To make the pipeline structure more clear and modular,
 we can group multiple transforms into a single composite transform.
 We do this by creating a subclass of the `PTransform` class and overriding the `expand` method to specify the actual processing logic.
 We can then use this transform just as we would a built-in transform from the Beam SDK.
-See the links above and [the `Salt2` composite transform in [`value_added/value_added.py`](value_added/value_added.py)].
+See the links above and the PGB `Salt2` composite transform at code path broker/beam/value_added/value_added.py.
 
 <!-- fe Apache Beam -->
 
@@ -140,7 +140,7 @@ Dataflow handles the provisioning and management of all GCP resources (e.g., Com
 We tell the Beam pipeline to run on Dataflow by setting it as the "runner".
 The runner, and its configuration options, are set when creating the Beam `Pipeline` object.
 We pass them in as command line arguments when starting the job.
-[see [`README.md`](./README.md)].
+see the README at code path broker/beam/README.md.
 - `--runner=DataflowRunner` runs the job in the Google Cloud via Dataflow
 - See [Pipeline options for the Cloud Dataflow Runner](https://beam.apache.org/documentation/runners/dataflow/#pipeline-options) for a complete list of Dataflow runner configuration options.
 

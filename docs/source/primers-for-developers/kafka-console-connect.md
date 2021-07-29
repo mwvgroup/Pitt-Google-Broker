@@ -1,11 +1,10 @@
-# Install Kafka and Run a Consumer (2 Methods) to Listen to the ZTF Stream
+# Install Kafka and Run a Consumer (2 Methods)
 
 This document walks through installing Kafka and then
 connecting to the ZTF alert stream via 2 different methods:
 1. Console Consumer: Command-line consumer (installed with Confluent Platform) that prints alert content to `stdout`; _useful for testing the connection_.
 2. Kafka Connectors: Plugins that listen to a stream and route the message to another service. _Our consumer is a Kafka -> Pub/Sub connector that simply passes the bytes through (no data decoding or conversions)._
 
-# ToC
 - [Pre-configured instance](#preconfig-instance)
 - [Install Kafka (Confluent Platform) manually](#manual-install)
 - [Install Kafka on a Compute Engine instance using the prepackaged, "Google Click to Deploy" stack the Google Marketplace](#gce-marketplace-install) (not recommended)
@@ -68,8 +67,7 @@ Instruction Links:
 - [How To Install Java with Apt on Debian 10](https://www.digitalocean.com/community/tutorials/how-to-install-java-with-apt-on-debian-10)
 - [Confluent Platform: Manual Install on Ubuntu and Debian](https://docs.confluent.io/platform/current/installation/installing_cp/deb-ubuntu.html)
 
-See [`vm_install.sh`](vm_install.sh) for a quick list of the commands required for steps 2 and 3.
-(this file is used to set up the production instance `ztf-consumer`).
+See the file at code path broker/consumer/vm_install.sh for a quick list of the commands required for steps 2 and 3.
 
 1. (Optional) Create a Compute Engine VM instance (Debian 10):
 
@@ -138,12 +136,12 @@ _[ToDo:] Create an "image" or a "machine image" of this VM and figure out how to
 ---
 
 <a name="cons-consumer"></a>
-# Console Consumer
+## Console Consumer
 <!-- fs -->
 `kafka-console-consumer.sh` is a command line utility that creates a consumer and prints the messages to the terminal. It is useful for testing the connection.
 
 <a name="config"></a>
-## Configure for ZTF access
+### Configure for ZTF access
 <!-- fs -->
 The following instructions are pieced together from:
 - [Kafka Consumer Configs](https://kafka.apache.org/documentation/#consumerconfigs)
@@ -204,7 +202,7 @@ auto.offset.reset=earliest
 <!-- fe Configure for ZTF access  -->
 
 <a name="run-consumer"></a>
-## Run the Kafka Console Consumer
+### Run the Kafka Console Consumer
 <!-- fs -->
 The following assumes we are using the manual install VM.
 
@@ -231,12 +229,12 @@ Use `control-C` to stop consuming.
 ---
 
 <a name="connectors"></a>
-# Kafka Connectors
+## Kafka Connectors
 <!-- fs -->
 Kafka connectors run a Kafka consumer and route the messages to another service.
 
 <a name="config-connect"></a>
-## General Configuration and ZTF Authentication
+### General Configuration and ZTF Authentication
 
 The following uses instructions at:
 - [Getting Started with Kafka Connect](https://docs.confluent.io/home/connect/userguide.html)

@@ -14,8 +14,8 @@
 
 A broker instance has many resources associated with it.
 See also:
-- [Broker Instance Keywords](broker-instance-keywords.md) to understand some naming conventions
-- [Broker Overview](broker-overview.md) to view the name stubs
+- [Broker Instance Keywords](../broker-design/broker-instance-keywords.md) to understand some naming conventions
+- [Broker Overview](../broker-design/broker-overview.md) to view the name stubs
 
 The following sections contain links to the GCP Console where you can view resources, plus descriptions of what you can view/do there, and some useful shell and Python commands.
 (Dashboards first, then alphabetical.)
@@ -45,7 +45,7 @@ See also:
     - [Python Client for Google BigQuery](https://googleapis.dev/python/bigquery/latest/index.html)
     - [Command-line tool `bq`](https://cloud.google.com/bigquery/docs/reference/bq-cli-reference)  
 - Load a row into a table: `broker_utils.gcp_utils` (Python)
-- Query the database instructions: [Pitt-Google-Tutorial.ipynb](../../../pgb_utils/tutorials/Pitt-Google-Tutorial.ipynb)
+- Query the database instructions in the Pitt-Google-Tutorial.ipynb at pgb_utils/tutorials/Pitt-Google-Tutorial.ipynb
     - using `pgb-utils` (Python; see source code for the Google Cloud SDK commands)
     - using the Google Cloud command-line tool `bq`
 
@@ -62,7 +62,7 @@ Click on a function name. From here you can:
 - test the function
 
 See also:
-- [`broker/setup_broker/deploy_cloud_fncs.sh`](../../../broker/setup_broker/deploy_cloud_fncs.sh). You can re-run this script to update the broker's Cloud Function(s).
+- The script at broker/setup_broker/deploy_cloud_fncs.sh. You can re-run this script to update the broker's Cloud Function(s).
 - [Create and deploy a Cloud Function using the `gcloud` command-line tool](https://cloud.google.com/functions/docs/quickstart)
 
 ---
@@ -91,7 +91,7 @@ See also:
     - [Python Client for Google Cloud Storage](https://googleapis.dev/python/storage/latest/index.html)
     - [Command-line tool `gsutil`](https://cloud.google.com/storage/docs/quickstart-gsutil)  
 - Upload and download files: `broker_utils.gcp_utils` (Python)
-- Tutorial: [Pitt-Google-Tutorial.ipynb](../../../pgb_utils/tutorials/Pitt-Google-Tutorial.ipynb)
+- Tutorial: pgb_utils/tutorials/Pitt-Google-Tutorial.ipynb
     - using the Google Cloud SDK (Python and command line)
 
 ---
@@ -132,7 +132,7 @@ gcloud compute instances add-metadata --zone="$zone" "$vm_name" \
 ```
 
 <a name="#startendnight"></a>
-Example: Use night-conductor to start/end the night (see also [auto-scheduler](auto-scheduler.md))
+Example: Use night-conductor to start/end the night (see also [auto-scheduler](../broker-design/auto-scheduler.md))
 ```bash
 survey=ztf
 testid=mytest
@@ -188,7 +188,7 @@ Click on a job name. From here you can:
 - access the _logs_. Click "LOGS" at the top, you will see tabs for "JOB LOGS", "WORKER LOGS", and "DIAGNOSTICS". Note that if you select a step in the graph you will only see logs related to that step (unselect the step to view logs for the full job). It's easiest to view the logs if you open them in the Logs Viewer by clicking the icon.
 
 Command-line access:
-- To start or update a job from the command line, see [broker/beam/README.md](../../../broker/beam/README.md)
+- To start or update a job from the command line, see the README at broker/beam/README.md
 - Job IDs: To update or stop a Dataflow job from the command line, you would need to look up the job ID assigned by Dataflow at runtime. If the night conductor VM started the job, the job ID has been set as a metadata attribute ([how to view it](view-resources.md#ce)).
 
 ---

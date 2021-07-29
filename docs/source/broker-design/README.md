@@ -9,6 +9,9 @@ __Broker Software Design__
     - [Broker Instance Keywords](broker-instance-keywords.md)
 - [Night-Conductor](night-conductor.md) (orchestrates the broker's startup and shutdown)
 - [Auto-Scheduler](auto-scheduler.md) (automates startup/shutdown to ingest the live topic nightly)
+Primers for Developers
+- [Kafka Primer: Connectors and Console](kafka-console-connect.md)
+- [Beam Dataflow Primer](beam-dataflow-primer.md)
 
 __Run a Broker Instance__
 
@@ -27,7 +30,3 @@ Run the Broker
 
 Delete the Broker
 - [Delete the Broker](delete-broker.md)
-
-Primers for Developers
-- [Kafka Primer: Connectors and Console](kafka-console-connect.md)
-- [Beam Dataflow Primer](beam-dataflow-primer.md)

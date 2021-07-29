@@ -10,14 +10,14 @@ Use this document to run a broker instance manually (typically a Testing instanc
 
 See also:
 - [__Workflow__: Testing a Broker Instance](test-an-instance.md)
-- [Auto-scheduler](auto-scheduler.md) to schedule a (typically Production) instance to run automatically each night.
-- [What Does Night Conductor Do?](night-conductor.md)
+- [Auto-scheduler](../broker-design/auto-scheduler.md) to schedule a (typically Production) instance to run automatically each night.
+- [What Does Night Conductor Do?](../broker-design/night-conductor.md)
 
 ---
 
 ## Start the Broker
 
-The easiest way to start the broker is to hijack the [auto-scheduler](auto-scheduler.md) by sending a `START` message to its Pub/Sub topic and attaching an attribute that indicates the topic to be ingested (or none). In addition to cueing up all broker components, the cue-response checker will run and log* the status of each component. (*See [View and Access Resources: Cloud Scheduler](view-resources.md#csched), and note that the checks are on a time delay of up to several minutes.)
+The easiest way to start the broker is to hijack the [auto-scheduler](../broker-design/auto-scheduler.md) by sending a `START` message to its Pub/Sub topic and attaching an attribute that indicates the topic to be ingested (or none). In addition to cueing up all broker components, the cue-response checker will run and log* the status of each component. (*See [View and Access Resources: Cloud Scheduler](view-resources.md#csched), and note that the checks are on a time delay of up to several minutes.)
 
 __Prerequisite__: Make sure the VMs are stopped (see [View and Access Resources: Compute Engine VMs](view-resources.md#ce), includes a code sample).
 
@@ -53,7 +53,7 @@ pgbps.publish(topic, cue, attrs=attr)
 
 ## Stop the Broker
 
-The easiest way to stop the broker is to hijack the [auto-scheduler](auto-scheduler.md) by sending an `END` message to its Pub/Sub topic. In addition to stopping all broker components, the cue-response checker will run and log* the status of each component. (*See [View and Access Resources: Cloud Scheduler](view-resources.md#csched), and note that the checks are on a time delay of up to several minutes.)
+The easiest way to stop the broker is to hijack the [auto-scheduler](../broker-design/auto-scheduler.md) by sending an `END` message to its Pub/Sub topic. In addition to stopping all broker components, the cue-response checker will run and log* the status of each component. (*See [View and Access Resources: Cloud Scheduler](view-resources.md#csched), and note that the checks are on a time delay of up to several minutes.)
 
 Command line:
 ```bash
@@ -86,20 +86,19 @@ pgbps.publish(topic, cue)
 
 Here are some options:
 
-__Generally__: Use night conductor's scripts. In most cases, you can simply call a shell script and pass in a few variables. See especially those called by [vm_startup.sh](../../../broker/night_conductor/vm_startup.sh):
-- [start_night.sh](../../../broker/night_conductor/start_night/start_night.sh)
-- [end_night.sh](../../../broker/night_conductor/end_night/end_night.sh)
+__Generally__: Use night conductor's scripts. In most cases, you can simply call a shell script and pass in a few variables. See especially those called by
+- vm_startup.sh at the code path broker/night_conductor/vm_startup.sh
+    - start_night.sh at the code path broker/night_conductor/start_night/start_night.sh
+    - end_night.sh at the code path broker/night_conductor/end_night/end_night.sh
 
 __Night Conductor__ - Instead of hijacking the auto-scheduler, you can start/stop the broker by controling night-conductor directly.
 See [Example: Use night-conductor to start/end the night](view-resources.md#startendnight)
 
 __Cloud Functions__ - update/redeploy: run the `deploy_cloud_fncs.sh` script, see [here](view-resources.md#cf)
 
-__Dataflow__
-- start/update jobs: see [beam/README.md](../../../broker/beam/README.md).
-- stop jobs: see [shutdown-broker.md](shutdown-broker.md)
+__Dataflow__ - start/update/stop jobs: see [View and Access Resources: Dataflow jobs](view-resources.md#dataflow)
 
-__VMs__ - start/stop: see [View and Access Resources](view-resources.md)
+__VMs__ - start/stop: see [View and Access Resources: Compute Engine VMs](view-resources.md#ce)
 
 ---
 

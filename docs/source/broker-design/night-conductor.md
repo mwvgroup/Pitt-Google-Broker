@@ -1,4 +1,4 @@
-# Night Conductor: Orchestrating the broker's startup and shutdown
+# Night Conductor
 
 - [What Does Night Conductor Do?](night-conductor.md)
     - [Start Night](#start-night)
@@ -7,7 +7,7 @@
 
 See also
 - [Auto-scheduler](auto-scheduler.md)
-- [__Workflow__: Testing a Broker Instance](test-an-instance.md)
+- [__Workflow__: Testing a Broker Instance](../run-a-broker-instance/test-an-instance.md)
 
 
 ## What Does Night Conductor Do?
@@ -19,8 +19,8 @@ Upon startup, it runs the set of scripts in the `night_conductor` directory of t
 To control the behavior, we pass arguments by setting __metadata attributes__ on the VM, prior to starting it up (see below for code sample).
 These attributes include:
 - `NIGHT`: `START` or `END`. See below.
-- `KAFKA_TOPIC`: a [valid topic](run-broker.md#kafka-topic-syntax) or `NONE`.
-If `NONE`, night conductor will not start the consumer VM; use this if (e.g.,) you want to use the [consumer simulator](consumer-simulator.md).
+- `KAFKA_TOPIC`: a [valid topic](../run-a-broker-instance/run-broker.md#kafka-topic-syntax) or `NONE`.
+If `NONE`, night conductor will not start the consumer VM; use this if (e.g.,) you want to use the [consumer simulator](../run-a-broker-instance/consumer-simulator.md).
 Otherwise, night conductor will set `KAFKA_TOPIC` as a metadata attribute on the consumer VM and start it.
 This attribute has no effect if `NIGHT=END`.
 
@@ -42,7 +42,7 @@ gcloud compute instances start "$instancename" --zone "$zone"
 ### Start Night
 
 See also:
-- [run-broker.md#start-the-broker](run-broker.md#start-the-broker)
+- [Start the Broker](run-broker.md#start-the-broker)
 
 If the metadata attribute `NIGHT=START`, night conductor runs the script `start_night.sh`. It does the following:
 
@@ -52,7 +52,7 @@ If the metadata attribute `NIGHT=START`, night conductor runs the script `start_
 ### End Night
 
 See also:
-- [run-broker.md#stop-the-broker](run-broker.md#stop-the-broker)
+- [Stop the Broker](run-broker.md#stop-the-broker)
 
 If the metadata attribute `NIGHT=END`, night conductor runs the script `end_night.sh`. It does the following:
 
@@ -63,13 +63,13 @@ If the metadata attribute `NIGHT=END`, night conductor runs the script `end_nigh
 
 ## Where to look if there's a problem
 
-See [View and Access Resources](view-resources.md) for details like where to view logs, how to ssh into a VM, and where to view Dataflow jobs on the GCP Console.
+See [View and Access Resources](../run-a-broker-instance/view-resources.md) for details like where to view logs, how to ssh into a VM, and where to view Dataflow jobs on the GCP Console.
 
 __Auto-scheduler's Logs__
 
 All broker instances share the following logs, which are a good starting point:
-- [`check-cue-response-cloudfnc`](https://cloudlogging.app.goo.gl/525hswivBiZfZQEUA)
-- [`cue-night-conductor-cloudfnc`](https://cloudlogging.app.goo.gl/7Uz92PiZLFF5zfNd8)
+- [check-cue-response-cloudfnc](https://cloudlogging.app.goo.gl/525hswivBiZfZQEUA)
+- [cue-night-conductor-cloudfnc](https://cloudlogging.app.goo.gl/7Uz92PiZLFF5zfNd8)
 
 (If you started/stopped the broker manually by sending a Pub/Sub message to the auto-scheduler's topic you have hijacked its process...
 this is a good thing since it means the cue-response checks are run and logs are reported to the links above.)
@@ -77,9 +77,9 @@ this is a good thing since it means the cue-response checks are run and logs are
 __Night Conductor's Logs__
 
 Compare night conductor's logs with the scripts it runs. You probably want to start with:
-- [`vm_startup.sh`](broker/night_conductor/vm_startup.sh),
-- [`start_night.sh`](broker/night_conductor/start_night/start_night.sh)
-- [`end_night.sh`](broker/night_conductor/end_night/end_night.sh)
+- vm_startup.sh at the code path broker/night_conductor/vm_startup.sh
+- start_night.sh at the code path broker/night_conductor/start_night/start_night.sh
+- end_night.sh at the code path broker/night_conductor/end_night/end_night.sh
 
 Remember that the actual scripts used by night conductor are stored in its `broker_files` bucket. Fresh copies are downloaded to the VM prior to execution.
 

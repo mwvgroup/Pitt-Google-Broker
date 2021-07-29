@@ -1,4 +1,4 @@
-## Workflow: Running, Developing, and Testing a Broker Instance
+# Workflow: Running, Developing, and Testing a Broker Instance
 
 __Prerequisites:__
 1. Complete the [Initial Setup](initial-setup.md) for GCP and your local environment.

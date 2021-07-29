@@ -9,7 +9,7 @@
 ---
 
 ## Prerequisites
-First, complete [intial-setup.md](intial-setup.md) to setup your Google Cloud project and install the SDKs. Make sure your environment variables are set:
+First, complete the [Initial Setup](initial-setup.md) to setup your Google Cloud project and install the SDKs. Make sure your environment variables are set:
 
 ```bash
 # If you installed the SDKs to a Conda environment, activate it.
@@ -79,11 +79,11 @@ Generally, stop the VMs when they're not actively in use so they don't incur cha
 ## What does `setup_broker.sh` do?
 
 Resource name stubs are given below in brackets [].
-See [Broker Instance Keywords](broker-instance-keywords.md) for details.
+See [Broker Instance Keywords](../broker-design/broker-instance-keywords.md) for details.
 
 1. Create and configure GCP resources in BigQuery, Cloud Storage, Dashboard, and Pub/Sub. Print a URL to the instance's Dashboard for the user. (You may be asked to authenticate yourself using `gcloud auth login`; follow the instructions. If you don't have a `bigqueryrc` config file setup yet it will walk you through creating one.)
 
-2. Upload the [beam](beam/), [broker_utils/schema_maps](broker_utils/schema_maps/),  [consumer](consumer/), and [night_conductor](night_conductor/) directories to the Cloud Storage bucket [`broker_files`].
+2. Upload the directors broker/beam, broker/broker_utils/schema_maps, broker/consumer, and broker/night_conductor to the Cloud Storage bucket [`broker_files`].
 
 3. Create and configure the Compute Engine instances [`night-conductor`] and [`consumer`].
 

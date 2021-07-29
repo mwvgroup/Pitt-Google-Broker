@@ -42,8 +42,7 @@ gcloud config set project $PROJECT_ID  # set your project ID
 ```
 
 2. __Install Python libraries__ for [GCP services](https://cloud.google.com/python/docs/reference) and other tools such as Pandas, Astropy, etc. as needed.
-You can install packages individually, or use the [`requirements.txt`](../../../requirements.txt) file. The following code creates a new [Conda](https://www.anaconda.com/) environment and installs the requirements.
-(I, Troy, suggest we have people install the `pgb-utils` package instead, but its requirements are currently optimized for Colab and need to be reconfigured.)
+You can install packages individually, or use the requirements.txt file at the top level of the repo. The following code creates a new [Conda](https://www.anaconda.com/) environment and installs the requirements.
 
 ```bash
 # create a Conda environment (optional)

@@ -13,7 +13,7 @@ The __consumer__ (1, see list below) ingests a survey's Kafka stream and republi
 The __data storage__ (2 and 3) and __science processing__ (4) components subscribe to the consumer's Pub/Sub stream. These components store their output data in Cloud Storage and/or BigQuery, and publish to dedicated Pub/Sub topics.
 The __night conductor__ (5) orchestrates the broker, starting up resources and jobs at night and shutting them down in the morning.
 
-To view the resources, see [View and Access Resources](view-resources.md).
+To view the resources, see [View and Access Resources](../run-a-broker-instance/view-resources.md).
 
 ### Details and Name Stubs
 
@@ -68,7 +68,7 @@ Fresh copies are downloaded/accessed prior to use each night.
 This is mostly handled by the VMs (`night-conductor` and `consumer`), but the `broker_utils` package also uses this bucket (e.g., for schema maps).
 This allows us to update most components of the broker by simply replacing the relevant files in the bucket, which is particularly useful for development and testing.
 
-See [View and Access Resources](view-resources.md) to find the `broker_files` bucket.
+See [View and Access Resources](../run-a-broker-instance/view-resources.md) to find the `broker_files` bucket.
 
 ---
 
