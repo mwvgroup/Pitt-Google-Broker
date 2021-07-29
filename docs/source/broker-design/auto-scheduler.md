@@ -4,6 +4,10 @@
 - [Cue-response checker](#cue-response-checker) (checks that the broker responded appropriately to the auto-scheduler's cue.)
     - [Alerting policy](#alerting-policy)
 
+See also:
+- [Night Conductor](night-conductor.md)
+- [Where to look if there's a problem](night-conductor.md#where-to-look-if-theres-a-problem) 
+
 ## Overview
 
 Broker ingestion of live topics is auto-scheduled with the following process:

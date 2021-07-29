@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-"""A module for Pitt-Google Broker utilities.
+"""Pitt-Google Broker.
 Example setup.py: https://github.com/pypa/sampleproject/blob/main/setup.py
 
-This file is part of the pgb_utils software package.
+This file is required for Read the Docs.
 
-The pgb_utils package is free software: you can redistribute it and/or
+The Pitt-Google Broker package is free software: you can redistribute it and/or
 modify it under the terms of the GNU General Public License as published
 by the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
