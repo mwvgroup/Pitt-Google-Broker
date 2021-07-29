@@ -1,0 +1,6 @@
+
+# Needed for building docs
+myst-parser
+sphinx
+# sphinx-copybutton
+sphinx_rtd_theme
