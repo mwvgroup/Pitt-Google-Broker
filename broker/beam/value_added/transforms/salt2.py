@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-"""The ``salt2_utils`` module contains classes and functions to
+"""The ``salt2`` module contains classes and functions to
 perform a Salt2 fit on the lightcurve of a ZTF alert
 and store the results.
 
@@ -20,25 +20,27 @@ Module Documentation
 --------------------
 """
 
-from base64 import b64encode
 import logging
 from tempfile import NamedTemporaryFile
 import numpy as np
+import pandas as pd
 from apache_beam import DoFn
 from apache_beam import pvalue
 from astropy.table import Table
-from astropy.time import Time
 import sncosmo
 from sncosmo.fitting import DataQualityError
 from google.cloud import storage
+
+from broker_utils import data_utils as bdu
 
 
 class FormatForSalt2(DoFn):
     """ Prepares an alert dict for a Salt2 fit.
     Extracts epoch data and calculates some statistics.
     """
-    def __init__(self, salt2_configs):
+    def __init__(self, schema_map, salt2_configs):
         super().__init__()
+        self.schema_map = schema_map
         self.salt2_configs = salt2_configs
 
     def process(self, alert):
@@ -53,6 +55,7 @@ class FormatForSalt2(DoFn):
                 objectId (str): alert['objectId']
                 candid (int): alert['candid']
         """
+        schema_map = self.schema_map
 
         # extract epoch data
         epoch_dict = self.extract_epochs(alert)
@@ -62,8 +65,8 @@ class FormatForSalt2(DoFn):
         epochInfo = self.format_for_salt2(epoch_dict)
 
         # add some metadata
-        epochInfo['objectId'] = alert['objectId']
-        epochInfo['candid'] = alert['candid']
+        epochInfo['objectId'] = alert[schema_map['objectId']]
+        epochInfo['sourceId'] = alert[schema_map['source']][schema_map['sourceId']]
 
         # package with the alert so Pub/Sub can have both
         alert_epoch_dicts = {'alert': alert, 'epochInfo': epochInfo}
@@ -81,31 +84,46 @@ class FormatForSalt2(DoFn):
                             values: Lists of light curve data with one element
                                     per epoch.
         """
+        schema_map = self.schema_map
+        survey = schema_map['SURVEY']
+        filter_map = schema_map['FILTER_MAP']  # bandpass mapping
 
         # collect epochs
-        epochs = alert['prv_candidates'] + [alert['candidate']]
+        epochs = alert[schema_map['prvSources']] + [alert[schema_map['source']]]
 
         # prepare empty lists to zip epoch data
-        mjd, flux, fluxerr, passband, magzpsci, magzpsciunc, zpsys, isdiffpos = ([] for i in range(8))
-        # bandpass mapping
-        fid_dict = {1: 'g', 2: 'r', 3: 'i'}
+        mjd, flux, fluxerr, passband = ([] for i in range(4))
+        magzp, magzpunc, zpsys, isdetection = ([] for i in range(4))
 
         for n, epoch in enumerate(epochs):
-            # skip nondetections.
-            if epoch['magpsf'] is None: continue
-            # in the future, may want to set this to epoch['diffmaglim']
+            # skip if no magnitude included
+            if epoch[schema_map['mag']] is None: continue
+            if pd.isna(epoch[schema_map['mag']]): continue
 
             # Gather epoch data
-            mjd.append(self.jd_to_mjd(epoch['jd']))
-            f, ferr = self.mag_to_flux(epoch['magpsf'], epoch['magzpsci'],
-                                       epoch['sigmapsf'])
+            if survey == 'decat':
+                mjdate = epoch['mjd']
+                f, ferr = epoch['flux'], epoch['fluxerr']
+                mzpunc = None
+                isdetect = (epoch[schema_map['mag']] is not None)
+
+            elif survey == 'ztf':
+                mjdate = bdu.jd_to_mjd(epoch['jd'])
+                f, ferr = bdu.mag_to_flux(epoch['magpsf'],
+                                           epoch['magzpsci'],
+                                           epoch['sigmapsf'])
+                mzpunc = epoch['magzpsciunc']
+                isdetect = epoch['isdiffpos'] == 't'
+                # this is how ZTF counts detections in their is_transient() filter
+
+            mjd.append(mjdate)
             flux.append(f)
             fluxerr.append(ferr)
-            passband.append(fid_dict[epoch['fid']])
-            magzpsci.append(epoch['magzpsci'])
-            magzpsciunc.append(epoch['magzpsciunc'])
+            passband.append(filter_map[epoch[schema_map['filter']]])
+            magzp.append(epoch[schema_map['magzp']])
+            magzpunc.append(mzpunc)
             zpsys.append('ab')
-            isdiffpos.append(epoch['isdiffpos']) # used to count detections/nondetections (null if non)
+            isdetection.append(isdetect)
 
         # Gather info
         epoch_dict = {
@@ -113,10 +131,10 @@ class FormatForSalt2(DoFn):
             'flux': np.asarray(flux),
             'fluxerr': np.asarray(fluxerr),
             'passband': np.asarray(passband),
-            'magzpsci': magzpsci,
-            'magzpsciunc': magzpsciunc,
-            'zpsys': zpsys,
-            'isdiffpos': np.asarray(isdiffpos)
+            'magzp': np.asarray(magzp),
+            'magzpunc': np.asarray(magzpunc),
+            'zpsys': np.asarray(zpsys),
+            'isdetection': np.asarray(isdetection)
         }
 
         return epoch_dict
@@ -133,19 +151,23 @@ class FormatForSalt2(DoFn):
                 epochTable (Table): epoch data formatted as Astropy Table
                 epochStats (dict): get_epoch_stats(epoch_dict)
         """
-
-        col_map = {# salt2_name: ztf_name,
+        schema_map = self.schema_map
+        col_map = { # salt2_name: name_used_by_broker,
                     'time': 'mjd',
                     'band': 'passband',
                     'flux': 'flux',
                     'fluxerr': 'fluxerr',
-                    'zp': 'magzpsci',
+                    'zp': 'magzp',
                     'zpsys': 'zpsys',
                     }
+        data = {s2name: epoch_dict[bname] for s2name, bname in col_map.items()}
 
-        data = {sname: epoch_dict[zname] for sname, zname in col_map.items()}
         # convert bandpass to name registered in sncosmo
-        data['band'] = [f'ztf{val}' for val in data['band']]
+        if schema_map['SURVEY'] == 'decat':
+            prefix = 'sdss'
+        elif schema_map['SURVEY'] == 'ztf':
+            prefix = 'ztf'
+        data['band'] = [f'{prefix}{val}' for val in data['band']]
 
         epochInfo = {
                     'epochTable': Table(data),
@@ -170,18 +192,16 @@ class FormatForSalt2(DoFn):
 
         SNthresh = self.salt2_configs['SNthresh']
         SN = epoch_dict['flux'] / epoch_dict['fluxerr']
-
         maxSN = np.max(SN)
 
         # to constrain t0, find mjd of first epoch with S/N > SNthresh
-        if maxSN > SNthresh:
-            first_SN_above_thresh = np.where(SN>SNthresh)[0][0]
+        if maxSN >= SNthresh:
+            first_SN_above_thresh = np.where(SN>=SNthresh)[0][0]
             t0_guess = epoch_dict['mjd'][first_SN_above_thresh]
         else:
             t0_guess = None
 
-        num_detections = np.sum(epoch_dict['isdiffpos'] == 't')
-        # this is how ZTF counts detections in their is_transient() filter
+        num_detections = np.sum(epoch_dict['isdetection'])
 
         epochStats = {
                     'maxSN': maxSN,
@@ -190,18 +210,6 @@ class FormatForSalt2(DoFn):
                 }
 
         return epochStats
-
-    def mag_to_flux(self, mag, zeropoint, magerr):
-        """ Converts an AB magnitude and its error to fluxes.
-        """
-        flux = 10 ** ((zeropoint - mag) / 2.5)
-        fluxerr = flux * magerr * np.log(10 / 2.5)
-        return flux, fluxerr
-
-    def jd_to_mjd(self, jd):
-        """ Converts Julian Date to modified Julian Date.
-        """
-        return Time(jd, format='jd').mjd
 
 
 def salt2_quality_cuts(alert_epoch_dicts, salt2_configs):
@@ -232,6 +240,10 @@ class FitSalt2(DoFn):
     Example usage:
         epochInfoDicts | beam.ParDo(FitSalt2())
     """
+    def __init__(self, schema_map):
+        super().__init__()
+        self.schema_map = schema_map
+
     def process(self, alert_epoch_dicts):
         """ Performs a Salt2 fit on alert history.
 
@@ -242,10 +254,12 @@ class FitSalt2(DoFn):
             salt2Fit (dict): output of Salt2 fit, formatted for BigQuery and Pub/Sub
             salt2Fit4Figure (dict): data, model, and result; needed to do sncosmo.plot_lc()
         """
+        schema_map = self.schema_map
+
         # unpack the data
         alert, epochInfo = alert_epoch_dicts['alert'], alert_epoch_dicts['epochInfo']
         objectId = epochInfo['objectId']
-        candid = epochInfo['candid']
+        sourceId = epochInfo['sourceId']
         epochTable = epochInfo['epochTable']
         epochStats = epochInfo['epochStats']
 
@@ -264,15 +278,23 @@ class FitSalt2(DoFn):
 
         # if DataQualityError, log the error and yield nothing
         except DataQualityError as dqe:
-            logging.info(f'Salt2 fit failed with DataQualityError for alertID {candid}. {dqe}')
+            msg = f'Salt2 fit failed for objectId {objectId}, sourceId {sourceId}. {dqe}'
+            logging.info(msg)
 
         # yield results
         else:
             # yield salt2Fit formatted for BQ to the main output
             # cov_names depreciated in favor of vparam_names, but flatten_result() requires it
             result['cov_names'] = result['vparam_names']
-            flatresult = dict(sncosmo.flatten_result(result))
-            salt2Fit = {'objectId': objectId, 'candid': candid, **flatresult,}
+            flattmp = dict(sncosmo.flatten_result(result))
+            lam = lambda v: None if pd.isna(v) else v  # replace nan for BigQuery
+            flatresult = {k: lam(v) for k,v in flattmp.items()}
+
+            salt2Fit = {  # name fields to match BigQuery schema
+                schema_map['objectId']: objectId,
+                schema_map['sourceId']: sourceId,
+                **flatresult,
+            }
             yield salt2Fit
 
             # yield alert + salt2Fit for PS, to a tagged output
@@ -282,7 +304,7 @@ class FitSalt2(DoFn):
             # yield info needed to plot lightcurve to a tagged output
             salt2Fit4Figure = {
                     'objectId': objectId,
-                    'candid': candid,
+                    'sourceId': sourceId,
                     'epochTable': epochTable,
                     'result': result,
                     'fitted_model': fitted_model,
@@ -301,7 +323,7 @@ class StoreSalt2FitFigure(DoFn):
         super().__init__()
         self.sink_CS_salt2 = sink_CS_salt2  # bucket name to store the figure
 
-    def start_bundle(self):
+    def setup(self):
         # Connect to Google Cloud Storage to store lc+fit figures
         self.storage_client = storage.Client()
         self.bucket = self.storage_client.bucket(self.sink_CS_salt2)
@@ -312,10 +334,9 @@ class StoreSalt2FitFigure(DoFn):
         Args:
             salt2Fit4Figure (dict): element of the PCollection tagged "salt2Fit4Figure" returned by `beam.ParDo(FitSalt2())`
         """
-
         # unpack the input dict
         objectId = salt2Fit4Figure['objectId']
-        candid = salt2Fit4Figure['candid']
+        sourceId = salt2Fit4Figure['sourceId']
         epochTable = salt2Fit4Figure['epochTable']
         result = salt2Fit4Figure['result']
         fitted_model = salt2Fit4Figure['fitted_model']
@@ -326,7 +347,7 @@ class StoreSalt2FitFigure(DoFn):
                 fig.savefig(temp_file, format="png")
                 temp_file.seek(0)
                 # upload to GCS
-                gcs_filename = f'candid_{candid}.png'
+                gcs_filename = f'{objectId}.{sourceId}.png'
                 blob = self.bucket.blob(f'salt2/plot_lc/{gcs_filename}')
                 blob.upload_from_filename(filename=temp_file.name)
 

@@ -5,20 +5,24 @@
 
 PROJECT_ID=$1
 testid=$2
+survey="${3:-ztf}"
+
 
 if [ "$testid" = "False" ]; then
     declare -a subs=(\
-    "ztf_alerts-counter" \
-    "ztf_alert_avros-counter" \
-    "ztf_exgalac_trans-counter" \
-    "ztf_salt2-counter" \
+    "${survey}-alerts-counter" \
+    "${survey}-alert_avros-counter" \
+    "${survey}-alerts_pure-counter" \
+    "${survey}-exgalac_trans-counter" \
+    "${survey}-salt2-counter" \
     )
 else
     declare -a subs=(\
-    "ztf_alerts-counter-${testid}" \
-    "ztf_alert_avros-counter-${testid}" \
-    "ztf_exgalac_trans-counter-${testid}" \
-    "ztf_salt2-counter-${testid}" \
+    "${survey}-alerts-counter-${testid}" \
+    "${survey}-alert_avros-counter-${testid}" \
+    "${survey}-alerts_pure-counter-${testid}" \
+    "${survey}-exgalac_trans-counter-${testid}" \
+    "${survey}-salt2-counter-${testid}" \
     )
 fi
 

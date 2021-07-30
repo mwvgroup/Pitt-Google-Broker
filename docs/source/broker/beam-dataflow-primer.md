@@ -16,7 +16,7 @@
     - [Error and exception handling](#error-and-exception-handling)
 
 
-__*Note*: References in [brackets] indicate PGB-specific examples of the indicated files/functions/etc. Most of these can be found in [[`ztf_value_added/beam_ztf_value_added.py`](ztf_value_added/beam_ztf_value_added.py)] or [[`README.md`](README.md)].__
+__*Note*: References in [brackets] indicate PGB-specific examples of the indicated files/functions/etc. Most of these can be found in [[`value_added/value_added.py`](value_added/value_added.py)] or [[`README.md`](README.md)].__
 
 
 ---
@@ -56,7 +56,7 @@ _Much of it is quoted directly from [__Apache Beam Overview/Tutorial__](https://
 
 ### [`Pipeline`](https://beam.apache.org/documentation/programming-guide/#creating-a-pipeline)
 - The `Pipeline` abstraction encapsulates all the data and steps in the data processing task.
-- The "driver program" [`ztf_value_added/beam_ztf_value_added.py`] creates a `Pipeline` object [`pipeline`, within `run()`] and uses it as the basis for creating the pipeline’s data (`PCollection`s) and its operations (`PTransform`s).
+- The "driver program" [`value_added/value_added.py`] creates a `Pipeline` object [`pipeline`, within `run()`] and uses it as the basis for creating the pipeline’s data (`PCollection`s) and its operations (`PTransform`s).
 - The general form of a step in the pipeline is (here, brackets indicate general Beam objects, not PGB-specific objects):
     - `[Output PCollection] = [Input PCollection] | [Transform]`
 
@@ -125,7 +125,7 @@ To make the pipeline structure more clear and modular,
 we can group multiple transforms into a single composite transform.
 We do this by creating a subclass of the `PTransform` class and overriding the `expand` method to specify the actual processing logic.
 We can then use this transform just as we would a built-in transform from the Beam SDK.
-See the links above and [the `Salt2` composite transform in [`ztf_value_added/beam_ztf_value_added.py`](ztf_value_added/beam_ztf_value_added.py)].
+See the links above and [the `Salt2` composite transform in [`value_added/value_added.py`](value_added/value_added.py)].
 
 <!-- fe Apache Beam -->
 

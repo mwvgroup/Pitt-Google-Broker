@@ -2,7 +2,7 @@ What is Pitt Broker
 ===================
 
 This documentation provides instructions on how to set up and deploy an instance
-of the Pitt-Google Broker system.
+of the Pitt-Google alert broker.
 
 .. toctree::
    :hidden:

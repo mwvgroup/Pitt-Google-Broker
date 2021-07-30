@@ -3,35 +3,32 @@
 
 from setuptools import setup, find_packages
 
-include = [
-            'beam_helpers',
-            'beam_helpers.*'
-          ]
+include = []
 
 requires = [
             'apache_beam[gcp]',
             'argparse',
-            'astropy',
+            # 'astropy',
             # 'base64', builtin
             'fastavro',
             'google-cloud-core>=1.4.1',
             'google-cloud-dataflow',
             'google-cloud-datastore>=1.15',
-            'google-cloud-logging',
-            'google-cloud-storage',
-            'iminuit==1.4.9',
+            'google-cloud-storage==1.38.0',
+            # 'iminuit==1.4.9',
             # 'io', builtin
             # 'json', builtin
-            'matplotlib',
-            'numpy',
-            'pandas',
-            'sncosmo==2.2.0',
+            # 'matplotlib',
+            # 'numpy',
+            'pgb-broker-utils',
+            # 'pandas',
+            # 'sncosmo==2.2.0',
             # 'tempfile', builtin
             'workflow',
             ]
 
 setup(
-    name = 'beam_ztf_value_added',
+    name = 'bq_sink',
     version = '0.0.1',
     url = 'https://github.com/mwvgroup/Pitt-Google-Broker',
     author = 'Troy Raen',

@@ -636,7 +636,7 @@
     "type": "STRING"
   },
   {
-    "description": "Candidate IDs from previous candidate's in the original alert packet (prv_candidates.candid)",
+    "description": "Candidate IDs from previous candidates in the original alert packet (prv_candidates.candid)",
     "mode": "NULLABLE",
     "name": "prv_candidates_candids",
     "type": "STRING"

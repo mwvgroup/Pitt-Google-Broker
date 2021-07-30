@@ -2,8 +2,9 @@
 # stop the ztf-consumer VM instance
 
 testid=$1
+survey="${2:-ztf}"
 
-consumerVM=ztf-consumer
+consumerVM="${survey}-consumer"
 if [ "$testid" != "False" ]; then
     consumerVM="${consumerVM}-${testid}"
 fi

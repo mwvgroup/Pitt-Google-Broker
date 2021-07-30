@@ -1,6 +1,6 @@
 {
-  "name": "projects/591409139500/dashboards/broker-instance-testid",
-  "displayName": "Broker Instance - testid",
+  "name": "projects/591409139500/dashboards/broker-instance-surveyname-testid",
+  "displayName": "Broker Instance  |  survey: surveyname  |  test ID: testid",
   "mosaicLayout": {
     "columns": 12,
     "tiles": [
@@ -9,7 +9,7 @@
         "width": 10,
         "height": 1,
         "widget": {
-          "title": "Broker Instance - testid",
+          "title": "Broker Instance  |  survey: surveyname  |  test ID: testid",
           "text": {
             "format": "RAW"
           }
@@ -27,7 +27,7 @@
               {
                 "timeSeriesQuery": {
                   "timeSeriesFilter": {
-                    "filter": "metric.type=\"dataflow.googleapis.com/job/system_lag\" resource.type=\"dataflow_job\" resource.label.\"job_name\"=monitoring.regex.full_match(\"(bq-sink|value-added)\")",
+                    "filter": "metric.type=\"dataflow.googleapis.com/job/system_lag\" resource.type=\"dataflow_job\" resource.label.\"job_name\"=monitoring.regex.full_match(\"(ztf-bq-sink|ztf-value-added)\")",
                     "aggregation": {
                       "alignmentPeriod": "60s",
                       "perSeriesAligner": "ALIGN_MAX",
@@ -65,7 +65,7 @@
               {
                 "timeSeriesQuery": {
                   "timeSeriesFilter": {
-                    "filter": "metric.type=\"dataflow.googleapis.com/job/data_watermark_age\" resource.type=\"dataflow_job\" resource.label.\"job_name\"=monitoring.regex.full_match(\"(bq-sink|value-added)\")",
+                    "filter": "metric.type=\"dataflow.googleapis.com/job/data_watermark_age\" resource.type=\"dataflow_job\" resource.label.\"job_name\"=monitoring.regex.full_match(\"(ztf-bq-sink|ztf-value-added)\")",
                     "aggregation": {
                       "alignmentPeriod": "60s",
                       "perSeriesAligner": "ALIGN_MAX",
@@ -97,13 +97,13 @@
         "width": 6,
         "height": 3,
         "widget": {
-          "title": "Write: ztf_alerts (Consumer)",
+          "title": "Write: ztf-alerts (Consumer)",
           "xyChart": {
             "dataSets": [
               {
                 "timeSeriesQuery": {
                   "timeSeriesFilter": {
-                    "filter": "metric.type=\"pubsub.googleapis.com/subscription/num_undelivered_messages\" resource.type=\"pubsub_subscription\" resource.label.\"subscription_id\"=\"ztf_alerts-counter\"",
+                    "filter": "metric.type=\"pubsub.googleapis.com/subscription/num_undelivered_messages\" resource.type=\"pubsub_subscription\" resource.label.\"subscription_id\"=\"ztf-alerts-counter\"",
                     "aggregation": {
                       "alignmentPeriod": "60s",
                       "perSeriesAligner": "ALIGN_MEAN"
@@ -138,7 +138,7 @@
               {
                 "timeSeriesQuery": {
                   "timeSeriesFilter": {
-                    "filter": "metric.type=\"pubsub.googleapis.com/subscription/num_undelivered_messages\" resource.type=\"pubsub_subscription\" resource.label.\"subscription_id\"=monitoring.regex.full_match(\"ztf_exgalac_trans-counter|ztf_salt2-counter\")",
+                    "filter": "metric.type=\"pubsub.googleapis.com/subscription/num_undelivered_messages\" resource.type=\"pubsub_subscription\" resource.label.\"subscription_id\"=monitoring.regex.full_match(\"ztf-alerts_pure-counter|ztf-exgalac_trans-counter|ztf-salt2-counter\")",
                     "aggregation": {
                       "alignmentPeriod": "60s",
                       "perSeriesAligner": "ALIGN_MEAN"
@@ -219,13 +219,13 @@
         "width": 6,
         "height": 3,
         "widget": {
-          "title": "Write: ztf_alerts (Consumer)",
+          "title": "Write: ztf-alerts (Consumer)",
           "xyChart": {
             "dataSets": [
               {
                 "timeSeriesQuery": {
                   "timeSeriesFilter": {
-                    "filter": "metric.type=\"pubsub.googleapis.com/topic/send_message_operation_count\" resource.type=\"pubsub_topic\" resource.label.\"topic_id\"=\"ztf_alerts\"",
+                    "filter": "metric.type=\"pubsub.googleapis.com/topic/send_message_operation_count\" resource.type=\"pubsub_topic\" resource.label.\"topic_id\"=\"ztf-alerts\"",
                     "aggregation": {
                       "alignmentPeriod": "60s",
                       "perSeriesAligner": "ALIGN_RATE"
@@ -263,7 +263,7 @@
               {
                 "timeSeriesQuery": {
                   "timeSeriesFilter": {
-                    "filter": "metric.type=\"dataflow.googleapis.com/job/current_num_vcpus\" resource.type=\"dataflow_job\" resource.label.\"job_name\"=monitoring.regex.full_match(\"(bq-sink|value-added)\")",
+                    "filter": "metric.type=\"dataflow.googleapis.com/job/current_num_vcpus\" resource.type=\"dataflow_job\" resource.label.\"job_name\"=monitoring.regex.full_match(\"(ztf-bq-sink|ztf-value-added)\")",
                     "aggregation": {
                       "alignmentPeriod": "60s",
                       "perSeriesAligner": "ALIGN_MAX"
@@ -291,13 +291,13 @@
         "width": 6,
         "height": 3,
         "widget": {
-          "title": "Read: ztf_alerts (Dataflow)",
+          "title": "Read: ztf-alerts (Dataflow)",
           "xyChart": {
             "dataSets": [
               {
                 "timeSeriesQuery": {
                   "timeSeriesFilter": {
-                    "filter": "metric.type=\"dataflow.googleapis.com/job/element_count\" resource.type=\"dataflow_job\" metric.label.\"pcollection\"=\"ReadFromPubSub/Read.out0\" resource.label.\"job_name\"=monitoring.regex.full_match(\"(bq-sink|value-added)\")",
+                    "filter": "metric.type=\"dataflow.googleapis.com/job/element_count\" resource.type=\"dataflow_job\" metric.label.\"pcollection\"=\"ReadFromPubSub/Read.out0\" resource.label.\"job_name\"=monitoring.regex.full_match(\"(ztf-bq-sink|ztf-value-added)\")",
                     "aggregation": {
                       "alignmentPeriod": "60s",
                       "perSeriesAligner": "ALIGN_MAX",
@@ -309,7 +309,7 @@
                   }
                 },
                 "plotType": "LINE",
-                "legendTemplate": "${resource.labels.job_name} (read ztf_alerts)",
+                "legendTemplate": "${resource.labels.job_name} (read ztf-alerts)",
                 "minAlignmentPeriod": "60s"
               }
             ],
@@ -352,13 +352,13 @@
         "width": 6,
         "height": 3,
         "widget": {
-          "title": "Read: ztf_alerts (Dataflow)",
+          "title": "Read: ztf-alerts (Dataflow)",
           "xyChart": {
             "dataSets": [
               {
                 "timeSeriesQuery": {
                   "timeSeriesFilter": {
-                    "filter": "metric.type=\"dataflow.googleapis.com/job/elements_produced_count\" resource.type=\"dataflow_job\" metric.label.\"ptransform\"=\"ReadFromPubSub/Read\" resource.label.\"job_name\"=monitoring.regex.full_match(\"(bq-sink|value-added)\")",
+                    "filter": "metric.type=\"dataflow.googleapis.com/job/elements_produced_count\" resource.type=\"dataflow_job\" metric.label.\"ptransform\"=\"ReadFromPubSub/Read\" resource.label.\"job_name\"=monitoring.regex.full_match(\"(ztf-bq-sink|ztf-value-added)\")",
                     "aggregation": {
                       "alignmentPeriod": "60s",
                       "perSeriesAligner": "ALIGN_RATE"
@@ -374,7 +374,7 @@
                   }
                 },
                 "plotType": "LINE",
-                "legendTemplate": "${resource.labels.job_name} (read ztf_alerts)",
+                "legendTemplate": "${resource.labels.job_name} (read ztf-alerts)",
                 "minAlignmentPeriod": "60s"
               }
             ],
@@ -395,13 +395,13 @@
         "width": 6,
         "height": 3,
         "widget": {
-          "title": "Write: ztf_alert_avros (Storage bucket)",
+          "title": "Write: ztf-alert_avros (Storage bucket)",
           "xyChart": {
             "dataSets": [
               {
                 "timeSeriesQuery": {
                   "timeSeriesFilter": {
-                    "filter": "metric.type=\"pubsub.googleapis.com/subscription/num_undelivered_messages\" resource.type=\"pubsub_subscription\" resource.label.\"subscription_id\"=\"ztf_alert_avros-counter\"",
+                    "filter": "metric.type=\"pubsub.googleapis.com/subscription/num_undelivered_messages\" resource.type=\"pubsub_subscription\" resource.label.\"subscription_id\"=\"ztf-alert_avros-counter\"",
                     "aggregation": {
                       "alignmentPeriod": "60s",
                       "perSeriesAligner": "ALIGN_MEAN"
@@ -435,7 +435,7 @@
               {
                 "timeSeriesQuery": {
                   "timeSeriesFilter": {
-                    "filter": "metric.type=\"pubsub.googleapis.com/topic/send_message_operation_count\" resource.type=\"pubsub_topic\" resource.label.\"topic_id\"=monitoring.regex.full_match(\"ztf_exgalac_trans|ztf_salt2\")",
+                    "filter": "metric.type=\"pubsub.googleapis.com/topic/send_message_operation_count\" resource.type=\"pubsub_topic\" resource.label.\"topic_id\"=monitoring.regex.full_match(\"ztf-alerts_pure|ztf-exgalac_trans|ztf-salt2\")",
                     "aggregation": {
                       "alignmentPeriod": "60s",
                       "perSeriesAligner": "ALIGN_RATE"
@@ -467,13 +467,13 @@
         "width": 6,
         "height": 3,
         "widget": {
-          "title": "Write: ztf_alert_avros (Storage bucket)",
+          "title": "Write: ztf-alert_avros (Storage bucket)",
           "xyChart": {
             "dataSets": [
               {
                 "timeSeriesQuery": {
                   "timeSeriesFilter": {
-                    "filter": "metric.type=\"pubsub.googleapis.com/topic/send_message_operation_count\" resource.type=\"pubsub_topic\" resource.label.\"topic_id\"=\"ztf_alert_avros\"",
+                    "filter": "metric.type=\"pubsub.googleapis.com/topic/send_message_operation_count\" resource.type=\"pubsub_topic\" resource.label.\"topic_id\"=\"ztf-alert_avros\"",
                     "aggregation": {
                       "alignmentPeriod": "60s",
                       "perSeriesAligner": "ALIGN_RATE"
@@ -546,7 +546,7 @@
               {
                 "timeSeriesQuery": {
                   "timeSeriesFilter": {
-                    "filter": "metric.type=\"compute.googleapis.com/instance/cpu/utilization\" resource.type=\"gce_instance\" metric.label.\"instance_name\"=monitoring.regex.full_match(\"night-conductor|ztf-consumer\")",
+                    "filter": "metric.type=\"compute.googleapis.com/instance/cpu/utilization\" resource.type=\"gce_instance\" metric.label.\"instance_name\"=monitoring.regex.full_match(\"ztf-night-conductor|ztf-consumer\")",
                     "aggregation": {
                       "alignmentPeriod": "60s",
                       "perSeriesAligner": "ALIGN_MEAN"
@@ -585,11 +585,11 @@
         "width": 6,
         "height": 2,
         "widget": {
-          "title": "night-conductor CPU utilization [MEAN]",
+          "title": "ztf-night-conductor CPU utilization [MEAN]",
           "scorecard": {
             "timeSeriesQuery": {
               "timeSeriesFilter": {
-                "filter": "metric.type=\"compute.googleapis.com/instance/cpu/utilization\" resource.type=\"gce_instance\" metric.label.\"instance_name\"=\"night-conductor\"",
+                "filter": "metric.type=\"compute.googleapis.com/instance/cpu/utilization\" resource.type=\"gce_instance\" metric.label.\"instance_name\"=\"ztf-night-conductor\"",
                 "aggregation": {
                   "alignmentPeriod": "60s",
                   "perSeriesAligner": "ALIGN_MEAN",
