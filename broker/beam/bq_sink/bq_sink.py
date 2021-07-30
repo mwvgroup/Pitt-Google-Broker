@@ -48,6 +48,8 @@ def sink_configs(PROJECTID, SURVEY):
             },
     }
 
+    # decat pipeline currently produces a large number of errors and
+    # does not drain properly. try dropping problem alerts.
     if SURVEY == 'decat':
         sink_configs['BQ_generic']['insert_retry_strategy'] = RetryStrategy.RETRY_NEVER
 
