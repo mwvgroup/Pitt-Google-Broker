@@ -8,7 +8,6 @@ The Pitt-Google broker is an astronomical alert broker that is being developed f
 We currently process and serve the [Zwicky Transient Facility](https://www.ztf.caltech.edu/)'s (ZTF) nightly alert stream.
 The broker runs on the [Google Cloud Platform](https://cloud.google.com) (GCP).
 
-
 ## Documentation
 
 Full documentation at [pitt-broker.readthedocs.io](https://pitt-broker.readthedocs.io/).
@@ -20,3 +19,5 @@ Some docs of note:
 - Broker Software:
     - [Broker Software Overview](https://pitt-broker.readthedocs.io/en/latest/broker-design/broker-overview.html)
     - [Workflow: Run/Develop/Test a Broker Instance](https://pitt-broker.readthedocs.io/en/latest/run-a-broker-instance/test-an-instance.html)
+
+If you run into issues or need assistance, please [open an Issue](https://github.com/mwvgroup/Pitt-Google-Broker/issues).
