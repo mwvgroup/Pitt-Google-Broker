@@ -17,7 +17,7 @@ The Pitt-Google Broker runs on the `Google Cloud Platform <https://cloud.google.
 
 .. toctree::
    :hidden:
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Access Data
 
    access-data/overview
@@ -54,7 +54,16 @@ The Pitt-Google Broker runs on the `Google Cloud Platform <https://cloud.google.
    primers-for-developers/beam-dataflow-primer
    primers-for-developers/kafka-console-connect
 
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+   :caption: API Reference
 
+   api/pgb-utils/beam
+   api/pgb-utils/bigquery
+   api/pgb-utils/figures
+   api/pgb-utils/pubsub
+   api/pgb-utils/utils
 
 
 ..
