@@ -1,11 +1,10 @@
 Broker Instance Keywords
 ========================
 
--  `Keywords <#keywords>`__
+-  `Keywords`_
 
-   -  `Resource Names <#resource-names>`__
-   -  `Production vs Testing
-      Instances <#production-vs-testing-instances>`__
+   -  `Resource Names`_
+   -  `Production vs Testing Instances`_
 
 --------------
 
@@ -39,8 +38,8 @@ Resource Names
 ~~~~~~~~~~~~~~
 
 All resources have a **name stub** that we use to generically identify
-the resource, independent of the particular broker instance. See `Broker
-Overview <broker-overview.md>`__ for a list. For example, the name stub
+the resource, independent of the particular broker instance. See
+:doc:`broker-overview` for a list. For example, the name stub
 of the consumer VM is ``consumer``. The names of resources belonging to
 a given broker instance will have the survey prepended and the testid
 appended (unless the testid is ``False``, in which case it is omitted).
@@ -66,5 +65,3 @@ Production vs Testing Instances
 
 -  "Testing" instances refer to all brokers that are not production
    instances.
-
-

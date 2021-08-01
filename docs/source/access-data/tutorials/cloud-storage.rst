@@ -1,30 +1,30 @@
 Cloud File Storage
 ==================
 
--  `Prerequisites <#prerequisites>`__
--  `File names <#file-names>`__
--  `Python <#python>`__
--  `Command line <#command-line>`__
+-  `Prerequisites`_
+-  `File names`_
+-  `Python`_
+-  `Command line`_
 
 This tutorial covers downloading and working with files from our Cloud
 Storage buckets via two methods: the pgb-utils Python package, and the
 gsutil CLI.
 
-For more information, see: - `Google Cloud Storage Client Python
-documentation <https://googleapis.dev/python/storage/latest/client.html>`__
-- `gsutil overview <https://cloud.google.com/storage/docs/gsutil>`__
+For more information, see:
+
+-   `Google Cloud Storage Client Python
+    documentation <https://googleapis.dev/python/storage/latest/client.html>`__
+-   `gsutil overview <https://cloud.google.com/storage/docs/gsutil>`__
 
 Prerequisites
 -------------
 
-1. Complete the `Initial Setup <initial-setup.md>`__. Be sure to:
+1. Complete the :doc:`initial-setup`. Be sure to:
 
    -  set your environment variables
    -  enable the Cloud Storage API
-   -  install the google-cloud-bigquery package if you want to use
-      Python
-   -  install the pgb-utils package if you want to plot the data using
-      Python
+   -  install the google-cloud-bigquery package if you want to use Python
+   -  install the pgb-utils package if you want to plot the data using Python
    -  install the CLI if you want to use the command line
 
 File names
@@ -118,10 +118,11 @@ Plot everything together
 Command line
 ------------
 
-See also: - `Quickstart: Using the gsutil
-tool <https://cloud.google.com/storage/docs/quickstart-gsutil>`__ -
-```gsutil cp`` - Copy files and
-objects <https://cloud.google.com/storage/docs/gsutil/commands/cp>`__
+See also:
+
+-   `Quickstart: Using the gsutil
+    tool <https://cloud.google.com/storage/docs/quickstart-gsutil>`__
+-   `gsutil cp <https://cloud.google.com/storage/docs/gsutil/commands/cp>`__
 
 Get help
 
@@ -142,4 +143,3 @@ Download a single file
     avro_bucket="${pgb_project_id}-ztf-alert_avros"
 
     gsutil cp "gs://${avro_bucket}/${file_name}" ${local_dir}/.
-

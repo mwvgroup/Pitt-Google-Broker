@@ -1,12 +1,12 @@
 Broker Software Overview
 ========================
 
--  `Broker Components <#broker-components>`__
+-  `Broker Components`_
 
-   -  `Details and Name Stubs <#details-and-name-stubs>`__
+   -  `Details and Name Stubs`_
 
--  `Broker Files <#broker-files>`__
--  ```broker_utils`` Package <#broker_utils-package>`__
+-  `Broker Files`_
+-  `broker_utils Python package`_
 
 --------------
 
@@ -21,8 +21,7 @@ Storage and/or BigQuery, and publish to dedicated Pub/Sub topics. The
 **night conductor** (5) orchestrates the broker, starting up resources
 and jobs at night and shutting them down in the morning.
 
-To view the resources, see `View and Access
-Resources <../run-a-broker-instance/view-resources.md>`__.
+To view the resources, see :doc:`../run-a-broker-instance/view-resources`.
 
 Details and Name Stubs
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -33,8 +32,7 @@ prepended, and the testid keyword appended. The character ``-``
 separates the stub from the keywords (unless it is restricted by GCP
 naming rules, in which case ``_`` is used). For example, a broker
 instance set up with ``survey=ztf`` and ``testid=mytestid`` will have a
-consumer VM named ``ztf-consumer-mytestid``. See `Broker Instance
-Keywords <broker-instance-keywords.md>`__ for details. Note that Cloud
+consumer VM named ``ztf-consumer-mytestid``. See :doc:`broker-instance-keywords` for details. Note that Cloud
 Storage buckets also have the project ID prepended, for uniqueness
 across GCP.
 
@@ -43,7 +41,7 @@ across GCP.
    -  **Compute Engine VM** [``consumer``\ ]
 
       -  **Runs** the Kafka plugin
-         ```CloudPubSubConnector`` <https://github.com/GoogleCloudPlatform/pubsub/tree/master/kafka-connector>`__
+         `CloudPubSubConnector <https://github.com/GoogleCloudPlatform/pubsub/tree/master/kafka-connector>`__
       -  **Publishes to** Pub/Sub topic [``alerts``\ ]
 
 2. **Avro File Storage** (alert -> fix schema if needed -> Cloud Storage
@@ -112,14 +110,13 @@ update most components of the broker by simply replacing the relevant
 files in the bucket, which is particularly useful for development and
 testing.
 
-See `View and Access
-Resources <../run-a-broker-instance/view-resources.md>`__ to find the
+See :doc:`../run-a-broker-instance/view-resources` to find the
 ``broker_files`` bucket.
 
 --------------
 
-``broker_utils`` Package
-------------------------
+broker_utils Python package
+-----------------------------
 
 The ``broker_utils`` Python package contains tools used throughout the
 broker, and tools useful for broker development and testing. Of
@@ -134,12 +131,15 @@ To import:
 
 ``import broker_utils``
 
-Includes the following modules: 1) ``beam_transforms``: custom
-transforms used in Beam jobs 2) ``consumer_simulator``: tool to pull
-alerts from a Pub/Sub "reservoir" and publish them to the ``alerts``
-topic 3) ``data_utils``: generally useful functions for dealing with the
-data (``alert_avro_to_dict()``, ``mag_to_flux()``, etc.) 4)
-``gcp_utils``: common interactions with GCP (download a file from Cloud
-Storage, load a row to BigQuery) 5) ``schema_maps``: retrieve a schema
-map from Cloud Storage, used to translate field names of a particular
-survey into generic names used in the broker
+Includes the following modules:
+
+1)  ``beam_transforms``: custom transforms used in Beam jobs
+2)  ``consumer_simulator``: tool to pull alerts from a
+    Pub/Sub "reservoir" and publish them to the ``alerts`` topic
+3)  ``data_utils``: generally useful functions for dealing with the
+    data (``alert_avro_to_dict()``, ``mag_to_flux()``, etc.)
+4)  ``gcp_utils``: common interactions with GCP (download a file from Cloud
+    Storage, load a row to BigQuery)
+5)  ``schema_maps``: retrieve a schema
+    map from Cloud Storage, used to translate field names of a particular
+    survey into generic names used in the broker

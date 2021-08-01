@@ -1,8 +1,8 @@
 Initial Setup of Google Cloud and a Local Environment
 =====================================================
 
--  `Create a GCP Project <#create-a-gcp-project>`__
--  `Setup Local Environment <#setup-local-environment>`__
+-  `Create a GCP Project`_
+-  `Setup Local Environment`_
 
 Create a GCP Project
 --------------------
@@ -38,15 +38,15 @@ code in the ``broker`` package. You can *develop* the code and/or
 environment as follows:
 
 1. **Install Google Cloud SDK command-line tools** using one of the
-   following options. Included tools: ``gcloud``, ``gsutil``, and
-   ``bq``. Version 323.0.0 or above is recommended.
+   following options. Included tools: gcloud, gsutil, and
+   bq. Version 323.0.0 or above is recommended.
 
    -  `install from the command
       line <https://cloud.google.com/sdk/docs/downloads-interactive>`__
    -  `download the
       package <https://cloud.google.com/sdk/docs/install>`__
 
-1b. You may need to authenticate ``gcloud`` using the code below. You
+1b. You may need to authenticate gcloud using the code below. You
 may be asked to re-authenticate occasionally in the future.
 
 .. code:: bash
@@ -138,4 +138,3 @@ variables as follows:
     buckets = list(storage_client.list_buckets())
     # If the request succeeded, your authentication works
     print(buckets)  # this list will be empty if you haven't created any buckets yet
-

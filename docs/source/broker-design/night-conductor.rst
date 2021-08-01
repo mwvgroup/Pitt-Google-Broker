@@ -1,17 +1,17 @@
 Night Conductor
 ===============
 
--  `What Does Night Conductor Do? <night-conductor.md>`__
+-  `What Does Night Conductor Do?`_
 
-   -  `Start Night <#start-night>`__
-   -  `End Night <#end-night>`__
+   -  `Start Night`_
+   -  `End Night`_
 
--  `Where to look if there's a
-   problem <#where-to-look-if-theres-a-problem>`__
+-  `Where to look if there's a problem`_
 
-See also - `Auto-scheduler <auto-scheduler.md>`__ - `**Workflow**:
-Testing a Broker
-Instance <../run-a-broker-instance/test-an-instance.md>`__
+See also
+
+-   :doc:`auto-scheduler`
+-   :doc:`../run-a-broker-instance/test-an-instance`
 
 What Does Night Conductor Do?
 -----------------------------
@@ -19,22 +19,24 @@ What Does Night Conductor Do?
 The night conductor VM starts and ends the night by orchestrating the
 startup and shutdown of the resources associated with its broker
 instance. It gets the appropriate survey and testid
-`keywords <broker-instance-keywords.md>`__ by parsing its own name. Upon
+:doc:`keywords <broker-instance-keywords>` by parsing its own name. Upon
 startup, it runs the set of scripts in the ``night_conductor`` directory
 of the instance's ``broker_files`` bucket, beginning with
 ``vm_startup.sh``.
 
 To control the behavior, we pass arguments by setting **metadata
 attributes** on the VM, prior to starting it up (see below for code
-sample). These attributes include: - ``NIGHT``: ``START`` or ``END``.
-See below. - ``KAFKA_TOPIC``: a `valid
-topic <../run-a-broker-instance/run-broker.md#kafka-topic-syntax>`__ or
-``NONE``. If ``NONE``, night conductor will not start the consumer VM;
-use this if (e.g.,) you want to use the `consumer
-simulator <../run-a-broker-instance/consumer-simulator.md>`__.
-Otherwise, night conductor will set ``KAFKA_TOPIC`` as a metadata
-attribute on the consumer VM and start it. This attribute has no effect
-if ``NIGHT=END``.
+sample). These attributes include:
+
+- ``NIGHT``: ``START`` or ``END``. See below.
+- ``KAFKA_TOPIC``: a
+  :ref:`valid topic <run-a-broker-instance/run-broker:kafka topic syntax>` or
+  ``NONE``. If ``NONE``, night conductor will not start the consumer VM;
+  use this if (e.g.,) you want to use the
+  :doc:`../run-a-broker-instance/consumer-simulator`.
+  Otherwise, night conductor will set ``KAFKA_TOPIC`` as a metadata
+  attribute on the consumer VM and start it. This attribute has no effect
+  if ``NIGHT=END``.
 
 After completing its scripts, night conductor clears the metadata
 attributes (so no unexpected behavior occurs on the next startup) and
@@ -58,8 +60,7 @@ Example: Manually set metadata attributes and start the VM.
 Start Night
 ~~~~~~~~~~~
 
-See also: - `Start the
-Broker <../run-a-broker-instance.md#start-the-broker>`__
+See also: :ref:`run-a-broker-instance/run-broker:start the broker`
 
 If the metadata attribute ``NIGHT=START``, night conductor runs the
 script ``start_night.sh``. It does the following:
@@ -74,8 +75,7 @@ script ``start_night.sh``. It does the following:
 End Night
 ~~~~~~~~~
 
-See also: - `Stop the
-Broker <../run-a-broker-instance.md#stop-the-broker>`__
+See also: :ref:`run-a-broker-instance/run-broker:stop the broker`
 
 If the metadata attribute ``NIGHT=END``, night conductor runs the script
 ``end_night.sh``. It does the following:
@@ -87,24 +87,23 @@ If the metadata attribute ``NIGHT=END``, night conductor runs the script
 3. Resets the Pub/Sub counters. These are subscriptions that the broker
    uses to count the number of elements received and processed each
    night (see the instance
-   `Dashboard <view-resources.md#dashboards>`__). They have name stubs
+   :ref:`Dashboard <run-a-broker-instance/view-resources:dashboards>`). They have name stubs
    like ``<topic_name>-counter``.
 
 Where to look if there's a problem
 ----------------------------------
 
-See `View and Access
-Resources <../run-a-broker-instance/view-resources.md>`__ for details
+See :doc:`../run-a-broker-instance/view-resources` for details
 like where to view logs, how to ssh into a VM, and where to view
 Dataflow jobs on the GCP Console.
 
 **Auto-scheduler's Logs**
 
 All broker instances share the following logs, which are a good starting
-point: -
-`check-cue-response-cloudfnc <https://cloudlogging.app.goo.gl/525hswivBiZfZQEUA>`__
--
-`cue-night-conductor-cloudfnc <https://cloudlogging.app.goo.gl/7Uz92PiZLFF5zfNd8>`__
+point:
+
+- `check-cue-response-cloudfnc <https://cloudlogging.app.goo.gl/525hswivBiZfZQEUA>`__
+- `cue-night-conductor-cloudfnc <https://cloudlogging.app.goo.gl/7Uz92PiZLFF5zfNd8>`__
 
 (If you started/stopped the broker manually by sending a Pub/Sub message
 to the auto-scheduler's topic you have hijacked its process... this is a
@@ -114,11 +113,12 @@ reported to the links above.)
 **Night Conductor's Logs**
 
 Compare night conductor's logs with the scripts it runs. You probably
-want to start with: - vm\_startup.sh at the code path
-broker/night\_conductor/vm\_startup.sh - start\_night.sh at the code
-path broker/night\_conductor/start\_night/start\_night.sh -
-end\_night.sh at the code path
-broker/night\_conductor/end\_night/end\_night.sh
+want to start with:
+
+- vm\_startup.sh at the code path broker/night\_conductor/vm\_startup.sh
+- start\_night.sh at the code path
+  broker/night\_conductor/start\_night/start\_night.sh
+- end\_night.sh at the code path broker/night\_conductor/end\_night/end\_night.sh
 
 Remember that the actual scripts used by night conductor are stored in
 its ``broker_files`` bucket. Fresh copies are downloaded to the VM prior

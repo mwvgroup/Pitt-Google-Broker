@@ -2,29 +2,27 @@ Consumer Simulator
 ==================
 
 The consumer simulator is a Python module that pulls
-alerts\ `\* <#notes>`__ from a Pub/Sub subscription and republishes them
-to a topic. By publishing to your broker instance's ``alerts`` topic you
+alerts :ref:`\* <consumersimnotes>` from a Pub/Sub subscription and republishes them
+to a topic. By publishing to your broker instance's "alerts" topic you
 can bypass the consumer and feed alerts into your instance at a
 controlled rate. This is the only way to control the flow of incoming
 alerts and is especially useful in testing.
 
--  `Install <#install>`__
--  `Code Examples <#code-examples>`__
--  `Arguments and Options <#arguments-and-options>`__
--  `How Does the Consumer Simulator
-   Work? <#how-does-the-consumer-simulator-work>`__
+-  `Install`_
+-  `Code Examples`_
+-  `Arguments and Options`_
+-  `How Does the Consumer Simulator Work?`_
 
-   -  `Reservoir Subscriptions <#reservoir-subscriptions>`__
+   -  `Reservoir Subscriptions`_
 
-See also: - `**Workflow**: Testing a Broker
-Instance <test-an-instance.md>`__
+See also: :doc:`../run-a-broker-instance/test-an-instance`
 
 --------------
 
 Install
 -------
 
-The consumer simulator is part of the ``pgb-broker-utils`` Python
+The consumer simulator is part of the pgb-broker-utils Python
 package. Install it with:
 
 .. code:: bash
@@ -36,7 +34,7 @@ package. Install it with:
 Code Examples
 -------------
 
-See also: `Arguments and Options <#arguments-and-options>`__
+See also: `Arguments and Options`_
 
 .. code:: python
 
@@ -78,68 +76,68 @@ See also: `Arguments and Options <#arguments-and-options>`__
 Arguments and Options
 ---------------------
 
--  **``alert_rate``**: ``(int, str)`` or ``str``. Required. Desired rate
+-  **alert_rate**: (int, str) or str. Required. Desired rate
    at which to publish alerts.
 
-   -  if ``(int, str)``:
+   -  if (int, str):
 
-      -  ``int`` (1st arg). Number of alerts to be published per unit
+      -  int (1st arg). Number of alerts to be published per unit
          time.
-      -  ``str`` (2nd arg). Rate unit. One of:
+      -  str (2nd arg). Rate unit. One of:
 
-         -  ``once``
-         -  ``perSec``
-         -  ``perMin``
-         -  ``perHr``
-         -  ``perNight`` = per 10 hrs
+         -  once
+         -  perSec
+         -  perMin
+         -  perHr
+         -  perNight = per 10 hrs
 
-   -  if ``str``: One of:
+   -  if str: One of:
 
-      -  ``ztf-active-avg`` = (300000, 'perNight'). The approximate
+      -  ztf-active-avg = (300000, 'perNight'). The approximate
          average rate of an active night from ZTF.
-      -  ``ztf-live-max`` = (200, 'perSec'). The approximate maximum
+      -  ztf-live-max = (200, 'perSec'). The approximate maximum
          incoming rate seen in the live ZTF stream.
 
--  **``instance``**: ``(str, str)`` = ``(survey, testid)``. Optional,
-   default ``None``. Keywords of the broker instance. Used to determine
-   the subscription and topic. If ``None``, both ``sub_id`` and
-   ``topic_id`` must be valid names. If both ``instance`` and
-   ``sub_id``/``topic_id`` are passed, ``sub_id``/``topic_id`` will
+-  **instance**: (str, str) = (survey, testid). Optional,
+   default None. Keywords of the broker instance. Used to determine
+   the subscription and topic. If None, both sub_id and
+   topic_id must be valid names. If both instance and
+   sub_id/topic_id are passed, sub_id/topic_id will
    prevail.
 
--  **``runtime``**: ``(int, str)``. Required unless ``alert_rate`` unit
-   is ``once``. Desired length of time the simulator runs for.
+-  **runtime**: (int, str). Required unless alert_rate unit
+   is once. Desired length of time the simulator runs for.
 
-   -  ``int`` (1st arg). Number of units of time the simulator runs.
-   -  ``str`` (2nd arg). Run time unit. One of:
+   -  int (1st arg). Number of units of time the simulator runs.
+   -  str (2nd arg). Run time unit. One of:
 
-      -  ``sec``
-      -  ``min``
-      -  ``hr``
-      -  ``night`` = 10 hrs
+      -  sec
+      -  min
+      -  hr
+      -  night = 10 hrs
 
--  **``publish_batch_every``**: ``(int, str)``. Optional. Default
-   ``(5,'sec')``. The simulator will sleep for this amount of time
+-  **publish_batch_every**: (int, str). Optional. Default
+   (5,'sec'). The simulator will sleep for this amount of time
    between batches.
 
-   -  ``int`` (1st arg). Number of units of time the simulator sleeps
+   -  int (1st arg). Number of units of time the simulator sleeps
       for.
-   -  ``str`` (2nd arg). Sleep time unit. One of:
+   -  str (2nd arg). Sleep time unit. One of:
 
-      -  ``sec``
+      -  sec
 
--  **``sub_id``**: ``str``. Optional. Name of the Pub/Sub subscription
-   from which to pull alerts. If ``None``, ``instance`` must contain
+-  **sub_id**: str. Optional. Name of the Pub/Sub subscription
+   from which to pull alerts. If None, instance must contain
    valid keywords, and then the production instance reservoir
-   ``{survey}-alerts-reservoir`` will be used.
+   {survey}-alerts-reservoir will be used.
 
--  **``topic_id``**: ``str``. Optional. Name of the Pub/Sub topic to
-   which alerts will be published. If ``None``, ``instance`` must
+-  **topic_id**: str. Optional. Name of the Pub/Sub topic to
+   which alerts will be published. If None, instance must
    contain valid keywords, and then the topic
-   ``{survey}-alerts-{testid}`` will be used.
+   {survey}-alerts-{testid} will be used.
 
--  **``nack``**: ``bool``. Optional. Default ``False``. Whether to
-   "nack" (not acknowledge) the messages. If ``True``, messages are
+-  **nack**: bool. Optional. Default False. Whether to
+   "nack" (not acknowledge) the messages. If True, messages are
    published to the topic, but they are not dropped from the
    subscription and so will be delivered again at an arbitrary time in
    the future.
@@ -157,14 +155,13 @@ How Does the Consumer Simulator Work?
 
 The consumer simulator simply pulls messages from a Pub/Sub subscription
 and republishes them to a Pub/Sub topic at given rate for a given length
-of time. By connecting to a `"reservoir"
-subscription <#reservoir-subscriptions>`__ that contains suitable
+of time. By connecting to a
+:ref:`"reservoir" subscription <run-a-broker-instance/consumer-simulator:Reservoir Subscriptions>` that contains suitable
 alerts, and publishing to your instance's ``alerts`` Pub/Sub topic, you
 can bypass your instance's consumer and control the flow of alerts
 entering your broker.
 
-Many options are available; see `Arguments and
-Options <#arguments-and-options>`__.
+Many options are available; see `Arguments and Options`_.
 
 The simulator publishes alerts in batches, so the input arguments get
 converted to appropriate values. Therefore, the *actual* total number of
@@ -178,7 +175,7 @@ Reservoir Subscriptions
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 Every broker instance has a Pub/Sub subscription with the name stub
-``alerts-reservoir`` that is a subscription to its ``alerts`` topic.
+"alerts-reservoir" that is a subscription to its "alerts" topic.
 Every alert entering the instance ends up in this reservoir where it is
 held until pulled (and acknowledged) or for 7 days, whichever comes
 first.
@@ -190,7 +187,7 @@ of the survey associated with the topic to which it is publishing, since
 it is assumed to contain the largest number of suitable alerts. You can
 check the number of alerts in a reservoir ("unacked message count") by
 viewing the subscription in the GCP Console (see
-`here <view-resources.md#ps>`__).
+:ref:`here <run-a-broker-instance/view-resources:Pub/Sub topics and subscriptions>`).
 
 If you pull from the reservoir of the same instance to which you are
 publishing, you create a *closed loop*. In this way, you can access an
@@ -203,6 +200,8 @@ which tells the subscriber "n"ot to "ack"nowledge the messages, meaning
 they do not get dropped from the reservoir.
 
 --------------
+
+.. _consumersimnotes:
 
 \* The consumer simulator actually does not care what the contents of
 the Pub/Sub messages are. It can be used to pull messages from any

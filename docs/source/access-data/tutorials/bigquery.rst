@@ -1,19 +1,18 @@
 BigQuery Databases
 ==================
 
--  `Prerequisites <#prerequisites>`__
--  `Python <#python>`__
+-  `Prerequisites`_
+-  `Python`_
 
-   -  `Setup and basics <#setup-and-basics>`__
-   -  `Query lightcurves and other
-      history <#query-lightcurves-and-other-history>`__
+   -  `Setup and basics`_
+   -  `Query lightcurves and other history`_
 
-      -  `Plot a lightcurve <#plot-a-lightcurve>`__
+      -  `Plot a lightcurve`_
 
-   -  `Cone search <#cone-search>`__
-   -  `Using ``google.cloud.bigquery`` <#using-google-cloud-bigquery>`__
+   -  `Cone search`_
+   -  `Using google.cloud.bigquery`_
 
--  `Command line <#command-line>`__
+-  `Command line`_
 
 This tutorial covers downloading and working with data from our BigQuery
 databases via two methods: the pgb-utils Python package, and the bq CLI.
@@ -27,7 +26,7 @@ reference <https://cloud.google.com/bigquery/docs/reference/bq-cli-reference>`__
 Prerequisites
 -------------
 
-1. Complete the `Initial Setup <initial-setup.md>`__. Be sure to:
+1. Complete the :doc:`initial-setup`. Be sure to:
 
    -  set your environment variables
    -  enable the BigQuery API
@@ -131,12 +130,10 @@ into memory at once. ``query_objects()`` can return one for you:
     # Option 2: Get a generator that yields a DataFrame for each objectId
 
     iterator = True
-    objects = pgb.bigquery.query_objects(columns,
-                                         objectIds=objectIds,
-                                         iterator=iterator,
-                                         dry_run=dry_run
-                                         )
-                                         # cleaned of duplicates
+    objects = pgb.bigquery.query_objects(
+        columns, objectIds=objectIds, iterator=iterator, dry_run=dry_run
+    )
+    # cleaned of duplicates
 
     for lc_df in objects:
         print(f'\nobjectId: {lc_df.objectId}')  # objectId in metadata
@@ -153,12 +150,10 @@ results:
     # Option 3: Get a single json string with all the results
 
     format = 'json'
-    lcsjson = pgb.bigquery.query_objects(columns,
-                                         objectIds=objectIds,
-                                         format=format,
-                                         dry_run=dry_run
-                                         )
-                                         # cleaned of duplicates
+    lcsjson = pgb.bigquery.query_objects(
+        columns, objectIds=objectIds, format=format, dry_run=dry_run
+    )
+    # cleaned of duplicates
     print(lcsjson)
 
     # read it back in
@@ -171,13 +166,10 @@ results:
 
     format = 'json'
     iterator = True
-    jobj = pgb.bigquery.query_objects(columns,
-                                      objectIds=objectIds,
-                                      format=format,
-                                      iterator=iterator,
-                                      dry_run=dry_run
-                                      )
-                                      # cleaned of duplicates
+    jobj = pgb.bigquery.query_objects(
+        columns, objectIds=objectIds, format=format, iterator=iterator, dry_run=dry_run
+    )
+    # cleaned of duplicates
 
     for lcjson in jobj:
         print(lcjson)
@@ -192,11 +184,9 @@ method.
     # Option 5: Get the `query_job` object
     #           (see the section on using google.cloud.bigquery directly)
 
-    query_job = pgb.bigquery.query_objects(columns,
-                                           objectIds=objectIds,
-                                           format='query_job',
-                                           dry_run=dry_run
-                                           )
+    query_job = pgb.bigquery.query_objects(
+        columns, objectIds=objectIds, format="query_job", dry_run=dry_run
+    )
     # query_job is iterable
     # each element contains the aggregated history for a single objectId
     # Beware: this has not been cleaned of duplicate entries
@@ -237,7 +227,8 @@ Cone search
 
 To perform a cone search, we query for object histories and then check
 whether they are within the cone. ``pgb.bigquery.cone_search()`` is a
-convenience wrapper for this.
+convenience wrapper provided
+for demonstration, but note that it is very inefficient.
 
 First we set the search parameters.
 
@@ -255,58 +246,18 @@ First we set the search parameters.
     # we'll restrict to a handful of objects to reduce runtime, but this is optional
     objectIds = ['ZTF18aczuwfe', 'ZTF18aczvqcr', 'ZTF20acqgklx', 'ZTF18acexdlh']
 
-``cone_search()`` has similar options to ``query_objects()``:
+``cone_search()`` has similar options to ``query_objects()``.
+Here we demonstrate one.
 
 .. code:: python
 
     # Option 1: Get a single df of all objects in the cone
 
-    objects_in_cone = pgb.bigquery.cone_search(center, radius, columns,
-                                               objectIds=objectIds,
-                                               dry_run=dry_run
-                                               )
+    objects_in_cone = pgb.bigquery.cone_search(
+        center, radius, columns, objectIds=objectIds, dry_run=dry_run
+    )
     objects_in_cone.sample(5)
 
-.. code:: python
-
-    # Option 2: Get a single json string of all objects in the cone
-    format = 'json'
-
-    objects_in_cone = pgb.bigquery.cone_search(center, radius, columns,
-                                               objectIds=objectIds,
-                                               format=format,
-                                               dry_run=dry_run
-                                               )
-    objects_in_cone
-
-.. code:: python
-
-    # Option 3: Get a generator that yields dfs of individual objects in the cone
-    iterator = True
-
-    objects_in_cone = pgb.bigquery.cone_search(center, radius, columns,
-                                               objectIds=objectIds,
-                                               iterator=iterator,
-                                               dry_run=dry_run
-                                               )
-    for obj in objects_in_cone:
-        print(f'objectId: {obj.objectId}')  # objectId in metadata
-        print(obj.head())
-
-.. code:: python
-
-    # Get a generator that yields a json string of individual objects in the cone
-    format = 'json'
-    iterator = True
-
-    objects_in_cone = pgb.bigquery.cone_search(center, radius, columns,
-                                               objectIds=objectIds,
-                                               format=format,
-                                               iterator=iterator,
-                                               dry_run=dry_run
-                                               )
-    for obj in objects_in_cone:
-        print(obj)
 
 --------------
 
@@ -318,10 +269,12 @@ with ``google.cloud.bigquery``. Here we demonstrate using these tools
 directly with some basic examples. View the pgb\_utils source code for
 more examples.
 
-Links to more information: - `Query syntax in Standard
-SQL <https://cloud.google.com/bigquery/docs/reference/standard-sql/query-syntax>`__
-- ```google.cloud.bigquery``
-docs <https://googleapis.dev/python/bigquery/latest/index.html>`__
+Links to more information:
+
+-   `Query syntax in Standard
+    SQL <https://cloud.google.com/bigquery/docs/reference/standard-sql/query-syntax>`__
+-   `google.cloud.bigquery
+    docs <https://googleapis.dev/python/bigquery/latest/index.html>`__
 
 Query setup:
 
@@ -410,12 +363,14 @@ Format and view results:
 Command line
 ------------
 
-Links to more information: - `Quickstart using the bq command-line
-tool <https://cloud.google.com/bigquery/docs/quickstarts/quickstart-command-line>`__
-- `Reference of all ``bq`` commands and
-flags <https://cloud.google.com/bigquery/docs/reference/bq-cli-reference>`__
-- `Query syntax in Standard
-SQL <https://cloud.google.com/bigquery/docs/reference/standard-sql/query-syntax>`__
+Links to more information:
+
+-   `Quickstart using the bq command-line
+    tool <https://cloud.google.com/bigquery/docs/quickstarts/quickstart-command-line>`__
+-   `Reference of all bq commands and
+    flags <https://cloud.google.com/bigquery/docs/reference/bq-cli-reference>`__
+-   `Query syntax in Standard
+    SQL <https://cloud.google.com/bigquery/docs/reference/standard-sql/query-syntax>`__
 
 .. code:: bash
 
@@ -461,4 +416,3 @@ SQL <https://cloud.google.com/bigquery/docs/reference/standard-sql/query-syntax>
         ndof>0 and chisq/ndof<2
     LIMIT
         10"
-

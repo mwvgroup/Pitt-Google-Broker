@@ -1,7 +1,7 @@
 Tutorials
 ============
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    tutorials/initial-setup
    tutorials/pubsub

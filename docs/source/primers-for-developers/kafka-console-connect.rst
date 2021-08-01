@@ -1,49 +1,55 @@
-Install Kafka and Run a Consumer (2 Methods)
-============================================
+Install Kafka and Run a Consumer (2 Methods) to Listen to the ZTF Stream
+========================================================================
 
 This document walks through installing Kafka and then connecting to the
-ZTF alert stream via 2 different methods: 1. Console Consumer:
-Command-line consumer (installed with Confluent Platform) that prints
-alert content to ``stdout``; *useful for testing the connection*. 2.
-Kafka Connectors: Plugins that listen to a stream and route the message
-to another service. *Our consumer is a Kafka -> Pub/Sub connector that
-simply passes the bytes through (no data decoding or conversions).*
+ZTF alert stream via 2 different methods:
 
--  `Pre-configured instance <#preconfig-instance>`__
--  `Install Kafka (Confluent Platform) manually <#manual-install>`__
--  `Install Kafka on a Compute Engine instance using the prepackaged,
-   "Google Click to Deploy" stack the Google
-   Marketplace <#gce-marketplace-install>`__ (not recommended)
--  `Console Consumer <#cons-consumer>`__ (useful for testing the
+1. Console Consumer: Command-line consumer (installed with Confluent
+   Platform) that prints alert content to ``stdout``; *useful for
+   testing the connection*.
+2. Kafka Connectors: Plugins that listen to a stream and route the
+   message to another service. *Our consumer is a Kafka -> Pub/Sub
+   connector that simply passes the bytes through (no data decoding or
+   conversions).*
+
+ToC
+===
+
+-  `Pre-configured instance`_
+-  `Install Kafka (Confluent Platform) manually`_
+-  `Console Consumer`_ (useful for testing the
    connection)
 
-   -  `Configure for ZTF access <#config>`__
-   -  `**Run the Kafka Console Consumer** <#run-consumer>`__
+   -  `Configure for ZTF access`_
+   -  `Run the Kafka Console Consumer`_
 
--  `Kafka Connectors <#connectors>`__ (run a consumer and route the
+-  `Kafka Connectors`_ (run a consumer and route the
    messages to another service)
 
-   -  `General Configuration and ZTF Authentication <#config-connect>`__
-   -  `Pub/Sub Connector <#psconnect>`__
+   -  `General Configuration and ZTF Authentication`_
+   -  `Pub/Sub Connector`_
 
-      -  `Install and Configure <#psconnect-config>`__
-      -  `**Run the Pub/Sub Connector** <#psconnect-run>`__
+      -  `Install and Configure`_
+      -  `Run the Pub/Sub Connector`_
 
-   -  `BigQuery Connector <#bqconnect>`__
-      -----------------------------------
+   -  `BigQuery Connector`_
 
- ## Pre-configured instance The example code that follows creates a
-Compute Engine (CE) instance called ``kafka-consumer-test`` and then
-installs and configures both methods to listen to the ZTF stream. (ZTF
-auth files are required, but not provided here.) There is an existing CE
-instance,
-```kafka-consumer`` <https://console.cloud.google.com/compute/instancesDetail/zones/us-central1-a/instances/kafka-consumer?project=ardent-cycling-243415>`__,
-that has been setup following this example. \_You(\*) can log into it
+--------------
+
+Pre-configured instance
+-----------------------
+
+The example code that follows creates a Compute Engine (CE) instance
+called kafka-consumer-test and then installs and configures both
+methods to listen to the ZTF stream. (ZTF auth files are required, but
+not provided here.) There is an existing CE instance,
+`kafka-consumer <https://console.cloud.google.com/compute/instancesDetail/zones/us-central1-a/instances/kafka-consumer?project=ardent-cycling-243415>`__,
+that has been setup following this example. *You(\*) can log into it
 and test or use the methods described here to connect to ZTF without
-having to install or configure anything\_ (see the "Run" sections below;
+having to install or configure anything* (see the "Run" sections below;
 you could also take advantage of the installed software and auth files,
 but create/configure your own *working* directory). It is *not* a
-"production" instance. The python commands to access ``kafka-consumer``
+"production" instance. The python commands to access kafka-consumer
 are:
 
 .. code:: python
@@ -65,28 +71,36 @@ get stuck.
 
 --------------
 
- ## Install Kafka (Confluent Platform) manually `Confluent
+Install Kafka (Confluent Platform) manually
+-------------------------------------------
+
+`Confluent
 Platform <https://docs.confluent.io/1.0/platform.html#what-is-the-confluent-platform>`__
 is a collection of tools (including Kafka) to run and manage data
 streams. In some sense, installing the full platform is overkill
 (listening to a stream requires fewer tools than producing a stream).
-However, it's worth it: 1) This is a (the?) standard way to install
-Kafka, so it becomes easier to follow online examples/tutorials and to
-troubleshoot with ZTF folks; 2) The tasks we need to accomplish (testing
-and running connections) run smoothly using Confluent Platform (the same
-cannot be said of other methods I and we have tried); and 3) It's easy
-to imagine needing some of the other components in the package down the
-road.
+However, it's worth it:
 
-Instruction Links: -
-```gcloud compute instances create`` <https://cloud.google.com/sdk/gcloud/reference/compute/instances/create>`__
-- `How To Install Java with Apt on Debian
-10 <https://www.digitalocean.com/community/tutorials/how-to-install-java-with-apt-on-debian-10>`__
-- `Confluent Platform: Manual Install on Ubuntu and
-Debian <https://docs.confluent.io/platform/current/installation/installing_cp/deb-ubuntu.html>`__
+1) This is a (the?) standard way to install Kafka, so it becomes easier
+   to follow online examples/tutorials and to troubleshoot with ZTF
+   folks;
+2) The tasks we need to accomplish (testing and running connections) run
+   smoothly using Confluent Platform (the same cannot be said of other
+   methods I and we have tried); and
+3) It's easy to imagine needing some of the other components in the
+   package down the road.
 
-See the file at code path broker/consumer/vm\_install.sh for a quick
-list of the commands required for steps 2 and 3.
+Instruction Links:
+
+-  `gcloud compute instances create <https://cloud.google.com/sdk/gcloud/reference/compute/instances/create>`__
+-  `How To Install Java with Apt on Debian
+   10 <https://www.digitalocean.com/community/tutorials/how-to-install-java-with-apt-on-debian-10>`__
+-  `Confluent Platform: Manual Install on Ubuntu and
+   Debian <https://docs.confluent.io/platform/current/installation/installing_cp/deb-ubuntu.html>`__
+
+See the file at code path broker/consumer/vm_install.sh for a quick list of the
+commands required for steps 2 and 3. (this file is used to set up the
+production instance ztf-consumer).
 
 1. (Optional) Create a Compute Engine VM instance (Debian 10):
 
@@ -123,72 +137,27 @@ list of the commands required for steps 2 and 3.
       the Confluent Platform link above.
    -  See links on LHS of the page for RHEL, CentOS, or Docker installs.
 
-.. raw:: html
-
-   <!-- fe Install Confluent Platform manually -->
-
- ## Install Kafka on a Google Compute Engine VM using the prepackaged,
-"Click to Deploy" stack on the Google Marketplace Note: this does *not*
-install Confluent Platform, and so it cannot be used with Confluent Hub
-which manages many of the available `Kafka Connectors <#connectors>`__.
-(The `Pub/Sub connector <#psconnect>`__ that we use is maintained by
-Pub/Sub developers and does *not* require Confluent Hub). Also, it
-installs Kafka to The manual install method (above) is smooth, and is a
-more standard setup. ***For these reasons, I do not recommend this
-"Click to Deploy" method (and the broker does not use it).*** Really,
-this section can probably be deleted.
-
-1. Go to the `Kafka, Click to Deploy stack on Google
-   Marketplace <https://console.cloud.google.com/marketplace/product/click-to-deploy-images/kafka?q=kafka&id=f19a0f63-fc57-47fd-9d94-8d5ca6af935e&project=ardent-cycling-243415&folder=&organizationId=>`__
-2. Click "Launch", fill in VM configuration info
-
-   -  This will spin up a VM and install Kafka, Java, and other
-      necessary packages.
-
-You can view the deployment at `GCP Console:
-Deployments <https://console.cloud.google.com/dm/deployments>`__
-
-Helpful notice from GCP: **"Kafka has been installed into /opt/kafka.
-Here you will find kafka config files and provided scripts.
-Documentation on configuration can be found
-`here <https://www.google.com/url?q=https%3A%2F%2Fkafka.apache.org%2Fdocumentation%2F%23configuration>`__.
-You can also restart the kafka server by running the below command."**
-
-.. code:: bash
-
-    sudo systemctl restart kafka
-
-``ssh`` into the VM from the GCP Console Deployments or VM instances
-pages, or the following:
-
-.. code:: bash
-
-    gcloud beta compute ssh --zone "us-west3-c" "kafka-1-vm" --project "ardent-cycling-243415"
-
-Set ``JAVA_HOME`` env variable following instructions in doc linked in
-previous section.
-
-*[ToDo:] Create an "image" or a "machine image" of this VM and figure
-out how to use it to deploy a new ZTF consumer daily.*
-
-.. raw:: html
-
-   <!-- fe # Install on a Google Compute Engine VM -->
-
 --------------
 
- ## Console Consumer ``kafka-console-consumer.sh`` is a command line
-utility that creates a consumer and prints the messages to the terminal.
-It is useful for testing the connection.
+Console Consumer
+----------------
 
- ### Configure for ZTF access The following instructions are pieced
-together from: - `Kafka Consumer
-Configs <https://kafka.apache.org/documentation/#consumerconfigs>`__ -
-`SASL configuration for Kafka
-Clients <https://docs.confluent.io/3.0.0/kafka/sasl.html#sasl-configuration-for-kafka-clients>`__
-- `Confluent Kafka
-Consumer <https://docs.confluent.io/platform/current/clients/consumer.html>`__
-- info I got from Christopher Phillips over phone/email.
+kafka-console-consumer.sh is a command line utility that creates a
+consumer and prints the messages to the terminal. It is useful for
+testing the connection.
+
+Configure for ZTF access
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following instructions are pieced together from:
+
+-  `Kafka Consumer
+   Configs <https://kafka.apache.org/documentation/#consumerconfigs>`__
+-  `SASL configuration for Kafka
+   Clients <https://docs.confluent.io/3.0.0/kafka/sasl.html#sasl-configuration-for-kafka-clients>`__
+-  `Confluent Kafka
+   Consumer <https://docs.confluent.io/platform/current/clients/consumer.html>`__
+-  info I got from Christopher Phillips over phone/email.
 
 1. Find out where Kafka is installed. On the VM using Marketplace, it is
    in ``/opt/kafka``. On the VM using manual install of Confluent
@@ -196,8 +165,9 @@ Consumer <https://docs.confluent.io/platform/current/clients/consumer.html>`__
 
    -  ``/etc/kafka`` (example properties and config files)
    -  ``/bin`` (e.g., for ``kafka-console-consumer`` and
-      ``confluent-hub``) The following assumes we are on the VM with
-      Confluent Platform.
+      ``confluent-hub``)
+
+The following assumes we are on the VM with Confluent Platform.
 
 2. Create a working directory. In the following I use
    ``/home/ztf_consumer``
@@ -211,30 +181,30 @@ Consumer <https://docs.confluent.io/platform/current/clients/consumer.html>`__
 4. Create ``kafka_client_jaas.conf `` in your working directory
    containing (change the ``keyTab`` path if needed):
 
-   ::
+::
 
-       KafkaClient {
-           com.sun.security.auth.module.Krb5LoginModule required 
-           useKeyTab=true 
-           storeKeyTab=true 
-           debug=true
-           serviceName="kafka" 
-           keyTab="/home/ztf_consumer/pitt-reader.user.keytab" 
-           principal="pitt-reader@KAFKA.SECURE" 
-           useTicketCache=false; 
-       };
+    KafkaClient {
+        com.sun.security.auth.module.Krb5LoginModule required 
+        useKeyTab=true 
+        storeKeyTab=true 
+        debug=true
+        serviceName="kafka" 
+        keyTab="/home/ztf_consumer/pitt-reader.user.keytab" 
+        principal="pitt-reader@KAFKA.SECURE" 
+        useTicketCache=false; 
+    };
 
-   Make sure there are no extra spaces at the ends of the lines, else
-   the connection will not succeed.
+Make sure there are no extra spaces at the ends of the lines, else the
+connection will not succeed.
 
-5. Set an environment variable so Java can find the file we just
+4. Set an environment variable so Java can find the file we just
    created:
 
-   .. code:: bash
+.. code:: bash
 
-       export KAFKA_OPTS="-Djava.security.auth.login.config=/home/ztf_consumer/kafka_client_jaas.conf"
+    export KAFKA_OPTS="-Djava.security.auth.login.config=/home/ztf_consumer/kafka_client_jaas.conf"
 
-6. Setup the Kafka config file ``consumer.properties``. Sample config
+5. Setup the Kafka config file ``consumer.properties``. Sample config
    files are provided with the installation in ``/opt/kafka/config/``
    (Marketplace VM) or ``/etc/kafka/`` on the manual install VM. Create
    a ``consumer.properties`` file in your working directory that
@@ -252,12 +222,10 @@ Consumer <https://docs.confluent.io/platform/current/clients/consumer.html>`__
     sasl.mechanism=GSSAPI
     auto.offset.reset=earliest
 
-.. raw:: html
+Run the Kafka Console Consumer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-   <!-- fe Configure for ZTF access  -->
-
- ### Run the Kafka Console Consumer The following assumes we are using
-the manual install VM.
+The following assumes we are using the manual install VM.
 
 .. code:: bash
 
@@ -277,33 +245,34 @@ After a few moments, if the connection is successful you will see
 encoded alerts printing to ``stdout``. Use ``control-C`` to stop
 consuming.
 
-.. raw:: html
-
-   <!-- fe Run the Kafka Consumer -->
-   <!-- fe Console Consumer -->
-
 --------------
 
- ## Kafka Connectors Kafka connectors run a Kafka consumer and route the
-messages to another service.
+Kafka Connectors
+-----------------
 
- ### General Configuration and ZTF Authentication
+Kafka connectors run a Kafka consumer and route the messages to another
+service.
 
-The following uses instructions at: - `Getting Started with Kafka
-Connect <https://docs.confluent.io/home/connect/userguide.html>`__
+General Configuration and ZTF Authentication
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following uses instructions at:
+
+-  `Getting Started with Kafka
+   Connect <https://docs.confluent.io/home/connect/userguide.html>`__
 
 1. Create a directory to store the connectors (plugins):
 
-   .. code:: bash
+.. code:: bash
 
-       mkdir /usr/local/share/kafka/plugins
+    mkdir /usr/local/share/kafka/plugins
 
 2. To use connectors, the ``.properties`` file called when running the
    consumer/connector must include the following:
 
-   .. code:: bash
+.. code:: bash
 
-       plugin.path=/usr/local/share/kafka/plugins
+    plugin.path=/usr/local/share/kafka/plugins
 
 3. Create a working directory. In the following I use
    ``/home/ztf_consumer``
@@ -314,12 +283,11 @@ Connect <https://docs.confluent.io/home/connect/userguide.html>`__
    2. ``pitt-reader.user.keytab``. I store this in the directory
       ``/home/ztf_consumer``; we need the path for config below.
 
-.. raw:: html
+Pub/Sub Connector
+~~~~~~~~~~~~~~~~~~~~
 
-   <!-- fe Kafka Connectors main -->
-
- ## Pub/Sub Connector We use a Kafka-Pub/Sub connector
-(```kafka-connector`` <https://github.com/GoogleCloudPlatform/pubsub/tree/master/kafka-connector>`__)
+We use a Kafka-Pub/Sub connector
+(`kafka-connector <https://github.com/GoogleCloudPlatform/pubsub/tree/master/kafka-connector>`__)
 that is maintained by Pub/Sub developers. There is another connector
 managed by Confluent
 (`here <https://www.confluent.io/hub/confluentinc/kafka-connect-gcp-pubsub>`__)
@@ -329,27 +297,43 @@ need a Pub/Sub *sink*.
 We pass the alert bytes straight through to Pub/Sub without decoding or
 converting them.
 
- ### Install and Configure The following instructions were pieced
-together from: - Installation: - `Getting Started with Kafka
-Connect <https://docs.confluent.io/home/connect/userguide.html>`__ - the
-``copy_tool.py`` file provided with connector (see the
-`repo <https://github.com/GoogleCloudPlatform/pubsub/tree/master/kafka-connector>`__
-) - Configuration: - Worker configuration: - `Configuring and Running
-Workers <https://docs.confluent.io/home/connect/userguide.html#configuring-and-running-workers>`__
-- `Worker Configuration
-Properties <https://docs.confluent.io/platform/current/connect/references/allconfigs.html>`__
-- `Configuring Key and Value
-Converters <https://docs.confluent.io/home/connect/userguide.html#connect-configuring-converters>`__
-- `Configuring GSSAPI: Kafka
-Connect <https://docs.confluent.io/platform/current/kafka/authentication_sasl/authentication_sasl_gssapi.html#kconnect-long>`__
-- `Consumer
-Overrides <https://docs.confluent.io/home/connect/userguide.html#producer-and-consumer-overrides>`__
-- Connector configuration: - `CloudPubSubConnector Sink Configuration
-Properties <https://github.com/GoogleCloudPlatform/pubsub/tree/master/kafka-connector#sink-connector>`__
-- Example config files, which you can find at: -
-``/etc/kafka/connect-standalone.properties`` -
-``/etc/kafka/connect-distributed.properties`` -
-```cps-sink-connector.properties`` <https://github.com/GoogleCloudPlatform/pubsub/blob/master/kafka-connector/config/cps-sink-connector.properties>`__
+Install and Configure
+.......................
+
+The following instructions were pieced together from:
+
+-  Installation:
+
+   -  `Getting Started with Kafka
+      Connect <https://docs.confluent.io/home/connect/userguide.html>`__
+   -  the ``copy_tool.py`` file provided with connector (see the
+      `repo <https://github.com/GoogleCloudPlatform/pubsub/tree/master/kafka-connector>`__
+      )
+
+-  Configuration:
+
+   -  Worker configuration:
+
+      -  `Configuring and Running
+         Workers <https://docs.confluent.io/home/connect/userguide.html#configuring-and-running-workers>`__
+      -  `Worker Configuration
+         Properties <https://docs.confluent.io/platform/current/connect/references/allconfigs.html>`__
+      -  `Configuring Key and Value
+         Converters <https://docs.confluent.io/home/connect/userguide.html#connect-configuring-converters>`__
+      -  `Configuring GSSAPI: Kafka
+         Connect <https://docs.confluent.io/platform/current/kafka/authentication_sasl/authentication_sasl_gssapi.html#kconnect-long>`__
+      -  `Consumer
+         Overrides <https://docs.confluent.io/home/connect/userguide.html#producer-and-consumer-overrides>`__
+
+   -  Connector configuration:
+
+      -  `CloudPubSubConnector Sink Configuration
+         Properties <https://github.com/GoogleCloudPlatform/pubsub/tree/master/kafka-connector#sink-connector>`__
+      -  Example config files, which you can find at:
+
+         -  ``/etc/kafka/connect-standalone.properties``
+         -  ``/etc/kafka/connect-distributed.properties``
+         -  ``cps-sink-connector.properties`` (`link <https://github.com/GoogleCloudPlatform/pubsub/blob/master/kafka-connector/config/cps-sink-connector.properties>`__)
 
 The connector can be configured to run in "standalone" or "distributed"
 mode. Distributed is recommended for production environments, partly due
@@ -440,11 +424,8 @@ Create a file in your working directory called
     # include Kafka topic, partition, offset, timestamp as msg attributes
     metadata.publish=true
 
-.. raw:: html
-
-   <!-- fe Install and Configure -->
-
- ### Run the Pub/Sub Connector
+Run the Pub/Sub Connector
+...........................
 
 .. code:: bash
 
@@ -466,16 +447,13 @@ messages similar to
     INFO WorkerSinkTask{id=ps-sink-connector-ztf-0} Committing offsets asynchronously using sequence number 3
 
 and messages streaming into the Pub/Sub topic
-```ztf_alert_data-kafka_consumer`` <https://console.cloud.google.com/cloudpubsub/topic/detail/ztf_alert_data-kafka_consumer?project=ardent-cycling-243415>`__.
+`ztf_alert_data-kafka_consumer <https://console.cloud.google.com/cloudpubsub/topic/detail/ztf_alert_data-kafka_consumer?project=ardent-cycling-243415>`__.
 
-.. raw:: html
+BigQuery Connector
+....................
 
-   <!-- fe Run the Pub/Sub Connector -->
-   <!-- fe Pub/Sub Connector -->
-
- ## BigQuery Connector This exists and it is free (some connectors
-require a Confluent Enterprise License), but I haven't actually tried
-it.
+This exists and it is free (some connectors require a Confluent
+Enterprise License), but I haven't actually tried it.
 
 One question that I haven't been able to find the answer to is this: *If
 we run two Kafka connectors, does that create two separate connections
@@ -488,9 +466,3 @@ connections every night.
    Platform <https://docs.confluent.io/kafka-connect-bigquery/current/index.html>`__
 -  `BigQuery Quotas and Limits: Streaming
    Inserts <https://cloud.google.com/bigquery/quotas#streaming_inserts>`__
-
-.. raw:: html
-
-   <!-- fe BigQuery Connector -->
-
-

@@ -1,28 +1,29 @@
 Pub/Sub Streams
 ===============
 
--  `Prerequisites <#prerequisites>`__
--  `Create a subscription <#create-a-subscription>`__
--  `Pull Messages <#pull-messages>`__
+-  `Prerequisites`_
+-  `Create a subscription`_
+-  `Pull Messages`_
 
 This tutorial covers subscribing to our Pub/Sub streams and pulling
 messages. It demonstrates two methods: 1) Python, using the pgb-utils
 package; and 2) the command line, using Google's gcloud CLI.
 
-For more information, see: - `What is
-Pub/Sub? <https://cloud.google.com/pubsub/docs/overview>`__ - `All
-Google APIs and
-references <https://cloud.google.com/pubsub/docs/apis>`__ (there are
-many access methods beyond the two presented in this tutorial) - `Python
-client
-documentation <https://googleapis.dev/python/pubsub/latest/index.html>`__
-(the pgb-utils functions used below are thin wrappers for this API) -
-`gcloud CLI reference <https://cloud.google.com/sdk/gcloud/reference>`__
+For more information, see:
+
+-   `What is Pub/Sub? <https://cloud.google.com/pubsub/docs/overview>`__
+-   `All Google APIs and references
+    <https://cloud.google.com/pubsub/docs/apis>`__ (there are
+    many access methods beyond the two presented in this tutorial)
+-   `Python client documentation
+    <https://googleapis.dev/python/pubsub/latest/index.html>`__
+    (the pgb-utils functions used below are thin wrappers for this API)
+-   `gcloud CLI reference <https://cloud.google.com/sdk/gcloud/reference>`__
 
 Prerequisites
 -------------
 
-1. Complete the `Initial Setup <initial-setup.md>`__. Be sure to:
+1. Complete the :doc:`initial-setup`. Be sure to:
 
    -  set your environment variables
    -  enable the Pub/Sub API
@@ -118,5 +119,3 @@ Pull Messages
            | 'Write results' >> beam.io.WriteToText(beam_outputs_prefix)
        )
    ``` -->
-
-

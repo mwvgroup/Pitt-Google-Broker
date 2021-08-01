@@ -1,15 +1,16 @@
 Auto-scheduler
 ==============
 
--  `Overview <#overview>`__
--  `Cue-response checker <#cue-response-checker>`__ (checks that the
+-  `Overview`_
+-  `Cue-response checker`_ (checks that the
    broker responded appropriately to the auto-scheduler's cue.)
 
-   -  `Alerting policy <#alerting-policy>`__
+   -  `Alerting policy`_
 
-See also: - `Night Conductor <night-conductor.md>`__ - `Where to look if
-there's a
-problem <night-conductor.md#where-to-look-if-theres-a-problem>`__
+See also:
+
+-   :doc:`night-conductor`
+-   :ref:`broker-design/night-conductor:Where to look if there's a problem`
 
 Overview
 --------
@@ -25,8 +26,8 @@ The cron job sends a Pub/Sub message that simply contains the cue:
 appropriate metadata attributes on the night conductor VM and starts it.
 
 (Note that you can start/stop the broker manually at any time by sending
-a message to the auto-scheduler's Pub/Sub topic. See `Run the
-Broker <../run-a-broker-instance/run-broker.md>`__.)
+a message to the auto-scheduler's Pub/Sub topic. See
+:doc:`../run-a-broker-instance/run-broker`.)
 
 Two cron jobs are scheduled, one each to start and end the night. Both
 processes use the same Pub/Sub topic and Cloud Function.
@@ -83,10 +84,11 @@ log. Therefore, a new policy does not need to be created with each new
 broker instance. (Also, recall that the auto-scheduler is typically only
 active in Production instances.)
 
-To update the existing policy, or create a new one, see: - `Managing
-log-based
-alerts <https://cloud.google.com/logging/docs/alerting/log-based-alerts>`__
-- `Managing alerting policies by
-API <https://cloud.google.com/monitoring/alerts/using-alerting-api>`__ -
-`Managing notification
-channels <https://cloud.google.com/monitoring/support/notification-options>`__
+To update the existing policy, or create a new one, see:
+
+-   `Managing log-based alerts
+    <https://cloud.google.com/logging/docs/alerting/log-based-alerts>`__
+-   `Managing alerting policies by API
+    <https://cloud.google.com/monitoring/alerts/using-alerting-api>`__
+-   `Managing notification channels
+    <https://cloud.google.com/monitoring/support/notification-options>`__

@@ -1,3 +1,5 @@
+.. _initial-setup-tutorial:
+
 Initial Setup
 =============
 
@@ -8,18 +10,23 @@ authorizing your use of Google's API. You can then use either
 command-line or Python tools to access our Pub/Sub streams, BigQuery
 databases, and file in Cloud Storage.
 
-This document contains instructions to: 1. Create a new GCP project (and
-delete it when you are done). 2. Create a service account and configure
-authentication on your local (or wherever) machine. 3. Enable the APIs
-on your project and install the command-line and/or Python tools.
+This document contains instructions to:
 
-There are two methods available to accomplish the above: - `Method A:
-Command line <#method-a-command-line>`__. Install the CLI and do
-everything from the command line. - `Method B: GCP
-Console <#method-b-gcp-console>`__. Use the web Console for the GCP
-setup portion.
+1.  Create a new GCP project (and delete it when you are done).
+2.  Create a service account and configure
+    authentication on your local (or wherever) machine.
+3.  Enable the APIs
+    on your project and install the command-line and/or Python tools.
+
+There are two methods available to accomplish the above:
+
+-   :ref:`method-a-command-line`. Install the CLI and do
+    everything from the command line.
+-   :ref:`method-b-gcp-console`. Use the web Console for the GCP setup portion.
 
 This process only needs to be done once per project/local machine.
+
+.. _method-a-command-line:
 
 Method A: Command line
 ----------------------
@@ -110,6 +117,8 @@ line):
 
     # gcloud projects delete $PROJECT_ID
 
+.. _method-b-gcp-console:
+
 Method B: GCP Console
 ---------------------
 
@@ -126,7 +135,6 @@ name and **write down the project ID (B)** for the following code. Click
 .. figure:: gcp-setup.png
    :alt: GCP setup
 
-   GCP setup
 **Step 2**
 
 Follow the instructions at `Creating a service
