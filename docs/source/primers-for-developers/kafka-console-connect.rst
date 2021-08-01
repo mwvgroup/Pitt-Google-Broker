@@ -5,26 +5,21 @@ This document walks through installing Kafka and then connecting to the
 ZTF alert stream via 2 different methods:
 
 1. Console Consumer: Command-line consumer (installed with Confluent
-   Platform) that prints alert content to ``stdout``; *useful for
+   Platform) that prints alert content to stdout; *useful for
    testing the connection*.
 2. Kafka Connectors: Plugins that listen to a stream and route the
    message to another service. *Our consumer is a Kafka -> Pub/Sub
    connector that simply passes the bytes through (no data decoding or
    conversions).*
 
-ToC
-===
-
 -  `Pre-configured instance`_
 -  `Install Kafka (Confluent Platform) manually`_
--  `Console Consumer`_ (useful for testing the
-   connection)
+-  `Console Consumer`_ (useful for testing the connection)
 
    -  `Configure for ZTF access`_
    -  `Run the Kafka Console Consumer`_
 
--  `Kafka Connectors`_ (run a consumer and route the
-   messages to another service)
+-  `Kafka Connectors`_ (run a consumer and route the messages to another service)
 
    -  `General Configuration and ZTF Authentication`_
    -  `Pub/Sub Connector`_
@@ -48,11 +43,11 @@ that has been setup following this example. *You(\*) can log into it
 and test or use the methods described here to connect to ZTF without
 having to install or configure anything* (see the "Run" sections below;
 you could also take advantage of the installed software and auth files,
-but create/configure your own *working* directory). It is *not* a
-"production" instance. The python commands to access kafka-consumer
+but create/configure your own *working* directory). It is not a
+Production instance. The command line commands to access kafka-consumer
 are:
 
-.. code:: python
+.. code:: bash
 
     # first start the instance
     gcloud compute instances start kafka-consumer --zone us-central1-a
@@ -151,66 +146,64 @@ Configure for ZTF access
 
 The following instructions are pieced together from:
 
--  `Kafka Consumer
-   Configs <https://kafka.apache.org/documentation/#consumerconfigs>`__
--  `SASL configuration for Kafka
-   Clients <https://docs.confluent.io/3.0.0/kafka/sasl.html#sasl-configuration-for-kafka-clients>`__
--  `Confluent Kafka
-   Consumer <https://docs.confluent.io/platform/current/clients/consumer.html>`__
--  info I got from Christopher Phillips over phone/email.
+- `Kafka Consumer
+  Configs <https://kafka.apache.org/documentation/#consumerconfigs>`__
+- `SASL configuration for Kafka
+  Clients <https://docs.confluent.io/3.0.0/kafka/sasl.html#sasl-configuration-for-kafka-clients>`__
+- `Confluent Kafka
+  Consumer <https://docs.confluent.io/platform/current/clients/consumer.html>`__
+- info I got from Christopher Phillips over phone/email.
 
 1. Find out where Kafka is installed. On the VM using Marketplace, it is
-   in ``/opt/kafka``. On the VM using manual install of Confluent
+   in /opt/kafka. On the VM using manual install of Confluent
    Platform, components are scattered around a bit; look in:
 
-   -  ``/etc/kafka`` (example properties and config files)
-   -  ``/bin`` (e.g., for ``kafka-console-consumer`` and
-      ``confluent-hub``)
+   - /etc/kafka (example properties and config files)
+   - /bin (e.g., for kafka-console-consumer and confluent-hub)
 
-The following assumes we are on the VM with Confluent Platform.
+   The following assumes we are on the VM with Confluent Platform.
 
 2. Create a working directory. In the following I use
-   ``/home/ztf_consumer``
+   /home/ztf_consumer
 
 3. This requires two authorization files (not provided here):
 
-   1. ``krb5.conf``, which should be at ``/etc/krb5.conf``
-   2. ``pitt-reader.user.keytab``. I store this in the directory
-      ``/home/ztf_consumer``; we need the path for config below.
+   1. krb5.conf, which should be at /etc/krb5.conf
+   2. pitt-reader.user.keytab. I store this in the directory
+      /home/ztf_consumer; we need the path for config below.
 
-4. Create ``kafka_client_jaas.conf `` in your working directory
-   containing (change the ``keyTab`` path if needed):
+4. Create kafka_client_jaas.conf in your working directory
+   containing the following (change the keyTab path if needed):
 
-::
+.. code:: none
 
     KafkaClient {
-        com.sun.security.auth.module.Krb5LoginModule required 
-        useKeyTab=true 
-        storeKeyTab=true 
+        com.sun.security.auth.module.Krb5LoginModule required
+        useKeyTab=true
+        storeKeyTab=true
         debug=true
-        serviceName="kafka" 
-        keyTab="/home/ztf_consumer/pitt-reader.user.keytab" 
-        principal="pitt-reader@KAFKA.SECURE" 
-        useTicketCache=false; 
+        serviceName="kafka"
+        keyTab="/home/ztf_consumer/pitt-reader.user.keytab"
+        principal="pitt-reader@KAFKA.SECURE"
+        useTicketCache=false;
     };
 
 Make sure there are no extra spaces at the ends of the lines, else the
 connection will not succeed.
 
-4. Set an environment variable so Java can find the file we just
-   created:
+5. Set an environment variable so Java can find the file we just created:
 
 .. code:: bash
 
     export KAFKA_OPTS="-Djava.security.auth.login.config=/home/ztf_consumer/kafka_client_jaas.conf"
 
-5. Setup the Kafka config file ``consumer.properties``. Sample config
-   files are provided with the installation in ``/opt/kafka/config/``
-   (Marketplace VM) or ``/etc/kafka/`` on the manual install VM. Create
-   a ``consumer.properties`` file in your working directory that
+6. Setup the Kafka config file consumer.properties. Sample config
+   files are provided with the installation in /opt/kafka/config/
+   (Marketplace VM) or /etc/kafka/ on the manual install VM. Create
+   a consumer.properties file in your working directory that
    contains the following:
 
-.. code:: bash
+.. code:: none
 
     bootstrap.servers=public2.alerts.ztf.uw.edu:9094
     group.id=group
@@ -242,7 +235,7 @@ The following assumes we are using the manual install VM.
     # final argument should point to the consumer.properties file created above
 
 After a few moments, if the connection is successful you will see
-encoded alerts printing to ``stdout``. Use ``control-C`` to stop
+encoded alerts printing to stdout. Use ``control-C`` to stop
 consuming.
 
 --------------
@@ -267,7 +260,7 @@ The following uses instructions at:
 
     mkdir /usr/local/share/kafka/plugins
 
-2. To use connectors, the ``.properties`` file called when running the
+2. To use connectors, the .properties file called when running the
    consumer/connector must include the following:
 
 .. code:: bash
@@ -275,13 +268,13 @@ The following uses instructions at:
     plugin.path=/usr/local/share/kafka/plugins
 
 3. Create a working directory. In the following I use
-   ``/home/ztf_consumer``
+   /home/ztf_consumer
 
 4. Two authorization files are required:
 
-   1. ``krb5.conf``, which should be at ``/etc/krb5.conf``
-   2. ``pitt-reader.user.keytab``. I store this in the directory
-      ``/home/ztf_consumer``; we need the path for config below.
+   1. krb5.conf, which should be at /etc/krb5.conf
+   2. pitt-reader.user.keytab. I store this in the directory
+      /home/ztf_consumer; we need the path for config below.
 
 Pub/Sub Connector
 ~~~~~~~~~~~~~~~~~~~~
@@ -306,7 +299,7 @@ The following instructions were pieced together from:
 
    -  `Getting Started with Kafka
       Connect <https://docs.confluent.io/home/connect/userguide.html>`__
-   -  the ``copy_tool.py`` file provided with connector (see the
+   -  the copy_tool.py file provided with connector (see the
       `repo <https://github.com/GoogleCloudPlatform/pubsub/tree/master/kafka-connector>`__
       )
 
@@ -331,9 +324,10 @@ The following instructions were pieced together from:
          Properties <https://github.com/GoogleCloudPlatform/pubsub/tree/master/kafka-connector#sink-connector>`__
       -  Example config files, which you can find at:
 
-         -  ``/etc/kafka/connect-standalone.properties``
-         -  ``/etc/kafka/connect-distributed.properties``
-         -  ``cps-sink-connector.properties`` (`link <https://github.com/GoogleCloudPlatform/pubsub/blob/master/kafka-connector/config/cps-sink-connector.properties>`__)
+         -  /etc/kafka/connect-standalone.properties
+         -  /etc/kafka/connect-distributed.properties
+         -  cps-sink-connector.properties
+            (`link <https://github.com/GoogleCloudPlatform/pubsub/blob/master/kafka-connector/config/cps-sink-connector.properties>`__)
 
 The connector can be configured to run in "standalone" or "distributed"
 mode. Distributed is recommended for production environments, partly due
@@ -363,10 +357,10 @@ should probably switch at some point):
     # navigate to the working directory created when configuring Kafka for ZTF
     cd /home/ztf_consumer
 
-Create a file called ``psconnect-worker.properties`` containing the
+Create a file called psconnect-worker.properties containing the
 following:
 
-.. code:: bash
+.. code:: none
 
     plugin.path=/usr/local/share/kafka/plugins
     # ByteArrayConverter provides a “pass-through” option that does no conversion
@@ -409,9 +403,9 @@ following:
 **Connector configuration**
 
 Create a file in your working directory called
-``ps-connector.properties`` containing the following:
+ps-connector.properties containing the following:
 
-.. code:: bash
+.. code:: none
 
     name=ps-sink-connector-ztf
     connector.class=com.google.pubsub.kafka.sink.CloudPubSubSinkConnector
