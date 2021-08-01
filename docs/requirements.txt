@@ -1,5 +1,6 @@
 
 # Needed for building docs
+docutils<0.17  # render lists properly
 myst-parser
 sphinx
 # sphinx-copybutton
