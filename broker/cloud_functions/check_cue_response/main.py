@@ -171,11 +171,11 @@ def check_dataflow(cue, metadata):
     else:
         # check that the jobs have stopped and drained
         for job_name, state in job_states.items():
-            if state == 'JOB_STATE_DRAINED':
-                msg = f'{job_name} drained as expected.'
+            if state in ['JOB_STATE_DRAINED', 'JOB_STATE_CANCELLED']:
+                msg = f'{job_name} stopped as expected. {state}'
                 severity = 'INFO'
             else:
-                msg = f'{job_name} should have drained, but its status is {state}.'
+                msg = f'{job_name} should have stopped, but its status is {state}.'
                 severity = 'CRITICAL'
             logger.log_text(msg, severity=severity)
 

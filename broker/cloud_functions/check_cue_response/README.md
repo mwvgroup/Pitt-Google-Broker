@@ -1,6 +1,8 @@
 # Check cue response
 
-This Cloud Function checks whether the broker responded appropriately to the auto-scheduler's cue. If it has not, "Critical" errors are raised which trigger a GCP alerting policy.
+This Cloud Function checks whether the broker responded appropriately to the auto-scheduler's cue.
+It does this by first pausing to allow time for the response, and then checking each broker component, such as VMs and Dataflow jobs.
+If a component is found to be in an unexpected state, a "Critical" error is raised which triggers a GCP alerting policy.
 
 This Cloud Function is triggered by the auto-scheduler's Pub/Sub topic. For reference, the auto-scheduling process looks like this (see [Auto-scheduler](auto-scheduler.md)):
 
