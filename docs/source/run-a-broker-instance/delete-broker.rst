@@ -1,5 +1,5 @@
-Delete a Broker Instance
-========================
+Delete the Broker
+=================
 
 To delete or "teardown" a broker instance means to permanently delete
 all resources and data associated with that instance. Testing instances
@@ -16,7 +16,7 @@ delete them manually.
     teardown=True
 
     # to use a local setup_broker.sh script, cd into the directory
-    # cd Pitt-Google-Broker/broker/setup_broker  
+    # cd Pitt-Google-Broker/broker/setup_broker
 
     # otherwise, download and use the script from the instance's bucket
     bucket="${GOOGLE_CLOUD_PROJECT}-${survey}-broker_files-${testid}"
@@ -26,4 +26,3 @@ delete them manually.
     # delete everything associated with the instance
     ./setup_broker.sh "$testid" "$teardown" "$survey"
     # you will be prompted several times to confirm
-

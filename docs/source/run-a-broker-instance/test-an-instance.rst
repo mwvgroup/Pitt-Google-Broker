@@ -1,5 +1,7 @@
-Workflow: Run/Develop/Test a Broker Instance
-============================================
+Workflow
+=========
+
+Run, develop, and test a broker instance.
 
 **Prerequisites:**
 

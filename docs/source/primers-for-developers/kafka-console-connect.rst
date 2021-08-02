@@ -1,5 +1,5 @@
-Install Kafka and Run a Consumer (2 Methods) to Listen to the ZTF Stream
-========================================================================
+Kafka Connections
+=================
 
 This document walks through installing Kafka and then connecting to the
 ZTF alert stream via 2 different methods:

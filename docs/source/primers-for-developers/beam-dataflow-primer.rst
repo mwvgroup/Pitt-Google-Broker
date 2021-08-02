@@ -1,5 +1,5 @@
-Apache Beam + Google Dataflow Primer
-====================================
+Apache Beam + Google Dataflow
+=============================
 
 -  `General Links`_
 -  `What are Apache Beam and Google Dataflow?`_  (the very basics)

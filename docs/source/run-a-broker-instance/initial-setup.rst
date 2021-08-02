@@ -1,5 +1,7 @@
-Initial Setup of Google Cloud and a Local Environment
-=====================================================
+Initial Setup
+==============
+
+Setup a Google Cloud Platform project and your local environment.
 
 -  `Create a GCP Project`_
 -  `Setup Local Environment`_

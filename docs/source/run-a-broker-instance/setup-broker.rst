@@ -1,5 +1,5 @@
-Setup a Broker Instance
-=======================
+Setup the Broker
+================
 
 -  `Prerequisites`_
 -  `Setup the Broker Instance`_

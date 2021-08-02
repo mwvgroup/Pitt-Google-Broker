@@ -1,5 +1,3 @@
-.. _initial-setup-tutorial:
-
 Initial Setup
 =============
 
@@ -12,7 +10,7 @@ databases, and file in Cloud Storage.
 
 This document contains instructions to:
 
-1.  Create a new GCP project (and delete it when you are done).
+1.  Create a new GCP project.
 2.  Create a service account and configure
     authentication on your local (or wherever) machine.
 3.  Enable the APIs
