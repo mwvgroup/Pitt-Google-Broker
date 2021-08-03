@@ -21,7 +21,8 @@ def publish_stream(
     publish_batch_every: Tuple[int,str] = (5,'sec'),
     sub_id: Optional[str] = None,
     topic_id: Optional[str] = None,
-    nack: bool = False
+    nack: bool = False,
+    auto_confirm: bool = False
     ):
     """Pulls messages from from a Pub/Sub subscription determined by either
     `instance` or `sub_id`, and publishes them to a topic determined by either
@@ -54,6 +55,8 @@ def publish_stream(
                     messages are published to the topic, but they are not
                     dropped from the subscription and so will be delivered again
                     at an arbitrary time in the future.
+
+        auto_confirm:   Whether to automatically answer "Y" to the confirmation prompt.
     """
 
     pbeN, pbeU = publish_batch_every  # shorthand
@@ -69,10 +72,10 @@ def publish_stream(
     print(f"\nPublishing:\n\t{Nbatches} batches\n\teach with {alerts_per_batch} alerts\n\tat a rate of 1 batch per {pbeN} {pbeU} (plus processing time)\n\tfor a total of {Nbatches*alerts_per_batch} alerts")
 
     # publish the stream
-    _do_publish_stream(instance, alerts_per_batch, Nbatches, publish_batch_every, sub_id, topic_id, nack)
+    _do_publish_stream(instance, alerts_per_batch, Nbatches, publish_batch_every, sub_id, topic_id, nack, auto_confirm)
 
 def _do_publish_stream(
-    instance, alerts_per_batch, Nbatches, publish_batch_every, sub_id=None, topic_id=None, nack=False):
+    instance, alerts_per_batch, Nbatches, publish_batch_every, sub_id=None, topic_id=None, nack=False, auto_confirm=False):
 
     # check units
     if publish_batch_every[1] != 'sec':
@@ -85,7 +88,7 @@ def _do_publish_stream(
     print(f"and\n\tPublish to topic: {topic_path}\n")
 
     # make the user confirm
-    _user_confirm()
+    _user_confirm(auto_confirm)
     print(f"\nPublishing...")
 
     b = 0
@@ -105,10 +108,11 @@ def _do_publish_stream(
         b = b+1
         time.sleep(publish_batch_every[0])
 
-def _user_confirm():
-    cont = input('Continue? [Y/n]: ') or 'Y'
-    if cont not in ['Y', 'y']:
-        sys.exit('Exiting consumer simulator.')
+def _user_confirm(auto_confirm=False):
+    if not auto_confirm:
+        cont = input('Continue? [Y/n]: ') or 'Y'
+        if cont not in ['Y', 'y']:
+            sys.exit('Exiting consumer simulator.')
 
 def _setup_subscribe(alerts_per_batch, instance=None, sub_id=None):
     if (instance is None) and (sub_id is None):
