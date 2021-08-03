@@ -1,66 +1,72 @@
 Initial Setup
 =============
 
-Our broker is based in `Google Cloud
-Platform <https://cloud.google.com/>`__ (GCP). To access the data, you
-need a (free) GCP project of your own with a configured service account
-authorizing your use of Google's API. You can then use either
-command-line or Python tools to access our Pub/Sub streams, BigQuery
-databases, and file in Cloud Storage.
+**Learning Objectives:**
 
-This document contains instructions to:
+- Complete the initial setup for data access
 
-1.  Create a new GCP project.
-2.  Create a service account and configure
-    authentication on your local (or wherever) machine.
-3.  Enable the APIs
-    on your project and install the command-line and/or Python tools.
+    1. Create a new GCP project.
+    2. Create a service account and configure authentication on a local machine.
+    3. Enable the APIs on your project and install related tools locally.
 
-There are two methods available to accomplish the above:
+Our broker lives on `Google Cloud
+Platform <https://cloud.google.com/>`__ (GCP).
+To access the data you
+need a free GCP project of your own, with a configured service account
+giving you access to Google's APIs.
+You can then connect using many different languages;
+our tutorials (except this one) demonstrate Python and command-line methods.
+
+Complete this tutorial one of two ways:
 
 -   :ref:`method-a-command-line`. Install the CLI and do
     everything from the command line.
 -   :ref:`method-b-gcp-console`. Use the web Console for the GCP setup portion.
 
-This process only needs to be done once per project/local machine.
+This setup only needs to be done once per project/local machine.
 
 .. _method-a-command-line:
 
 Method A: Command line
 ----------------------
 
-Fill in these three lines as desired for your new GCP project:
+Choose some parameters that will be used to create and configure your GCP project:
 
 .. code:: bash
 
-    # choose your GCP Project ID. it must be unique, so at least add a number here
+    # project ID. it must be unique, so at least add a number here
     PROJECT_ID=my-pgb-project
 
-    # choose a name for your service account
-    SA_NAME=mypgb-service-account
+    # service account name
+    SA_NAME=my-service-account
 
-    # choose a location for your key file
+    # local path to store your key file, ending with .json
     KEY_PATH=/local/path/for/GCP_auth_key.json
 
-Install the CLI
-(`cloud.google.com/sdk <https://cloud.google.com/sdk>`__) and connect it
-to your Google account (go
+    # nothing to choose here, just set this variable
+    SA_EMAIL="$SA_NAME@$PROJECT_ID.iam.gserviceaccount.com"
+
+
+We will use the `gcloud <https://cloud.google.com/sdk/gcloud>`__
+tool to manage the project.
+Using the commands below, install it and connect it to a Google or Gmail account (go
 `here <https://accounts.google.com/signup/v2/webcreateaccount?flowName=GlifWebSignIn&flowEntry=SignUp>`__
-if you need to create one). The CLI includes the tools gcloud (general
-purpose), bq (BigQuery), and gsutil (Cloud Storage).
+if you need to create one).
+This installs a CLI package that also includes the
+`bq <https://cloud.google.com/bigquery/docs/bq-command-line-tool>`__ and
+`gsutil <https://cloud.google.com/storage/docs/gsutil>`__ tools.
 
 .. code:: bash
 
-    # Windows: see https://cloud.google.com/sdk/docs/downloads-interactive#windows
-
-    # Linux and MacOS:
-    curl https://sdk.cloud.google.com | bash
+    # install the CLI
+    curl https://sdk.cloud.google.com | bash  # Linux and MacOS:
+        # Windows: see https://cloud.google.com/sdk/docs/downloads-interactive#windows
     # follow the directions
 
     # open a new terminal or restart your shell
     # exec -l $SHELL
 
-    # connect to the Google account you want to use
+    # connect to a Google account
     gcloud init
     gcloud auth login
     # this will open a browser and prompt you for authorization. follow the instructions
@@ -72,13 +78,15 @@ Create a new GCP project and set it as your local default.
     gcloud projects create $PROJECT_ID
     gcloud config set project $PROJECT_ID
 
-Create an owner service account and download an authentication key file.
+Create a service account, give it owner permissions, and download an authentication key file.
 
 .. code:: bash
 
     gcloud iam service-accounts create $SA_NAME
-    gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:$SA_NAME@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/owner"
-    gcloud iam service-accounts keys create $KEY_PATH --iam-account=$SA_NAME@$PROJECT_ID.iam.gserviceaccount.com
+    gcloud projects add-iam-policy-binding $PROJECT_ID \
+        --member="serviceAccount:$SA_EMAIL" \
+        --role="roles/owner"
+    gcloud iam service-accounts keys create $KEY_PATH --iam-account=$SA_EMAIL
 
 Set local environment variables that will be used by API calls.
 
@@ -91,21 +99,22 @@ Enable the desired APIs. Here are some options:
 
 .. code:: bash
 
-    gcloud services enable pubsub.googleapis.com
     gcloud services enable bigquery.googleapis.com
+    gcloud services enable pubsub.googleapis.com
     gcloud services enable storage.googleapis.com
 
 Install the desired Python APIs. Here are some options:
 
 .. code:: bash
 
-    # Option 1: install PGB's package to use our wrapper functions to make API calls
-    #           this also installs all Google Cloud APIs listed in Option 2
+    # Option 1:
     pip install pgb-utils
+    # most of our tutorials use this
+    # it also installs everything listed below
 
-    # Option 2: install only the Google Cloud APIs that you want to use. some options:
-    pip install google-cloud-pubsub
+    # Option 2: install only specific Google Cloud APIs. some options:
     pip install google-cloud-bigquery
+    pip install google-cloud-pubsub
     pip install google-cloud-storage
 
 To permanently DELETE the project when you are done, use (uncomment the
@@ -146,7 +155,7 @@ Set local environment variables that will be used by API calls.
 
     # insert your project ID from step 1:
     PROJECT_ID=my-pgb-project
-    # insert the path to the key file you downloaded
+    # insert the path to the key file you just downloaded
     KEY_PATH=/local/path/to/GCP_auth_key.json
 
     export GOOGLE_CLOUD_PROJECT=$PROJECT_ID
@@ -169,13 +178,14 @@ Install the desired Python APIs. Here are some options:
 
 .. code:: bash
 
-    # Option 1: install PGB's package to use our wrapper functions to make API calls
-    #           this also installs all Google Cloud APIs listed in Option 2
+    # Option 1:
     pip install pgb-utils
+    # most of our tutorials use this
+    # it also installs everything listed below
 
-    # Option 2: install only the Google Cloud APIs that you want to use. some options:
-    pip install google-cloud-pubsub
+    # Option 2: install only specific Google Cloud APIs. some options:
     pip install google-cloud-bigquery
+    pip install google-cloud-pubsub
     pip install google-cloud-storage
 
 **To delete**
