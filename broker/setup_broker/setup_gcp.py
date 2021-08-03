@@ -154,6 +154,8 @@ def _resources(service, survey='ztf', testid='test'):
                     [f'{survey}-alerts-counter', f'{survey}-alerts-reservoir', ],
                 f'{survey}-alerts_pure':
                     [f'{survey}-alerts_pure-counter', ],
+                f'{survey}-cue_night_conductor':
+                    [],
                 f'{survey}-exgalac_trans':
                     [f'{survey}-exgalac_trans-counter'],
                 f'{survey}-salt2':
@@ -295,7 +297,10 @@ def setup_dashboard(survey='ztf', testid='test', teardown=False) -> None:
         print('\nA monitoring dashboard has been created for you!\nView it at:')
         print(f'{dashboard_url}\n')
 
-    else:
+        # clean up the json file
+        os.remove(jpath)
+
+    else:  # delete the dashboard
         gdelete = f'gcloud monitoring dashboards delete projects/{PROJECT_ID}/dashboards/{dashboard_id}'
         __ = subprocess.check_output(shlex.split(gdelete))
 

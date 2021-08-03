@@ -52,7 +52,7 @@ class StripCutouts(DoFn):
 
 
 class ExtractDIASource(DoFn):
-    """Extract the DIA source` fields and information needed for provinance
+    """Extract the DIA source` fields and information needed for provenance
     from the alertDict.
     """
     def __init__(self, schema_map):
@@ -74,7 +74,7 @@ class ExtractDIASource(DoFn):
         sourcename = lambda x: x if x not in dup_cols else f'source_{x}'
         src = {sourcename(k):v for k,v in alertDict['triggersource'].items()}
 
-        # get info for provinance
+        # get info for provenance
         notmetakeys = ['triggersource', 'sources']
         metadict = {k:v for k,v in alertDict.items() if k not in notmetakeys}
 
@@ -94,7 +94,7 @@ class ExtractDIASource(DoFn):
         dup_cols = ['candid']  # candid is repeated, drop the one nested here
         cand = {k:v for k,v in alertDict['candidate'].items() if k not in dup_cols}
 
-        # get info for provinance
+        # get info for provenance
         metakeys = ['schemavsn', 'publisher', 'objectId', 'candid']
         metadict = {k:v for k,v in alertDict.items() if k in metakeys}
 
