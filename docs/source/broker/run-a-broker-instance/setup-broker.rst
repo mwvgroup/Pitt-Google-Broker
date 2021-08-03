@@ -48,7 +48,7 @@ Upload Kafka Authentication Files
 
 Note: Do this before the consumer VM finishes its install and shuts
 itself down. Else, you'll need to start it again (see
-:ref:`here <run-a-broker-instance/view-resources:Compute Engine VMs>`).
+:ref:`here <broker/run-a-broker-instance/view-resources:Compute Engine VMs>`).
 
 The consumer VM requires two **authorization files** to connect to the
 ZTF stream. *These must be obtained independently and uploaded to the VM
@@ -73,7 +73,7 @@ You can use the ``gcloud compute scp`` command for this:
 What does setup_broker.sh do?
 ---------------------------------
 
-Resource name stubs are given below in brackets []. See :doc:`../broker-design/broker-instance-keywords` for details.
+Resource name stubs are given below in brackets []. See :doc:`../broker-instance-keywords` for details.
 
 1. Create and configure GCP resources in BigQuery, Cloud Storage,
    Dashboard, and Pub/Sub. Print a URL to the instance's Dashboard for

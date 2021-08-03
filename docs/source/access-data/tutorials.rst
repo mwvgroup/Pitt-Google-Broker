@@ -4,6 +4,6 @@ Tutorials
    :maxdepth: 2
 
    tutorials/initial-setup
-   tutorials/pubsub
    tutorials/bigquery
    tutorials/cloud-storage
+   tutorials/pubsub

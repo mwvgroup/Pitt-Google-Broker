@@ -15,9 +15,9 @@ View and Access Resources
 
 A broker instance has many resources associated with it. See also:
 
-- :doc:`../broker-design/broker-instance-keywords` to understand
+- :doc:`../broker-instance-keywords` to understand
   some naming conventions
-- :doc:`../broker-design/broker-overview` to view the name stubs
+- :doc:`../broker-overview` to view the name stubs
 
 The following sections contain links to the GCP Console where you can
 view resources, plus descriptions of what you can view/do there, and
@@ -64,7 +64,7 @@ See also:
 
 - Load a row into a table: use ``broker_utils.gcp_utils.bq_insert_rows`` (Python)
 - Query the database instructions in the tutorial
-  :doc:`../access-data/tutorials/bigquery` (Python and command line)
+  :doc:`../../access-data/tutorials/bigquery` (Python and command line)
 
 --------------
 
@@ -125,7 +125,7 @@ See also:
 
 - Upload and download files: use ``broker_utils.gcp_utils.cs_download_file``
   and ``broker_utils.gcp_utils.cs_upload_file`` (Python)
-- Tutorial :doc:`../access-data/tutorials/cloud-storage`
+- Tutorial :doc:`../../access-data/tutorials/cloud-storage`
   (Python and command line)
 
 --------------
@@ -174,7 +174,7 @@ General access:
 .. _use-night-conductor-to-start-end-night:
 
 Example: Use night-conductor to start/end the night (see also
-:doc:`../broker-design/auto-scheduler`)
+:doc:`../components/auto-scheduler`)
 
 .. code:: bash
 

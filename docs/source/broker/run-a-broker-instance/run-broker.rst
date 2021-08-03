@@ -14,9 +14,9 @@ instance).
 See also:
 
 - :doc:`test-an-instance`
-- :doc:`../broker-design/auto-scheduler` to schedule a
+- :doc:`../components/auto-scheduler` to schedule a
   (typically Production) instance to run automatically each night.
-- :doc:`../broker-design/night-conductor`
+- :doc:`../components/night-conductor`
 
 --------------
 
@@ -24,17 +24,17 @@ Start the Broker
 ----------------
 
 The easiest way to start the broker is to hijack the
-:doc:`../broker-design/auto-scheduler` by sending a
+:doc:`../components/auto-scheduler` by sending a
 ``START`` message to its Pub/Sub topic and attaching an attribute that
 indicates the topic to be ingested (or none). In addition to cueing up
 all broker components, the cue-response checker will run and log\* the
 status of each component. (\*See :ref:`View and Access Resources: Cloud
-Scheduler <run-a-broker-instance/view-resources:Cloud Scheduler>`, and
+Scheduler <broker/run-a-broker-instance/view-resources:Cloud Scheduler>`, and
 note that the checks are on
 a time delay of up to several minutes.)
 
 **Prerequisite**: Make sure the VMs are stopped (see
-:ref:`View and Access Resources: Compute Engine VMs <run-a-broker-instance/view-resources:Compute Engine VMs>`,
+:ref:`View and Access Resources: Compute Engine VMs <broker/run-a-broker-instance/view-resources:Compute Engine VMs>`,
 includes a code sample).
 
 Command line:
@@ -73,11 +73,11 @@ Stop the Broker
 ---------------
 
 The easiest way to stop the broker is to hijack the
-:doc:`../broker-design/auto-scheduler` by sending an
+:doc:`../components/auto-scheduler` by sending an
 ``END`` message to its Pub/Sub topic. In addition to stopping all broker
 components, the cue-response checker will run and log\* the status of
 each component. (\*See :ref:`View and Access Resources: Cloud
-Scheduler <run-a-broker-instance/view-resources:Cloud Scheduler>`, and
+Scheduler <broker/run-a-broker-instance/view-resources:Cloud Scheduler>`, and
 note that the checks are on
 a time delay of up to several minutes.)
 
@@ -135,17 +135,17 @@ those called by
 
 - update/redeploy: run the ``deploy_cloud_fncs.sh``
   script, see :ref:`View and Access Resources:
-  Cloud Functions <run-a-broker-instance/view-resources:Cloud Functions>`
+  Cloud Functions <broker/run-a-broker-instance/view-resources:Cloud Functions>`
 
 **Dataflow**
 
 - start/update/stop jobs: see :ref:`View and Access Resources:
-  Dataflow jobs <run-a-broker-instance/view-resources:Dataflow jobs>`
+  Dataflow jobs <broker/run-a-broker-instance/view-resources:Dataflow jobs>`
 
 **VMs**
 
 - start/stop: see :ref:`View and Access Resources: Compute Engine
-  VMs <run-a-broker-instance/view-resources:Compute Engine VMs>`
+  VMs <broker/run-a-broker-instance/view-resources:Compute Engine VMs>`
 
 --------------
 

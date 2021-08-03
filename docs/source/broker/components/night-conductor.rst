@@ -11,7 +11,7 @@ Night Conductor
 See also
 
 -   :doc:`auto-scheduler`
--   :doc:`../run-a-broker-instance/test-an-instance`
+-   :doc:`../../broker/run-a-broker-instance/test-an-instance`
 
 What Does Night Conductor Do?
 -----------------------------
@@ -19,7 +19,7 @@ What Does Night Conductor Do?
 The night conductor VM starts and ends the night by orchestrating the
 startup and shutdown of the resources associated with its broker
 instance. It gets the appropriate survey and testid
-:doc:`keywords <broker-instance-keywords>` by parsing its own name. Upon
+:doc:`keywords <../broker-instance-keywords>` by parsing its own name. Upon
 startup, it runs the set of scripts in the ``night_conductor`` directory
 of the instance's ``broker_files`` bucket, beginning with
 ``vm_startup.sh``.
@@ -30,10 +30,10 @@ sample). These attributes include:
 
 - ``NIGHT``: ``START`` or ``END``. See below.
 - ``KAFKA_TOPIC``: a
-  :ref:`valid topic <run-a-broker-instance/run-broker:kafka topic syntax>` or
+  :ref:`valid topic <broker/run-a-broker-instance/run-broker:kafka topic syntax>` or
   ``NONE``. If ``NONE``, night conductor will not start the consumer VM;
   use this if (e.g.,) you want to use the
-  :doc:`../run-a-broker-instance/consumer-simulator`.
+  :doc:`../../broker/run-a-broker-instance/consumer-simulator`.
   Otherwise, night conductor will set ``KAFKA_TOPIC`` as a metadata
   attribute on the consumer VM and start it. This attribute has no effect
   if ``NIGHT=END``.
@@ -60,7 +60,7 @@ Example: Manually set metadata attributes and start the VM.
 Start Night
 ~~~~~~~~~~~
 
-See also: :ref:`run-a-broker-instance/run-broker:start the broker`
+See also: :ref:`broker/run-a-broker-instance/run-broker:start the broker`
 
 If the metadata attribute ``NIGHT=START``, night conductor runs the
 script ``start_night.sh``. It does the following:
@@ -75,7 +75,7 @@ script ``start_night.sh``. It does the following:
 End Night
 ~~~~~~~~~
 
-See also: :ref:`run-a-broker-instance/run-broker:stop the broker`
+See also: :ref:`broker/run-a-broker-instance/run-broker:stop the broker`
 
 If the metadata attribute ``NIGHT=END``, night conductor runs the script
 ``end_night.sh``. It does the following:
@@ -87,13 +87,13 @@ If the metadata attribute ``NIGHT=END``, night conductor runs the script
 3. Resets the Pub/Sub counters. These are subscriptions that the broker
    uses to count the number of elements received and processed each
    night (see the instance
-   :ref:`Dashboard <run-a-broker-instance/view-resources:dashboards>`). They have name stubs
+   :ref:`Dashboard <broker/run-a-broker-instance/view-resources:dashboards>`). They have name stubs
    like ``<topic_name>-counter``.
 
 Where to look if there's a problem
 ----------------------------------
 
-See :doc:`../run-a-broker-instance/view-resources` for details
+See :doc:`../../broker/run-a-broker-instance/view-resources` for details
 like where to view logs, how to ssh into a VM, and where to view
 Dataflow jobs on the GCP Console.
 

@@ -15,7 +15,7 @@ alerts and is especially useful in testing.
 
    -  `Reservoir Subscriptions`_
 
-See also: :doc:`../run-a-broker-instance/test-an-instance`
+See also: :doc:`test-an-instance`
 
 --------------
 
@@ -156,7 +156,7 @@ How Does the Consumer Simulator Work?
 The consumer simulator simply pulls messages from a Pub/Sub subscription
 and republishes them to a Pub/Sub topic at given rate for a given length
 of time. By connecting to a
-:ref:`"reservoir" subscription <run-a-broker-instance/consumer-simulator:Reservoir Subscriptions>` that contains suitable
+:ref:`"reservoir" subscription <broker/run-a-broker-instance/consumer-simulator:Reservoir Subscriptions>` that contains suitable
 alerts, and publishing to your instance's ``alerts`` Pub/Sub topic, you
 can bypass your instance's consumer and control the flow of alerts
 entering your broker.
@@ -187,7 +187,7 @@ of the survey associated with the topic to which it is publishing, since
 it is assumed to contain the largest number of suitable alerts. You can
 check the number of alerts in a reservoir ("unacked message count") by
 viewing the subscription in the GCP Console (see
-:ref:`here <run-a-broker-instance/view-resources:Pub/Sub topics and subscriptions>`).
+:ref:`here <broker/run-a-broker-instance/view-resources:Pub/Sub topics and subscriptions>`).
 
 If you pull from the reservoir of the same instance to which you are
 publishing, you create a *closed loop*. In this way, you can access an

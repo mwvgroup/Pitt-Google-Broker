@@ -21,7 +21,7 @@ Storage and/or BigQuery, and publish to dedicated Pub/Sub topics. The
 **night conductor** (5) orchestrates the broker, starting up resources
 and jobs at night and shutting them down in the morning.
 
-To view the resources, see :doc:`../run-a-broker-instance/view-resources`.
+To view the resources, see :doc:`../broker/run-a-broker-instance/view-resources`.
 
 Details and Name Stubs
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -110,7 +110,7 @@ update most components of the broker by simply replacing the relevant
 files in the bucket, which is particularly useful for development and
 testing.
 
-See :doc:`../run-a-broker-instance/view-resources` to find the
+See :doc:`../broker/run-a-broker-instance/view-resources` to find the
 ``broker_files`` bucket.
 
 --------------

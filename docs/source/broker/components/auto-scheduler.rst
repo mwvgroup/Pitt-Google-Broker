@@ -10,7 +10,7 @@ Auto-scheduler
 See also:
 
 -   :doc:`night-conductor`
--   :ref:`broker-design/night-conductor:Where to look if there's a problem`
+-   :ref:`broker/components/night-conductor:Where to look if there's a problem`
 
 Overview
 --------
@@ -27,7 +27,7 @@ appropriate metadata attributes on the night conductor VM and starts it.
 
 (Note that you can start/stop the broker manually at any time by sending
 a message to the auto-scheduler's Pub/Sub topic. See
-:doc:`../run-a-broker-instance/run-broker`.)
+:doc:`../../broker/run-a-broker-instance/run-broker`.)
 
 Two cron jobs are scheduled, one each to start and end the night. Both
 processes use the same Pub/Sub topic and Cloud Function.

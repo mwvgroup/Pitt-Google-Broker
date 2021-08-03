@@ -10,17 +10,17 @@ The Pitt-Google Broker is a cloud-based alert distribution service designed to p
 
 The Pitt-Google Broker runs on the `Google Cloud Platform <https://cloud.google.com/>`_ (GCP) and is currently focused on processing and serving alerts from the `Zwicky Transient Facility <https://www.ztf.caltech.edu/>`_ (ZTF), and extending broker capabilities using ZTF, the LSST Alert Simulator, and the DECam Alliance for Transients (DECAT) stream.
 
-.. toctree::
-   :hidden:
-
-   <self>
+.. .. toctree::
+..    :hidden:
+..
+..    Overview<self>
 
 .. toctree::
    :hidden:
    :maxdepth: 3
    :caption: Access Data
 
-   access-data/overview
+   access-data/data-overview
    access-data/tutorials
 
 .. toctree::
@@ -28,31 +28,11 @@ The Pitt-Google Broker runs on the `Google Cloud Platform <https://cloud.google.
    :maxdepth: 1
    :caption: Broker Design
 
-   broker-design/broker-overview
-   broker-design/broker-instance-keywords
-   broker-design/night-conductor
-   broker-design/auto-scheduler
-
-.. toctree::
-   :hidden:
-   :maxdepth: 1
-   :caption: Run a Broker Instance
-
-   run-a-broker-instance/test-an-instance
-   run-a-broker-instance/initial-setup
-   run-a-broker-instance/setup-broker
-   run-a-broker-instance/run-broker
-   run-a-broker-instance/delete-broker
-   run-a-broker-instance/consumer-simulator
-   run-a-broker-instance/view-resources
-
-.. toctree::
-   :hidden:
-   :maxdepth: 1
-   :caption: Primers for Developers
-
-   primers-for-developers/beam-dataflow-primer
-   primers-for-developers/kafka-console-connect
+   broker/broker-overview
+   broker/broker-instance-keywords
+   broker/components
+   broker/run-a-broker-instance
+   broker/primers-for-developers
 
 .. toctree::
    :hidden:
