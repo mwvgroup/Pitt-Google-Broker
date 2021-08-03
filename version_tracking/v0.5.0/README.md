@@ -1,18 +1,29 @@
 # v0.5.0
 
+- [Results Summary](#results-summary)  
 - [Documentation of Changes](#documentation-of-changes)
 - [Test the Changes](#test-the-changes)
-- [Results Summary](#results-summary)  
+
+---
+
+## Results Summary
+
+Auto-scheduler and cue-response checker appear to be working smoothly.
+
+Documentation is back up on ReadTheDocs.
 
 ---
 
 ## Documentation of Changes
 
 - PR [#62](https://github.com/mwvgroup/Pitt-Google-Broker/pull/62)
-- [schedule-night-conductor.md](schedule-night-conductor.md)
-- [external-connection.md](external-connection.md)
+- Auto-scheduler: [schedule-night-conductor.md](schedule-night-conductor.md)
+- Pub/Sub tutorial setup:
+    - [external-connection.md](external-connection.md)  (setup an external GCP project and connect to our Pub/Sub streams)
+    - [stream-looper.md](stream-looper.md) (setup a VM to run a consumer simulator that publishes ZTF alerts to a dedicated PS topic on a slow loop)
 
-
+Started but didn't finish; TODO in a future version:
+- [supernnova.md](supernnova.md) (implement SuperNNova)
 
 ---
 
@@ -89,52 +100,4 @@ attr=topic_date=20210727
 gcloud pubsub topics publish "$topic" --message="$cue" --attribute="$attr"
 ```
 
-#### consumer sim, tbd
-
-
-start/stop the broker
-```bash
-survey=ztf
-testid=v050
-topic="${survey}-cue_night_conductor-${testid}"
-
-# start the night
-cue=START
-attr=KAFKA_TOPIC=NONE  # leave consumer VM off
-gcloud pubsub topics publish "$topic" --message="$cue" --attribute="$attr"
-
-# end the night
-cue=END
-gcloud pubsub topics publish "$topic" --message="$cue"
-```
-
-```python
-from broker_utils import consumer_sim as bcs
-
-testid = 'v050'
-survey = 'decat'
-sub_id = 'decat-alerts-reservoir-testschema'  # production instance doesn't exist yet
-# survey = 'ztf'
-# sub_id = 'ztf_alerts-reservoir'  # production instance names are not yet updated
-instance = (survey, testid)
-# alert_rate = (100, 'once')
-alert_rate = 'ztf-active-avg'
-runtime = (30, 'min')  # options: 'sec', 'min', 'hr', 'night'(=10 hrs)
-
-bcs.publish_stream(alert_rate, instance, sub_id=sub_id, runtime=runtime)
-```
-```bash
-# end the night
-NIGHT="END"
-gcloud compute instances add-metadata "$nconductVM" --zone="$zone" \
-        --metadata NIGHT="$NIGHT"
-gcloud compute instances start "$nconductVM" --zone "$zone"
-```
-
 <!-- fe Test the Changes -->
-
-
-
----
-
-## Results Summary

@@ -1,6 +1,7 @@
-## Setup stream-looper VM and topic
+# Setup stream-looper VM and topic
 
-Create the topic and allow public subscriptions
+## Create the Pub/Sub topic and allow public subscriptions
+
 ```bash
 PROJECT=$GOOGLE_CLOUD_PROJECT
 TOPIC="ztf-loop"
@@ -15,7 +16,8 @@ gcloud pubsub topics get-iam-policy $topic_path --format yaml > $fnametmp
 gcloud pubsub topics set-iam-policy $topic_path $fname
 ```
 
-Create the VM and setup the consumer simulator
+## Create the VM and setup the consumer simulator
+
 ```bash
 vmname="stream-looper"
 zone="us-central1-a"
@@ -34,21 +36,44 @@ gcloud compute instances create "$vmname" \
 gcloud compute instances add-metadata "$vmname" --zone="$zone" --metadata=startup-script=""
 
 # ssh in
-gcloud compute ssh $vmname
-screen
-ipython3
+# gcloud compute ssh $vmname
 ```
+
+### Set a startup script to run consumer simulator indefinitely
+
+Python script to trigger at startup.
+Save the following code to a root-executable file at
+/home/consumer_sim/run-looper-indefinitely.py:
+
 ```python
+#!/usr/bin/env python3
+# -*- coding: UTF-8 -*-
 from broker_utils import consumer_sim as bcs
 
-# publish 1 alert every 5 seconds
-alert_rate = (12, 'perMin')
+# set args to publish 1 alert every second
+alert_rate = (60, 'perMin')
 kwargs = {
     'instance': None,
-    'runtime': (1, 'hr'),
-    'publish_batch_every': (5, 'sec'),
-    'sub_id': 'ztf-alerts-reservoir-v050',
+    'runtime': (1, 'night'),
+    'publish_batch_every': (1, 'sec'),
+    'sub_id': 'ztf-alerts-reservoir',
     'topic_id': 'ztf-loop',
+    'auto_confirm': True,
 }
-bcs.publish_stream(alert_rate, **kwargs)
+
+# run indefinitely
+while True:
+    bcs.publish_stream(alert_rate, **kwargs)
+```
+
+Set a startup script to execute the python file in a background thread:
+```bash
+startupscript="#! /bin/bash
+dir=/home/consumer_sim/
+fname=run-looper-indefinitely
+nohup python3 \${dir}\${fname}.py >> \${dir}\${fname}.out 2>&1 &
+"
+
+# set the startup script
+gcloud compute instances add-metadata "$vmname" --metadata=startup-script="$startupscript"
 ```
