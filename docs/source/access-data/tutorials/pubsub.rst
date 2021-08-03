@@ -99,6 +99,7 @@ Two options:
 1. Pull a fixed number of messages. Useful for testing.
 
 .. code:: python
+
     import pgb_utils as pgb
 
     # pull messages
@@ -106,12 +107,14 @@ Two options:
     max_messages = 5
     msgs = pgb.pubsub.pull(subscription_name, max_messages=max_messages)  # list[bytes,]
 
+    # now process the messages. for example:
     # convert the bytes to a pandas dataframe
     df = pgb.pubsub.decode_ztf_alert(msgs[0], return_format='df')
 
 2. Pull messages continuously.
 
 .. code:: python
+
     import pgb_utils as pgb
 
     # create a function that executes your processing logic
