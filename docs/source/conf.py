@@ -40,6 +40,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.autosummary',
     'sphinx.ext.napoleon',
+    'sphinx_autodoc_typehints',
     'sphinx_copybutton'
 ]
 

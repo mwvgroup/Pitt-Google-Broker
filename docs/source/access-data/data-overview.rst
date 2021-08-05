@@ -4,6 +4,13 @@ Data Overview
 Pub/Sub
 ----------------
 
+Pub/Sub is an asynchronous, publish–subscribe messaging service.
+The Pitt-Google broker publishes alerts and value-added data to multiple topics,
+listed below.
+You can subscribe to one or more of these topics,
+and then pull and process the message stream(s).
+See the :doc:`tutorials/pubsub` tutorial for more information.
+
 Current streams include:
 
 ztf-loop

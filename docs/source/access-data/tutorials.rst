@@ -1,7 +1,7 @@
 Tutorials
 ============
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    tutorials/initial-setup
    tutorials/bigquery
