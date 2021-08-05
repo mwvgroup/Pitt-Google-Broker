@@ -261,7 +261,7 @@ Here we demonstrate one.
 
 --------------
 
-Using ``google.cloud.bigquery``
+Using google.cloud.bigquery
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The previous sections demonstrated convenience wrappers for querying

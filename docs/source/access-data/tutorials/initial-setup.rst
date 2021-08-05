@@ -117,12 +117,18 @@ Recommended method:
     along with our package which contains working examples of using
     the Google APIs to access data from the Pitt-Google project.
     It will also install some standard packages like Astropy and Pandas.
-
-    Our tutorials use this package to demonstrate Python calls.
+    You may wish to create a new conda environment first using
 
     .. code-block:: console
 
-        $ pip install pgb-utils
+        $ conda create --name PGB python=3.7 python3-pip
+        $ conda activate PGB
+
+    .. code-block:: console
+
+        $ pip3 install pgb-utils
+
+    Our tutorials use this package to demonstrate Python calls.
 
 Alternate method:
 
