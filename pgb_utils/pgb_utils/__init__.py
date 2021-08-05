@@ -6,7 +6,7 @@ and services.
 """
 
 import pkg_resources  # part of setuptools
-from . import beam, bigquery, figures, pubsub, utils
+from . import bigquery, figures, pubsub, utils
 
 
 __version__ = pkg_resources.require("pgb_utils")[0].version
