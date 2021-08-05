@@ -5,11 +5,17 @@ Pub/Sub Streams
 
 1.  :ref:`Subscribe to a Pitt-Google Pub/Sub stream <create-subscription>`
 2.  :ref:`Pull messages from your subscription <pull-messages>`
+3.  :ref:`Clean up by deleting the subscription <delete-subscription>`
 
 This tutorial covers subscribing to our Pub/Sub streams and pulling messages.
 It demonstrates two methods: Python and the command line.
-The end of this tutorial includes instructions to
-:ref:`delete the subscription <delete-subscription>`.
+The Python sections use the pgb-utils package, which contains example functions to
+complete the most common tasks.
+These example functions are thin wrappers for the Google API, which offers many more
+options than those presented here.
+Interested users are encouraged to look at and extend the pgb-utils source code
+(available in the :doc:`docs <../../api/pgb-utils/pubsub>`) to harness the full power
+of the Google API.
 
 Pub/Sub is an asynchronous, publish–subscribe messaging service.
 The Pitt-Google broker publishes alerts and value-added data to multiple topics
@@ -134,7 +140,7 @@ Option 1: Pull a fixed number of messages. Useful for testing.
     # msgs is a list containing alerts as bytes
     # you can now process them however you'd like
     # here we simply convert the first alert to a pandas dataframe
-    df = pgb.pubsub.decode_ztf_alert(msgs[0], return_format='df')
+    df = pgb.utils.decode_alert(msgs[0], return_format='df')
 
 Option 2: Pull messages in streaming mode.
 This method pulls, processes, and acknowledges messages continuously in a
