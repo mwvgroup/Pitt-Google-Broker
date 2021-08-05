@@ -31,7 +31,7 @@ with open('requirements.txt') as f:
 
 setup(
     name='pgb_utils',  # Required
-    version='0.1.4',  # Required
+    version='0.2.2',  # Required
     description='Tools to interact with Pitt-Google Broker data products and services.',
     long_description=long_description,
     long_description_content_type='text/markdown',
