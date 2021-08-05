@@ -57,7 +57,7 @@ def pull(
     with subscriber:
 
         # pull
-        response = subscriber.pull(**request)
+        response = subscriber.pull(request=request)
 
         # unpack the messages
         message_list, ack_ids = [], []
@@ -73,7 +73,7 @@ def pull(
             "subscription": subscription_path,
             "ack_ids": ack_ids,
         }
-        subscriber.acknowledge(**ack_request)
+        subscriber.acknowledge(request=ack_request)
 
     return message_list
 
@@ -120,7 +120,9 @@ def streamingPull(
     subscription_path = subscriber.subscription_path(project_id, subscription_name)
 
     # start receiving and processing messages in a background thread
-    streaming_pull_future = subscriber.subscribe(subscription_path, callback)
+    streaming_pull_future = subscriber.subscribe(
+        subscription_path, callback, await_callbacks_on_shutdown=True
+    )
 
     if block:
         # block until there are no messages for the timeout duration
@@ -199,8 +201,10 @@ def create_subscription(
 
     sub_path = subscriber.subscription_path(project_id, subscription_name)
     topic_path = publisher.topic_path(pgb_project_id, topic_name)
+    request = {"name": sub_path, "topic": topic_path}
 
-    subscription = subscriber.create_subscription(sub_path, topic_path)
+    with subscriber:
+        subscription = subscriber.create_subscription(request=request)
 
     print(f"Created subscription {subscription.name}")
     print(f"attached to topic {subscription.topic}")
@@ -209,7 +213,9 @@ def create_subscription(
 
 
 # --- Delete a subscription --- #
-def delete_subscription(subscription_name: str, project_id: Optional[str] = None) -> None:
+def delete_subscription(
+    subscription_name: str, project_id: Optional[str] = None
+) -> None:
     """Delete a Pub/Sub subscription.
 
     Wrapper for `google.cloud.pubsub_v1.SubscriberClient().delete_subscription()`.
@@ -230,6 +236,6 @@ def delete_subscription(subscription_name: str, project_id: Optional[str] = None
     request = {"subscription": subscription_path}
 
     with subscriber:
-        subscriber.delete_subscription(**request)
+        subscriber.delete_subscription(request=request)
 
     print(f"Subscription deleted: {subscription_path}.")
