@@ -3,8 +3,16 @@ Initial Setup
 
 Setup a Google Cloud Platform project and your local environment.
 
+Method A:
+
 -  `Create a GCP Project`_
 -  `Setup Local Environment`_
+
+Method B: Alternately, you can skip down to to the `Command line`_ section and try
+completing the full process from the command line.
+
+Note that neither method has been fully tested, end-to-end, on a new GCP account and
+project.
 
 Create a GCP Project
 --------------------
@@ -140,3 +148,52 @@ variables as follows:
     buckets = list(storage_client.list_buckets())
     # If the request succeeded, your authentication works
     print(buckets)  # this list will be empty if you haven't created any buckets yet
+
+Command line
+------------
+
+.. code:: bash
+
+    # choose your GCP Project ID (it must be unique, so at least add a number here)
+    PROJECT_ID=my-pgb-project
+    # choose a name for your service account
+    NAME=mypgb-service-account
+    # choose a location for your key file
+    KEY_PATH=/local/path/for/GCP_auth_key.json
+
+    # install the SDK for the command line
+        # Linux and MacOS:
+    curl https://sdk.cloud.google.com | bash
+        # Windows:
+        # see https://cloud.google.com/sdk/docs/downloads-interactive#windows
+    # follow the directions
+
+    # open a new terminal or restart your shell
+    # exec -l $SHELL
+
+    # connect gcloud to the Google account you want to use (assumes you have one already)
+    gcloud init
+    gcloud auth login
+    # this will open a browser and prompt you for authorization. follow the instructions
+
+    # create the project, set it as the gcloud default, and enable the Pub/Sub API
+    gcloud projects create $PROJECT_ID
+    gcloud config set project $PROJECT_ID
+    gcloud services enable pubsub.googleapis.com
+
+    # create an owner service account and download a key file
+    gcloud iam service-accounts create $NAME
+    gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:$NAME@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/owner"
+    gcloud iam service-accounts keys create $KEY_PATH --iam-account=$NAME@$PROJECT_ID.iam.gserviceaccount.com
+
+    # set environment variables
+    export GOOGLE_CLOUD_PROJECT=$PROJECT_ID
+    export GOOGLE_APPLICATION_CREDENTIALS=$KEY_PATH
+
+    # install Pub/Sub Python API
+    pip install google-cloud-bigquery
+    pip install google-cloud-pubsub
+    pip install google-cloud-storage
+
+    # if you would like to delete the project with you are done, use:
+    # gcloud projects delete $PROJECT_ID
