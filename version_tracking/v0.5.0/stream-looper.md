@@ -74,6 +74,11 @@ fname=run-looper-indefinitely
 nohup python3 \${dir}\${fname}.py >> \${dir}\${fname}.out 2>&1 &
 "
 
-# set the startup script
 gcloud compute instances add-metadata "$vmname" --metadata=startup-script="$startupscript"
+```
+
+Stop and restart the vm:
+```bash
+gcloud compute instances stop "$vmname"
+gcloud compute instances start "$vmname"
 ```
