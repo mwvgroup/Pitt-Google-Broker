@@ -31,7 +31,7 @@ with open('requirements.txt') as f:
 
 setup(
     name='pgb_broker_utils',  # Required
-    version='0.2.8',  # Required
+    version='0.2.9',  # Required
     description='Tools used by the Pitt-Google astronomical alert broker.',
     long_description=long_description,
     long_description_content_type='text/markdown',
