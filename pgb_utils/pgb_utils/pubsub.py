@@ -29,8 +29,11 @@ def pull(
     """Pull and acknowledge a fixed number of messages from a Pub/Sub topic.
 
     Wrapper for the synchronous
-    `google.cloud.pubsub_v1.SubscriberClient().pull()`.
-    See also: https://cloud.google.com/pubsub/docs/pull#synchronous_pull
+    `google.cloud.pubsub_v1.SubscriberClient().pull()`
+    documented at
+    https://googleapis.dev/python/pubsub/latest/subscriber/api/client.html.
+
+    See also: https://cloud.google.com/pubsub/docs/pull
 
     Args:
         subscription_name: Name of the Pub/Sub subcription to pull from.
@@ -43,7 +46,8 @@ def pull(
         msg_only: Whether to return the message contents only or the full packet.
 
     Returns:
-        A list of messages
+        A list of messages. If `msg_only` is True, the messages are bytes containing
+        the message data only. Otherwise the messages are the full message packets.
     """
     if project_id is None:
         project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
@@ -69,6 +73,8 @@ def pull(
                 message_list.append(received_message.message.data)  # bytes
             else:
                 message_list.append(received_message)
+                # https://cloud.google.com/pubsub/docs/reference/rpc/google.pubsub.v1#google.pubsub.v1.ReceivedMessage
+
             ack_ids.append(received_message.ack_id)
 
         # acknowledge the messages so they will not be sent again
@@ -85,14 +91,16 @@ def streamingPull(
     subscription_name: str,
     callback: Callable[[PubsubMessage], None],
     project_id: str = None,
-    timeout: int = 10,
     block: bool = True
 ) -> Union[None, StreamingPullFuture]:
-    """Pull and process Pub/Sub messages continuously in a background thread.
+    """Pull and process Pub/Sub messages continuously in streaming mode.
 
     Wrapper for the asynchronous
-    `google.cloud.pubsub_v1.SubscriberClient().subscribe()`.
-    See also: https://cloud.google.com/pubsub/docs/pull#asynchronous-pull
+    `google.cloud.pubsub_v1.SubscriberClient().subscribe()`
+    documented at
+    https://googleapis.dev/python/pubsub/latest/subscriber/api/client.html.
+
+    See also: https://cloud.google.com/pubsub/docs/pull
 
     Args:
         subscription_name: The Pub/Sub subcription to pull from.
@@ -103,18 +111,17 @@ def streamingPull(
         project_id: GCP project ID for the project containing the subscription.
                     If None, the environment variable GOOGLE_CLOUD_PROJECT will be used.
 
-        timeout: The amount of time, in seconds, the subscriber client should wait for
-                 a new message before closing the connection.
-
         block: Whether to block while streaming messages or return the
                StreamingPullFuture object for the user to manage separately.
 
     Returns:
-        If `block` is False, immediately returns the StreamingPullFuture object that
-        manages the background thread.
+        If `block` is False, immediately returns the `StreamingPullFuture` object that
+        manages the background thread that is pulling and processing messages.
         Call its `cancel()` method to stop streaming messages.
-        If `block` is True, returns None once the streaming encounters an error
-        or timeout.
+
+        If `block` is True, the user's thread is blocked until the streaming encounters
+        an error.
+        Use Control+C to stop streaming.
     """
     if project_id is None:
         project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
@@ -132,8 +139,8 @@ def streamingPull(
         # or an error is encountered
         with subscriber:
             try:
-                streaming_pull_future.result(timeout=timeout)
-            except TimeoutError:
+                streaming_pull_future.result()
+            except KeyboardInterrupt:
                 streaming_pull_future.cancel()  # Trigger the shutdown.
                 streaming_pull_future.result()  # Block until the shutdown is complete.
 
@@ -147,8 +154,11 @@ def publish(
 ) -> str:
     """Publish messages to a Pub/Sub topic.
 
-    Wrapper for `google.cloud.pubsub_v1.PublisherClient().publish()`.
-    See also: https://cloud.google.com/pubsub/docs/publisher#publishing_messages.
+    Wrapper for `google.cloud.pubsub_v1.PublisherClient().publish()`
+    documented at
+    https://googleapis.dev/python/pubsub/latest/publisher/api/client.html.
+
+    See also: https://cloud.google.com/pubsub/docs/publisher
 
     Args:
         topic_name: The Pub/Sub topic name for publishing alerts.
@@ -178,12 +188,15 @@ def publish(
 # --- Subscribe to a PGB stream from an external account --- #
 def create_subscription(
     topic_name: str,
-    project_id: Optional[str] = None,
     subscription_name: Optional[str] = None,
-):
+    project_id: Optional[str] = None,
+) -> Subscription:
     """Create a subscription to a Pitt-Google Pub/Sub topic.
 
-    Wrapper for `google.cloud.pubsub_v1.SubscriberClient().create_subscription()`.
+    Wrapper for `google.cloud.pubsub_v1.SubscriberClient().create_subscription()`
+    documented at
+    https://googleapis.dev/python/pubsub/latest/subscriber/api/client.html.
+
     See also: https://cloud.google.com/pubsub/docs/admin#manage_subs
 
     Args:
@@ -193,6 +206,9 @@ def create_subscription(
                     created in this account.
         subscription_name: Name for the user's Pub/Sub subscription. If None,
                            `topic_name` will be used.
+
+    Returns:
+        A Pub/Sub `Subscription` instance
     """
     if project_id is None:
         project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
@@ -221,7 +237,10 @@ def delete_subscription(
 ) -> None:
     """Delete a Pub/Sub subscription.
 
-    Wrapper for `google.cloud.pubsub_v1.SubscriberClient().delete_subscription()`.
+    Wrapper for `google.cloud.pubsub_v1.SubscriberClient().delete_subscription()`
+    documented at
+    https://googleapis.dev/python/pubsub/latest/subscriber/api/client.html.
+
     See also: https://cloud.google.com/pubsub/docs/admin#delete_subscription
 
     Args:

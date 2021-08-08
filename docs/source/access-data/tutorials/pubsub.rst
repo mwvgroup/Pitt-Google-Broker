@@ -85,10 +85,12 @@ Method A: Python
     subscription_name = 'ztf-loop'
 
     # create the subscription
-    subscription = pgb.pubsub.create_subscription(
-        topic_name, subscription_name=subscription_name
-    )
+    subscription = pgb.pubsub.create_subscription(topic_name, subscription_name)
     # you can look at the subscription object, but you don't need to do anything with it
+
+For more information, view the docstring and source code for
+:meth:`pgb_utils.pubsub.create_subscription`.
+
 
 Method B: Command line
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -96,14 +98,14 @@ Method B: Command line
 .. code:: bash
 
     # choose an existing Pitt-Google topic
-    TOPIC_NAME="ztf-loop"
+    topic_name="ztf-loop"
 
     # name your subscription whatever you'd like
-    SUBSCRIPTION_NAME="ztf-loop"
+    subscription_name="ztf-loop"
 
     # create the subscription
-    gcloud pubsub subscriptions create $SUBSCRIPTION_NAME \
-        --topic=$TOPIC_NAME \
+    gcloud pubsub subscriptions create $subscription_name \
+        --topic=$topic_name \
         --topic-project="ardent-cycling-243415"  # Pitt-Google project ID
 
 .. _pull-messages:
@@ -112,42 +114,48 @@ Pull Messages
 -------------
 
 The code below pulls and acknowledges messages from a subscription.
-Once the subscription is created, messages published to the topic will be available
-in the subscription until they are either pulled and acknowledged,
-or until they expire (7 days max).
 
 Method A: Python
 ~~~~~~~~~~~~~~~~
 
-In Python you have the option to either pull a fixed number of messages
-or to pull and process messages continuously in streaming mode.
+In Python you have the option to either
+(1) pull a fixed number of messages and then process them, or
+(2) pull and process messages continuously in streaming mode.
 
-Option 1: Pull a fixed number of messages. Useful for testing.
+Pull a fixed number of messages
+*******************************
+
+With this method, a fixed number (maximum) of messages are returned in a list.
+You can then process them however you'd like.
 
 .. code:: python
 
     import pgb_utils as pgb
 
-    # setup
+    # pull and acknowledge messages
     subscription_name = 'ztf-loop'
     max_messages = 5
-
-    # pull and acknowledge messages
     msgs = pgb.pubsub.pull(subscription_name, max_messages=max_messages)
 
-    # msgs is a list containing alerts as bytes
+    # msgs is a list containing the alert data as bytes
     # you can now process them however you'd like
-    # here we simply convert the first alert to a pandas dataframe
-    df = pgb.utils.decode_alert(msgs[0], return_format='df')
 
-Option 2: Pull messages in streaming mode.
-This method pulls, processes, and acknowledges messages continuously in a
-background thread.
+    # here we simply convert the first alert to an astropy table
+    table = pgb.pubsub.decode_message(msgs[0], return_alert_as='table')
+
+For more information, view the docstring and source code for
+:meth:`pgb_utils.pubsub.pull`.
+
+Pull messages in streaming mode
+********************************
+
+This method pulls, processes, and acknowledges messages continuously.
+
 To use this method, we must first create a "callback" function that accepts
-a single message, processes the data, and then acknowledges the message.
-
-By default, the ``streamingPull`` function below does not return until the background thread either times out or encounters an error,
-but this blocking behavior can be controlled using a keyword.
+a single message, processes the data according to the user's desires,
+and then acknowledges the message.
+The message object is described `here
+<https://cloud.google.com/pubsub/docs/reference/rpc/google.pubsub.v1#google.pubsub.v1.PubsubMessage>`__.
 
 .. code:: python
 
@@ -158,37 +166,51 @@ but this blocking behavior can be controlled using a keyword.
         # extract the message data
         alert = message.data  # bytes
 
-        # process the message
-        # in this example we simply convert it to a dataframe and print the 1st row
-        df = pgb.utils.decode_alert(alert, return_format='df')
+        # process the message however you'd like
+
+        # here we simply convert it to a dataframe and print the 1st row
+        df = pgb.pubsub.decode_message(alert, return_alert_as='df')
         print(df.head(1))
 
         # acknowledge the message so it is not delivered again
         message.ack()
 
-    # open the connection and process the streaming messages
+    # start streaming messages
     subscription_name = 'ztf-loop'
-    timeout = 5  # maximum number of seconds to wait for a message before exiting
-    pgb.pubsub.streamingPull(subscription_name, callback, timeout=timeout)
+    pgb.pubsub.streamingPull(subscription_name, callback)
+    # use Control+C to cancel the streaming
 
+For more information, view the docstring and source code for
+:meth:`pgb_utils.pubsub.streamingPull`.
 
 Method B: Command line
 ~~~~~~~~~~~~~~~~~~~~~~
 
+This method returns a fixed number (maximum) of messages.
+See `gcloud pubsub subscriptions pull
+<https://cloud.google.com/sdk/gcloud/reference/pubsub/subscriptions/pull>`__
+(format options are listed
+`here <https://cloud.google.com/sdk/gcloud/reference#--format>`__).
+
 .. code:: bash
 
-    SUBSCRIPTION="ztf-loop"
-    limit=1  # default=1
-    gcloud pubsub subscriptions pull $SUBSCRIPTION --auto-ack --limit=$limit
+    # set these parameters as desired
+    subscription_name="ztf-loop"
+    max_messages=5
+    format=json
 
+    # pull messages
+    gcloud pubsub subscriptions pull $subscription_name \
+        --limit $max_messages \
+        --format $format \
+        --auto-ack
 
 .. _delete-subscription:
 
 Cleanup: Delete a subscription
 --------------------------------
 
-If you are not using a subscription you should delete it so that messages do not
-continue to accrue and count against your quota.
+If you are done with a subscription you can delete it.
 
 Method A: Python
 ~~~~~~~~~~~~~~~~
@@ -200,29 +222,13 @@ Method A: Python
     subscription_name = 'ztf-loop'
     pgb.pubsub.delete_subscription(subscription_name)
 
+For more information, view the docstring and source code for
+:meth:`pgb_utils.pubsub.delete_subscription`.
+
 Method B: Command line
 ~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: bash
 
-    SUBSCRIPTION_NAME="ztf-loop"
-    gcloud pubsub subscriptions delete $SUBSCRIPTION_NAME
-
-.. raw:: html
-
-   <!--
-
-   ## Process messages using Dataflow
-
-   ```python
-
-   with beam.Pipeline() as pipeline:
-       (
-           pipeline
-           | 'Read BigQuery' >> beam.io.ReadFromBigQuery(**read_args)
-           | 'Type cast to DataFrame' >> beam.ParDo(pgb.beam.ExtractHistoryDf())
-           | 'Is nearby known SS object' >> beam.Filter(nearby_ssobject)
-           | 'Calculate mean magnitudes' >> beam.ParDo(calc_mean_mags())
-           | 'Write results' >> beam.io.WriteToText(beam_outputs_prefix)
-       )
-   ``` -->
+    subscription_name="ztf-loop"
+    gcloud pubsub subscriptions delete $subscription_name
