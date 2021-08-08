@@ -14,8 +14,8 @@ Complete the initial setup required for data access:
 
 Our broker lives on `Google Cloud
 Platform <https://cloud.google.com/>`__ (GCP).
-To access the data you
-need a free GCP project of your own, with a configured service account
+To access the data, you
+need a free GCP project of your own with a configured service account
 authenticating your access to Google's APIs.
 You can then connect using many different languages;
 our tutorials (except this one) demonstrate Python and command-line methods.
@@ -44,7 +44,7 @@ Click "Create".
 Step 2: Configure authentication
 ---------------------------------
 
-**On GCP:**
+**Complete the following on GCP:**
 
     Go to Google's "Getting started with authentication" page and complete the
     section `Creating a service
@@ -52,30 +52,26 @@ Step 2: Configure authentication
     where you will create a service account in your project
     and download a JSON key file for authentication.
 
-**Locally:**
+**Complete the following locally:**
 
     Open a shell on your local machine and execute the following code to set
     two environment variables.
     They will be used in the background by the APIs to connect to your project
     and authenticate your calls to various services like Pub/Sub or BigQuery.
 
-    .. code-block:: console
+    .. code-block:: bash
 
-        $ # insert your project ID from step 1:
-        $ PROJECT_ID=my-pgb-project
+        # insert your project ID from step 1:
+        export GOOGLE_CLOUD_PROJECT=my-pgb-project
 
-        $ # insert the path to the key file you just downloaded
-        $ KEY_PATH=/local/path/to/GCP_auth_key.json
-
-        $ # set the environment variables
-        $ export GOOGLE_CLOUD_PROJECT=$PROJECT_ID
-        $ export GOOGLE_APPLICATION_CREDENTIALS=$KEY_PATH
+        # insert the path to the key file you just downloaded
+        export GOOGLE_APPLICATION_CREDENTIALS=/local/path/to/GCP_auth_key.json
 
 
 Step 3: Enable and install APIs
 ---------------------------------
 
-**On GCP:**
+**Complete the following on GCP:**
 
     Enable the desired APIs in your project.
     Below are direct links to the APIs needed for our tutorials.
@@ -98,7 +94,7 @@ Step 3: Enable and install APIs
     `API Library <https://console.cloud.google.com/apis/library>`__:
     search for and click on the API you want, then click "Enable".
 
-**Locally:**
+**Complete the following locally:**
 
     Install the desired :ref:`Python <python-installs>` and/or
     :ref:`command-line <cli-installs>` tools.
@@ -117,18 +113,34 @@ Recommended method:
     along with our package which contains working examples of using
     the Google APIs to access data from the Pitt-Google project.
     It will also install some standard packages like Astropy and Pandas.
-    You may wish to create a new conda environment first using
-
-    .. code-block:: console
-
-        $ conda create --name PGB python=3.7 python3-pip
-        $ conda activate PGB
-
-    .. code-block:: console
-
-        $ pip3 install pgb-utils
-
     Our tutorials use this package to demonstrate Python calls.
+
+    If you want to install to a new Conda environment, you can use the provided yaml:
+
+    .. code-block:: bash
+
+        # download the file, create, and activate the environment
+        wget https://raw.githubusercontent.com/mwvgroup/Pitt-Google-Broker/master/pgb_utils/pgb_env.yaml
+        conda env create --file pgb_env.yaml
+        conda activate PGB
+
+        # persist the environment variables in the new PGB env
+        cd $CONDA_PREFIX
+        mkdir -p ./etc/conda/activate.d
+        mkdir -p ./etc/conda/deactivate.d
+        touch ./etc/conda/activate.d/env_vars.sh
+        touch ./etc/conda/deactivate.d/env_vars.sh
+        echo "export GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT" >> ./etc/conda/activate.d/env_vars.sh
+        echo "export GOOGLE_APPLICATION_CREDENTIALS=$GOOGLE_APPLICATION_CREDENTIALS" >> ./etc/conda/activate.d/env_vars.sh
+        echo 'unset GOOGLE_CLOUD_PROJECT' >> ./etc/conda/deactivate.d/env_vars.sh
+        echo 'unset GOOGLE_APPLICATION_CREDENTIALS' >> ./etc/conda/deactivate.d/env_vars.sh
+
+    If you don't want to use Conda, you can install the package directly using pip
+    (a Python 3.7 environment is recommended):
+
+    .. code-block:: bash
+
+        pip install pgb-utils
 
 Alternate method:
 
@@ -136,11 +148,11 @@ Alternate method:
     install the packages individually.
     Here are commands to install the BigQuery, Pub/Sub, and Cloud Storage APIs:
 
-    .. code-block:: console
+    .. code-block:: bash
 
-        $ pip install google-cloud-bigquery
-        $ pip install google-cloud-pubsub
-        $ pip install google-cloud-storage
+        pip install google-cloud-bigquery
+        pip install google-cloud-pubsub
+        pip install google-cloud-storage
 
     See `Python Cloud Client Libraries
     <https://cloud.google.com/python/docs/reference>`__
@@ -148,35 +160,33 @@ Alternate method:
 
 .. _cli-installs:
 
-Command-line interface install
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+CLI installs
+~~~~~~~~~~~~
 
 To access data from the command line, install and configure the CLI
 using the code below.
 This will install three tools: gcloud, bq, and gsutil.
 Their use is demonstrated in our tutorials.
 
-.. code-block:: console
+.. code-block:: bash
 
-    $ # Windows:
-    $ # see https://cloud.google.com/sdk/docs/downloads-interactive#windows
+    # Windows:
+    # see https://cloud.google.com/sdk/docs/downloads-interactive#windows
 
-    $ # Linux and MacOS:
-    $ curl https://sdk.cloud.google.com | bash
-    $ # follow the directions
+    # Linux and MacOS:
+    curl https://sdk.cloud.google.com | bash
+    # follow the directions
 
-    $ # open a new terminal or restart your shell
+    # open a new terminal or restart your shell
+    # either reactivate the Conda env, or reset the environment variables from step 2
 
-    $ # either reactivate your Conda environment,
-    $ # or reset the environment variables from step 2
+    # connect the CLI to your Google account:
+    gcloud init
+    # follow the directions
+    # note this may open a browser and ask you to complete the setup there
 
-    $ # connect the CLI to your Google account:
-    $ gcloud init
-    $ # follow the directions
-    $ # note this may open a browser and ask you to complete the setup there
-
-    $ # set your new project as the default:
-    $ gcloud config set project $GOOGLE_CLOUD_PROJECT
+    # set your new project as the default:
+    gcloud config set project $GOOGLE_CLOUD_PROJECT
 
 
 .. _delete-project:
@@ -185,7 +195,6 @@ Cleanup: Delete a GCP project
 -------------------------------
 
 If you are done with your GCP project you can permanently delete it.
-
 Go to the `Cloud Resource
 Manager <https://console.cloud.google.com/cloud-resource-manager>`__,
 select your project, and click "DELETE".

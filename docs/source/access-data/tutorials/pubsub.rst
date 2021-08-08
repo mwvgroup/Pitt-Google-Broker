@@ -5,17 +5,6 @@ Pub/Sub Streams
 
 1.  :ref:`Subscribe to a Pitt-Google Pub/Sub stream <create-subscription>`
 2.  :ref:`Pull messages from your subscription <pull-messages>`
-3.  :ref:`Clean up by deleting the subscription <delete-subscription>`
-
-This tutorial covers subscribing to our Pub/Sub streams and pulling messages.
-It demonstrates two methods: Python and the command line.
-The Python sections use the pgb-utils package, which contains example functions to
-complete the most common tasks.
-These example functions are thin wrappers for the Google API, which offers many more
-options than those presented here.
-Interested users are encouraged to look at and extend the pgb-utils source code
-(available in the :doc:`docs <../../api/pgb-utils/pubsub>`) to harness the full power
-of the Google API.
 
 Pub/Sub is an asynchronous, publish–subscribe messaging service.
 The Pitt-Google broker publishes alerts and value-added data to multiple topics
@@ -23,20 +12,29 @@ The Pitt-Google broker publishes alerts and value-added data to multiple topics
 You can subscribe to one or more of these topics, and then pull and process the data
 either in real-time or up to 7 days after a message was published.
 
+This tutorial demonstrates two methods: Python and the command line.
+The Python sections use the pgb-utils package, which contains example functions to
+complete these tasks.
+These example functions are thin wrappers for the Google API, which offers more
+options than those presented here.
+Interested users are encouraged to look at and extend the pgb-utils source code
+(see :doc:`docs <../../api/pgb-utils/pubsub>`) to harness the full power
+of the Google API.
+
 For more information, see:
 
 - `What is Pub/Sub? <https://cloud.google.com/pubsub/docs/overview>`__
-- `All Google APIs and references for Pub/Sub
-  <https://cloud.google.com/pubsub/docs/apis>`__
-  (many languages are available)
 - Python client documentation:
 
+        - :doc:`pgb_utils.pubsub <../../api/pgb-utils/pubsub>`
         - `google.cloud.pubsub
           <https://googleapis.dev/python/pubsub/latest/index.html>`__
           (pgb-utils.pubsub contains thin wrappers for this API)
-        - :doc:`pgb_utils.pubsub <../../api/pgb-utils/pubsub>`
 
 - `gcloud CLI reference <https://cloud.google.com/sdk/gcloud/reference>`__
+- `All Google APIs for Pub/Sub
+  <https://cloud.google.com/pubsub/docs/apis>`__
+  (many languages are available)
 
 Prerequisites
 -------------
