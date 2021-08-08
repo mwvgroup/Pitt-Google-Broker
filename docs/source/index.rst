@@ -17,7 +17,6 @@ The Pitt-Google Broker runs on the `Google Cloud Platform <https://cloud.google.
 
 .. toctree::
    :hidden:
-   :maxdepth: 3
    :caption: Access Data
 
    access-data/data-overview
@@ -26,7 +25,7 @@ The Pitt-Google Broker runs on the `Google Cloud Platform <https://cloud.google.
 .. toctree::
    :hidden:
    :maxdepth: 1
-   :caption: Broker
+   :caption: Broker Software
 
    broker/broker-overview
    broker/broker-instance-keywords
@@ -39,7 +38,6 @@ The Pitt-Google Broker runs on the `Google Cloud Platform <https://cloud.google.
    :maxdepth: 1
    :caption: API Reference
 
-   api/pgb-utils/beam
    api/pgb-utils/bigquery
    api/pgb-utils/figures
    api/pgb-utils/pubsub
