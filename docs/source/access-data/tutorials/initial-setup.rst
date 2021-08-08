@@ -49,7 +49,7 @@ Step 2: Configure authentication
     Go to Google's "Getting started with authentication" page and complete the
     section `Creating a service
     account <https://cloud.google.com/docs/authentication/getting-started#creating_a_service_account>`__
-    where you will create a service account with the owner role in your project
+    where you will create a service account with the "owner" role in your project
     and download a JSON key file for authentication.
 
 **Complete the following locally:**
