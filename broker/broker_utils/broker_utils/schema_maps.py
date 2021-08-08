@@ -38,7 +38,7 @@ def load_schema_map(survey: str, testid: str, schema: Optional[str] =None) -> di
     return schema_map
 
 def _broker_bucket_name(survey, testid):
-    if testid == False:
+    if testid == "False":
         return f'{pgb_project_id}-{survey}-broker_files'
     else:
         return f'{pgb_project_id}-{survey}-broker_files-{testid}'
