@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-"""The ``pubsub`` module facilitates interacting with Pitt-Google Pub/Sub streams.
+"""The `pubsub` module facilitates access to Pitt-Google Pub/Sub streams."""
 
-publishing, pulling subscriptions, and decoding alert streams.
-"""
-
+from astropy.table import Table
+from fastavro import reader
 from google.cloud import pubsub_v1
+# note: the 'v1' refers to the underlying API, not the google.cloud.pubsub version
 from google.cloud.pubsub_v1.subscriber.futures import StreamingPullFuture
-from google.cloud.pubsub_v1.types import PubsubMessage, ReceivedMessage
+from google.cloud.pubsub_v1.types import PubsubMessage, ReceivedMessage, Subscription
+from io import BytesIO
+import json
 import os
-from typing import Callable, List, Optional, Union
+import pandas as pd
+from typing import Callable, List, Optional, Tuple, Union
 
 
 pgb_project_id = "ardent-cycling-243415"
@@ -239,3 +242,146 @@ def delete_subscription(
         subscriber.delete_subscription(request=request)
 
     print(f"Subscription deleted: {subscription_path}.")
+
+
+# --- Decode messages --- #
+def decode_message(
+    msg_bytes: bytes,
+    return_alert_as: str = "dict",
+) -> Union[
+    Union[dict, pd.DataFrame, Table],
+    Union[Tuple[dict, dict], Tuple[pd.DataFrame, dict], Tuple[Table, dict]],
+]:
+    """Decode the message and return in requested format.
+
+    Args:
+        msg_bytes: a single alert
+
+        return_alert_as: Format for the returned alert.
+            One of "dict" (dictionary), "df" (Pandas DataFrame) or
+            "table" (Astropy Table).
+            Note that only the "dict" option returns the full packet.
+            Using "df" or "table" drops some metadata and the cutouts (if present).
+
+    Returns:
+        If the message contains an alert packet only, it is returned in the requested
+        format.
+
+        If the message contains an alert packet plus value added products, it is
+        returned as a tuple where the first element is the alert packet in the
+        requested format, and the second element is the value added products as a dict.
+    """
+    # decode the message
+    try:
+        # decode message with avro encoding
+        # may come from topic ztf-alerts or ztf-loop
+        alert_dict, va_dict = _decode_avro_alert(msg_bytes)
+    except ValueError:
+        try:
+            # decode message with json encoding
+            # may come from ztf-alerts_pure, ztf-exgalac_trans, or ztf-salt2
+            alert_dict, va_dict = _decode_json_msg(msg_bytes)
+        except UnicodeDecodeError:
+            _raise_decode_error()
+        except json.JSONDecodeError:
+            _raise_decode_error()
+
+    # cast the alert to the requested type
+    if return_alert_as == "dict":
+        alert = alert_dict
+    elif return_alert_as == "df":
+        alert = _alert_dict_to_dataframe(alert_dict)
+    elif return_alert_as == "table":
+        alert = _alert_dict_to_table(alert_dict)
+    else:
+        errmsg = f"Received return_alert_as = {return_alert_as}, which is invalid"
+        raise ValueError(errmsg)
+
+    # package the object(s) to return
+    if va_dict is None:
+        rtn = alert
+    else:
+        rtn = (alert, va_dict)
+
+    return rtn
+
+
+def _decode_avro_alert(
+    alert_bytes: bytes,
+) -> Union[Tuple[dict, dict], Tuple[dict, None]]:
+    # extract the alert data
+    with BytesIO(alert_bytes) as fin:
+        alert_dicts = [r for r in reader(fin)]  # list of dicts
+    # ZTF alerts are expected to contain one dict in the list
+    assert len(alert_dicts) == 1
+    alert_dict = alert_dicts[0]
+
+    # these streams do not have value added products
+    va_dict = None
+
+    return alert_dict, va_dict
+
+
+def _decode_json_msg(
+    msg_bytes: bytes
+) -> Union[Tuple[dict, dict], Tuple[dict, None]]:
+    # decode to a dict
+    dict_str = msg_bytes.decode("UTF-8")
+    dic = json.loads(dict_str)
+
+    # separate alert from value added
+    if "alert" in dic.keys():  # value added products are included in the msg
+        alert_dict = dic.pop("alert")
+        va_dict = dic
+
+    else:  # msg is just the alert
+        alert_dict = dic
+        va_dict = None
+
+    return alert_dict, va_dict
+
+
+def _strip_cutouts_ztf(alert_dict: dict) -> dict:
+    """Drop the cutouts from the alert dictionary.
+
+    Args:
+        alert_dict: ZTF alert formated as a dict
+    Returns:
+        `alert_data` with the cutouts (postage stamps) removed
+    """
+    cutouts = ["cutoutScience", "cutoutTemplate", "cutoutDifference"]
+    alert_stripped = {k: v for k, v in alert_dict.items() if k not in cutouts}
+    return alert_stripped
+
+
+def _alert_dict_to_dataframe(alert_dict: dict) -> pd.DataFrame:
+    """Package a ZTF alert dictionary into a dataframe.
+
+    Adapted from:
+    https://github.com/ZwickyTransientFacility/ztf-avro-alert/blob/master/notebooks/Filtering_alerts.ipynb
+    """
+    dfc = pd.DataFrame(alert_dict["candidate"], index=[0])
+    df_prv = pd.DataFrame(alert_dict["prv_candidates"])
+    df = pd.concat([dfc, df_prv], ignore_index=True, sort=True)
+    df = df[dfc.columns]  # return to original column ordering
+
+    # we'll attach some metadata--note this may not be preserved after all operations
+    # https://stackoverflow.com/questions/14688306/adding-meta-information-metadata-to-pandas-dataframe
+    df.objectId = alert_dict["objectId"]
+    return df
+
+
+def _alert_dict_to_table(alert_dict: dict) -> Table:
+    """Package a ZTF alert dictionary into an Astopy Table."""
+    rows = [alert_dict["candidate"]] + alert_dict["prv_candidates"]
+    table = Table(rows=rows)
+    table.meta["comments"] = f"ZTF objectId: {alert_dict['objectId']}"
+    return table
+
+
+def _raise_decode_error():
+    errmsg = (
+        "Unable to decode the message. "
+        "It does not seem to be of an expected type."
+    )
+    raise ValueError(errmsg)
