@@ -89,7 +89,7 @@ Method A: Python
     # you can look at the subscription object, but you don't need to do anything with it
 
 For more information, view the docstring and source code for
-:meth:`pgb_utils.pubsub.create_subscription`.
+:meth:`pgb_utils.pgb_utils.pubsub.create_subscription`.
 
 
 Method B: Command line
