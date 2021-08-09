@@ -43,7 +43,9 @@ Imports
 
 .. code:: python
 
+    import fastavro
     from google.cloud import storage
+    from pathlib import Path
     import pgb_utils as pgb
 
 Name some things
