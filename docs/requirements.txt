@@ -22,4 +22,5 @@ docutils<0.17  # render lists properly
 myst-parser
 sphinx
 sphinx-copybutton
+sphinx_autodoc_typehints
 sphinx_rtd_theme

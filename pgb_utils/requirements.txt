@@ -1,15 +1,15 @@
-# apache_beam[gcp]
-apache_beam
 aplpy
-astropy==3.2.1
-astropy-healpix==0.6
-beautifulsoup4==4.8
+astropy>=4.0  # allow create Table from row dicts with different keys
+# astropy==3.2.1
+# astropy-healpix==0.6
+# beautifulsoup4==4.8
+fastavro
 # google-auth
 # google-api-core
-google-apitools
+# google-apitools
 google-cloud-bigquery
 # google-cloud-logging
-# google-cloud-pubsub
+google-cloud-pubsub>=2.0  # request syntax is different than in v1.x
 google-cloud-storage
 matplotlib
 numpy

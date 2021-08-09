@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 """A module for Pitt-Google Broker utilities.
+
 Example setup.py: https://github.com/pypa/sampleproject/blob/main/setup.py
 
 This file is part of the pgb_utils software package.
@@ -16,7 +17,8 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with pgb_utils.  If not, see <http://www.gnu.org/licenses/>."""
+along with pgb_utils.  If not, see <http://www.gnu.org/licenses/>.
+"""
 
 from setuptools import setup, find_packages
 import pathlib
@@ -31,7 +33,7 @@ with open('requirements.txt') as f:
 
 setup(
     name='pgb_utils',  # Required
-    version='0.1.4',  # Required
+    version='0.2.5',  # Required
     description='Tools to interact with Pitt-Google Broker data products and services.',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -54,7 +56,12 @@ setup(
 
     # For an analysis of "install_requires" vs pip's requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=requirements
+    install_requires=requirements,
+
+    # https://setuptools.readthedocs.io/en/latest/userguide/dependency_management.html#optional-dependencies
+    # extras_require={
+    #         "beam":  ["apache_beam[gcp]"],
+    #     },
 
     # python_requires='>=3.6, <4',
 
