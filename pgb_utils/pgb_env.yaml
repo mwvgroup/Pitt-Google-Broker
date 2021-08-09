@@ -1,4 +1,4 @@
-name: PGB2
+name: PGB
 channels:
   - defaults
 dependencies:
@@ -49,7 +49,7 @@ dependencies:
     - numpy==1.21.1
     - packaging==21.0
     - pandas==1.3.1
-    - pgb-utils>=0.2.3
+    - pgb-utils>=0.2.5
     - pillow==8.3.1
     - proto-plus==1.19.0
     - protobuf==3.17.3
