@@ -15,6 +15,8 @@ import os
 import pandas as pd
 from typing import Callable, List, Optional, Tuple, Union
 
+from . import utils as pgbu
+
 
 pgb_project_id = "ardent-cycling-243415"
 
@@ -309,9 +311,9 @@ def decode_message(
     if return_alert_as == "dict":
         alert = alert_dict
     elif return_alert_as == "df":
-        alert = _alert_dict_to_dataframe(alert_dict)
+        alert = pgbu.alert_dict_to_dataframe(alert_dict)
     elif return_alert_as == "table":
-        alert = _alert_dict_to_table(alert_dict)
+        alert = pgbu.alert_dict_to_table(alert_dict)
     else:
         errmsg = f"Received return_alert_as = {return_alert_as}, which is invalid"
         raise ValueError(errmsg)
@@ -358,44 +360,6 @@ def _decode_json_msg(
         va_dict = None
 
     return alert_dict, va_dict
-
-
-def _strip_cutouts_ztf(alert_dict: dict) -> dict:
-    """Drop the cutouts from the alert dictionary.
-
-    Args:
-        alert_dict: ZTF alert formated as a dict
-    Returns:
-        `alert_data` with the cutouts (postage stamps) removed
-    """
-    cutouts = ["cutoutScience", "cutoutTemplate", "cutoutDifference"]
-    alert_stripped = {k: v for k, v in alert_dict.items() if k not in cutouts}
-    return alert_stripped
-
-
-def _alert_dict_to_dataframe(alert_dict: dict) -> pd.DataFrame:
-    """Package a ZTF alert dictionary into a dataframe.
-
-    Adapted from:
-    https://github.com/ZwickyTransientFacility/ztf-avro-alert/blob/master/notebooks/Filtering_alerts.ipynb
-    """
-    dfc = pd.DataFrame(alert_dict["candidate"], index=[0])
-    df_prv = pd.DataFrame(alert_dict["prv_candidates"])
-    df = pd.concat([dfc, df_prv], ignore_index=True, sort=True)
-    df = df[dfc.columns]  # return to original column ordering
-
-    # we'll attach some metadata--note this may not be preserved after all operations
-    # https://stackoverflow.com/questions/14688306/adding-meta-information-metadata-to-pandas-dataframe
-    df.objectId = alert_dict["objectId"]
-    return df
-
-
-def _alert_dict_to_table(alert_dict: dict) -> Table:
-    """Package a ZTF alert dictionary into an Astopy Table."""
-    rows = [alert_dict["candidate"]] + alert_dict["prv_candidates"]
-    table = Table(rows=rows)
-    table.meta["comments"] = f"ZTF objectId: {alert_dict['objectId']}"
-    return table
 
 
 def _raise_decode_error():
