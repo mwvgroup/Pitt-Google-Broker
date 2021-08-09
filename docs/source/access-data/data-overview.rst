@@ -1,6 +1,14 @@
 Data Overview
 =============
 
+We are currently processing the ZTF alert stream.
+Data is available in message streams (Pub/Sub),
+database tables (BigQuery), and
+Avro files (Cloud Storage).
+The data lives in the Google Cloud and can be accessed via their many APIs.
+Our tutorials demonstrate Python and the command line,
+and give links to further information.
+
 Pub/Sub
 ----------------
 
@@ -8,8 +16,8 @@ Pub/Sub is an asynchronous, publish–subscribe messaging service.
 The Pitt-Google broker publishes alerts and value-added data to multiple topics,
 listed below.
 You can subscribe to one or more of these topics,
-and then pull and process the message stream(s).
-See the :doc:`pubsub` tutorial for more information.
+and then pull and process the message stream(s)
+(see the :doc:`pubsub` tutorial).
 
 .. list-table:: Current Streams
     :class: tight-table
@@ -42,6 +50,26 @@ See the :doc:`pubsub` tutorial for more information.
         These messages contain no data, only attributes.
         The file name is in the attribute "objectId",
         and the bucket name is in the attribute "bucketId".
+
+BigQuery
+----------------
+
+BigQuery is a data warehouse service designed for scalable analysis over
+petabytes of data.
+
+We store the alert content (except cutouts) and our value-added products in
+BigQuery tables, available for public queries.
+See the :doc:`bigquery` tutorial.
+
+
+Cloud Storage
+----------------
+
+Google Cloud Storage is a RESTful file storage web service.
+We store the complete alert packets, including cutouts,
+as well as value-added products from our pipeline as applicable
+in publicly accesible Cloud Storage buckets.
+See the :doc:`cloud-storage` tutorial.
 
 
 Note on Costs

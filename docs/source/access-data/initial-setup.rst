@@ -18,7 +18,7 @@ To access the data, you
 need a free GCP project of your own with a configured service account
 authenticating your access to Google's APIs.
 You can then connect using many different languages;
-our tutorials (except this one) demonstrate Python and command-line methods.
+our tutorials demonstrate Python and command-line methods.
 
 This setup only needs to be done once per project/local machine.
 

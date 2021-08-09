@@ -137,8 +137,7 @@ def streamingPull(
     )
 
     if block:
-        # block until there are no messages for the timeout duration
-        # or an error is encountered
+        # block until an error is encountered or the user cancels with Control+C
         with subscriber:
             try:
                 streaming_pull_future.result()
