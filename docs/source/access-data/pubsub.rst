@@ -144,7 +144,7 @@ You can then process them however you'd like.
     table = pgb.pubsub.decode_message(msgs[0], return_alert_as='table')
 
 For more information, view the docstring and source code for
-:meth:`pgb_utils.pubsub.pull`.
+:meth:`pgb_utils.pgb_utils.pubsub.pull`.
 
 Pull messages in streaming mode
 ********************************
@@ -181,7 +181,7 @@ The message object is described `here
     # use Control+C to cancel the streaming
 
 For more information, view the docstring and source code for
-:meth:`pgb_utils.pubsub.streamingPull`.
+:meth:`pgb_utils.pgb_utils.pubsub.streamingPull`.
 
 Method B: Command line
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -223,7 +223,7 @@ Method A: Python
     pgb.pubsub.delete_subscription(subscription_name)
 
 For more information, view the docstring and source code for
-:meth:`pgb_utils.pubsub.delete_subscription`.
+:meth:`pgb_utils.pgb_utils.pubsub.delete_subscription`.
 
 Method B: Command line
 ~~~~~~~~~~~~~~~~~~~~~~
