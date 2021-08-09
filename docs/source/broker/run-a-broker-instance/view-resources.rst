@@ -64,7 +64,7 @@ See also:
 
 - Load a row into a table: use ``broker_utils.gcp_utils.bq_insert_rows`` (Python)
 - Query the database instructions in the tutorial
-  :doc:`../../access-data/tutorials/bigquery` (Python and command line)
+  :doc:`../../access-data/bigquery` (Python and command line)
 
 --------------
 
@@ -125,7 +125,7 @@ See also:
 
 - Upload and download files: use ``broker_utils.gcp_utils.cs_download_file``
   and ``broker_utils.gcp_utils.cs_upload_file`` (Python)
-- Tutorial :doc:`../../access-data/tutorials/cloud-storage`
+- Tutorial :doc:`../../access-data/cloud-storage`
   (Python and command line)
 
 --------------

@@ -6,11 +6,11 @@ Initial Setup
 Complete the initial setup required for data access:
 
     1. :ref:`Create a new GCP project.
-       <access-data/tutorials/initial-setup:Step 1: Create a GCP project>`
+       <access-data/initial-setup:Step 1: Create a GCP project>`
     2. :ref:`Create a service account and configure authentication on a local machine.
-       <access-data/tutorials/initial-setup:Step 2: Configure authentication>`
+       <access-data/initial-setup:Step 2: Configure authentication>`
     3. :ref:`Enable the APIs on your project and install related tools locally.
-       <access-data/tutorials/initial-setup:Step 3: Enable and install APIs>`
+       <access-data/initial-setup:Step 3: Enable and install APIs>`
 
 Our broker lives on `Google Cloud
 Platform <https://cloud.google.com/>`__ (GCP).
