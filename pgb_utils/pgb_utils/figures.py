@@ -85,14 +85,10 @@ def plot_stamp(stamp, fig=None, subplot=None, **kwargs):
                 subplot = (1,1,1)
             ffig = aplpy.FITSFigure(hdul[0],figure=fig, subplot=subplot, **kwargs)
             ffig.show_grayscale(stretch='arcsinh')
-            # This has been throwing: `ValueError: a must be > 0 and <= 1`
-            # I think I have fixed this by requiring
-            # astropy==3.2.1
-            # astropy-healpix==0.6
-            # beautifulsoup4==4.8
+            # this has been throwing: `ValueError: a must be > 0 and <= 1`
+            # this is fixed by requiring astropy==3.2.1
             # Note: I see this related thing: https://github.com/aplpy/aplpy/issues/420
-            # but I am using the latest version (2.0.3).
-            # ffig.show_grayscale()
+            # but I am using the latest APLpy version (2.0.3).
     return ffig
 
 def plot_cutouts(alert_dict):

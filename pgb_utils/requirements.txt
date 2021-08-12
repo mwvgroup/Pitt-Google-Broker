@@ -1,6 +1,5 @@
 aplpy
-astropy>=4.0  # allow create Table from row dicts with different keys
-# astropy==3.2.1
+astropy==3.2.1  # required by figures.plot_stamp(), see comments there
 # astropy-healpix==0.6
 # beautifulsoup4==4.8
 fastavro
