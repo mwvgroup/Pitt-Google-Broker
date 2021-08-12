@@ -113,3 +113,11 @@ plt.show(block=False)
 table = put.alert_dict_to_table(alert_dict)
 # this works
 ```
+
+Test the conda env from yaml method after publishing to PyPI:
+
+```bash
+conda env create --file pgb_env.yaml
+conda activate PGByaml
+# now run the previous python block, and both functions work, yay
+```
