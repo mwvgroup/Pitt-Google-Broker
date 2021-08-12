@@ -7,6 +7,7 @@ Pitt-Google Broker's data and services.
 
 
 from astropy.table import Table
+from collections import OrderedDict
 import pandas as pd
 
 
@@ -35,7 +36,19 @@ def alert_dict_to_dataframe(alert_dict: dict) -> pd.DataFrame:
 
 def alert_dict_to_table(alert_dict: dict) -> Table:
     """Package a ZTF alert dictionary into an Astopy Table."""
-    rows = [alert_dict["candidate"]] + alert_dict["prv_candidates"]
+    candidate = OrderedDict(alert_dict["candidate"])  # dict
+    cand_cols = set(candidate.keys())
+
+    # astropy 3.2.1 cannot handle dicts with different keys (fixed by v4.1)
+    prv_candidates = []  # recreate with missing keys added
+    for prv_cand in alert_dict["prv_candidates"]:
+        prvc_cols = set(prv_cand.keys())
+        missing_cols = cand_cols - prvc_cols
+        empty = {mc: None for mc in missing_cols}
+        tmp = {**prv_cand, **empty}
+        prv_candidates.append(tmp)
+
+    rows = [candidate] + prv_candidates
     table = Table(rows=rows)
     table.meta["comments"] = f"ZTF objectId: {alert_dict['objectId']}"
     return table
