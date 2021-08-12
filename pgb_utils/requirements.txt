@@ -1,13 +1,7 @@
 aplpy
 astropy==3.2.1  # required by figures.plot_stamp(), see comments there
-# astropy-healpix==0.6
-# beautifulsoup4==4.8
 fastavro
-# google-auth
-# google-api-core
-# google-apitools
 google-cloud-bigquery
-# google-cloud-logging
 google-cloud-pubsub>=2.0  # request syntax is different than in v1.x
 google-cloud-storage
 matplotlib
