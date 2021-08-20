@@ -106,7 +106,10 @@ def _resources(service, survey='ztf', testid='test'):
     """
 
     if service == 'BQ':
-        datasets = {f'{survey}_alerts': ['alerts', 'DIASource', 'salt2']}
+        datasets = {
+            f'{survey}_alerts':
+                ['alerts', 'DIASource', 'salt2', 'SuperNNova']
+        }
 
         # append the testid to the dataset name only
         if testid is not False:
@@ -160,6 +163,8 @@ def _resources(service, survey='ztf', testid='test'):
                     [f'{survey}-exgalac_trans-counter'],
                 f'{survey}-salt2':
                     [f'{survey}-salt2-counter'],
+                f'{survey}-SuperNNova':
+                    [f'{survey}-SuperNNova-counter'],
         }
 
         # append the testid

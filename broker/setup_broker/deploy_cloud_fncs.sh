@@ -18,6 +18,8 @@ cue_nc_trigger_topic="${survey}-cue_night_conductor"
 cue_nc_CF_name="${survey}-cue_night_conductor"
 check_cue_trigger_topic="${cue_nc_trigger_topic}"
 check_cue_CF_name="${survey}-check_cue_response"
+classify_snn_CF_name="${survey}-classify_with_SuperNNova"
+classify_snn_trigger_topic="${survey}-exgalac_trans"
 # use test resources, if requested
 if [ "$testid" != "False" ]; then
     ps_to_gcs_trigger_topic="${ps_to_gcs_trigger_topic}-${testid}"
@@ -26,6 +28,8 @@ if [ "$testid" != "False" ]; then
     cue_nc_CF_name="${cue_nc_CF_name}-${testid}"
     check_cue_trigger_topic="${check_cue_trigger_topic}-${testid}"
     check_cue_CF_name="${check_cue_CF_name}-${testid}"
+    classify_snn_CF_name="${classify_snn_CF_name}-${testid}"
+    classify_snn_trigger_topic="${classify_snn_trigger_topic}-${testid}"
 fi
 
 if [ "$teardown" = "True" ]; then
@@ -79,6 +83,21 @@ else # Deploy the Cloud Functions
         --trigger-topic "$check_cue_trigger_topic" \
         --set-env-vars TESTID="$testid",SURVEY="$survey",ZONE="$zone" \
         --timeout 540s  # allow the CF to sleep without timing out
+
+    cd $OGdir
+
+#--- classify with SNN cloud function
+    classify_snn_entry_point="run"
+
+    cd .. && cd cloud_functions
+    cd classify_snn
+
+    gcloud functions deploy "$classify_snn_CF_name" \
+        --entry-point "$classify_snn_entry_point" \
+        --memory 512MB \  # standard 256MB is too small here
+        --runtime python37 \
+        --trigger-topic "$classify_snn_trigger_topic" \
+        --set-env-vars TESTID="$testid",SURVEY="$survey"
 
     cd $OGdir
 
