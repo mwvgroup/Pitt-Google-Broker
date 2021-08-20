@@ -7,14 +7,19 @@ GCP resources.
 from google.cloud import bigquery, pubsub_v1, storage
 from google.cloud.pubsub_v1.subscriber.futures import StreamingPullFuture
 from google.cloud.pubsub_v1.types import PubsubMessage, ReceivedMessage
+import json
 from typing import Callable, List, Optional, Union
 
 pgb_project_id = 'ardent-cycling-243415'
 
 
 # --- Pub/Sub --- #
-def publish(
-    topic_name: str, message: bytes, project_id: Optional[str] = None, attrs: dict = {}
+def publish_pubsub(
+    topic_name: str,
+    message: Union[bytes, dict],
+    project_id: Optional[str] = None,
+    attrs: dict = {},
+    publisher: Optional[pubsub_v1.PublisherClient] = None
 ) -> str:
     """Publish messages to a Pub/Sub topic.
 
@@ -31,13 +36,29 @@ def publish(
 
         attrs: Message attributes to be published.
 
+        publisher: An instantiated PublisherClient.
+                   Use this kwarg if you are calling this function repeatedly.
+                   The publisher will automatically batch the messages over a
+                   small time window (currently 0.05 seconds) to avoid making
+                   too many separate requests to the service.
+                   This helps increase throughput. See
+                   https://googleapis.dev/python/pubsub/1.7.0/publisher/index.html#batching
+
     Returns:
         published message ID
     """
     if project_id is None:
         project_id = pgb_project_id
 
-    publisher = pubsub_v1.PublisherClient()
+    if publisher is None:
+        publisher = pubsub_v1.PublisherClient()
+
+    if type(message) == dict:
+        message = json.dumps(message).encode('utf-8')
+    try:
+        assert type(message) == bytes
+    except AssertionError:
+        raise ValueError('`message` must be bytes or a dict.')
 
     topic_path = publisher.topic_path(project_id, topic_name)
 
