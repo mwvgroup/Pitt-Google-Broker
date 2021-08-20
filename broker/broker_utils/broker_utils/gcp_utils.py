@@ -201,6 +201,35 @@ def bq_insert_rows(table_id: str, rows: List[dict]):
     bq_client = bigquery.Client(project=pgb_project_id)
     table = bq_client.get_table(table_id)
     errors = bq_client.insert_rows(table, rows)
+    return errors
+
+
+def query_bigquery(query: str, project_id: Optional[str] = None):
+    """Query BigQuery.
+
+    Example query:
+        ``
+        query = (
+            f'SELECT * '
+            f'FROM `{project_id}.{dataset}.{table}` '
+            f'WHERE objectId={objectId} '
+        )
+        ``
+
+    Example of working with the query_job:
+        ``
+        for r, row in enumerate(query_job):
+            # row values can be accessed by field name or index
+            print(f"objectId={row[0]}, candid={row['candid']}")
+        ``
+    """
+    if project_id is None:
+        project_id = pgb_project_id
+
+    bq_client = bigquery.Client(project=project_id)
+    query_job = bq_client.query(query)
+
+    return query_job
 
 
 # --- Cloud Storage --- #
