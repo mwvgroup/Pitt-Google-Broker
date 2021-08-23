@@ -288,7 +288,7 @@ def load_dataframe_bigquery(
 
     # report the results
     msg = (
-        f"Loaded {job.output_rows} to BigQuery table {table_id}.\n"
+        f"Loaded {job.output_rows} rows to BigQuery table {table_id}.\n"
         f"The following errors were generated: {job.errors}"
     )
     if logger is not None:
