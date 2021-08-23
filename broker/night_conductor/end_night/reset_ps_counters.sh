@@ -15,6 +15,7 @@ if [ "$testid" = "False" ]; then
     "${survey}-alerts_pure-counter" \
     "${survey}-exgalac_trans-counter" \
     "${survey}-salt2-counter" \
+    "${survey}-SuperNNova-counter" \
     )
 else
     declare -a subs=(\
@@ -23,6 +24,7 @@ else
     "${survey}-alerts_pure-counter-${testid}" \
     "${survey}-exgalac_trans-counter-${testid}" \
     "${survey}-salt2-counter-${testid}" \
+    "${survey}-SuperNNova-counter-${testid}" \
     )
 fi
 
