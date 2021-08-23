@@ -1,0 +1,86 @@
+[
+  {
+    "description": "Object identifier or name",
+    "mode": "REQUIRED",
+    "name": "objectId",
+    "type": "STRING"
+  },
+  {
+    "description": "Candidate ID from operations DB",
+    "mode": "REQUIRED",
+    "name": "candid",
+    "type": "STRING"
+  },
+  {
+    "description": "Name of the survey's Kafka topic that originated the alert.",
+    "mode": "NULLABLE",
+    "name": "kafka_topic__alerts",
+    "type": "STRING"
+  },
+  {
+    "description": "Timestamp of the original alert from the survey's Kafka topic.",
+    "mode": "NULLABLE",
+    "name": "kafka_timestamp__alerts",
+    "type": "STRING"
+  },
+  {
+    "description": "Timestamp of the alerts Pub/Sub message. UTC, Unix time; nanosecond resolution.",
+    "mode": "NULLABLE",
+    "name": "publish_time__alerts",
+    "type": "STRING"
+  },
+  {
+    "description": "Timestamp of the alert_avros Pub/Sub message. UTC, Unix time; nanosecond resolution.",
+    "mode": "NULLABLE",
+    "name": "publish_time__alert_avros",
+    "type": "STRING"
+  },
+  {
+    "description": "Name of the bucket that contains the alert avro file.",
+    "mode": "NULLABLE",
+    "name": "bucketId__alert_avros",
+    "type": "STRING"
+  },
+  {
+    "description": "Name of the alert avro file in the bucket.",
+    "mode": "NULLABLE",
+    "name": "filename__alert_avros",
+    "type": "STRING"
+  },
+  {
+    "description": "Type of event that triggered the alert_avros Pub/Sub message; e.g., OBJECT_FINALIZE or OBJECT_METADATA_UPDATE.",
+    "mode": "NULLABLE",
+    "name": "eventType__alert_avros",
+    "type": "STRING"
+  },
+  {
+    "description": "Timestamp of the event (e.g., file upload) that triggered the alert_avros Pub/Sub message. RFC 3339 format.",
+    "mode": "NULLABLE",
+    "name": "eventTime__alert_avros",
+    "type": "STRING"
+  },
+  {
+    "description": "Timestamp of the alerts_pure Pub/Sub message. UTC, Unix time; nanosecond resolution.",
+    "mode": "NULLABLE",
+    "name": "publish_time__alerts_pure",
+    "type": "STRING"
+  },
+  {
+    "description": "Timestamp of the exgalac_trans Pub/Sub message. UTC, Unix time; nanosecond resolution.",
+    "mode": "NULLABLE",
+    "name": "publish_time__exgalac_trans",
+    "type": "STRING"
+  },
+  {
+    "description": "Timestamp of the salt2 Pub/Sub message. UTC, Unix time; nanosecond resolution.",
+    "mode": "NULLABLE",
+    "name": "publish_time__salt2",
+    "type": "STRING"
+  },
+  {
+    "description": "Timestamp of the SuperNNova Pub/Sub message. UTC, Unix time; nanosecond resolution.",
+    "mode": "NULLABLE",
+    "name": "publish_time__SuperNNova",
+    "type": "STRING"
+  }
+]
