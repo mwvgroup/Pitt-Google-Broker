@@ -72,6 +72,8 @@ def pull(
     max_messages: int = 1,
     project_id: Optional[str] = None,
     msg_only: bool = True,
+    callback: Optional[Callable[[Union[ReceivedMessage, bytes]], bool]] = None,
+    return_count: bool = False,
 ) -> Union[List[bytes], List[ReceivedMessage]]:
     """Pull and acknowledge a fixed number of messages from a Pub/Sub topic.
 
@@ -85,9 +87,19 @@ def pull(
         max_messages: The maximum number of messages to pull.
 
         project_id: GCP project ID for the project containing the subscription.
-                    If None, the environment variable GOOGLE_CLOUD_PROJECT will be used.
+                    If None, the module's `pgb_project_id` will be used.
 
-        msg_only: Whether to return the message contents only or the full packet.
+        msg_only: Whether to work with and return the message contents only
+                  or the full packet.
+                  If `return_count` is True, it supersedes the returned object.
+
+        callback: Function used to process each message.
+                  It's input type is determined by the value of `msg_only`.
+                  It should return True if the message should be acknowledged,
+                  else False.
+
+        return_count: Whether to return the messages or just the total number of
+                      acknowledged messages.
 
     Returns:
         A list of messages
@@ -112,20 +124,38 @@ def pull(
         # unpack the messages
         message_list, ack_ids = [], []
         for received_message in response.received_messages:
+
             if msg_only:
-                message_list.append(received_message.message.data)  # bytes
+                # extract the message bytes and append
+                msg_bytes = received_message.message.data
+                message_list.append(msg_bytes)
+                # perform callback, if requested
+                if callback is not None:
+                    success = callback(msg_bytes)
+
             else:
+                # append the full message
                 message_list.append(received_message)
-            ack_ids.append(received_message.ack_id)
+                # perform callback, if requested
+                if callback is not None:
+                    success = callback(received_message)
+
+            # collect ack_id, if appropriate
+            if (callback is None) or (success):
+                ack_ids.append(received_message.ack_id)
 
         # acknowledge the messages so they will not be sent again
-        ack_request = {
-            "subscription": subscription_path,
-            "ack_ids": ack_ids,
-        }
-        subscriber.acknowledge(**ack_request)
+        if len(ack_ids) > 0:
+            ack_request = {
+                "subscription": subscription_path,
+                "ack_ids": ack_ids,
+            }
+            subscriber.acknowledge(**ack_request)
 
-    return message_list
+    if not return_count:
+        return message_list
+    else:
+        return len(message_list)
 
 
 def streamingPull(
