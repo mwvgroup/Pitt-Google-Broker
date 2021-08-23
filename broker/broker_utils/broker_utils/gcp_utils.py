@@ -5,9 +5,11 @@ GCP resources.
 """
 
 from google.cloud import bigquery, pubsub_v1, storage
+from google.cloud.logging_v2.logger import Logger
 from google.cloud.pubsub_v1.subscriber.futures import StreamingPullFuture
 from google.cloud.pubsub_v1.types import PubsubMessage, ReceivedMessage
 import json
+import pandas as pd
 from typing import Callable, List, Optional, Union
 
 pgb_project_id = 'ardent-cycling-243415'
@@ -233,6 +235,68 @@ def insert_rows_bigquery(table_id: str, rows: List[dict]):
     table = bq_client.get_table(table_id)
     errors = bq_client.insert_rows(table, rows)
     return errors
+
+
+def load_dataframe_bigquery(
+    table_id: str,
+    df: pd.DataFrame,
+    use_table_schema: bool = True,
+    logger: Optional[Logger] = None,
+):
+    """Load a dataframe to a table.
+
+    Args:
+        table_id: Identifier for the BigQuery table in the form
+            {dataset}.{table}. For example, 'ztf_alerts.alerts'.
+        df: Data to load in to the table. If the  dataframe schema does not match the
+            BigQuery table schema, must pass a valid `schema`.
+        use_table_schema: Conform the dataframe to the table schema by converting
+                          dtypes and dropping extra columns.
+        logger: If not None, messages will be sent to the logger. Else, print them.
+    """
+    # setup
+    bq_client = bigquery.Client(project=pgb_project_id)
+    table = bq_client.get_table(table_id)
+
+    if use_table_schema:
+        # set a job_config; bigquery will try to convert df.dtypes to match table schema
+        job_config = bigquery.LoadJobConfig(schema=table.schema)
+
+        # make sure the df has the correct columns
+        bq_col_names = [s.name for s in table.schema]
+        # pad missing columns
+        missing = [c for c in bq_col_names if c not in df.columns]
+        for col in missing:
+            df[col] = None
+        # drop extra columns
+        dropped = list(set(df.columns) - set(bq_col_names))  # grab so we can report
+        df = df[bq_col_names]
+        # tell the user what happened
+        if len(dropped) > 0:
+            msg = f'Dropping columns not in the table schema: {dropped}'
+            if logger is not None:
+                logger.log_text(msg, severity='INFO')
+            else:
+                print(msg)
+
+    else:
+        job_config = None
+
+    # load the data
+    job = bq_client.load_table_from_dataframe(df, table_id, job_config=job_config)
+    job.result()  # Wait for the job to complete.
+
+    # report the results
+    msg = (
+        f"Loaded {job.output_rows} to BigQuery table {table_id}.\n"
+        f"The following errors were generated: {job.errors}"
+    )
+    if logger is not None:
+        severity = 'DEBUG' if job.errors is not None else 'INFO'
+        logger.log_text(msg, severity=severity)
+    else:
+        print(msg)
+
 
 
 def query_bigquery(query: str, project_id: Optional[str] = None):
