@@ -67,7 +67,7 @@ def publish_pubsub(
     return future.result()
 
 
-def pull(
+def pull_pubsub(
     subscription_name: str,
     max_messages: int = 1,
     project_id: Optional[str] = None,
@@ -158,7 +158,7 @@ def pull(
         return len(message_list)
 
 
-def streamingPull(
+def streamingPull_pubsub(
     subscription_name: str,
     callback: Callable[[PubsubMessage], None],
     project_id: str = None,
@@ -219,8 +219,9 @@ def streamingPull(
 
 
 # --- BigQuery --- #
-def bq_insert_rows(table_id: str, rows: List[dict]):
-    """
+def insert_rows_bigquery(table_id: str, rows: List[dict]):
+    """Insert rows into a table using the streaming API.
+
     Args:
         table_id:   Identifier for the BigQuery table in the form
                     {dataset}.{table}. For example, 'ztf_alerts.alerts'.
