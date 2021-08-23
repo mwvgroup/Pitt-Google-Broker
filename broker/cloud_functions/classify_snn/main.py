@@ -5,7 +5,6 @@
 
 import base64
 from google.cloud import logging
-from google.cloud.functions import Context
 import json
 import numpy as np
 import os
@@ -41,17 +40,23 @@ model_file_name = "vanilla_S_0_CLF_2_R_none_photometry_DF_1.0_N_global_lstm_32x2
 model_path = Path(__file__).resolve().parent / f"{model_dir_name}/{model_file_name}"
 
 
-def run(msg: dict, context: Context) -> None:
+def run(msg: dict, context) -> None:
     """Classify alert with SuperNNova; publish and store results.
+
+    For args descriptions, see:
+    https://cloud.google.com/functions/docs/writing/background#function_parameters
 
     Args:
         msg: Pub/Sub message data and attributes.
             `data` field contains the message data in a base64-encoded string.
             `attributes` field contains the message's custom attributes in a dict.
 
-        context: The Cloud Function's event metadata (aka the Pub/Sub message metadata).
-            The `event_id` attribute contains the Pub/Sub message ID.
-            The `timestamp` attribute contains the message's publish time.
+        context: The Cloud Function's event metadata.
+            It has the following attributes:
+                `event_id`: the Pub/Sub message ID.
+                `timestamp`: the Pub/Sub message publish time.
+                `event_type`: for example: "google.pubsub.topic.publish".
+                `resource`: the resource that emitted the event.
     """
     # logger.log_text(f"{type(msg['data'])}', severity='DEBUG")
     # logger.log_text(f"{msg['data']}', severity='DEBUG")
