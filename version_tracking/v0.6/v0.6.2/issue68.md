@@ -6,7 +6,7 @@ Solution summary:
 - require astropy==3.2.1
     - fix utils module to accomodate this astropy version
 
-Note the the specific error from issue 68
+Note the specific error from issue 68
 `OSError: No SIMPLE card found, this file does not appear to be a valid FITS file`
 can be avoided by added the kwarg `ignore_missing_simple=True`
 to the function `astropy.io.fits.open()`.
