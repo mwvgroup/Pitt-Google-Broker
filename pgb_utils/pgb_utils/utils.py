@@ -36,19 +36,15 @@ def alert_dict_to_dataframe(alert_dict: dict) -> pd.DataFrame:
 
 def alert_dict_to_table(alert_dict: dict) -> Table:
     """Package a ZTF alert dictionary into an Astopy Table."""
-    candidate = OrderedDict(alert_dict["candidate"])  # dict
-    cand_cols = set(candidate.keys())
-
-    # astropy 3.2.1 cannot handle dicts with different keys (fixed by v4.1)
-    prv_candidates = []  # recreate with missing keys added
+    # collect rows for the table
+    candidate = OrderedDict(alert_dict["candidate"])
+    rows = [candidate]
     for prv_cand in alert_dict["prv_candidates"]:
-        prvc_cols = set(prv_cand.keys())
-        missing_cols = cand_cols - prvc_cols
-        empty = {mc: None for mc in missing_cols}
-        tmp = {**prv_cand, **empty}
-        prv_candidates.append(tmp)
+        # astropy 3.2.1 cannot handle dicts with different keys (fixed by 4.1)
+        prv_cand_tmp = {key: prv_cand.get(key, None) for key in candidate.keys()}
+        rows.append(prv_cand_tmp)
 
-    rows = [candidate] + prv_candidates
+    # create and return the table
     table = Table(rows=rows)
     table.meta["comments"] = f"ZTF objectId: {alert_dict['objectId']}"
     return table
