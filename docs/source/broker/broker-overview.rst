@@ -79,7 +79,7 @@ across GCP.
          -  [`salt2`] (Salt2 fit params)
 
 5. **Night Conductor** (orchestrates GCP resources and jobs to run the
-   broker each night)
+   broker each night; collects metadata)
 
    -  Compute Engine VM [`night-conductor`]
 
