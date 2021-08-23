@@ -22,5 +22,8 @@ echo "Draining Dataflow jobs..."
 echo
 echo "Waiting 2 min so Pub/Sub counters have time to register the plateau..."
 sleep 120
-echo "Resetting Pub/Sub counters..."
-./reset_ps_counters.sh "$PROJECT_ID" "$testid" "$survey"
+# echo "Resetting Pub/Sub counters..."
+# ./reset_ps_counters.sh "$PROJECT_ID" "$testid" "$survey"
+echo "Processing Pub/Sub counters..."
+b=500  # batch size
+python3 process_pubsub_counters.py --survey=$survey --testid=$testid --batch_size=$b
