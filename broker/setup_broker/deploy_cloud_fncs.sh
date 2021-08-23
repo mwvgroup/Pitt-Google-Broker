@@ -44,6 +44,7 @@ else # Deploy the Cloud Functions
     OGdir=$(pwd)
 
 #--- Pub/Sub -> Cloud Storage Avro cloud function
+    echo "Deploying Cloud Function: $ps_to_gcs_CF_name"
     ps_to_gcs_entry_point="run"
 
     cd .. && cd cloud_functions
@@ -58,6 +59,7 @@ else # Deploy the Cloud Functions
     cd $OGdir
 
 #--- Cue night-conductor cloud function
+    echo "Deploying Cloud Function: $cue_nc_CF_name"
     cue_nc_entry_point="run"
 
     cd .. && cd cloud_functions
@@ -72,6 +74,7 @@ else # Deploy the Cloud Functions
     cd $OGdir
 
 #--- Check cue response cloud function
+    echo "Deploying Cloud Function: $check_cue_CF_name"
     check_cue_entry_point="run"
 
     cd .. && cd cloud_functions
@@ -87,14 +90,16 @@ else # Deploy the Cloud Functions
     cd $OGdir
 
 #--- classify with SNN cloud function
+    echo "Deploying Cloud Function: $classify_snn_CF_name"
     classify_snn_entry_point="run"
+    memory=512MB  # standard 256MB is too small here
 
     cd .. && cd cloud_functions
     cd classify_snn
 
     gcloud functions deploy "$classify_snn_CF_name" \
         --entry-point "$classify_snn_entry_point" \
-        --memory 512MB \  # standard 256MB is too small here
+        --memory "$memory" \
         --runtime python37 \
         --trigger-topic "$classify_snn_trigger_topic" \
         --set-env-vars TESTID="$testid",SURVEY="$survey"
