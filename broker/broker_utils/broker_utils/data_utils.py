@@ -17,6 +17,7 @@ def decode_alert(
     alert_avro: Union[str, bytes],
     return_as: str = 'dict',
     schema_map: Optional[dict] = None,
+    drop_cutouts: bool = False,
 ) -> Union[dict, pd.DataFrame]:
     """Load an alert Avro and return in requested format.
 
@@ -27,7 +28,9 @@ def decode_alert(
             the bytes encoding the Avro-formated alert.
         return_as: Format the alert will be returned in.
         schema_map: Mapping between survey schema and broker's generic schema.
-            Required if `return_as == 'df'`.
+            Required if `return_as='df'` or `drop_cutouts=True`.
+        drop_cutouts: Whether to drop or return the cutouts (stamps).
+                      If `return_as='df'` the cutouts are always dropped.
 
     Returns:
         alert packet in requested format
@@ -35,7 +38,11 @@ def decode_alert(
     alert_dict = alert_avro_to_dict(alert_avro)
 
     if return_as == "dict":
-        return alert_dict
+        if drop_cutouts:
+            return _drop_cutouts(alert_dict, schema_map)
+        else:
+            return alert_dict
+
     elif return_as == "df":
         return alert_dict_to_dataframe(alert_dict, schema_map)
     else:
@@ -108,6 +115,26 @@ def alert_dict_to_dataframe(alert_dict: dict, schema_map: dict) -> pd.DataFrame:
     dflc.sourceId = alert_dict[schema_map['sourceId']]
 
     return dflc
+
+def _drop_cutouts(alert_dict: dict, schema_map: dict) -> dict:
+    """Drop the cutouts from the alert dictionary."""
+    cutouts = [
+        schema_map['cutoutScience'],
+        schema_map['cutoutTemplate'],
+        schema_map['cutoutDifference']
+    ]
+
+    if schema_map['SURVEY'] == 'decat':
+        alert_lite = {k: v for k, v in alert_dict.items()}
+        for co in cutouts:
+            alert_lite[schema_map['source']].pop(co, None)
+            for psource in alert_lite[schema_map['prvSources']]:
+                psource.pop(co, None)
+
+    elif schema_map['SURVEY'] == 'ztf':
+        alert_lite = {k: v for k, v in alert_dict.items() if k not in cutouts}
+
+    return alert_lite
 
 def mag_to_flux(mag: float, zeropoint: float, magerr: float) -> Tuple[float,float]:
     """ Converts an AB magnitude and its error to fluxes.
