@@ -84,7 +84,12 @@ across GCP.
 
       -  Cloud Function [`classify_with_SuperNNova`]
 
-         -  Listens to PS topic [`exgalac_trans`]
+         -  Listens to PS topic [`exgalac_trans_cf`]
+
+            - this stream is emitted by the Cloud Function [`filter_exgalac_trans`],
+              which implements the same extragalactic transient filter as the
+              Dataflow job, for comparison.
+
          -  Stores in BigQuery table [`SuperNNova`]
          -  Publishes to PS topic [`SuperNNova`]
 
