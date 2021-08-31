@@ -163,6 +163,8 @@ def _resources(service, survey='ztf', testid='test'):
                     [f'{survey}-exgalac_trans-counter'],
                 f'{survey}-salt2':
                     [f'{survey}-salt2-counter'],
+                f'{survey}-exgalac_trans_cf':
+                    [f'{survey}-exgalac_trans_cf-counter'],
                 f'{survey}-SuperNNova':
                     [f'{survey}-SuperNNova-counter'],
         }
