@@ -42,6 +42,8 @@ if [ "$teardown" = "True" ]; then
         gcloud functions delete "$ps_to_gcs_CF_name"
         gcloud functions delete "$cue_nc_CF_name"
         gcloud functions delete "$check_cue_CF_name"
+        gcloud functions delete "$filter_exgal_CF_name"
+        gcloud functions delete "$classify_snn_CF_name"
     fi
 
 else # Deploy the Cloud Functions
