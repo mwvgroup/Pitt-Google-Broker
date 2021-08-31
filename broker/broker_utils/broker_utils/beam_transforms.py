@@ -119,9 +119,11 @@ class FormatDictForPubSub(DoFn):
         import json
 
         # collect message attributes
+        # value-added streams nest the alert next to their own dict(s); extract it
         if 'alert' in alertDict.keys():
             a = alertDict['alert']
         else:
+            # the alert is the only object in the dict
             a = alertDict
         attrs = {'objectId': str(a['objectId']), 'candid': str(a['candid'])}
 

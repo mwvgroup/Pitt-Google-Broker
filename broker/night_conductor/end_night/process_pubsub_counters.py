@@ -357,7 +357,7 @@ if __name__ == "__main__":  # noqa
         "--survey",
         dest="survey",
         default="ztf",
-        help="The broker instance's `survey` keyword. Names the resources.\n",
+        help="Broker instance `survey` keyword. Used to label resources.\n",
     )
     # testid
     # when calling this script, use one of `--testid=<mytestid>` or `--production`
@@ -365,22 +365,22 @@ if __name__ == "__main__":  # noqa
         "--testid",  # set testid = <mytestid>
         dest="testid",
         default="test",
-        help="The broker instance's `testid` keyword. Names the resources\n",
+        help="Broker instance `testid` keyword. Used to label resources.\n",
     )
     parser.add_argument(
         "--production",  # set testid = False
         dest="testid",
         action="store_false",
-        default="test",
-        help="Sets `testid=False`. Use for broker production instances.\n",
+        help="Sets `testid='False'`. Use for broker production instances.\n",
     )
     parser.add_argument(
         "--batch_size",
         dest="batch_size",
         default=500,
+        type=int,
         help="Maximum number of Pub/Sub messages to pull per call.",
     )
 
-    known_args, __ = parser.parse_known_args()
+    known_args, _ = parser.parse_known_args()
 
-    run(known_args.survey, known_args.testid, int(known_args.batch_size))
+    run(known_args.survey, known_args.testid, known_args.batch_size)

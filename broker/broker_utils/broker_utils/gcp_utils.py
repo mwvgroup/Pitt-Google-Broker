@@ -96,7 +96,7 @@ def pull_pubsub(
                   If `return_count` is True, it supersedes the returned object.
 
         callback: Function used to process each message.
-                  It's input type is determined by the value of `msg_only`.
+                  Its input type is determined by the value of `msg_only`.
                   It should return True if the message should be acknowledged,
                   else False.
 
