@@ -4,10 +4,11 @@
 GCP resources.
 """
 
+from typing import Callable, List, Optional, Union
+
 from google.cloud import bigquery, pubsub_v1, storage
 from google.cloud.pubsub_v1.subscriber.futures import StreamingPullFuture
 from google.cloud.pubsub_v1.types import PubsubMessage, ReceivedMessage
-from typing import Callable, List, Optional, Union
 
 pgb_project_id = 'ardent-cycling-243415'
 

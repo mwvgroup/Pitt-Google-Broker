@@ -7,11 +7,11 @@ auto-scheduler's cue. If it has not, a message(s) is logged with
 """
 
 import base64
-from google.cloud import logging
-from googleapiclient import discovery
 import os
 import time
 
+from google.cloud import logging
+from googleapiclient import discovery
 
 PROJECT_ID = os.getenv('GCP_PROJECT')
 TESTID = os.getenv('TESTID')
@@ -59,25 +59,27 @@ def run(msg, context) -> None:
     if continue_checks:  # do the checks
         check_cue_response(cue, attrs)
 
+
 def check_cue_value(cue):
     # check that the cue is an expected value and log result
-    expected_values = ['START','END']
+    expected_values = ['START', 'END']
 
     if cue in expected_values:
         continue_checks = True
         msg = (f'Broker instance with keywords [{SURVEY},{TESTID}] received '
-        f'cue = {cue}. Giving the broker time to '
-        'respond, then will check its response to the cue.'
-        )
+               f'cue = {cue}. Giving the broker time to '
+               'respond, then will check its response to the cue.'
+               )
         severity = 'INFO'
     else:
         continue_checks = False
         msg = (f'Broker received cue = {cue}, which is an unexpected value. '
-        'The broker is not expected to respond. No further checks will be done.')
+               'The broker is not expected to respond. No further checks will be done.')
         severity = 'CRITICAL'
     logger.log_text(msg, severity=severity)
 
     return continue_checks
+
 
 def check_cue_response(cue, attrs):
     """Check that the broker components responded appropriately to the cue.
@@ -87,11 +89,12 @@ def check_cue_response(cue, attrs):
     status, metadata = check_night_conductor()
 
     # sleep so the rest of the broker has time to respond
-    time.sleep(7*60)  # 7 min. Draining Dataflow jobs takes the longest
+    time.sleep(7 * 60)  # 7 min. Draining Dataflow jobs takes the longest
 
     # finish the checks
     check_dataflow(cue, metadata)
     check_consumer(cue, attrs)
+
 
 def check_night_conductor():
     # night-conductor should start in response to either cue
@@ -114,6 +117,7 @@ def check_night_conductor():
     # in the future, may want to check the metadata as well
 
     return (status, metadata)
+
 
 def check_dataflow(cue, metadata):
     """Check that the jobs are either running or drained
@@ -141,7 +145,7 @@ def check_dataflow(cue, metadata):
     job_states = {}  # {job name: current state}}
     for jobid in jobids:
         region = '-'.join(ZONE.split('-')[:-1])
-        kwargs = {'projectId':PROJECT_ID, 'location':region, 'jobId':jobid}
+        kwargs = {'projectId': PROJECT_ID, 'location': region, 'jobId': jobid}
         request = dataflow_service.projects().locations().jobs().get(**kwargs)
         state = request.execute()
         job_states[state['name']] = state['currentState']
@@ -157,15 +161,15 @@ def check_dataflow(cue, metadata):
                     severity = 'INFO'
                 else:
                     msg = (f'{job_name} Dataflow job exists, but it is not '
-                    'running as expected. Its status is {}'
-                    )
+                           'running as expected. Its status is {}'
+                           )
                     severity = 'CRITICAL'
             else:
                 # job does not exist or didn't get recorded properly
                 msg = (f'{job_name} Dataflow job should be running, but it either '
-                    'did not start or its job ID did not get recorded in '
-                    'night-conductor metadata.'
-                )
+                       'did not start or its job ID did not get recorded in '
+                       'night-conductor metadata.'
+                       )
                 severity = 'CRITICAL'
             logger.log_text(msg, severity=severity)
     else:
@@ -179,12 +183,14 @@ def check_dataflow(cue, metadata):
                 severity = 'CRITICAL'
             logger.log_text(msg, severity=severity)
 
+
 def get_dataflow_jobids(metadata):
     for item in metadata['items']:
         if item['key'] == 'RUNNING_BEAM_JOBS':
             jobid_string = item['value']
     jobids = jobid_string.split(' ')  # list of job ids
     return jobids
+
 
 def check_consumer(cue, attrs):
     request_kwargs = {
@@ -229,6 +235,7 @@ def check_consumer(cue, attrs):
             msg = f'{consumer} should have stopped, but its status = {status}'
             severity = 'CRITICAL'
         logger.log_text(msg, severity=severity)
+
 
 def get_vm_info(request_kwargs):
     request = compute_service.instances().get(**request_kwargs)
