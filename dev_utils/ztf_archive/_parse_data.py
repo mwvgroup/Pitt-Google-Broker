@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 from astropy.io import fits
 from matplotlib.pyplot import Figure
 
-from broker.ztf_archive._utils import get_ztf_data_dir
+from ._utils import get_ztf_data_dir
 from ._download_data import get_local_alerts
 
 ZTF_DATA_DIR = get_ztf_data_dir()

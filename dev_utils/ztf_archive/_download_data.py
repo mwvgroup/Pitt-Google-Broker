@@ -13,7 +13,7 @@ import requests
 from astropy.table import Table
 from tqdm import tqdm
 
-from broker.ztf_archive._utils import get_ztf_data_dir
+from ._utils import get_ztf_data_dir
 
 ZTF_DATA_DIR = get_ztf_data_dir()
 ZTF_DATA_DIR.mkdir(exist_ok=True, parents=True)
