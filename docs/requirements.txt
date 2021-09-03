@@ -1,18 +1,26 @@
-# Minimum requirements for importing package during build
+# pgb-utils
+apache_beam[gcp]
 aplpy
-astropy
-astroquery
-astrorapid
-beautifulsoup4
-deepdiff
-fastavro
-lxml
+astropy==3.2.1
+astropy-healpix==0.6
+beautifulsoup4==4.8
+# google-auth
+# google-api-core
+# google-apitools
+google-cloud-bigquery
+google-cloud-logging
+google-cloud-pubsub
+google-cloud-storage
+matplotlib
 numpy
-pandavro
-requests
-tqdm
+pandas
+tabulate
+typing
 
 # Needed for building docs
+docutils<0.17  # render lists properly
+myst-parser
 sphinx
 sphinx-copybutton
+sphinx_autodoc_typehints
 sphinx_rtd_theme

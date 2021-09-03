@@ -1,0 +1,11 @@
+apache-beam[gcp]==2.25.0
+astropy
+fastavro
+google-cloud-bigquery
+google-cloud-storage>=1.38
+google-cloud-pubsub<2  # beam requires <2
+numpy
+pandas
+PyYAML>=5.3
+six>=1.15  # bigquery requires
+typing

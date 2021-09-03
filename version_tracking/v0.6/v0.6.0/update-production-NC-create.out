@@ -1,0 +1,3 @@
+Created [https://www.googleapis.com/compute/v1/projects/ardent-cycling-243415/zones/us-central1-a/instances/ztf-night-conductor].
+NAME                 ZONE           MACHINE_TYPE   PREEMPTIBLE  INTERNAL_IP  EXTERNAL_IP     STATUS
+ztf-night-conductor  us-central1-a  e2-standard-2               10.128.0.94  34.133.252.233  RUNNING

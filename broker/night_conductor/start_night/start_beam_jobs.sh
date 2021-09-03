@@ -5,6 +5,7 @@ PROJECT_ID=$1
 testid=$2
 brokerdir=$3
 broker_bucket=$4
+survey="${5:-ztf}"
 
 # Replace the broker's Beam directory with GCS files and cd in
 cd ${brokerdir}
@@ -13,20 +14,15 @@ gsutil -m cp -r gs://${broker_bucket}/beam .
 cd beam
 beamdir=$(pwd)
 
-# Copy beam_helpers modules to job dirs so setup.py works correctly
-mkdir -p ztf_bq_sink/beam_helpers
-cp beam_helpers/__init__.py beam_helpers/data_utils.py ztf_bq_sink/beam_helpers/.
-cp -r beam_helpers ztf_value_added/.
-
 # Set configs
-source jobs.config ${PROJECT_ID} ${testid} ${beamdir}
+source jobs.config ${PROJECT_ID} ${testid} ${beamdir} ${survey}
 
 # Start the ztf-value_added job.
 # - the command holds the terminal, so use timeout (does not cancel the job).
 # - send the output to a file.
-cd ztf_value_added
+cd value_added
 timeout 60 \
-    python3 beam_ztf_value_added.py \
+    python3 value_added.py \
         --experiments use_runner_v2 \
         --setup_file ${setup_file_valadd} \
         --runner ${runner} \
@@ -37,7 +33,9 @@ timeout 60 \
         --staging_location ${staging_location} \
         --temp_location ${temp_location} \
         --PROJECTID ${PROJECT_ID} \
-        --source_PS_ztf ${source_PS_ztf} \
+        --SURVEY ${survey} \
+        --TESTID ${testid} \
+        --source_PS_alerts ${source_PS_alerts} \
         --sink_BQ_salt2 ${sink_BQ_salt2} \
         --sink_CS_salt2 ${sink_CS_salt2} \
         --sink_PS_pure ${sink_PS_pure} \
@@ -51,9 +49,9 @@ timeout 60 \
 jobid1=$(grep "Submitted job:" runjob.out | awk '{print $(NF)}')
 
 # Start the ztf -> BQ job
-cd ${beamdir} && cd ztf_bq_sink
+cd ${beamdir} && cd bq_sink
 timeout 60 \
-    python3 beam_ztf_bq_sink.py \
+    python3 bq_sink.py \
         --experiments use_runner_v2 \
         --setup_file ${setup_file_bqsink} \
         --runner ${runner} \
@@ -64,8 +62,10 @@ timeout 60 \
         --staging_location ${staging_location} \
         --temp_location ${temp_location} \
         --PROJECTID ${PROJECT_ID} \
-        --source_PS_ztf ${source_PS_ztf} \
-        --sink_BQ_originalAlert ${sink_BQ_originalAlert} \
+        --SURVEY ${survey} \
+        --TESTID ${testid} \
+        --source_PS_alerts ${source_PS_alerts} \
+        --sink_BQ_alerts ${sink_BQ_alerts} \
         --sink_BQ_diasource ${sink_BQ_diasource} \
         --streaming \
     &> runjob.out

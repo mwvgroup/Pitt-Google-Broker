@@ -88,9 +88,12 @@ def _create_client_if_needed():
 #--- Get information about PGB datasets and tables
 def get_table_info(table: Union[str,list] = 'all', dataset: str ='ztf_alerts'):
     """Retrieves and prints BigQuery table schemas.
+
     Args:
+
         table: Name of the BigQuery table or list of the same.
                'all' will print the info for all tables in the dataset.
+
         dataset: Name of BigQuery dataset that the table(s) belong to.
     """
     # if a bigquery Client does not exist, help the user instantiate one

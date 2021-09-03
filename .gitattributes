@@ -1,0 +1,4 @@
+# ignore Jupyter notebooks in language stats
+# their number of lines of code are inflated and take over the stats
+*.ipynb linguist-documentation
+*.py linguist-language=python

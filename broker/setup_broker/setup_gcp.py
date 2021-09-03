@@ -61,16 +61,17 @@ In Python:
 
    from broker import gcp_setup
 
+   survey = 'ztf'
    testid = 'mytest'
    teardown = False
 
    # Run individual tasks
-   gcp_setup.setup_bigquery(testid=testid, teardown=teardown)
-   gcp_setup.setup_buckets(testid=testid, teardown=teardown)
-   gcp_setup.setup_pubsub(testid=testid, teardown=teardown)
+   gcp_setup.setup_bigquery(survey=survey, testid=testid, teardown=teardown)
+   gcp_setup.setup_buckets(survey=survey, testid=testid, teardown=teardown)
+   gcp_setup.setup_pubsub(survey=survey, testid=testid, teardown=teardown)
 
    # Run all tasks
-   gcp_setup.auto_setup(testid=testid, teardown=teardown)
+   gcp_setup.auto_setup(survey=survey, testid=testid, teardown=teardown)
 
 
 Module Documentation
@@ -91,20 +92,23 @@ from google.cloud import bigquery, pubsub_v1, logging, storage
 PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
 
 
-def _resources(service, testid='test'):
+def _resources(service, survey='ztf', testid='test'):
     """ Names the GCP resources to be setup/torn down.
 
     Args:
         service (str): which GCP service resources to return.
+        survey (str): which astronomical survey the broker instance will
+                      connect to. Controls the names of resources and the
+                      behavior of functions that rely on schemas.
         testid (False or str): False: Use production resources.
                                 str: Use test resources. (This string is
                                 appended to the resource names.)
     """
 
     if service == 'BQ':
-        datasets = {'ztf_alerts': ['alerts', 'DIASource', 'salt2']}
+        datasets = {f'{survey}_alerts': ['alerts', 'DIASource', 'salt2']}
 
-        # append the testid
+        # append the testid to the dataset name only
         if testid is not False:
             dtmp = {f'{key}_{testid}': val for key, val in datasets.items()}
             datasets = dtmp
@@ -112,8 +116,8 @@ def _resources(service, testid='test'):
 
     if service == 'dashboard':
         # get resources not named elsewhere in this function
-        dataflow = ['bq-sink', 'value-added']
-        instances = ['night-conductor', 'ztf-consumer']
+        dataflow = [f'{survey}-bq-sink', f'{survey}-value-added']
+        instances = [f'{survey}-night-conductor', f'{survey}-consumer']
         all = dataflow + instances
 
         if testid is not False:
@@ -124,12 +128,12 @@ def _resources(service, testid='test'):
 
     if service == 'GCS':
         buckets = {  # '<bucket-name>': ['<file-name to upload>',]
-                f'{PROJECT_ID}-broker_files': [],
-                f'{PROJECT_ID}_dataflow': [],
-                f'{PROJECT_ID}_testing_bucket':
+                f'{PROJECT_ID}-{survey}-broker_files': [],
+                f'{PROJECT_ID}-{survey}-dataflow': [],
+                f'{PROJECT_ID}-{survey}-testing_bucket':
                     ['ztf_3.3_validschema_1154446891615015011.avro'],
-                f'{PROJECT_ID}_ztf_alert_avros': [],
-                f'{PROJECT_ID}_ztf-sncosmo': [],
+                f'{PROJECT_ID}-{survey}-alert_avros': [],
+                f'{PROJECT_ID}-{survey}-sncosmo': [],
         }
         # Files are currently expected to reside in the
         # ``../../tests/test_alerts`` directory.
@@ -144,16 +148,18 @@ def _resources(service, testid='test'):
 
     if service == 'PS':
         topics = {  # '<topic_name>': ['<subscription_name>', ]
-                'ztf_alert_avros':
-                    ['ztf_alert_avros-counter'],
-                'ztf_alerts':
-                    ['ztf_alerts-counter', 'ztf_alerts-reservoir', ],
-                'ztf_alerts_pure':
-                    ['ztf_alerts_pure-counter', ],
-                'ztf_exgalac_trans':
-                    ['ztf_exgalac_trans-counter'],
-                'ztf_salt2':
-                    ['ztf_salt2-counter'],
+                f'{survey}-alert_avros':
+                    [f'{survey}-alert_avros-counter'],
+                f'{survey}-alerts':
+                    [f'{survey}-alerts-counter', f'{survey}-alerts-reservoir', ],
+                f'{survey}-alerts_pure':
+                    [f'{survey}-alerts_pure-counter', ],
+                f'{survey}-cue_night_conductor':
+                    [],
+                f'{survey}-exgalac_trans':
+                    [f'{survey}-exgalac_trans-counter'],
+                f'{survey}-salt2':
+                    [f'{survey}-salt2-counter'],
         }
 
         # append the testid
@@ -164,11 +170,14 @@ def _resources(service, testid='test'):
             topics = ttmp
         return topics
 
-def _do_not_delete_production_resources(testid='test', teardown=True):
+def _do_not_delete_production_resources(survey='ztf', testid='test', teardown=True):
     """ If the user is requesting to delete resources used in production,
     throw an error.
 
     Args:
+        survey (str): which astronomical survey the broker instance will
+                      connect to. Controls the names of resources and the
+                      behavior of functions that rely on schemas.
         testid (False or str): False: Use production resources.
                                 str: Use test resources. (This string is
                                 appended to the resource names.)
@@ -179,11 +188,14 @@ def _do_not_delete_production_resources(testid='test', teardown=True):
                f'Exiting to prevent the teardown of production resources.\n')
         raise ValueError(msg)
 
-def _confirm_options(testid, teardown):
+def _confirm_options(survey, testid, teardown):
     """ Require the user to confirm options that determine
     the behavior of this script.
 
     Args:
+        survey (str): which astronomical survey the broker instance will
+                      connect to. Controls the names of resources and the
+                      behavior of functions that rely on schemas.
         testid (False or str): False: Use production resources.
                                 str: Use test resources. (This string is
                                 appended to the resource names.)
@@ -193,7 +205,7 @@ def _confirm_options(testid, teardown):
     if not testid:
         resources = 'PRODUCTION resources'
     else:
-        resources = f'TEST resources tagged with "{testid}"'
+        resources = f'"{survey}" resources tagged with "{testid}"'
     msg = (f'\nsetup_gcp will {behavior} all bq, gcs, and ps {resources}.\n'
             'Continue?  [Y/n]:  ')
     continue_with_setup = input(msg) or 'Y'
@@ -203,20 +215,23 @@ def _confirm_options(testid, teardown):
         sys.exit(msg)
 
 
-def setup_bigquery(testid='test', teardown=False) -> None:
+def setup_bigquery(survey='ztf', testid='test', teardown=False) -> None:
     """Create the necessary Big Query datasets if they do not already exist
     Args:
+        survey (str): which astronomical survey the broker instance will
+                      connect to. Controls the names of resources and the
+                      behavior of functions that rely on schemas.
         testid (False or str): False: Use production resources.
                                 str: Use test resources. (This string is
                                 appended to the resource names.)
         teardown (bool): if True, delete resources rather than setting them up
 
     New datasets include:
-      ``ztf_alerts``
+      ``{survey}-alerts``
     """
-    _do_not_delete_production_resources(testid=testid, teardown=teardown)
+    _do_not_delete_production_resources(survey=survey, testid=testid, teardown=teardown)
 
-    datasets = _resources('BQ', testid=testid)
+    datasets = _resources('BQ', survey=survey, testid=testid)
     bigquery_client = bigquery.Client()
 
     for dataset, tables in datasets.items():
@@ -232,37 +247,64 @@ def setup_bigquery(testid='test', teardown=False) -> None:
 
             # create the tables
             for table in tables:
-                bqmk = f'bq mk --table {PROJECT_ID}:{dataset}.{table} templates/bq_{table}_schema.json'
-                out = subprocess.check_output(shlex.split(bqmk))
-                print(f'{out}')  # should be a success message
+                table_id = f'{PROJECT_ID}.{dataset}.{table}'
+                try:
+                    bigquery_client.get_table(table_id)
+                    print(f'Skipping existing table: {table_id}.')
+                except NotFound:
+                    bqmk = f'bq mk --table {PROJECT_ID}:{dataset}.{table} templates/bq_{survey}_{table}_schema.json'
+                    out = subprocess.check_output(shlex.split(bqmk))
+                    print(f'{out}')  # should be a success message
 
-
-def setup_dashboard(testid='test', teardown=False) -> None:
+def setup_dashboard(survey='ztf', testid='test', teardown=False) -> None:
     """Create a monitoring dashboard for the broker instance.
 
     See: https://cloud.google.com/blog/products/management-tools/cloud-monitoring-dashboards-using-an-api
+
+    Args:
+        survey (str): which astronomical survey the broker instance will
+                      connect to. Controls the names of resources and the
+                      behavior of functions that rely on schemas.
+        testid (False or str): False: Use production resources.
+                                str: Use test resources. (This string is
+                                appended to the resource names.)
+        teardown (bool): if True, delete resources rather than setting them up
     """
     # dashboard ID will be the last part of the "name" field of the json file
-    dashboard_id = f'broker-instance-{testid}'
+    dashboard_id = f'broker-instance-{survey}-{testid}'
     dashboard_url = f'https://console.cloud.google.com/monitoring/dashboards/builder/{dashboard_id}'
 
     if not teardown:
         # create json config file
-        jpath = _setup_dashboard_json(testid)
+        jpath = _setup_dashboard_json(survey=survey, testid=testid)
+
+        # if the dashboard already exists, delete it so we can make a new one
+        gdescribe = f'gcloud monitoring dashboards describe {dashboard_id}'
+        try:
+            dboard = subprocess.check_output(shlex.split(gdescribe),
+                                             stderr=subprocess.DEVNULL)
+        except:
+            pass
+        else:
+            gdelete = f'gcloud monitoring dashboards delete projects/{PROJECT_ID}/dashboards/{dashboard_id} --quiet'
+            __ = subprocess.check_output(shlex.split(gdelete))
 
         # create the dashboard
-        gcreate = f'gcloud monitoring dashboards create --config-from-file={jpath}'
-        __ = subprocess.check_output(shlex.split(gcreate))
+        gboard = f'gcloud monitoring dashboards create --config-from-file={jpath}'
+        __ = subprocess.check_output(shlex.split(gboard))
 
         # tell the user where to view it
-        print('\nA new dashboard has been created for you!\nView it at:')
+        print('\nA monitoring dashboard has been created for you!\nView it at:')
         print(f'{dashboard_url}\n')
 
-    else:
+        # clean up the json file
+        os.remove(jpath)
+
+    else:  # delete the dashboard
         gdelete = f'gcloud monitoring dashboards delete projects/{PROJECT_ID}/dashboards/{dashboard_id}'
         __ = subprocess.check_output(shlex.split(gdelete))
 
-def _setup_dashboard_json(testid='test'):
+def _setup_dashboard_json(survey='ztf', testid='test'):
     """Create a new dashboard config json file from a template.
     """
 
@@ -272,56 +314,72 @@ def _setup_dashboard_json(testid='test'):
         dstring = json.dumps(json.load(f))
 
     # change the resource names
-    rnames = _setup_dashboard_resource_names(testid)  # {'old-name': 'new-name'}
+    rnames = _setup_dashboard_resource_names(survey=survey, testid=testid)
+    # {'old-name': 'new-name'}
     for k,v in rnames.items():
         dstring = dstring.replace(k,v)
 
     # write the new config file
     if testid != False:
-        fname = f'templates/dashboard-{testid}.json'
+        fname = f'templates/dashboard-{survey}-{testid}.json'
     else:
-        fname = f'templates/dashboard-production.json'
+        fname = f'templates/dashboard-{survey}-production.json'
     with open(fname, 'w') as f:
         json.dump(json.loads(dstring), f, indent=2)
 
     return fname
 
-def _setup_dashboard_resource_names(testid='test'):
-    """Get dict mapping resources {'old-name': 'new-name',}.
+def _setup_dashboard_resource_names(survey='ztf', testid='test'):
+    """Get dict mapping resources {'old-name': 'new-name',} which will be used
+    to do a find-and-replace in the dashboard's json config file.
     Relies heavily on lists and dicts being ordered (requires Python>=3.7).
     """
     # PS
-    psold = _resources('PS', testid=False)
-    psnew = _resources('PS', testid=testid)
+    psold = _resources('PS', survey='ztf', testid=False)
+    psnew = _resources('PS', survey=survey, testid=testid)
     # get topic names
     pstopics = {old:new for old,new in zip(psold.keys(),psnew.keys())}
-    # Subscription names are topic names with a suffix appended.
+    #--- Fix some problems: (yes, this is messy)
+    # 1) The `alerts_pure` topic/subscription name gets mixed up. fix it
+    pspure = {f'-{testid}_pure': f'_pure-{testid}'}
+    # 2) Subscription names are topic names with a suffix appended.
     # The topic name gets a testid appended,
     # then we need to swap the testid with the suffix
     # Current dashboard only uses "counter" subscriptions
     pssubs = {f'-{testid}-counter': f'-counter-{testid}'}
 
     # VMs and Dataflow jobs
-    oold = _resources('dashboard', testid=False)
-    onew = _resources('dashboard', testid=testid)
+    oold = _resources('dashboard', survey='ztf', testid=False)
+    onew = _resources('dashboard', survey=survey, testid=testid)
     othernames = {old:new for old,new in zip(oold,onew)}
 
-    # add the testid, merge the dicts, and return
-    return {'testid': testid, **pstopics, **pssubs, **othernames}
+    # add the survey and testid, merge the dicts, and return
+    resource_maps = {
+        'surveyname': f'{survey}',
+        'testid': f'{testid}',
+        **pstopics,
+        **pspure,
+        **pssubs,
+        **othernames
+    }
+    return resource_maps
 
-def setup_buckets(testid='test', teardown=False) -> None:
+def setup_buckets(survey='ztf', testid='test', teardown=False) -> None:
     """Create new storage buckets and upload testing files.
     Files are expected to reside in the ``tests/test_alerts`` directory.
 
     Args:
+        survey (str): which astronomical survey the broker instance will
+                      connect to. Controls the names of resources and the
+                      behavior of functions that rely on schemas.
         testid (False or str): False: Use production resources.
                                 str: Use test resources. (This string is
                                 appended to the resource names.)
         teardown (bool): if True, delete resources rather than setting them up
     """
-    _do_not_delete_production_resources(testid=testid, teardown=teardown)
+    _do_not_delete_production_resources(survey=survey, testid=testid, teardown=teardown)
 
-    buckets = _resources('GCS', testid=testid)
+    buckets = _resources('GCS', survey=survey, testid=testid)
     storage_client = storage.Client()
 
     for bucket_name, files in buckets.items():
@@ -354,17 +412,20 @@ def setup_buckets(testid='test', teardown=False) -> None:
                     blob.upload_from_file(infile)
                 print(f'Uploaded {inpath} to {bucket_name}')
 
-def setup_pubsub(testid='test', teardown=False) -> None:
+def setup_pubsub(survey='ztf', testid='test', teardown=False) -> None:
     """ Create new Pub/Sub topics and subscriptions.
     Args:
+        survey (str): which astronomical survey the broker instance will
+                      connect to. Controls the names of resources and the
+                      behavior of functions that rely on schemas.
         testid (False or str): False: Use production resources.
                                 str: Use test resources. (This string is
                                 appended to the resource names.)
         teardown (bool): if True, delete resources rather than setting them up
     """
-    _do_not_delete_production_resources(testid=testid, teardown=teardown)
+    _do_not_delete_production_resources(survey=survey, testid=testid, teardown=teardown)
 
-    topics = _resources('PS', testid=testid)
+    topics = _resources('PS', survey=survey, testid=testid)
     publisher = pubsub_v1.PublisherClient()
     subscriber = pubsub_v1.SubscriberClient()
 
@@ -407,34 +468,40 @@ def setup_pubsub(testid='test', teardown=False) -> None:
                     subscriber.create_subscription(name=sub_path, topic=topic_path)
                     print(f'Created subscription {sub_name}')
 
-def auto_setup(testid='test', teardown=False) -> None:
+def auto_setup(survey='ztf', testid='test', teardown=False, confirmed=False) -> None:
     """Create and setup GCP products required by the ``broker`` package.
 
     Args:
+        survey (str): which astronomical survey the broker instance will
+                      connect to. Controls the names of resources and the
+                      behavior of functions that rely on schemas.
         testid (False or str): False: Use production resources.
                                 str: Use test resources. (This string is
                                 appended to the resource names.)
         teardown (bool): if True, delete resources rather than setting them up
+        confirmed (bool): if True, assumes user has already confirmed settings
+                          and tries not to ask again.
 
     """
-    _do_not_delete_production_resources(testid=testid, teardown=teardown)
-    _confirm_options(testid, teardown)  # make user confirm script behavior
+    _do_not_delete_production_resources(survey=survey, testid=testid, teardown=teardown)
+    if not confirmed:
+        _confirm_options(survey, testid, teardown)
 
-    setup_bigquery(testid=testid, teardown=teardown)
-    setup_buckets(testid=testid, teardown=teardown)
-    setup_pubsub(testid=testid, teardown=teardown)
-    setup_dashboard(testid=testid, teardown=teardown)
+    setup_bigquery(survey=survey, testid=testid, teardown=teardown)
+    setup_buckets(survey=survey, testid=testid, teardown=teardown)
+    setup_pubsub(survey=survey, testid=testid, teardown=teardown)
+    setup_dashboard(survey=survey, testid=testid, teardown=teardown)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    # teardown
+    # survey
+    # when calling this script, use one of `--testid=<mytestid>` or `--production`
     parser.add_argument(
-        "--teardown",
-        dest='teardown',
-        action='store_true',
-        default=False,
-        help="Delete resources rather than creating them.\n",
+        '--survey',  # set testid = <mytestid>
+        dest='survey',
+        default='ztf',
+        help='which astronomical survey the broker instance will connect to.\n',
     )
     # testid
     # when calling this script, use one of `--testid=<mytestid>` or `--production`
@@ -451,7 +518,25 @@ if __name__ == "__main__":
         default='test',
         help='Use production resources.\n',
     )
-
+    # teardown
+    parser.add_argument(
+        "--teardown",
+        dest='teardown',
+        action='store_true',
+        default=False,
+        help="Delete resources rather than creating them.\n",
+    )
+    parser.add_argument(
+        '--confirmed',  # set testid = False
+        dest='confirmed',
+        action='store_true',
+        default=False,
+        help="User has already confirmed settings; try not to ask again.\n",
+    )
     known_args, __ = parser.parse_known_args()
 
-    auto_setup(testid=known_args.testid, teardown=known_args.teardown)
+    auto_setup(survey=known_args.survey,
+               testid=known_args.testid,
+               teardown=known_args.teardown,
+               confirmed=known_args.confirmed
+    )

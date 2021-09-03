@@ -6,6 +6,7 @@ fixing the schema first, if necessary.
 """
 
 import base64
+from exceptions import SchemaParsingError
 import fastavro
 from google.cloud import logging
 from google.cloud import storage
@@ -15,22 +16,26 @@ import pickle
 import re
 from tempfile import SpooledTemporaryFile
 
-from exceptions import SchemaParsingError
+from broker_utils import schema_maps
 
 
 PROJECT_ID = os.getenv('GCP_PROJECT')
 TESTID = os.getenv('TESTID')
+SURVEY = os.getenv('SURVEY')
+
+schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
+storage_client = storage.Client()
 
 # connect to the cloud logger
 logging_client = logging.Client()
 log_name = 'ps-to-gcs-cloudfnc'
 logger = logging_client.logger(log_name)
 
-# bucket to store the Avro files
-bucket_name = f'{PROJECT_ID}-ztf-alert_avros'
+# GCP resources used in this module
+bucket_name = f'{PROJECT_ID}-{SURVEY}-alert_avros'  # store the Avro files
 if TESTID != "False":
     bucket_name = f'{bucket_name}-{TESTID}'
-storage_client = storage.Client()
+# connect to the avro bucket
 bucket = storage_client.get_bucket(bucket_name)
 
 # By default, spool data in memory to avoid IO unless data is too big
@@ -70,9 +75,9 @@ def run(msg, context) -> None:
          metadata. The `event_id` field contains the Pub/Sub message ID. The
          `timestamp` field contains the publish time.
     """
-    upload_ztf_bytes_to_bucket(msg, context)
+    upload_bytes_to_bucket(msg, context)
 
-def upload_ztf_bytes_to_bucket(msg, context) -> None:
+def upload_bytes_to_bucket(msg, context) -> None:
     """Uploads the msg data bytes to a GCP storage bucket. Prior to storage,
     corrects the schema header to be compliant with BigQuery's strict
     validation standards if the alert is from a survey version with an
@@ -89,16 +94,18 @@ def upload_ztf_bytes_to_bucket(msg, context) -> None:
     data = base64.b64decode(msg['data'])  # alert packet, bytes
     attributes = msg['attributes']
     # Get the survey name and version
-    survey = guess_schema_survey(data)
-    version = guess_schema_version(data)
+    # survey = guess_schema_survey(data)
 
     with TempAlertFile(max_size=max_alert_packet_size, mode='w+b') as temp_file:
         temp_file.write(data)
         temp_file.seek(0)
 
         alert = extract_alert_dict(temp_file)
+        temp_file.seek(0)
         filename = create_filename(alert, attributes)
-        fix_schema(temp_file, alert, survey, version, filename)
+        if SURVEY == 'ztf':
+            fix_schema(temp_file, alert, data, filename)
+        temp_file.seek(0)
 
         blob = bucket.blob(filename)
         blob.upload_from_file(temp_file)
@@ -107,9 +114,10 @@ def upload_ztf_bytes_to_bucket(msg, context) -> None:
 
 def create_filename(alert, attributes):
     # alert is a single alert dict wrapped in a list
-    oid, cid = alert[0]['objectId'], alert[0]['candid']
+    oid = alert[0][schema_map['objectId']]
+    sid = alert[0][schema_map['source']][schema_map['sourceId']]
     topic = attributes['kafka.topic']
-    filename = f'{oid}.{cid}.{topic}.avro'
+    filename = f'{oid}.{sid}.{topic}.avro'
     return filename
 
 def extract_alert_dict(temp_file):
@@ -120,25 +128,24 @@ def extract_alert_dict(temp_file):
     alert = [r for r in fastavro.reader(temp_file)]
     return alert
 
-def fix_schema(temp_file, alert, survey, version, filename):
+def fix_schema(temp_file, alert, data, filename):
     """ Rewrites the temp_file with a corrected schema header
         so that it is valid for upload to BigQuery.
 
     Args:
         temp_file: Temporary file containing the alert.
-        survey: Name of the survey generating the alert.
-        version: Schema version.
     """
+    version = guess_schema_version(data)
 
     # get the corrected schema if it exists, else return
     try:
-        fpkl = f'valid_schemas/{survey}_v{version}.pkl'
+        fpkl = f'valid_schemas/{SURVEY}_v{version}.pkl'
         inpath = Path(__file__).resolve().parent / fpkl
         with inpath.open('rb') as infile:
             valid_schema = pickle.load(infile)
 
     except FileNotFoundError:
-        msg = f'Original schema header retained for {survey} v{version}; file {filename}'
+        msg = f'Original schema header retained for {SURVEY} v{version}; file {filename}'
         logger.log_text(msg)
         return
 
@@ -148,7 +155,7 @@ def fix_schema(temp_file, alert, survey, version, filename):
     temp_file.truncate()  # removes leftover data
     temp_file.seek(0)
 
-    logger.log_text(f'Schema header reformatted for {survey} v{version}; file {filename}')
+    logger.log_text(f'Schema header reformatted for {SURVEY} v{version}; file {filename}')
 
 def guess_schema_version(alert_bytes: bytes) -> str:
     """Retrieve the ZTF schema version
@@ -168,22 +175,3 @@ def guess_schema_version(alert_bytes: bytes) -> str:
         raise SchemaParsingError(err_msg)
 
     return version_match.group(2).decode()
-
-def guess_schema_survey(alert_bytes: bytes) -> str:
-    """Retrieve the ZTF schema version
-
-    Args:
-        alert_bytes: An alert from ZTF or LSST
-
-    Returns:
-        The survey name
-    """
-
-    survey_regex_pattern = b'("namespace":\s")(\S*)(")'
-    survey_match = re.search(survey_regex_pattern, alert_bytes)
-    if survey_match is None:
-        err_msg = f'Could not guess survey name for alert {alert_bytes}'
-        logger.log_text(err_msg, severity='ERROR')
-        raise SchemaParsingError(err_msg)
-
-    return survey_match.group(2).decode()
