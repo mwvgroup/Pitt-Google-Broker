@@ -176,6 +176,5 @@ survey='ztf'
 testid='False'
 to=2
 tr=True
-# python3 process_pubsub_counters.py --survey=$survey --production --timeout=$to --testrun=$tr
-python3 process_pubsub_counters.py --survey=$survey --testid=$testid
+python3 process_pubsub_counters.py --survey=$survey --production --timeout=$to --testrun=$tr
 ```
