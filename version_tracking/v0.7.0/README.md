@@ -1,6 +1,7 @@
 # v0.7.0
 
-Implements SuperNNova as a Cloud Function.
+- Implements SuperNNova as a Cloud Function.
+- Adds the extragalactic transients filter as a Cloud Function, emitting the Pub/Sub stream that SuperNNova listens to.
 
 See [PR \#71](https://github.com/mwvgroup/Pitt-Google-Broker/pull/71)
 
@@ -76,9 +77,9 @@ from broker_utils import consumer_sim as bcs
 testid = 'v070'
 survey = 'ztf'
 instance = (survey, testid)
-alert_rate = (5, 'once')
-# alert_rate = 'ztf-active-avg'
-# runtime = (30, 'min')  # options: 'sec', 'min', 'hr', 'night'(=10 hrs)
+# alert_rate = (5, 'once')
+alert_rate = 'ztf-active-avg'
+runtime = (10, 'min')  # options: 'sec', 'min', 'hr', 'night'(=10 hrs)
 
-bcs.publish_stream(alert_rate, instance)
+bcs.publish_stream(alert_rate, instance, runtime=runtime)
 ```
