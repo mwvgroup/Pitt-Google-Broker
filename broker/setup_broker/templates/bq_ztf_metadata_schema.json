@@ -21,19 +21,19 @@
     "description": "Timestamp of the original alert from the survey's Kafka topic.",
     "mode": "NULLABLE",
     "name": "kafka_timestamp__alerts",
-    "type": "STRING"
+    "type": "TIMESTAMP"
   },
   {
-    "description": "Timestamp of the alerts Pub/Sub message. UTC, Unix time; nanosecond resolution.",
+    "description": "Timestamp of the alerts Pub/Sub message.",
     "mode": "NULLABLE",
     "name": "publish_time__alerts",
-    "type": "STRING"
+    "type": "TIMESTAMP"
   },
   {
-    "description": "Timestamp of the alert_avros Pub/Sub message. UTC, Unix time; nanosecond resolution.",
+    "description": "Timestamp of the alert_avros Pub/Sub message.",
     "mode": "NULLABLE",
     "name": "publish_time__alert_avros",
-    "type": "STRING"
+    "type": "TIMESTAMP"
   },
   {
     "description": "Name of the bucket that contains the alert avro file.",
@@ -54,33 +54,39 @@
     "type": "STRING"
   },
   {
-    "description": "Timestamp of the event (e.g., file upload) that triggered the alert_avros Pub/Sub message. RFC 3339 format.",
+    "description": "Timestamp of the event (e.g., file upload) that triggered the alert_avros Pub/Sub message.",
     "mode": "NULLABLE",
     "name": "eventTime__alert_avros",
-    "type": "STRING"
+    "type": "TIMESTAMP"
   },
   {
-    "description": "Timestamp of the alerts_pure Pub/Sub message. UTC, Unix time; nanosecond resolution.",
+    "description": "Timestamp of the alerts_pure Pub/Sub message.",
     "mode": "NULLABLE",
     "name": "publish_time__alerts_pure",
-    "type": "STRING"
+    "type": "TIMESTAMP"
   },
   {
-    "description": "Timestamp of the exgalac_trans Pub/Sub message. UTC, Unix time; nanosecond resolution.",
+    "description": "Timestamp of the exgalac_trans Pub/Sub message.",
     "mode": "NULLABLE",
     "name": "publish_time__exgalac_trans",
-    "type": "STRING"
+    "type": "TIMESTAMP"
   },
   {
-    "description": "Timestamp of the salt2 Pub/Sub message. UTC, Unix time; nanosecond resolution.",
+    "description": "Timestamp of the salt2 Pub/Sub message.",
     "mode": "NULLABLE",
     "name": "publish_time__salt2",
-    "type": "STRING"
+    "type": "TIMESTAMP"
   },
   {
-    "description": "Timestamp of the SuperNNova Pub/Sub message. UTC, Unix time; nanosecond resolution.",
+    "description": "Timestamp of the exgalac_trans_cf Pub/Sub message.",
+    "mode": "NULLABLE",
+    "name": "publish_time__exgalac_trans_cf",
+    "type": "TIMESTAMP"
+  },
+  {
+    "description": "Timestamp of the SuperNNova Pub/Sub message.",
     "mode": "NULLABLE",
     "name": "publish_time__SuperNNova",
-    "type": "STRING"
+    "type": "TIMESTAMP"
   }
 ]
