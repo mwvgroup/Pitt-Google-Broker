@@ -259,18 +259,20 @@ def load_dataframe_bigquery(
     table = bq_client.get_table(table_id)
 
     if use_table_schema:
+        d = df.reset_index()
+
         # set a job_config; bigquery will try to convert df.dtypes to match table schema
         job_config = bigquery.LoadJobConfig(schema=table.schema)
 
         # make sure the df has the correct columns
         bq_col_names = [s.name for s in table.schema]
         # pad missing columns
-        missing = [c for c in bq_col_names if c not in df.columns]
+        missing = [c for c in bq_col_names if c not in d.columns]
         for col in missing:
-            df[col] = None
+            d[col] = None
         # drop extra columns
-        dropped = list(set(df.columns) - set(bq_col_names))  # grab so we can report
-        df = df[bq_col_names]
+        dropped = list(set(d.columns) - set(bq_col_names))  # grab so we can report
+        d = d[bq_col_names]
         # tell the user what happened
         if len(dropped) > 0:
             msg = f'Dropping columns not in the table schema: {dropped}'
@@ -280,10 +282,11 @@ def load_dataframe_bigquery(
                 print(msg)
 
     else:
+        d = df
         job_config = None
 
     # load the data
-    job = bq_client.load_table_from_dataframe(df, table_id, job_config=job_config)
+    job = bq_client.load_table_from_dataframe(d, table_id, job_config=job_config)
     job.result()  # Wait for the job to complete.
 
     # report the results
