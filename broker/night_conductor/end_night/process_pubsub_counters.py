@@ -460,18 +460,17 @@ if __name__ == "__main__":  # noqa
         default="ztf",
         help="Broker instance `survey` keyword. Used to label resources.\n",
     )
-    # testid
-    # when calling this script, use one of `--testid=<mytestid>` or `--production`
+    # testid. use one of `--testid=<mytestid>` or `--production`
     parser.add_argument(
-        "--testid",  # set testid = <mytestid>
+        "--testid",
         default="test",
-        help="Broker instance `testid` keyword. Used to label resources.\n",
+        help="Broker instance `testid` keyword (str). Used to label resources.\n",
     )
     parser.add_argument(
-        "--production",  # set testid = False
+        "--production",
         dest="testid",
         action="store_false",
-        help="Sets `testid='False'`. Use for broker production instances.\n",
+        help="Sets `testid=False` (bool). Use for broker production instances.\n",
     )
     parser.add_argument(
         "--timeout",
