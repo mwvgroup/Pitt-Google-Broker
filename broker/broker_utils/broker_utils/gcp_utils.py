@@ -4,6 +4,7 @@
 GCP resources.
 """
 
+from concurrent.futures import TimeoutError
 from google.cloud import bigquery, pubsub_v1, storage
 from google.cloud.logging_v2.logger import Logger
 from google.cloud.pubsub_v1.subscriber.futures import StreamingPullFuture
@@ -182,8 +183,8 @@ def streamingPull_pubsub(
         project_id: GCP project ID for the project containing the subscription.
                     If None, the environment variable GOOGLE_CLOUD_PROJECT will be used.
 
-        timeout: The amount of time, in seconds, the subscriber client should wait for
-                 a new message before closing the connection.
+        timeout: The number of seconds before the `subscribe` call times out and
+                 closes the connection.
 
         block: Whether to block while streaming messages or return the
                StreamingPullFuture object for the user to manage separately.
@@ -207,8 +208,7 @@ def streamingPull_pubsub(
     )
 
     if block:
-        # block until there are no messages for the timeout duration
-        # or an error is encountered
+        # block until timeout duration is reached or an error is encountered
         with subscriber:
             try:
                 streaming_pull_future.result(timeout=timeout)
