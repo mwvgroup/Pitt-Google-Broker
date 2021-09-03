@@ -4,14 +4,16 @@
 
 
 import argparse
-from google.cloud import logging
+from google.cloud import bigquery, logging
 import json
 import pandas as pd
 import time
-from typing import Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 from broker_utils import gcp_utils, schema_maps
 
+
+project_id = "ardent-cycling-243415"
 
 # connect to the logger
 logging_client = logging.Client()
@@ -28,28 +30,38 @@ def _resource_names(survey: str, testid: Union[str, bool]):
         names["bq_table"] = f"{survey}_alerts.metadata"
     else:
         names["bq_table"] = f"{survey}_alerts_{testid}.metadata"
+    # table column names
+    table = bigquery.Client().get_table(names["bq_table"])
+    names["bq_table_cols"] = [s.name for s in table.schema]
 
     # pubsub names as {topic name stub: full subscription name}
     name_stubs = [
-        "alert_avros",
         "alerts",
+        "alert_avros",
         "alerts_pure",
         "exgalac_trans",
         "salt2",
+        "exgalac_trans_cf",
         "SuperNNova",
     ]
     if not testid:
         names["pubsub"] = {ns: f"{survey}-{ns}-counter" for ns in name_stubs}
     else:
         names["pubsub"] = {ns: f"{survey}-{ns}-counter-{testid}" for ns in name_stubs}
-        # subscriptions = [f'{survey}-{ns}-counter-{testid}' for ns in name_stubs]
 
     return names
 
 
-def run(survey: str, testid: Union[str, bool], batch_size: int):
+def _log_and_print(msg, severity="INFO"):
+    print(msg)
+    logger.log_text(msg, severity=severity)
+
+
+def run(
+    survey: str, testid: Union[str, bool], timeout: int, testrun: bool,
+):
     """Collect and store all metadata in the Pub/Sub counters."""
-    collector = MetadataCollector(survey, testid, batch_size)
+    collector = MetadataCollector(survey, testid, timeout, testrun)
     collector.collect_and_store_all_metadata()
 
 
@@ -80,28 +92,44 @@ class MetadataCollector:
     schema are dropped.
     """
 
-    def __init__(self, survey: str, testid: Union[str, bool], batch_size: int):
+    def __init__(
+        self,
+        survey: str,
+        testid: Union[str, bool],
+        timeout: int = 45,
+        testrun: bool = False,
+    ):
         """Initialize a MetadataCollector.
 
         Args:
-            survey: The broker instance's `survey` keyword. Names the resources.
-            testid: The broker instance's `testid` keyword. Names the resources.
-            batch_size: Maximum number of messages to pull and process in a batch.
+            survey: Broker instance `survey` keyword. Used to label resources.
+            testid: Broker instance `testid` keyword. Used to label resources.
+            timeout: Number of seconds to wait between checks to determine whether
+                     messages are still streaming in. If no new messages have arrived
+                     since the previous check, the subscription is assumed to be empty
+                     and the streaming pull connection is closed.
+            testrun: If True, pull for a single timeout duration and nack all messages.
         """
-        self.batch_size = batch_size
-        self.metadata_dfs_dict = {}  # one df per subscription
-        self.metadata_df = None  # all subscriptions
-        self.schema_map = schema_maps.load_schema_map(survey, testid)
+        self.testrun = testrun
+        self.timeout = timeout
 
         names = _resource_names(survey, testid)
         self.bq_table = names["bq_table"]
+        self.bq_table_cols = names["bq_table_cols"]
         self.pubsub_names = names["pubsub"]
+
+        self.metadata_dfs_dict = {}  # {topic stub: df}. one df per subscription
+        self.metadata_df = None  # all subscriptions
+        # index that will be used to join subscription dfs
+        schema_map = schema_maps.load_schema_map(survey, testid)
+        self.index = [schema_map["objectId"], schema_map["sourceId"]]
 
     def collect_and_store_all_metadata(self):
         """Entry point for the MetadataCollector."""
         # collect it
         self._collect_all_metadata()  # populate self.metadata_dfs_dict
         # reorganize it
+        self._format_dfs_for_join_and_load()  # set index and column names
         self._join_metadata()  # populate self.metadata_df
         # store it
         self._load_metadata_to_bigquery()
@@ -113,11 +141,12 @@ class MetadataCollector:
         self.metadata_dfs_dict = {}
 
         for topic_stub, sub_name in self.pubsub_names.items():
-            print(f"processing {sub_name}")
-
             # generate a df of metadata from all messages in the subscription
             sub_collector = SubscriptionMetadataCollector(
-                (topic_stub, sub_name), self.schema_map, self.batch_size
+                (topic_stub, sub_name),
+                self._get_names_of_fields_to_collect(topic_stub),
+                timeout=self.timeout,
+                testrun=self.testrun,
             )
             sub_collector.pull_and_process_messages()
 
@@ -125,15 +154,56 @@ class MetadataCollector:
             if sub_collector.metadata_df is not None:
                 self.metadata_dfs_dict[topic_stub] = sub_collector.metadata_df
 
-    def _join_metadata(self):
-        # all subscription dfs are indexed by [objectId, sourceId]
-        # except the alerts df... fix it
+    def _get_names_of_fields_to_collect(self, topic_stub):
+        # field name(s) that will serve as the index to join the dfs
+        requested_fields = [i for i in self.index]
+
+        # field names from this topic to be loaded to bigquery (minus self.index).
+        # parse these from the existing bigquery column names.
+        bqcols = [c for c in self.bq_table_cols if c not in self.index]
+        tfields = [c.split("__")[0] for c in bqcols if c.split("__")[1] == topic_stub]
+        # actual metadata field names may contain "." or "-",
+        # but bigquery col names only allow "_", so tfields is not properly formatted.
+        # this will have to be handled by the SubscriptionMetadataCollector
+        requested_fields.extend(tfields)
+
+        # extra fields needed to properly join the dfs in _add_ids_to_alerts_stream()
+        if topic_stub == "alerts":
+            requested_fields.append("message_id")
+        if topic_stub == "alert_avros":
+            requested_fields.append("file_origin_message_id")
+
+        return requested_fields
+
+    def _format_dfs_for_join_and_load(self):
+        oid, sid = self.index
+        # all subscriptions have the index columns except the alerts df... fix it
         self._add_ids_to_alerts_stream()
 
-        # join the subscription dfs on index
-        alerts = self.metadata_dfs_dict["alerts"]
-        allothers = [df for t, df in self.metadata_dfs_dict.items() if t != "alerts"]
-        self.metadata_df = alerts.join(allothers, how="outer")
+        for topic_stub, df in self.metadata_dfs_dict.items():
+            # set the index with explicit types
+            df = df.astype({oid: str, sid: str})
+            df = df.set_index([oid, sid])
+
+            # convert some types
+            if topic_stub == "alerts":
+                # convert the kafka timestamp to np.datetime64
+                df["kafka.timestamp"] = pd.to_datetime(
+                    df["kafka.timestamp"], unit="ms", utc=True
+                )
+            elif topic_stub == "alert_avros":
+                # convert the eventTime (str, RFC 3339) to np.datetime64
+                df["eventTime"] = pd.to_datetime(df["eventTime"])
+
+            # attach topic name stub to column names, separated by double underscore
+            df.rename(columns=lambda x: f"{x}__{topic_stub}", inplace=True)
+
+            # format column names; BigQuery accepts only letters, numbers, underscores
+            df.rename(columns=lambda x: x.replace("-", "_"), inplace=True)
+            df.rename(columns=lambda x: x.replace(".", "_"), inplace=True)
+
+            # store it
+            self.metadata_dfs_dict[topic_stub] = df
 
     def _add_ids_to_alerts_stream(self):
         """Add objectId and sourceId to alerts stream metadata.
@@ -147,44 +217,61 @@ class MetadataCollector:
         Pub/Sub message_id, which is used here to associate "alerts" stream messages
         with DIA ids.
         """
+        if "alerts" not in self.metadata_dfs_dict.keys():
+            return
+
         # column names
-        oid = self.schema_map["objectId"]
-        sid = self.schema_map["sourceId"]
-        msg_id_long = "file_origin_message_id__alert_avros"
+        oid, sid = self.index
+        msg_id_origin = "file_origin_message_id"
         msg_id = "message_id"
 
         # get all the ids from the alert_avros metadata
         df_avros = self.metadata_dfs_dict["alert_avros"].reset_index()
-        df_avros[msg_id] = df_avros[msg_id_long].astype(int)
-        df_avros = df_avros[[oid, sid, msg_id]]  # drop the other columns
+        df_avros[msg_id] = df_avros[msg_id_origin].astype(int)
         df_avros = df_avros.set_index(msg_id)
+        df_avros = df_avros[[oid, sid]]  # drop the columns we don't need
         df_avros = df_avros[~df_avros.index.duplicated(keep="first")]  # drop duplicates
 
         # add the ids to the alerts metadata
-        df_alerts = self.metadata_dfs_dict["alerts"].copy(deep=True)
+        df_alerts = self.metadata_dfs_dict["alerts"].reset_index()
+        df_alerts = df_alerts.astype({msg_id: int}).set_index(msg_id)
         df_alerts[oid] = df_avros[oid]
         df_alerts[sid] = df_avros[sid]
 
-        # log and drop messages we can't identify
-        null_sid = df_alerts[sid].isnull()  # series of bools
-        null_msg_ids = df_alerts[null_sid].index
-        if len(null_msg_ids) > 0:
-            msg = (
-                f"Dropping {len(null_msg_ids)} messages from alerts stream "
-                f"because they cannot be matched to a {sid}. "
-                f"Their Pub/Sub message ids are: {null_msg_ids.tolist()}"
-            )
-            logger.log_text(msg, severity='DEBUG')
-        df_alerts.drop(index=null_msg_ids, inplace=True)
+        # handle messages that were not matched to an oid and sid
+        null_ids = df_alerts[df_alerts[[oid, sid]].isnull().any(axis=1)].index
+        if len(null_ids) > 0:
+            # fill in the oid, sid with "unknown-{pubsub message_id}"
+            def unk(row):
+                return f"unknown-{row.name}"
 
-        # set the new index and return
-        self.metadata_dfs_dict["alerts"] = df_alerts.set_index([oid, sid])
+            df_alerts.loc[df_alerts[oid].isnull(), oid] = df_alerts.apply(unk, axis=1)
+            df_alerts.loc[df_alerts[sid].isnull(), sid] = df_alerts.apply(unk, axis=1)
+
+            # log some info
+            _log_and_print(
+                (
+                    f"Cannot match {len(null_ids)} messages from the alerts stream "
+                    f"to an {oid} and {sid}. "
+                    f"Their Pub/Sub message ids are: {null_ids.tolist()}"
+                ),
+                severity="DEBUG",
+            )
+
+        # store the updated df
+        self.metadata_dfs_dict["alerts"] = df_alerts.reset_index()
+
+    def _join_metadata(self):
+        # join the subscription dfs on index
+        alerts = self.metadata_dfs_dict["alerts"]
+        allothers = [df for t, df in self.metadata_dfs_dict.items() if t != "alerts"]
+        self.metadata_df = alerts.join(allothers, how="outer")
 
     def _load_metadata_to_bigquery(self):
         # by default, conforms the dataframe to the table schema
         # i.e., converts dtypes and drops extra columns
         gcp_utils.load_dataframe_bigquery(
-            self.bq_table, self.metadata_df.reset_index(), logger=logger
+            self.bq_table, self.metadata_df, logger=logger
         )
 
 
@@ -202,21 +289,35 @@ class SubscriptionMetadataCollector:
     """
 
     def __init__(
-        self, pubsub_names: Tuple[str, str], schema_map: dict, batch_size: int = 500
+        self,
+        pubsub_names: Tuple[str, str],
+        requested_fields: Optional[List[str]] = None,
+        timeout: int = 45,
+        testrun: bool = False,
     ):
         """Initialize a SubscriptionMetadataCollector.
 
         Args:
             pubsub_names: Pub/Sub stream to be processed, in the format
                           (topic name stub, full subscription name).
-            schema_map: Mapping between survey schema and broker's generic schema.
-            batch_size: Maximum number of messages to pull and process in a batch.
+            requested_fields: Metadata field names requested.
+                              Actual collected fields may be a subset of this if some
+                              requested fields are not present.
+                              If None, collect all fields.
+            timeout: Number of seconds to wait between checks to determine whether
+                     messages are still streaming in. If no new messages have arrived
+                     since the previous check, the subscription is assumed to be empty
+                     and the streaming pull connection is closed.
+                     For a testrun, a 2 second timeout works well.
+            testrun: If True, pull for a single timeout duration and nack all messages.
         """
-        self.batch_size = batch_size
+        self.topic_stub, self.subscription = pubsub_names
+        self.requested_fields = requested_fields
+        self.testrun = testrun
+        self.timeout = timeout
+
         self.metadata_df = None
         self.metadata_dicts_list = []
-        self.schema_map = schema_map
-        self.topic_stub, self.subscription = pubsub_names
 
     def pull_and_process_messages(self):
         """Entry point for the SubscriptionMetadataCollector."""
@@ -226,113 +327,64 @@ class SubscriptionMetadataCollector:
         # for debugging: write to file in case next step fails
         # self._stash_dicts_to_json_file()
 
-        # create dataframe with proper index and column names
+        # cast to dataframe
         if len(self.metadata_dicts_list) > 0:
             self._package_metadata_into_df()  # populate self.metadata_df
 
     def _pull_messages_and_extract_metadata(self):
-        # pull and process messages in batches
-        # using the callback self._extract_metadata().
-        # populate self.metadata_dicts_list
+        _log_and_print(f"Processing {self.subscription}")
 
-        # pull. assume there are no more msgs when 2 successive calles return nothing.
-        # if this turns out to be insufficient, use the Pub/Sub monitoring metrics here:
-        # https://cloud.google.com/monitoring/api/metrics_gcp#gcp-pubsub
-        total_num_processed = 0
-        num_in_batch = 1  # >0 to start the loop
-        while num_in_batch > 0:
-            num_in_batch = gcp_utils.pull_pubsub(
-                self.subscription,
-                max_messages=self.batch_size,
-                msg_only=False,
-                callback=self._extract_metadata,
-                return_count=True,
-            )
+        # start pulling and processing messages in a background thread
+        streaming_pull_future = gcp_utils.streamingPull_pubsub(
+            self.subscription, self._extract_metadata, block=False
+        )
 
-            if num_in_batch == 0:  # wait, then try one more time
-                time.sleep(10)
-                num_in_batch = gcp_utils.pull_pubsub(
-                    self.subscription,
-                    max_messages=self.batch_size,
-                    msg_only=False,
-                    callback=self._extract_metadata,
-                    return_count=True,
-                )
+        # close the connection when no msgs arrive within at least 1 timeout duration
+        still_streaming = True
+        n = len(self.metadata_dicts_list)
+        while still_streaming:
+            time.sleep(self.timeout)
 
-            print(f"\tfinished batch of {num_in_batch}")
-            total_num_processed = total_num_processed + num_in_batch
+            if self.testrun:
+                still_streaming = False
+
+            n_new = len(self.metadata_dicts_list)
+            if (n_new - n) == 0:
+                still_streaming = False
+            else:
+                n = n_new
+
+        streaming_pull_future.cancel()  # Trigger the shutdown.
+        streaming_pull_future.result()  # Block until the shutdown is complete.
 
         # log the total
-        msg = (
-            f"Pulled {total_num_processed} messages from "
+        _log_and_print(
+            f"\tpulled {len(self.metadata_dicts_list)} messages from "
             f"{self.subscription} and extracted metadata."
         )
-        logger.log_text(msg, severity="INFO")
 
-    def _extract_metadata(self, received_message):
+    def _extract_metadata(self, message):
         # process a pubsub message and extract metadata
-        message = received_message.message
 
         # collect the custom metadata; e.g., DIA ids
         metadata = {**message.attributes}
 
         # collect other metadata
         metadata["message_id"] = message.message_id
-        metadata["publish_time"] = self._package_publish_time(message.publish_time)
+        metadata["publish_time"] = message.publish_time
 
         # handle uniqueness of messages coming from the alert_avros bucket
         if "alert_avros-counter" in self.subscription:
             metadata = self._package_alert_avros_metadata(message.data, metadata)
 
-        self.metadata_dicts_list.append(metadata)
+        # store the requested fields in the list
+        self.metadata_dicts_list.append(self._dont_collect_extra_fields(metadata))
 
-        # for now, we assume everything went fine... update this if problems arise
-        success = True
-        return success
-
-    def _stash_dicts_to_json_file(self):
-        # for debugging
-        fname = f"metadata/{self.subscription}.json"
-        with open(fname, "w") as fout:
-            json.dump(self.metadata_dicts_list, fout, allow_nan=True)
-
-    def _package_metadata_into_df(self):
-        # cast to a dataframe and set the index and columns
-        oid = self.schema_map["objectId"]  # survey-specific field name for the objectId
-        sid = self.schema_map["sourceId"]  # survey-specific field name for the sourceId
-
-        # cast the collected metadata to a df
-        df = pd.DataFrame(self.metadata_dicts_list)
-
-        # set the index with explicit types
-        if (oid in df.columns) and (sid in df.columns):
-            df = df.astype({oid: str, sid: str})
-            df = df.set_index([oid, sid])
+        # for now, assume everything went fine... update this if problems arise
+        if self.testrun:
+            message.nack()
         else:
-            # currently this is just the "alerts" stream
-            # and is handled in MetadataCollector._add_ids_to_alerts_stream()
-            df = df.astype({"message_id": int}).set_index("message_id")
-
-        # attach topic name stub to column names, separated by double underscore
-        df.rename(columns=lambda x: f"{x}__{self.topic_stub}", inplace=True)
-
-        # format column names; BigQuery accepts only letters, numbers, and underscores
-        df.rename(columns=lambda x: x.replace("-", "_"), inplace=True)
-        df.rename(columns=lambda x: x.replace(".", "_"), inplace=True)
-
-        self.metadata_df = df
-
-    def _package_publish_time(self, publish_time):
-        # publish_time timestamp is given as two ints: seconds and nanoseconds
-        # package it into a single number
-
-        # preserve zero padding
-        tmpnanos = f"{publish_time.nanos*1e-9}".split(".")[1][:9]
-
-        # concat. use string type to ensure exact representation
-        pubtime = f"{publish_time.seconds}.{tmpnanos}"
-
-        return pubtime
+            message.ack()
 
     def _package_alert_avros_metadata(self, msg_data, msg_metadata):
         # clarify the metadata names
@@ -349,13 +401,62 @@ class SubscriptionMetadataCollector:
 
         return metadata
 
+    def _dont_collect_extra_fields(self, metadata):
+        if self.requested_fields is None:
+            # keep everything
+            return metadata
+
+        else:
+            keep_keys = self._keep_field_names(self.requested_fields, metadata.keys())
+            # keep message_id so we can drop duplicates later
+            keep_keys = keep_keys + ["message_id"]
+
+            metadata_to_keep = {k: v for k, v in metadata.items() if k in keep_keys}
+
+            return metadata_to_keep
+
+    def _stash_dicts_to_json_file(self):
+        # for debugging
+        fname = f"metadata/{self.subscription}.json"
+        with open(fname, "w") as fout:
+            json.dump(self.metadata_dicts_list, fout, allow_nan=True)
+
+    def _package_metadata_into_df(self):
+        # cast the collected metadata to a df
+        df = pd.DataFrame(self.metadata_dicts_list)
+        n = len(df)
+
+        # messages can be published multiple times. we only care about the first one.
+        df = df.sort_values("publish_time").drop_duplicates("message_id", keep="first")
+        # log the number we dropped
+        nnew = len(df)
+        if n - nnew > 0:
+            _log_and_print(
+                f"Dropping {n-nnew} messages that are duplicates of previously "
+                f"published messages in the subscription {self.subscription}."
+            )
+
+        # keep only the requested fields
+        keepcols = self._keep_field_names(self.requested_fields, df.columns)
+        self.metadata_df = df[keepcols]
+
+    def _keep_field_names(self, keep_fields, field_names):
+        # metadata field names may contain "." or "-",
+        # but names in self.requested_fields are formatted as bigquery col names
+        # which only contain "_", so we need to match them
+
+        # return list of field_names with a match in keep_fields,
+        # treating "_", "-", and "." as equivalent.
+        names_map = {f: f.replace("-", "_").replace(".", "_") for f in field_names}
+        keep = [c for c in field_names if names_map[c] in keep_fields]
+        return keep
+
 
 if __name__ == "__main__":  # noqa
     parser = argparse.ArgumentParser()
     # survey
     parser.add_argument(
         "--survey",
-        dest="survey",
         default="ztf",
         help="Broker instance `survey` keyword. Used to label resources.\n",
     )
@@ -363,7 +464,6 @@ if __name__ == "__main__":  # noqa
     # when calling this script, use one of `--testid=<mytestid>` or `--production`
     parser.add_argument(
         "--testid",  # set testid = <mytestid>
-        dest="testid",
         default="test",
         help="Broker instance `testid` keyword. Used to label resources.\n",
     )
@@ -374,13 +474,18 @@ if __name__ == "__main__":  # noqa
         help="Sets `testid='False'`. Use for broker production instances.\n",
     )
     parser.add_argument(
-        "--batch_size",
-        dest="batch_size",
-        default=500,
+        "--timeout",
+        default=45,
         type=int,
-        help="Maximum number of Pub/Sub messages to pull per call.",
+        help="Number of seconds to wait for messages before closing the connection.",
+    )
+    parser.add_argument(
+        "--testrun",
+        default=False,
+        type=bool,
+        help="If True, pull for a single timeout duration and nack all messages.",
     )
 
     known_args, _ = parser.parse_known_args()
 
-    run(known_args.survey, known_args.testid, known_args.batch_size)
+    run(known_args.survey, known_args.testid, known_args.timeout, known_args.testrun)
