@@ -242,8 +242,12 @@ def setup_bigquery(survey='ztf', testid='test', teardown=False) -> None:
             print(f'Deleted dataset {dataset}')
         else:
             # Create dataset
-            bigquery_client.create_dataset(dataset, exists_ok=True)
-            print(f'Created dataset (skipped if previously existed): {dataset}')
+            try:
+                bigquery_client.get_dataset(dataset)
+                print(f"Skipping existing dataset: {dataset}")
+            except NotFound:
+                bigquery_client.create_dataset(dataset)
+                print(f'Created dataset: {dataset}')
 
             # create the tables
             for table in tables:
@@ -252,6 +256,7 @@ def setup_bigquery(survey='ztf', testid='test', teardown=False) -> None:
                     bigquery_client.get_table(table_id)
                     print(f'Skipping existing table: {table_id}.')
                 except NotFound:
+                    # use CLI so we can create the table from a schema file
                     bqmk = f'bq mk --table {PROJECT_ID}:{dataset}.{table} templates/bq_{survey}_{table}_schema.json'
                     out = subprocess.check_output(shlex.split(bqmk))
                     print(f'{out}')  # should be a success message
@@ -401,6 +406,8 @@ def setup_buckets(survey='ztf', testid='test', teardown=False) -> None:
                     pass
                 else:
                     print(f'Deleted bucket {bucket_name}')
+            else:
+                print(f'Skipped existing bucket: {bucket_name}')
 
         #-- Upload any files
         if not teardown and len(files)>0:
