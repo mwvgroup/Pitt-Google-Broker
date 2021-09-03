@@ -14,8 +14,11 @@ information about the original Kafka stream and the Avro file storage.
 
 To track additional metadata:
 
-1. Add the information to a custom attribute on the appropriate Pub/Sub message.
+1. Add the information to a custom attribute(s) on the appropriate Pub/Sub message.
 
-2. Add a corresponding column to the schema of the metadata BigQuery table.
-   The column name will be: the name of the custom attribute from step 1 plus the
-   name stub of the publishing topic, separated by a double underscore.
+2. Add the Pub/Sub topic and subscription to the resource names in
+   broker/night_conductor/end_night/process_pubsub_counters.py.
+
+3. Add a corresponding column to the schema of the metadata BigQuery table.
+   The column name(s) will be: the name(s) of the custom attribute(s) from step 1 plus
+   the name stub of the publishing topic, separated by a double underscore.
