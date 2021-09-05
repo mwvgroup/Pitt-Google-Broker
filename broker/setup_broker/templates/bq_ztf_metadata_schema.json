@@ -42,6 +42,24 @@
     "type": "TIMESTAMP"
   },
   {
+    "description": "Timestamp of the BigQuery Pub/Sub message.",
+    "mode": "NULLABLE",
+    "name": "publish_time__BigQuery",
+    "type": "TIMESTAMP"
+  },
+  {
+    "description": "BigQuery alerts table Id the alert was stored in.",
+    "mode": "NULLABLE",
+    "name": "alerts_table__BigQuery",
+    "type": "STRING"
+  },
+  {
+    "description": "BigQuery DIASource table Id the alert was stored in.",
+    "mode": "NULLABLE",
+    "name": "DIASource_table__BigQuery",
+    "type": "STRING"
+  },
+  {
     "description": "Timestamp of the alert_avros Pub/Sub message.",
     "mode": "NULLABLE",
     "name": "publish_time__alert_avros",
