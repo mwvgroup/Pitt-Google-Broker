@@ -6,8 +6,8 @@
 See [PR \#71](https://github.com/mwvgroup/Pitt-Google-Broker/pull/71)
 
 Working notes:
-- [supernnova.md](supernnova.md) (implementing the pre-trained model provided by Anais)
-- [supernnova_train_a_model.md](supernnova_train_a_model.md)
+- [supernnova.md](https://github.com/mwvgroup/Pitt-Google-Broker/tree/troy/troy/SNN/supernnova.md) (implementing the pre-trained model provided by Anais)
+- [supernnova_train_a_model.md](https://github.com/mwvgroup/Pitt-Google-Broker/tree/troy/troy/SNN/supernnova_train_a_model.md)
 (not necessary for this PR, but good for future reference)
 
 ## Test the changes
