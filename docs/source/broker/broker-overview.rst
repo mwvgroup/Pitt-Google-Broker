@@ -56,11 +56,12 @@ across GCP.
 
 3. **BigQuery Database Storage** (alert -> BigQuery)
 
-   -  Dataflow job [`bq-sink`]
+   -  Cloud Function [`store_in_BigQuery`]
 
       -  Listens to PS topic [`alerts`]
       -  Stores in BQ dataset [`alerts`] in tables
          [`alerts`] and [`DIASource`]
+      -  Publishes to Pub/Sub topic [`BigQuery`]
 
 4. **Data Processing Pipeline** (alert -> {filters, fitters,
    classifiers} -> {Cloud Storage, BigQuery, Pub/Sub})
