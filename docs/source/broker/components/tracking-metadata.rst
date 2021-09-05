@@ -17,11 +17,18 @@ To track additional metadata:
    Note, the message's publish timestamp is automatically attached; it does not need
    to be added manually.
 
-2. If this is a new Pub/Sub stream, add the topic/subscription to the resource names in
-   the processing script at broker/night_conductor/end_night/process_pubsub_counters.py.
-
-3. Add the corresponding column(s) to the schema template(s) for the metadata table(s)
+2. Add the corresponding column(s) to the schema template(s) for the metadata table(s)
    in broker/setup_broker/templates/.
-   The column name(s) will be: the name(s) of the attribute(s) plus
+   The format for a column name must be: the name of the attribute plus
    the name stub of the publishing topic, separated by a double underscore.
    If this is a new Pub/Sub stream, remember to add a column for the publish timestamp.
+
+3. If this is a new Pub/Sub stream:
+
+    - Attach a "counter" subscription to the new topic. The subscription name stub
+      should have the form `<topic_name_stub>-counter`.
+
+    - Add the topic name stub to the resource names at the top of the processing script
+      at broker/night_conductor/end_night/process_pubsub_counters.py.
+      The script will automatically process the subscription and collect all
+      attributes for which there is a corresponding column in the BigQuery table.
