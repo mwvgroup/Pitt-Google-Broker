@@ -6,6 +6,7 @@
 import argparse
 from google.cloud import bigquery, logging
 import json
+import numpy as np
 import pandas as pd
 import time
 from typing import List, Optional, Tuple, Union
@@ -194,6 +195,8 @@ class MetadataCollector:
             elif topic_stub == "alert_avros":
                 # convert the eventTime (str, RFC 3339) to np.datetime64
                 df["eventTime"] = pd.to_datetime(df["eventTime"])
+                df["ra"] = df["ra"].astype(np.float64)
+                df["dec"] = df["dec"].astype(np.float64)
 
             # attach topic name stub to column names, separated by double underscore
             df.rename(columns=lambda x: f"{x}__{topic_stub}", inplace=True)

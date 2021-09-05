@@ -12,6 +12,18 @@
     "type": "STRING"
   },
   {
+    "description": "Right Ascension of candidate; J2000 [deg]",
+    "mode": "NULLABLE",
+    "name": "ra__alert_avros",
+    "type": "FLOAT"
+  },
+  {
+    "description": "Declination of candidate; J2000 [deg]",
+    "mode": "NULLABLE",
+    "name": "dec__alert_avros",
+    "type": "FLOAT"
+  },
+  {
     "description": "Name of the survey's Kafka topic that originated the alert.",
     "mode": "NULLABLE",
     "name": "kafka_topic__alerts",
