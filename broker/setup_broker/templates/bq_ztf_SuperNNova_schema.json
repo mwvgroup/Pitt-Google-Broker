@@ -26,7 +26,7 @@
   {
     "description": "predicted class; 0 = non-Ia, 1 = Ia",
     "mode": "NULLABLE",
-    "name": "pred_class",
+    "name": "predicted_class",
     "type": "INTEGER"
   }
 ]

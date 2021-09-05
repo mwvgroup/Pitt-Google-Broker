@@ -92,7 +92,7 @@ def _classify_with_snn(alert_dict: dict) -> dict:
         schema_map["sourceId"]: snn_df.sourceId,
         "prob_class0": pred_probs[0].item(),
         "prob_class1": pred_probs[1].item(),
-        "pred_class": np.argmax(pred_probs).item(),
+        "predicted_class": np.argmax(pred_probs).item(),
     }
 
     return snn_dict
