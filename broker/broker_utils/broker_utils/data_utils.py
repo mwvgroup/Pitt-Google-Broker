@@ -59,10 +59,10 @@ def alert_avro_to_dict(alert_avro: Union[str, bytes]) -> dict:
     Returns:
         alert as a dict
     """
-    if type(alert_avro) == str:
+    if isinstance(alert_avro, str):
         with open(alert_avro, 'rb') as fin:
             alert_list = [r for r in fastavro.reader(fin)]  # list of dicts
-    elif type(alert_avro) == bytes:
+    elif isinstance(alert_avro, bytes):
         try:
             with BytesIO(alert_avro) as fin:
                 alert_list = [r for r in fastavro.reader(fin)]  # list of dicts
@@ -100,7 +100,7 @@ def alert_dict_to_dataframe(alert_dict: dict, schema_map: dict) -> pd.DataFrame:
     """ Packages an alert into a dataframe.
     Adapted from: https://github.com/ZwickyTransientFacility/ztf-avro-alert/blob/master/notebooks/Filtering_alerts.ipynb
     """
-    if type(schema_map) != dict:
+    if not isinstance(schema_map, dict):
         raise ValueError("`schema_map` is not a valid dictionary.")
 
     dfc = pd.DataFrame(alert_dict[schema_map['source']], index=[0])
@@ -109,10 +109,11 @@ def alert_dict_to_dataframe(alert_dict: dict, schema_map: dict) -> pd.DataFrame:
 
     # attach some metadata. note this may not be preserved after all operations
     # https://stackoverflow.com/questions/14688306/adding-meta-information-metadata-to-pandas-dataframe
-    dflc.objectId = alert_dict[schema_map['objectId']]
-    # make sure we haven't onboarded a new survey that has a field named "sourceId"
-    assert 'sourceId' not in dflc.keys()
-    dflc.sourceId = alert_dict[schema_map['sourceId']]
+    # make sure this does not overwrite existing columns
+    if "objectId" not in dflc.keys():
+        dflc.objectId = alert_dict[schema_map['objectId']]
+    if "sourceId" not in dflc.keys():
+        dflc.sourceId = alert_dict[schema_map['sourceId']]
 
     return dflc
 

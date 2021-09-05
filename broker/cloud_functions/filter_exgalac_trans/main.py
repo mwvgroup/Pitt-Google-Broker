@@ -15,7 +15,6 @@ from broker_utils import data_utils, gcp_utils, schema_maps
 PROJECT_ID = os.getenv("GCP_PROJECT")
 TESTID = os.getenv("TESTID")
 SURVEY = os.getenv("SURVEY")
-assert SURVEY in ["ztf", "decat"]
 
 # connect to the logger
 logging_client = logging.Client()
