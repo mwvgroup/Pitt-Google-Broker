@@ -119,8 +119,8 @@ class MetadataCollector:
         self.bq_table_cols = names["bq_table_cols"]
         self.pubsub_names = names["pubsub"]
 
-        self.metadata_dfs_dict = {}  # {topic stub: df}. one df per subscription
-        self.metadata_df = None  # all subscriptions
+        self.metadata_dfs_dict = {}  # Dict[str, pd.DataFrame] as {topic stub: df}
+        self.metadata_df = None  # pd.DataFrame, all subscriptions joined
         # index that will be used to join subscription dfs
         schema_map = schema_maps.load_schema_map(survey, testid)
         self.index = [schema_map["objectId"], schema_map["sourceId"]]
@@ -319,8 +319,8 @@ class SubscriptionMetadataCollector:
         self.testrun = testrun
         self.timeout = timeout
 
-        self.metadata_df = None
-        self.metadata_dicts_list = []
+        self.metadata_df = None  # pd.DataFrame
+        self.metadata_dicts_list = []  # List[dict]
 
     def pull_and_process_messages(self):
         """Entry point for the SubscriptionMetadataCollector."""
