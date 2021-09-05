@@ -24,7 +24,7 @@ gcloud compute instances add-metadata ${consumerVM} --zone ${zone} \
   --metadata startup-script-url=${startupscript}
 
 # set the machine size just large enough to run the connector
-gcloud compute instances set-machine-type $consumerVM --machine-type g1-small
+gcloud compute instances set-machine-type "$consumerVM" --machine-type g1-small
 
 # start the VM
 gcloud compute instances start ${consumerVM} --zone ${zone}
