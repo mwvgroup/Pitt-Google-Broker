@@ -12,11 +12,11 @@ echo "Stopping Consumer instance..."
 ./stop_consumer.sh "$testid" "$survey"
 
 #--- Drain the Dataflow jobs
-echo
-echo "Waiting 2 min to give processes related to Consumer time to settle down..."
-sleep 120
-echo "Draining Dataflow jobs..."
-./drain_beam_jobs.sh "$PROJECT_ID"  # waits for status = "Drained" or "Cancelled"
+# echo
+# echo "Waiting 2 min to give processes related to Consumer time to settle down..."
+# sleep 120
+# echo "Draining Dataflow jobs..."
+# ./drain_beam_jobs.sh "$PROJECT_ID"  # waits for status = "Drained" or "Cancelled"
 
 #--- Reset Pub/Sub counters
 echo

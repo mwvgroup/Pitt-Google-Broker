@@ -11,9 +11,9 @@ brokerdir=/home/broker
 mkdir -p ${brokerdir}
 
 #--- Start the Beam/Dataflow jobs
-echo
-echo "Starting Dataflow Beam jobs..."
-./start_beam_jobs.sh ${PROJECT_ID} ${testid} ${brokerdir} ${broker_bucket} ${survey}
+# echo
+# echo "Starting Dataflow Beam jobs..."
+# ./start_beam_jobs.sh ${PROJECT_ID} ${testid} ${brokerdir} ${broker_bucket} ${survey}
 
 #--- Start the consumer, if the KAFKA_TOPIC attribute is not "NONE"
 baseurl="http://metadata.google.internal/computeMetadata/v1"
