@@ -4,16 +4,17 @@
 Cloud Storage.
 """
 
-from google.cloud import storage
 # from typing import List, Tuple, Optional, Union, Generator
 from typing import Optional
+
 import yaml
+from google.cloud import storage
 
 pgb_project_id = 'ardent-cycling-243415'
 storage_client = storage.Client()
 
 
-def load_schema_map(survey: str, testid: str, schema: Optional[str] =None) -> dict:
+def load_schema_map(survey: str, testid: str, schema: Optional[str] = None) -> dict:
     """
     Args:
         survey: Name of the survey associated with the broker instance.
@@ -37,11 +38,13 @@ def load_schema_map(survey: str, testid: str, schema: Optional[str] =None) -> di
 
     return schema_map
 
+
 def _broker_bucket_name(survey, testid):
     if testid == "False":
         return f'{pgb_project_id}-{survey}-broker_files'
     else:
         return f'{pgb_project_id}-{survey}-broker_files-{testid}'
+
 
 def _schema_file_name(survey):
     return f'schema_maps/{survey}.yaml'

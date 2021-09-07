@@ -30,23 +30,23 @@ Module Documentation
 
 import argparse
 import logging
+
 import apache_beam as beam
 from apache_beam.io import BigQueryDisposition as bqdisp
-from apache_beam.io import ReadFromPubSub, WriteToPubSub, WriteToBigQuery
+from apache_beam.io import ReadFromPubSub, WriteToBigQuery, WriteToPubSub
 from apache_beam.io.gcp.bigquery_tools import RetryStrategy
 from apache_beam.options.pipeline_options import PipelineOptions
 
 from broker_utils import beam_transforms as bbt
 from broker_utils import schema_maps as bsm
-
 from transforms import filters as tf
 from transforms import salt2 as ts2
-
 
 
 def load_schema_map(SURVEY, TESTID):
     # load the schema map from the broker bucket in Cloud Storage
     return bsm.load_schema_map(SURVEY, TESTID)
+
 
 def sink_configs(PROJECTID, SURVEY):
     """Configuration dicts for all pipeline sinks.
@@ -59,17 +59,17 @@ def sink_configs(PROJECTID, SURVEY):
         sink_configs = {'sinkResource_dataDescription': {'config_name': value, }, }
     """
     sink_configs = {
-            'BQ_salt2': {
-                'create_disposition': bqdisp.CREATE_NEVER,
-                'write_disposition': bqdisp.WRITE_APPEND,
-                'insert_retry_strategy': RetryStrategy.RETRY_ON_TRANSIENT_ERROR,
-            },
-            'PS_generic': {
-                'with_attributes': False,  # currently using bytes
-                #  may want to use these in the future:
-                'id_label': None,
-                'timestamp_attribute': None
-            },
+        'BQ_salt2': {
+            'create_disposition': bqdisp.CREATE_NEVER,
+            'write_disposition': bqdisp.WRITE_APPEND,
+            'insert_retry_strategy': RetryStrategy.RETRY_ON_TRANSIENT_ERROR,
+        },
+        'PS_generic': {
+            'with_attributes': False,  # currently using bytes
+            #  may want to use these in the future:
+            'id_label': None,
+            'timestamp_attribute': None
+        },
     }
 
     if SURVEY == 'decat':
@@ -87,6 +87,7 @@ class Salt2(beam.PTransform):
     5. Store fit results in BigQuery
     6. Publish fit results to Pub/Sub
     """
+
     def __init__(self, schema_map, sinks, sink_configs, salt2_configs):
         super().__init__()
         self.schema_map = schema_map
@@ -157,8 +158,7 @@ def run(schema_map, sources, sinks, sink_configs, pipeline_args, salt2_configs):
     pipeline_options = PipelineOptions(pipeline_args, streaming=True)
 
     with beam.Pipeline(options=pipeline_options) as pipeline:
-
-        #-- Read from PS and extract data as dicts
+        # -- Read from PS and extract data as dicts
         alert_bytes = (
             pipeline | 'ReadFromPubSub' >>
             ReadFromPubSub(topic=sources['PS_alerts'])
@@ -172,7 +172,7 @@ def run(schema_map, sources, sinks, sink_configs, pipeline_args, salt2_configs):
             beam.ParDo(bbt.StripCutouts(schema_map))
         )
 
-        #-- Filter for purity and publish a Pub/Sub stream
+        # -- Filter for purity and publish a Pub/Sub stream
         adicts_pure = (
             alert_dicts | 'filterPurity' >>
             beam.Filter(tf.is_pure, schema_map)
@@ -186,7 +186,7 @@ def run(schema_map, sources, sinks, sink_configs, pipeline_args, salt2_configs):
             WriteToPubSub(sinks['PS_pure'], **sink_configs['PS_generic'])
         )  # ToDo: handle deadletters
 
-        #-- Filter for extragalactic transients and publish a Pub/Sub stream
+        # -- Filter for extragalactic transients and publish a Pub/Sub stream
         adicts_exgal = (
             alert_dicts | 'filterExgalTrans' >>
             beam.Filter(tf.is_extragalactic_transient, schema_map)
@@ -198,14 +198,13 @@ def run(schema_map, sources, sinks, sink_configs, pipeline_args, salt2_configs):
         adicts_exgal_ps_deadletters = (
             adicts_exgal_ps | 'exgalTransToPubSub' >>
             WriteToPubSub(sinks['PS_exgalTrans'], **sink_configs['PS_generic'])
-       )  # ToDo: handle deadletters
+        )  # ToDo: handle deadletters
 
-        #-- Fit with Salt2, store and announce results
+        # -- Fit with Salt2, store and announce results
         __ = (
             adicts_exgal | 'Salt2' >>
             Salt2(schema_map, sinks, sink_configs, salt2_configs)
         )
-
 
 
 if __name__ == "__main__":
@@ -227,7 +226,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--source_PS_alerts",
         help="Pub/Sub topic to read alerts from.\n"
-        '"projects/<PROJECT_NAME>/topics/<TOPIC_NAME>".',
+             '"projects/<PROJECT_NAME>/topics/<TOPIC_NAME>".',
     )
     parser.add_argument(
         "--sink_BQ_salt2",
@@ -270,16 +269,16 @@ if __name__ == "__main__":
     schema_map = load_schema_map(known_args.SURVEY, known_args.TESTID)
     sources = {'PS_alerts': known_args.source_PS_alerts}
     sinks = {
-            'BQ_salt2': known_args.sink_BQ_salt2,
-            'CS_salt2': known_args.sink_CS_salt2,
-            'PS_pure': known_args.sink_PS_pure,
-            'PS_exgalTrans': known_args.sink_PS_exgalTrans,
-            'PS_salt2': known_args.sink_PS_salt2,
+        'BQ_salt2': known_args.sink_BQ_salt2,
+        'CS_salt2': known_args.sink_CS_salt2,
+        'PS_pure': known_args.sink_PS_pure,
+        'PS_exgalTrans': known_args.sink_PS_exgalTrans,
+        'PS_salt2': known_args.sink_PS_salt2,
     }
     sink_configs = sink_configs(known_args.PROJECTID, known_args.SURVEY)
     salt2_configs = {
-                    'SNthresh': float(known_args.salt2_SNthresh),
-                    'minNdetections': int(known_args.salt2_minNdetections),
+        'SNthresh': float(known_args.salt2_SNthresh),
+        'minNdetections': int(known_args.salt2_minNdetections),
     }
 
     run(schema_map, sources, sinks, sink_configs, pipeline_args, salt2_configs)

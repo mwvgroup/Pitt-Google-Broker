@@ -21,7 +21,6 @@ Module Documentation
 
 import astropy.units as u
 import numpy as np
-import pandas as pd
 
 from broker_utils import data_utils as bdu
 
@@ -64,9 +63,9 @@ def is_extragalactic_transient(alert, schema_map):
 
         where_detected = (dflc['isdiffpos'] == 't')
         if np.sum(where_detected) >= 2:
-            detection_times = dflc.loc[where_detected,'jd'].values
+            detection_times = dflc.loc[where_detected, 'jd'].values
             dt = np.diff(detection_times)
-            not_moving = np.max(dt) >= (30*u.minute).to(u.day).value
+            not_moving = np.max(dt) >= (30 * u.minute).to(u.day).value
         else:
             not_moving = False
 
@@ -76,6 +75,7 @@ def is_extragalactic_transient(alert, schema_map):
         is_extragalactic_transient = (is_positive_sub and no_pointsource_counterpart and not_moving and no_ssobject)
 
     return is_extragalactic_transient
+
 
 def is_pure(alert, schema_map):
     """Adapted from: https://zwickytransientfacility.github.io/ztf-avro-alert/filtering.html

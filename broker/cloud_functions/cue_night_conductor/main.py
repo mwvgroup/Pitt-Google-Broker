@@ -6,13 +6,13 @@ It sets metadata attributes on the night conductor VM and starts it.
 """
 
 import base64
+import os
 from datetime import datetime
+
 from google.cloud import logging
 from googleapiclient import discovery
-import os
 
 from broker_utils import schema_maps
-
 
 PROJECT_ID = os.getenv('GCP_PROJECT')
 TESTID = os.getenv('TESTID')
@@ -31,6 +31,7 @@ logger = logging_client.logger(log_name)
 instance_name = f'{SURVEY}-night-conductor'
 if TESTID != "False":
     instance_name = f'{instance_name}-{TESTID}'
+
 
 def run(msg, context) -> None:
     """ Entry point for the Cloud Function
@@ -57,24 +58,26 @@ def run(msg, context) -> None:
     if continue_cue:
         cue_night_conductor(cue, attrs)
 
+
 def check_cue_value(cue, attrs):
     # check that the cue is an expected value and log the result
-    expected_values = ['START','END']
+    expected_values = ['START', 'END']
     if cue in expected_values:
         continue_cue = True
         msg = (f'cloud fnc with keywords [{SURVEY}, {TESTID}] received '
-            f'cue = {cue}; attrs = {attrs}. Cueing night-conductor.'
-        )
+               f'cue = {cue}; attrs = {attrs}. Cueing night-conductor.'
+               )
         severity = 'INFO'
     else:
         continue_cue = False
         msg = (f'Valid cues are {expected_values}, but '
-            f'cloud fnc with keywords [{SURVEY}, {TESTID}] received cue = {cue}. Exiting.'
-        )
+               f'cloud fnc with keywords [{SURVEY}, {TESTID}] received cue = {cue}. Exiting.'
+               )
         severity = 'CRITICAL'
     logger.log_text(msg, severity=severity)
 
     return continue_cue
+
 
 def cue_night_conductor(cue, attrs):
     """Sets appropriate metadata attributes on the night-conductor VM and starts it.
@@ -99,6 +102,7 @@ def cue_night_conductor(cue, attrs):
     set_metadata(metadata, request_kwargs)
     start_vm(request_kwargs)
 
+
 def get_update_items(cue, attrs):
     """Metadata items to update.
     """
@@ -106,6 +110,7 @@ def get_update_items(cue, attrs):
     if cue == 'START':
         update_items.append({'key': 'KAFKA_TOPIC', 'value': get_kafka_topic(attrs)})
     return update_items
+
 
 def get_kafka_topic(attrs):
     # If a specific topic or date was reqested in the attrs, set it.
@@ -136,6 +141,7 @@ def get_kafka_topic(attrs):
 
     return KAFKA_TOPIC
 
+
 def get_current_metadata(update_keys, request_kwargs):
     # get the current metadata and fingerprint
     request = service.instances().get(**request_kwargs)
@@ -146,11 +152,13 @@ def get_current_metadata(update_keys, request_kwargs):
 
     return (fingerprint, keep_items)
 
+
 def set_metadata(metadata, request_kwargs):
     """Set attributes on night-conductor
     """
     request = service.instances().setMetadata(**request_kwargs, body=metadata)
     response = request.execute()
+
 
 def start_vm(request_kwargs):
     # start the vm
