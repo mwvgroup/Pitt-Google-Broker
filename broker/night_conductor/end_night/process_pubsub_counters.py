@@ -155,7 +155,20 @@ class MetadataCollector:
             if sub_collector.metadata_df is not None:
                 self.metadata_dfs_dict[topic_stub] = sub_collector.metadata_df
 
-    def _get_names_of_fields_to_collect(self, topic_stub):
+    def _get_names_of_fields_to_collect(self, topic_stub) -> List[str]:
+        """Return a list of metadata fields to be collected from this stream.
+
+        Includes fields which will be uploaded to BigQuery, and fields needed to join
+        the data from different streams.
+
+        Args:
+            `topic_stub`: Pub/Sub topic name stub of the stream being processed.
+        Returns:
+            List of the names of metadata attributes to be collected.
+            Some separation characters ("_", "-", and ".") in the returned list may not
+            match the real metadata attribute names. This discrepancy must be handled
+            later, at the time of collection.
+        """
         # field name(s) that will serve as the index to join the dfs
         requested_fields = [i for i in self.index]
 
@@ -177,6 +190,7 @@ class MetadataCollector:
         return requested_fields
 
     def _format_dfs_for_join_and_load(self):
+        """Standardize index/names/types so data can be joined, loaded to BigQuery."""
         oid, sid = self.index
         # all subscriptions have the index columns except the alerts df... fix it
         self._add_ids_to_alerts_stream()
