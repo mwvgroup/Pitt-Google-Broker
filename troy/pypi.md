@@ -1,5 +1,5 @@
 # PyPI setup for pgb-utils
-<!-- fs -->
+
 - [Packaging Python Projects](https://packaging.python.org/tutorials/packaging-projects/)
 - [Packaging and distributing projects](https://packaging.python.org/guides/distributing-packages-using-setuptools/)
 - [Example Project](https://github.com/pypa/sampleproject)
@@ -45,4 +45,3 @@ python -m pip install -e .
 import pgb_utils as pgb
 
 ```
-<!-- fe PyPI setup -->
