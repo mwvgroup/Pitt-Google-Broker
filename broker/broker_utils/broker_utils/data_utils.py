@@ -39,12 +39,18 @@ def decode_alert(
 
     if return_as == "dict":
         if drop_cutouts:
-            return _drop_cutouts(alert_dict, schema_map)
+            if schema_map is not None:
+                return _drop_cutouts(alert_dict, schema_map)
+            else:
+                raise ValueError("`schema_map` required to drop cutouts.")
         else:
             return alert_dict
 
     elif return_as == "df":
-        return alert_dict_to_dataframe(alert_dict, schema_map)
+        if schema_map is not None:
+            return alert_dict_to_dataframe(alert_dict, schema_map)
+        else:
+            raise ValueError("`schema_map` required if `return_as='df'`.")
     else:
         raise ValueError("`return_as` must be one of 'dict' or 'df'.")
 
