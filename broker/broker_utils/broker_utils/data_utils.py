@@ -103,19 +103,19 @@ def alert_dict_to_dataframe(alert_dict: dict, schema_map: dict) -> pd.DataFrame:
     if not isinstance(schema_map, dict):
         raise ValueError("`schema_map` is not a valid dictionary.")
 
-    dfc = pd.DataFrame(alert_dict[schema_map['source']], index=[0])
-    df_prv = pd.DataFrame(alert_dict[schema_map['prvSources']])
-    dflc = pd.concat([dfc,df_prv], ignore_index=True)
+    src_df = pd.DataFrame(alert_dict[schema_map['source']], index=[0])
+    prvs_df = pd.DataFrame(alert_dict[schema_map['prvSources']])
+    df = pd.concat([src_df, prvs_df], ignore_index=True)
 
     # attach some metadata. note this may not be preserved after all operations
     # https://stackoverflow.com/questions/14688306/adding-meta-information-metadata-to-pandas-dataframe
     # make sure this does not overwrite existing columns
-    if "objectId" not in dflc.keys():
-        dflc.objectId = alert_dict[schema_map['objectId']]
-    if "sourceId" not in dflc.keys():
-        dflc.sourceId = alert_dict[schema_map['sourceId']]
+    if "objectId" not in df.keys():
+        df.objectId = alert_dict[schema_map['objectId']]
+    if "sourceId" not in df.keys():
+        df.sourceId = alert_dict[schema_map['sourceId']]
 
-    return dflc
+    return df
 
 def _drop_cutouts(alert_dict: dict, schema_map: dict) -> dict:
     """Drop the cutouts from the alert dictionary."""
