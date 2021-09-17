@@ -5,9 +5,11 @@
 
 from datetime import timedelta
 from matplotlib import pyplot as plt
+from matplotlib.dates import date2num
 import numpy as np
 import pandas as pd
 from pathlib import Path
+import scipy.stats as st
 from typing import Optional, Union
 
 from broker_utils import gcp_utils
@@ -34,6 +36,7 @@ class MetadataPlotter:
                     - 'testid': (str)
                     - 'date': (str) in the format yyyymmdd
                     - 'limit': (int) (optional)
+                    - 'columns': (List[str]) (optional)
         """
         msg = "Either `query` or `df` must not be `None`."
         assert ((query is not None) or (df is not None)), msg
@@ -48,16 +51,21 @@ class MetadataPlotter:
         # column name of origin timestamp,
         # used to calculate processing times and plot the incoming alert rate
         self.t0 = 'kafka_timestamp__alerts'
-        self.t0bins = None  # set in _plot_incoming_rate(), if needed
+        self.t0bins = {  # set in _get_rate_hist_bins(), if needed
+            'per_min': None,
+            'per_sec': None,
+        }
 
         # plot colors for each stream
         self.colors = {
+            'jd': 'tab:red',
             'alerts': 'tab:green',
-            'eventTime__alert_avros': 'tab:blue',
-            'alert_avros': 'tab:orange',
+            'BigQuery': 'tab:blue',
+            'alert_avros': 'tab:cyan',
+            'eventTime__alert_avros': 'teal',
             'alerts_pure': 'tab:olive',
-            'exgalac_trans': 'tab:blue',
-            'salt2': 'tab:orange',
+            # 'exgalac_trans': 'tab:blue',
+            # 'salt2': 'tab:orange',
             'exgalac_trans_cf': 'tab:pink',
             'SuperNNova': 'tab:purple',
         }
@@ -83,16 +91,23 @@ class MetadataPlotter:
             dataset = f"{dataset}_{self.query['testid']}"
         table = 'metadata'
         kafka_topic = f"ztf_{self.query['date']}_programid1"
-        collist = [
-            # 'objectId', 'candid',
-            'kafka_timestamp__alerts', 'publish_time__alerts',
-            'publish_time__alert_avros', 'eventTime__alert_avros',
-            'publish_time__alerts_pure',
-            'publish_time__exgalac_trans', 'publish_time__salt2',
-            'publish_time__exgalac_trans_cf', 'publish_time__SuperNNova',
-        ]
+        self.query.setdefault(
+            'columns',
+            [
+                # 'objectId', 'candid',
+                'ra__alert_avros',
+                'kafka_timestamp__alerts',
+                'publish_time__alerts',
+                'publish_time__BigQuery',
+                'publish_time__alert_avros',
+                'eventTime__alert_avros',
+                'publish_time__alerts_pure',
+                'publish_time__exgalac_trans_cf',
+                'publish_time__SuperNNova',
+            ]
+        )
         sql_stmnt = (
-            f"SELECT {', '.join(collist)} "
+            f"SELECT {', '.join(self.query['columns'])} "
             f"FROM `{project_id}.{dataset}.{table}` "
             f"WHERE kafka_topic__alerts='{kafka_topic}'"
             # f"LIMIT 100"
@@ -102,128 +117,146 @@ class MetadataPlotter:
 
         return sql_stmnt
 
-    def plot_all(self, clip_first=0):
-        """Create all plots in this class."""
-        self.plot_alerts(clip_first=clip_first)
-        self.plot_avros(clip_first=clip_first)
-        self.plot_dataflow(clip_first=clip_first)
-        self.plot_cloud_fncs(clip_first=clip_first)
-        self.plot_compare_methods(clip_first=clip_first)
+    def plot_rate_hist(self, col, ax, bin_per='min'):
+        """Plot histogram of timestamps, i.e. alert rates."""
+        if col == 't0':
+            col = self.t0
+            ylabel = f'incoming rate (alerts/{bin_per})'
+        else:
+            col = f'publish_time__{col}'
+            ylabel = f'processing rate (alerts/{bin_per})'
 
-    def plot_alerts(self, clip_first=0):
-        """Plot processing time for alerts stream."""
-        fig = plt.figure()
-        ax = fig.gca()
+        # get/set the bins
+        bins = self._get_rate_hist_bins(bin_per)
+        # color
+        color = 'tab:olive'
 
-        kwargs = self._set_plot_kwargs('alerts', 'alerts')
+        # plot
+        self.df.hist(col, ax=ax, bins=bins, color=color, alpha=0.5)
 
-        self._plot_proc_time('alerts', ax, kwargs, clip_first)
+        ax.set_ylim(bottom=0)
+        ax.grid(False)
+        ax.set_ylabel(ylabel)
+        ax.yaxis.label.set_color(color)
+        ax.tick_params(axis='y', colors=color)
 
-        plt.legend(loc=1)
+    def plot_proc_time(self, topic_stub, ax, clip_first=0, marg_ax={}):
+        """Plot the time difference between the `topic_stub` and Kafka timestamps."""
+        bin_rate_per = 'min'
+        # set the field name for the topic_stub timestamp
+        if topic_stub.split('__')[0] == 'eventTime':
+            t1 = topic_stub
+        else:
+            t1 = f'publish_time__{topic_stub}'
 
-        self._plot_incoming_rate(ax.twinx())
+        # get initial set of rows to be plotted
+        start_time = self.df[self.t0].min() + timedelta(minutes=clip_first)
+        d = self.df.loc[self.df[self.t0] >= start_time].dropna(subset=[t1])
 
-        plt.title('Processing Time: alerts stream')
-        self._save_or_show('alerts')
+        # calculate the processing times
+        d['proc_time'] = pd.to_numeric(d[t1]-d[self.t0])*1e-9  # seconds
+        if topic_stub == 'jd':
+            d['proc_time'] = d['proc_time'].abs()
 
-    def plot_avros(self, clip_first=0):
-        """Plot processing time for avro file storage and related stream."""
-        stubs = ['eventTime__alert_avros', 'alert_avros']
+        # get max before sigma clip
+        max = np.round(d['proc_time'].max(), 1)
 
-        fig = plt.figure()
-        ax = fig.gca()
+        # do sigma clipping
+        _, low, upp = st.sigmaclip(d['proc_time'])
+        d = d.loc[(d['proc_time'] > low) & (d['proc_time'] < upp)]
 
-        for i, topic_stub in enumerate(stubs):
-            kwargs = self._set_plot_kwargs(topic_stub, 'other')
-            kwargs['zorder'] = i
-            self._plot_proc_time(topic_stub, ax, kwargs, clip_first)
+        # calculate some stats
+        mean = d['proc_time'].mean()
+        median = np.round(d['proc_time'].median(), 3)
+        # std = np.round(proc_time.std(), 1)
+        conf95 = st.norm.interval(alpha=0.95, loc=mean, scale=st.sem(d['proc_time']))
+        pm = np.round(mean - conf95[0], 3)
+        mean = np.round(mean, 3)
 
-        plt.legend(loc=1)
+        # set kwargs
+        color = self.colors[topic_stub]
+        label = f"{topic_stub} (median* {median}, mean* {mean}+-{pm}, max {max})"
+        alpha = 0.15
 
-        self._plot_incoming_rate(ax.twinx())
+        # plots
+        x, y = d[t1], d['proc_time']
+        # scatter
+        ax.scatter(x, y, s=5, color=color, label=label, alpha=alpha)
+        # ax.legend(loc=4)
+        # marginal histograms
+        if 'x' in marg_ax.keys():
+            marg_ax['x'].hist(
+                x, bins=self._get_rate_hist_bins(bin_rate_per), color=color
+            )
+            marg_ax['x'].tick_params(axis="x", labelbottom=False)  # no labels
+            marg_ax['x'].set_ylabel(f'(per {bin_rate_per})')
+        if 'y' in marg_ax.keys():
+            marg_ax['y'].hist(y, bins=100, orientation='horizontal', color=color)
+            marg_ax['y'].tick_params(axis="y", labelleft=False)  # no labels
 
-        plt.title('Processing Time: avro storage')
-        self._save_or_show('avro_storage')
+        # set axis stuff
+        ax.set_ylim(bottom=0)
+        if topic_stub != 'jd':
+            # lbl = 'publish time - ZTF timestamp (sec)'
+            lbl = 'Pub/Sub timestamp - Kafka timestamp (sec)'
+        else:
+            lbl = 'ZTF timestamp - start of exposure (sec)'
+        ax.set_ylabel(lbl)
+        # ax.yaxis.label.set_color(color)
+        # ax.tick_params(axis='y', colors=color)
+        ax.set_xlabel('publish time')
 
-    def plot_cloud_fncs(self, clip_first=0):
-        """Plot processing time for streams generated by Cloud Functions."""
-        filter_stubs = ['exgalac_trans_cf', ]
-        class_stubs = ['SuperNNova', ]
+    def plot_ra(self, ax, timestamp_col='t0'):
+        """Plot RA."""
+        if timestamp_col == 't0':
+            x = self.df[self.t0]
+        else:
+            x = self.df[timestamp_col]
+        ra = self.df['ra__alert_avros']
 
-        fig = plt.figure()
-        ax = fig.gca()
+        color = 'tab:orange'
+        kwargs = {
+            'facecolors': color,
+            'edgecolors': 'none',
+            'alpha': 0.15,
+            's': 5,
+        }
+        ax.scatter(x, ra, **kwargs)
 
-        for i, topic_stub in enumerate(filter_stubs + class_stubs):
-            if topic_stub in filter_stubs:
-                kwargs = self._set_plot_kwargs(topic_stub, 'filter')
-            else:
-                kwargs = self._set_plot_kwargs(topic_stub, 'classifier')
-            kwargs['zorder'] = i
+        ax.set_ylabel('RA (deg)')
+        ax.yaxis.label.set_color(color)
+        ax.tick_params(axis='y', colors=color)
 
-            self._plot_proc_time(topic_stub, ax, kwargs, clip_first)
+    def _get_rate_hist_bins(self, bin_per='min'):
+        bins = self.t0bins[f'per_{bin_per}']
 
-        plt.legend(loc=1)
+        # set the bins, if needed
+        if bins is None:
+            start = self.df[self.t0].min()
+            end = self.df[self.t0].max()
 
-        self._plot_incoming_rate(ax.twinx())
+            if bin_per == 'sec':
+                one_sec = timedelta(minutes=1)
+                night_delta = end.ceil(freq='S') - start.floor(freq='S')
+                secs = []
+                for i in range(night_delta.seconds+1):
+                    secs.append(start.floor(freq='S') + (i)*one_sec)
+                bins = date2num(secs)
 
-        plt.title('Processing Time: Cloud Function streams')
-        self._save_or_show('cloud_fncs')
+            elif bin_per == 'min':
+                one_min = timedelta(minutes=1)
+                night_delta = end.ceil(freq='T') - start.floor(freq='T')
+                mins = []
+                for i in range(int(night_delta.seconds/60)+1):
+                    mins.append(start.floor(freq='T') + (i)*one_min)
+                bins = date2num(mins)
 
-    def plot_dataflow(self, clip_first=0):
-        """Plot processing time for Dataflow streams."""
-        filter_stubs = ['alerts_pure', 'exgalac_trans']
-        class_stubs = ['salt2', ]
+            # store the bins for next time
+            self.t0bins[f'per_{bin_per}'] = bins
 
-        fig = plt.figure()
-        ax = fig.gca()
+        return bins
 
-        for i, topic_stub in enumerate(filter_stubs + class_stubs):
-            if topic_stub in filter_stubs:
-                kwargs = self._set_plot_kwargs(topic_stub, 'filter')
-            else:
-                kwargs = self._set_plot_kwargs(topic_stub, 'classifier')
-            kwargs['zorder'] = i
-
-            self._plot_proc_time(topic_stub, ax, kwargs, clip_first)
-
-        plt.legend(loc=1)
-
-        self._plot_incoming_rate(ax.twinx())
-
-        plt.title('Processing Time: Dataflow streams')
-        self._save_or_show('dataflow')
-
-    def plot_compare_methods(self, clip_first=0):
-        """Plot processing time for Salt2 and SuperNNova and their trigger streams."""
-        # filter_stubs = ['exgalac_trans', 'exgalac_trans_cf', ]
-        filter_stubs = []
-        class_stubs = ['salt2', 'SuperNNova', ]
-        # pair streams for logical plot order
-        # stubs = [i for sublist in zip(filter_stubs, class_stubs) for i in sublist]
-        stubs = class_stubs
-
-        fig = plt.figure()
-        ax = fig.gca()
-
-        # ['alerts_pure'] + 'tab:green',
-        for i, topic_stub in enumerate(stubs):
-            if topic_stub in filter_stubs:
-                kwargs = self._set_plot_kwargs(topic_stub, 'filter')
-            else:
-                kwargs = self._set_plot_kwargs(topic_stub, 'classifier')
-            kwargs['alpha'] = 0.75
-            kwargs['zorder'] = i
-
-            self._plot_proc_time(topic_stub, ax, kwargs, clip_first)
-
-        plt.legend(loc=1)
-
-        self._plot_incoming_rate(ax.twinx())
-
-        plt.title('Processing Time: Dataflow vs Cloud Fncs')
-        self._save_or_show('dataflow_vs_cloud_fncs')
-
-    def _set_plot_kwargs(self, topic_stub, stream_type):
+    def _get_plot_kwargs(self, topic_stub, stream_type):
         if stream_type == 'filter':
             kwargs = {
                 'facecolors': 'none',
@@ -244,44 +277,6 @@ class MetadataPlotter:
 
         return kwargs
 
-    def _plot_incoming_rate(self, ax):
-        if self.t0bins is None:
-            night = self.df[self.t0].max() - self.df[self.t0].min()
-            self.t0bins = int(night.seconds/60)+1  # 1 bin per minute of the night
-            # bins = int(night.seconds)+1  # 1 bin per second of the night
-
-        self.df.hist(self.t0, color='k', alpha=0.25, ax=ax, bins=self.t0bins)
-        ax.set_ylim(bottom=0)
-        ax.set_ylabel('ZTF alert rate (alerts/min)')
-        ax.grid(False)
-
-    def _plot_proc_time(self, topic_stub, ax, kwargs={}, clip_first=0):
-        if topic_stub.split('__')[0] == 'eventTime':
-            t1 = topic_stub
-        else:
-            t1 = f'publish_time__{topic_stub}'
-
-        start_time = self.df[self.t0].min() + timedelta(minutes=clip_first)
-        d = self.df.loc[self.df[self.t0] >= start_time].dropna(subset=[t1])
-        proc_time = pd.to_numeric(d[t1]-d[self.t0])*1e-9  # seconds
-
-        mean = np.round(proc_time.mean(), 1)
-        std = np.round(proc_time.std(), 1)
-
-        default_kwargs = {
-            'label': f"{topic_stub} ({mean}+-{std})",
-            's': 5,
-            'marker': 'o',
-            'alpha': 0.5,
-        }
-        for k, v in default_kwargs.items():
-            kwargs.setdefault(k, v)
-
-        ax.scatter(d[self.t0], proc_time, **kwargs)
-
-        ax.set_ylim(bottom=0)
-        ax.set_ylabel('publish time - ZTF timestamp (sec)')
-
     def _save_or_show(self, fname_stub):
         if self.savefig_dir is not None:
             plt.gcf().set_size_inches(10, 6.0)
@@ -290,7 +285,7 @@ class MetadataPlotter:
             plt.show(block=False)
 
     def _create_fig_save_path(self, fname_stub):
-        format = 'pdf'
+        format = 'png'
         fname = f"{self.savefig_dir}/{fname_stub}"
         try:
             s, tid, dt = self.query['survey'], self.query['testid'], self.query['date']
