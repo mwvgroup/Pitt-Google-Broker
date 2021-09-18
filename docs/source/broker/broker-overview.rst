@@ -14,11 +14,11 @@ Broker Components
 -----------------
 
 The **consumer** (1, see list below) ingests a survey's Kafka stream and
-republishes it as a Pub/Sub stream. The **data storage** (2 and 3) and
-**science processing** (4) components subscribe to the consumer's
+republishes it as a Pub/Sub stream. The **data storage** (2)
+component subscribes to the consumer's
 Pub/Sub stream. These components store their output data in Cloud
 Storage and/or BigQuery, and publish to dedicated Pub/Sub topics. The
-**night conductor** (5) orchestrates the broker, starting up resources
+**night conductor** (3) orchestrates the broker, starting up resources
 and jobs at night and shutting them down in the morning.
 
 To view the resources, see :doc:`../broker/run-a-broker-instance/view-resources`.
@@ -53,32 +53,7 @@ across GCP.
       -  Stores in GCS bucket [`alert_avros`]
       -  GCS bucket triggers Pub/Sub topic [`alert_avros`]
 
-3. **BigQuery Database Storage** (alert -> BigQuery)
-
-   -  Dataflow job [`bq-sink`]
-
-      -  Listens to PS topic [`alerts`]
-      -  Stores in BQ dataset [`alerts`] in tables
-         [`alerts`] and [`DIASource`]
-
-4. **Data Processing Pipeline** (alert -> {filters, fitters,
-   classifiers} -> {Cloud Storage, BigQuery, Pub/Sub})
-
-   -  Dataflow job [`value-added`]
-
-      -  Listens to PS topic [`alerts`]
-      -  Stores in BQ dataset [`alerts`] in table [`salt2`]
-         (Salt2 fit params)
-      -  Stores in GCS bucket [`sncosmo`] (lightcurve + Salt2
-         fit, png)
-      -  Publishes to PS topics
-
-         -  [`alerts_pure`] (alerts passing the purity filter)
-         -  [`exgalac_trans`] (alerts passing extragalactic
-            transient filter)
-         -  [`salt2`] (Salt2 fit params)
-
-5. **Night Conductor** (orchestrates GCP resources and jobs to run the
+3. **Night Conductor** (orchestrates GCP resources and jobs to run the
    broker each night)
 
    -  Compute Engine VM [`night-conductor`]
