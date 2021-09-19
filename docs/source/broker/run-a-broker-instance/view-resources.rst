@@ -62,7 +62,7 @@ See also:
     - `Command-line tool bq
       <https://cloud.google.com/bigquery/docs/reference/bq-cli-reference>`__
 
-- Load a row into a table: use ``broker_utils.gcp_utils.bq_insert_rows`` (Python)
+- Load a row into a table: use ``broker_utils.gcp_utils.insert_rows_bigquery`` (Python)
 - Query the database instructions in the tutorial
   :doc:`../../access-data/bigquery` (Python and command line)
 

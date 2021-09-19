@@ -112,11 +112,25 @@ class ExtractDIASource(DoFn):
 class FormatDictForPubSub(DoFn):
     def process(self, alertDict):
         """Converts alert packet dictionaries to format suitable for WriteToPubSub().
-        Currently returns a bytes object (includes msg data only).
-        Can be updated to return a :class:`~PubsubMessage` object.
-        In that case, change WriteToPubSub() kwarg 'with_attributes' to `True`.
-        See https://beam.apache.org/releases/pydoc/2.26.0/apache_beam.io.external.gcp.pubsub.html?highlight=writetopubsub#apache_beam.io.external.gcp.pubsub.WriteToPubSub
+
+        Returns a `PubsubMessage` object with custom attributes attached.
         """
+        from apache_beam.io.gcp.pubsub import PubsubMessage
         import json
+
+        # collect message attributes
+        # value-added streams nest the alert next to their own dict(s); extract it
+        if 'alert' in alertDict.keys():
+            a = alertDict['alert']
+        else:
+            # the alert is the only object in the dict
+            a = alertDict
+        attrs = {'objectId': str(a['objectId']), 'candid': str(a['candid'])}
+
         # convert dict -> bytes
-        return [json.dumps(alertDict).encode('utf-8')]
+        alert_bytes = json.dumps(alertDict).encode('utf-8')
+
+        # package the message
+        msg = PubsubMessage(alert_bytes, attrs)
+
+        return [msg]

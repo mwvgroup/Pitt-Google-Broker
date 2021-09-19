@@ -1,4 +1,5 @@
 SURVEY: decat
+SURVEY_SCHEMA: https://github.com/rknop/decat_schema
 TOPIC_SYNTAX: decat_yyyymmdd_2021A-0113  # replace yyyymmdd with the date
 FILTER_MAP:
   g DECam SDSS c0001 4720.0 1520.0: g

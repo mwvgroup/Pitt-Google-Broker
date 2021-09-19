@@ -16,9 +16,10 @@ Broker Components
 The **consumer** (1, see list below) ingests a survey's Kafka stream and
 republishes it as a Pub/Sub stream. The **data storage** (2 and 3) and
 **science processing** (4) components subscribe to the consumer's
-Pub/Sub stream. These components store their output data in Cloud
+Pub/Sub stream. (The SuperNNova classifier (5) is implemented separately.)
+These components store their output data in Cloud
 Storage and/or BigQuery, and publish to dedicated Pub/Sub topics. The
-**night conductor** (5) orchestrates the broker, starting up resources
+**night conductor** (6) orchestrates the broker, starting up resources
 and jobs at night and shutting them down in the morning.
 
 To view the resources, see :doc:`../broker/run-a-broker-instance/view-resources`.
@@ -55,11 +56,12 @@ across GCP.
 
 3. **BigQuery Database Storage** (alert -> BigQuery)
 
-   -  Dataflow job [`bq-sink`]
+   -  Cloud Function [`store_in_BigQuery`]
 
       -  Listens to PS topic [`alerts`]
       -  Stores in BQ dataset [`alerts`] in tables
          [`alerts`] and [`DIASource`]
+      -  Publishes to Pub/Sub topic [`BigQuery`]
 
 4. **Data Processing Pipeline** (alert -> {filters, fitters,
    classifiers} -> {Cloud Storage, BigQuery, Pub/Sub})
@@ -78,8 +80,17 @@ across GCP.
             transient filter)
          -  [`salt2`] (Salt2 fit params)
 
-5. **Night Conductor** (orchestrates GCP resources and jobs to run the
-   broker each night)
+5. **SuperNNova Classifier** (extragalactic transient alert -> SuperNNova ->
+   {BigQuery, Pub/Sub})
+
+      -  Cloud Function [`classify_with_SuperNNova`]
+
+         -  Listens to PS topic [`exgalac_trans`]
+         -  Stores in BigQuery table [`SuperNNova`]
+         -  Publishes to PS topic [`SuperNNova`]
+
+6. **Night Conductor** (orchestrates GCP resources and jobs to run the
+   broker each night; collects metadata)
 
    -  Compute Engine VM [`night-conductor`]
 

@@ -22,8 +22,8 @@ Documentation is back up on ReadTheDocs.
     - [external-connection.md](external-connection.md)  (setup an external GCP project and connect to our Pub/Sub streams)
     - [stream-looper.md](stream-looper.md) (setup a VM to run a consumer simulator that publishes ZTF alerts to a dedicated PS topic on a slow loop)
 
-Started but didn't finish; TODO in a future version:
-- [supernnova.md](supernnova.md) (implement SuperNNova)
+Started but didn't finish; TODO in a future version (this is v0.7.0):
+- [supernnova.md](../v0.7.0/supernnova.md) (implement SuperNNova)
 
 ---
 
