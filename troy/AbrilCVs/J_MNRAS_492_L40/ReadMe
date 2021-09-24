@@ -1,0 +1,140 @@
+J/MNRAS/492/L40   Disentangling cataclysmic variables in Gaia DR2 (Abril+, 2020)
+================================================================================
+Disentangling cataclysmic variables in Gaia's HR-Diagram.
+    Abril J., Schmidtobreick L., Ederoclite A., Lopez-Sanjuan C.
+    <Mon. Not. R. Astron. Soc. 492, L40-44 (2020)>
+    =2020MNRAS.492L..40A        (SIMBAD/NED BibCode)
+================================================================================
+ADC_Keywords: Binaries, cataclysmic ; Stars, distances ;
+              Parallaxes, trigonometric ; Proper motions ; Magnitudes
+Keywords: Hertzsprung-Russell and colour-magnitude diagrams - novae -
+          cataclysmic variables
+
+Abstract:
+    Cataclysmic Variables (CVs) are interacting binaries consisting of at
+    least three components that control their colour and magnitude.
+    Using Gaia we here investigate the influence of the physical
+    properties of these binaries on their position in the
+    Hertzsprung-Russell diagram (HR-diagram). The CVs are on average
+    located between the main sequence and the white dwarf regime, the
+    maximum density being at G_BP_-G_RP_~=0.56 and G_abs_~10.15. We nd a
+    trend of the orbital period with colour and absolute brightness: with
+    decreasing period, the CVs become bluer and fainter. We also identify
+    the location of the various CV sub-types in the HR-diagram and discuss
+    the possible location of detached CVs, going through the orbital
+    period gap.
+
+Description:
+    Crossmatch of CVs with Gaia's parallaxes (Cat. I/345) and Bailer-Jones
+    (Cat. I/347) distances.
+
+    The Catalog and Atlas of Cataclysmic Variables (Downes et al.,
+    2001PASP..113..764D, Cat. V/123) includes all objects which have been
+    classified as a CV at some point in time.
+
+    The Catalog of Cataclysmic Binaries, Low-Mass X-Ray Binaries and
+    Related Objects (Ritter & Kolb 2003A&A...404..301R, Cat, B/cb) which
+    only contains objects with a measured period, is updated up to
+    December 31st, 2015 and it provides coordinates, apparent magnitudes,
+    orbital parameters, stellar parameters of the components and other
+    characteristic properties for 1429 CVs.
+
+    Both catalogues have been merged into a final sample of 1920 CVs, out
+    of which 1187 are contained in the GDR2 footprint.
+
+File Summary:
+--------------------------------------------------------------------------------
+ FileName      Lrecl  Records   Explanations
+--------------------------------------------------------------------------------
+ReadMe            80        .   This file
+catalog.dat      464     1198   Crossmatch of CVs with Gaia's parallaxes and
+                                 Bailer-Jones (Cat. I/347) distances
+--------------------------------------------------------------------------------
+
+See also:
+    I/345 : Gaia DR2 (Gaia Collaboration, 2018)
+    I/347 : Distances to 1.33 billion stars in Gaia DR2 (Bailer-Jones+, 2018)
+    V/123 : Catalog of Cataclysmic Variables (Downes+ 2001-2006)
+    B/cb  : Cataclysmic Binaries, LMXBs, and related objects (Ritter+, 2004)
+
+Byte-by-byte Description of file: catalog.dat
+--------------------------------------------------------------------------------
+   Bytes Format Units    Label     Explanations
+--------------------------------------------------------------------------------
+   1- 12  A12   ---      Name      Name, as in CV catalog (Name)
+  14- 33  A20   ---      AltName   Alternative name, as in CV catalog (AltName)
+  35- 51 F17.13 deg      RAdeg     Right Ascension (J2000) (ra_epoch2000)
+  53- 69 F17.13 deg      DEdeg     Declination (J2000) (dec_epoch2000)
+  71- 72  A2    ---      Type1     CV subtype (Type1)
+  74- 75  A2    ---      Type2     CV subtype (Type2)
+  77- 80  F4.1  mag      mag1      ? Apparent magnitude at maximum brightness
+                                    from CV catalog (B/cb) (mag1)
+  82- 89  F8.6  d        Orb.Per   Orbital period from CV catalog (B/cb)
+                                    (Orb.Per)
+  91- 97  F7.2  yr       Outburst  ? Year of outburst from CV catalog (V/123)
+                                    (Outburst)
+  99-110  A12   ---      MagRange  Magnitude range from CV catalog (V/123)
+                                    (Mag.Range)
+ 112-118  A7    ---      SpType2   Spectral type of the secondary from CV
+                                    catalog (B/cb) (SpType2)
+ 120-126  A7    ---      SpType1   Spectral type of the primary from CV
+                                    catalog (B/cb) (SpType1)
+ 128-146  I19   ---      Source    Gaia source identifier, identical to the
+                                    Gaia-DR2 source_id. (source_id)
+ 148-162 F15.11 deg      RAGdeg    Gaia DR2 Right Ascension (ICRS) at Ep=2015.5
+                                    (ra_x)
+ 164-170  F7.4  mas    e_RAGdeg    Gaia DR2 Standard error of right ascension
+                                    (ra_error)
+ 172-186 F15.11 deg      DEGdeg    Gaia DR2 Declination (ICRS) at Ep=2015.5
+                                    (dec_x)
+ 188-194  F7.4  mas    e_DEGdeg    Gaia DR2 Standard error of declination
+                                    (dec_error)
+ 196-214 F19.13 pc       rest      Estimated distance from Bailer-Jones (I/347)
+                                    (rest_BailerJones)
+ 216-234 F19.13 pc     b_rest      Lower bound on the confidence interval of the
+                                    estimated distance (I/347) (b_rest_x)
+ 236-254 F19.13 pc     B_rest      Upper bound on the confidence interval of the
+                                    estimated distance (I/347) (B_rest_xa)
+ 256-272 F17.12 pc       rlen      Length scale used in the prior for the
+                                    distance estimation (I/347) (rlen)
+ 274-280  F7.4  mas      plx       ? Gaia DR2 Parallax (parallax)
+ 282-287  F6.4  mas    e_plx       ? Gaia DR2 Standard error of parallax
+                                    (parallax_error)
+ 289-296  F8.3  mas/yr   pmRA      ? Gaia DR2 Proper motion in right ascension
+                                    direction, pmRA*cosDE (yr pmra)
+ 298-302  F5.3  mas/yr e_pmRA      ? Gaia DR2 Standard error of proper motion in
+                                    right ascension direction (pmra_error)
+ 304-311  F8.3  mas/yr   pmDE      ? Gaia DR2 Proper motion in declination
+                                    direction (pmdec)
+ 313-317  F5.3  mas/yr e_pmDE      ? Gaia DR2 Standard error of proper motion in
+                                    declination direction (yr pmdec_error)
+ 319-330  F12.4 e-/s     FG        Gaia DR2 G-band mean flux (phot_g_mean_flux)
+ 332-343  F12.6 e-/s   e_FG        Gaia DR2 Error on G-band mean flux
+                                    (phot_g_mean_flux_error)
+ 345-353  F9.6  mag      Gmag      Gaia DR2 G-band mean magnitude
+                                    (phot_g_mean_mag)
+ 355-374 F20.17 mag      GMAG      Absolute magnitude (g_mag_abs) (1)
+ 376-387  F12.4 e-/s     FBP       ? Gaia DR2 Integrated BP mean flux
+                                    (phot_bp_mean_flux)
+ 389-400  F12.6 e-/s   e_FBP       ? Gaia DR2 Error on the integrated BP mean
+                                    flux (phot_bp_mean_flux_error)
+ 402-410  F9.6  mag      BPmag     ? Gaia DR2 Integrated BP mean magnitude
+                                    (phot_bp_mean_mag)
+ 412-423  F12.4 e-/s     FRP       ? Gaia DR2 Integrated RP mean flux
+                                    (phot_rp_mean_flux)
+ 425-436  F12.6 e-/s   e_FRP       ? Gaia DR2 Error on the integrated RP mean
+                                    flux (phot_rp_mean_flux_error)
+ 438-446  F9.6  mag      RPmag     ? Gaia DR2 Integrated RP mean magnitude
+                                    (phot_rp_mean_mag)
+ 448-456  E9.6  mag      BP-RP     ? Gaia DR2 BP-RP colour (bp_rp)
+ 458-464  F7.2  K        Teff      ? Gaia DR2 Stellar effective temperature
+                                    (teff_val)
+--------------------------------------------------------------------------------
+Note (1): Absolute magnitudes computed from Bailer-Jones (Cat. I/347) distances.
+--------------------------------------------------------------------------------
+
+Acknowledgements:
+     Javier Abril, jabrilib(at)eso.org
+
+================================================================================
+(End)                                        Patricia Vannier [CDS]  10-Dec-2019
