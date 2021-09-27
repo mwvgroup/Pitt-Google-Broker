@@ -7,24 +7,31 @@ import figures as figs
 query = {
     'survey': 'ztf',
     'testid': False,
-    'date': '20210916',
+    'date': '20210927',
     # 'limit': 100,
     'columns': [
                     'kafka_timestamp__alerts',
                     'publish_time__alerts',
                     'publish_time__BigQuery',
                     'publish_time__alert_avros',
+                    'publish_time__AllWISE',
                     # 'publish_time__alerts_pure',
                     'publish_time__exgalac_trans_cf',
                     'publish_time__SuperNNova',
                 ]
 }
-savefig_dir = 'figures'
+savefig_dir = 'figures/20210927'
 mplot = figs.MetadataPlotter(query=query, savefig_dir=savefig_dir)
 # mplot = figs.MetadataPlotter(df=mplot.df, query=query, savefig_dir=savefig_dir)
 
 # plot processing times with marginal histograms
+cols = ['alerts', 'BigQuery', 'alert_avros', 'AllWISE', 'exgalac_trans_cf', 'SuperNNova']
+clip_first = 0
 for c in cols:
+    for tref in ['Kafka', 'Trigger']:
+        plot_proct()
+
+def plot_proct():
     fig = plt.figure()
     gs = fig.add_gridspec(2, 2,  width_ratios=(7, 1.3), height_ratios=(2, 7),
                           left=0.1, right=0.9, bottom=0.1, top=0.9,
@@ -35,11 +42,16 @@ for c in cols:
         'x': fig.add_subplot(gs[0, 0], sharex=ax),
         'y': fig.add_subplot(gs[1, 1], sharey=ax),
     }
-    mplot.plot_proc_time(c, ax, clip_first=clip_first, marg_ax=marg_ax)
+    mplot.plot_proc_time(c, ax, tref=tref, clip_first=clip_first, marg_ax=marg_ax)
     fig.autofmt_xdate()
-    fig.suptitle(f"{c.split('__')[-1]}")
-    mplot._save_or_show(c)
-    plt.close(fig)
+    if tref == 'Kafka':
+        title = f"{c.split('__')[-1]} - processing time: cumulative"
+    elif tref == 'Trigger':
+        title = f"{c.split('__')[-1]} - processing time: single component"
+    fig.suptitle(title)
+    mplot._save_or_show(f'{c}-{tref}')
+    if mplot.savefig_dir is not None:
+        plt.close(fig)
 
 # t0 and RA
 fig = plt.figure()
