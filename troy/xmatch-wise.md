@@ -1,18 +1,123 @@
 # Cross match with the AllWISE catalog in BigQuery public datasets
 
+Outline:
+- [Create resources and deploy to Cloud Run](#create-resources-and-deploy-to-cloud-run)
+- [Work out the cross match](#work-out-the-cross-match)
+    - [Article: Querying the Stars with BigQuery GIS](#article-querying-the-stars-with-bigquery-gis)
+
+External links:
 - [AllWISE](https://wise2.ipac.caltech.edu/docs/release/allwise/) (web)
     - [column names and descriptions](https://wise2.ipac.caltech.edu/docs/release/allwise/expsup/sec2_1a.html)
-- BigQuery table: `bigquery-public-data:wise_all_sky_data_release.all_wise` contains additional columns:
-    - `point` ([GEOGRAPHY](https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types#geography_type)) - useful for cross-matching
-    - `single_date` - used to partition the table
+    - BigQuery table: `bigquery-public-data:wise_all_sky_data_release.all_wise` contains additional columns:
+        - `point` ([GEOGRAPHY](https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types#geography_type)) - useful for cross-matching
+        - `single_date` - used to partition the table
+- [Querying the Stars with BigQuery GIS](https://cloud.google.com/blog/products/data-analytics/querying-the-stars-with-bigquery-gis) 
+- Cloud Run
+    - [pubsub trigger](https://cloud.google.com/run/docs/triggering/pubsub-push#command-line_1)
 
+
+## Create resources and deploy to Cloud Run
+
+Allow Pub/Sub to create authentication tokens in the project:
+
+```bash
+project_number=591409139500
+gcloud projects add-iam-policy-binding ${GOOGLE_CLOUD_PROJECT} \
+     --member=serviceAccount:service-${project_number}@gcp-sa-pubsub.iam.gserviceaccount.com \
+     --role=roles/iam.serviceAccountTokenCreator
+```
+
+Create service account and give it permission to invoke cloud run
+
+```bash
+SERVICE_ACCOUNT_NAME="cloud-run-invoker"
+DISPLAYED_SERVICE_ACCOUNT_NAME="Cloud Run Invoker Service Account"
+
+gcloud iam service-accounts create "$SERVICE_ACCOUNT_NAME" \
+   --display-name "$DISPLAYED_SERVICE_ACCOUNT_NAME"
+
+SERVICE="xmatch-allwise"
+
+gcloud run services add-iam-policy-binding "$SERVICE" \
+   --member=serviceAccount:"${SERVICE_ACCOUNT_NAME}@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com" \
+   --role=roles/run.invoker
+```
+
+Create the subscription with the service account attached
+
+```bash
+endpoint="https://xmatch-allwise-3tp3qztwza-uc.a.run.app/"
+survey="ztf"
+topic = "${survey}-alerts"
+subscription="${topic}-xmatch_allwise"
+ack_deadline=300
+
+gcloud pubsub subscriptions create "$subscription" --topic "$topic" \
+   --push-endpoint="$endpoint" \
+   --push-auth-service-account="${SERVICE_ACCOUNT_NAME}@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com" \
+   --ack-deadline="$ack_deadline"
+```
+
+Create bigquery table
+
+```bash
+cd /Users/troyraen/Documents/broker/wise/broker/setup_broker
+survey=ztf
+testid=allwise
+dataset=${survey}_alerts
+table=xmatch
+bq mk --table ${PROJECT_ID}:${dataset}.${table} templates/bq_${survey}_${table}_schema.json
+```
+
+Deploy cloud run
+
+```bash
+cd /Users/troyraen/Documents/broker/wise/broker/cloud_run/wise
+survey=ztf
+testid=False
+image_name="${survey}-xmatch_allwise"
+run_name=xmatch-allwise
+IMAGE_URL="gcr.io/${GOOGLE_CLOUD_PROJECT}/${image_name}:latest"
+# create and upload container
+gcloud builds submit --tag "$IMAGE_URL"
+# deploy to cloud run
+gcloud run deploy "$run_name" --image "$IMAGE_URL"  --no-allow-unauthenticated \
+    --set-env-vars TESTID="$testid",SURVEY="$survey"
+# returned
+# Service URL: https://xmatch-allwise-3tp3qztwza-uc.a.run.app
+
+```
+
+Create AllWISE topic
+
+```python
+from google.cloud import pubsub_v1
+import os
+PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
+survey = 'ztf'
+testid = 'allwise'
+publisher = pubsub_v1.PublisherClient()
+subscriber = pubsub_v1.SubscriberClient()
+
+# create topic and counter subscription
+topic = f'{survey}-AllWISE'
+topic_path = publisher.topic_path(PROJECT_ID, topic)
+publisher.create_topic(topic_path)
+subscription = f'{topic}-counter'
+sub_path = subscriber.subscription_path(PROJECT_ID, subscription)
+subscriber.create_subscription(name=sub_path, topic=topic_path)
+```
+
+## Work out the cross match
 
 ```python
 from google.cloud import bigquery
 import data_utils, gcp_utils
+import troy_fncs as tfncs
 
-f = '/Users/troyraen/Documents/broker/troy/troy/alerts-for-testing/ZTF18aazyhkf.1704216964315015009.ztf_20210901_programid1.avro'
-alert_dict = data_utils.decode_alert(f)
+alert_dict = tfncs.load_alert_file({'drop_cutouts': True})
+# f = '/Users/troyraen/Documents/broker/troy/troy/alerts-for-testing/ZTF18aazyhkf.1704216964315015009.ztf_20210901_programid1.avro'
+# alert_dict = data_utils.decode_alert(f)
 
 # all_wise_table = 'bigquery-public-data:wise_all_sky_data_release.all_wise'
 all_wise_col_list = [
@@ -116,7 +221,8 @@ aw_dict = df.to_dict(orient='records')
 
 ```
 
-## Article: Querying the Stars with BigQuery GIS
+### Article: Querying the Stars with BigQuery GIS
+
 https://cloud.google.com/blog/products/data-analytics/querying-the-stars-with-bigquery-gis
 
 ```python
