@@ -57,6 +57,20 @@ class MetadataPlotter:
         }
 
         # plot colors for each stream
+        self.triggers = {
+            'alerts': self.t0,
+            'BigQuery': 'publish_time__alerts',
+            'alert_avros': 'publish_time__alerts',
+            'eventTime__alert_avros': 'publish_time__alerts',
+            'alerts_pure': 'publish_time__alerts',
+            'AllWISE': 'publish_time__alerts',
+            # 'exgalac_trans': 'tab:blue',
+            # 'salt2': 'tab:orange',
+            'exgalac_trans_cf': 'publish_time__alerts',
+            'SuperNNova': 'publish_time__exgalac_trans_cf',
+        }
+
+        # plot colors for each stream
         self.colors = {
             'jd': 'tab:red',
             'alerts': 'tab:green',
@@ -64,6 +78,7 @@ class MetadataPlotter:
             'alert_avros': 'tab:cyan',
             'eventTime__alert_avros': 'teal',
             'alerts_pure': 'tab:olive',
+            'AllWISE': 'tab:orange',
             # 'exgalac_trans': 'tab:blue',
             # 'salt2': 'tab:orange',
             'exgalac_trans_cf': 'tab:pink',
@@ -140,9 +155,16 @@ class MetadataPlotter:
         ax.yaxis.label.set_color(color)
         ax.tick_params(axis='y', colors=color)
 
-    def plot_proc_time(self, topic_stub, ax, clip_first=0, marg_ax={}):
+    def plot_proc_time(self, topic_stub, ax, tref='Kafka', clip_first=0, marg_ax={}):
         """Plot the time difference between the `topic_stub` and Kafka timestamps."""
         bin_rate_per = 'min'
+        # set the timestamp reference column
+        if tref == 'Kafka':
+            t0 = self.t0
+        elif tref == 'Trigger':
+            t0 = self.triggers[topic_stub]
+        else:
+            raise ValueError("`tref` must be one of `'Kafka'` or `'Trigger'`.")
         # set the field name for the topic_stub timestamp
         if topic_stub.split('__')[0] == 'eventTime':
             t1 = topic_stub
@@ -150,11 +172,11 @@ class MetadataPlotter:
             t1 = f'publish_time__{topic_stub}'
 
         # get initial set of rows to be plotted
-        start_time = self.df[self.t0].min() + timedelta(minutes=clip_first)
-        d = self.df.loc[self.df[self.t0] >= start_time].dropna(subset=[t1])
+        start_time = self.df[t0].min() + timedelta(minutes=clip_first)
+        d = self.df.loc[self.df[t0] >= start_time].dropna(subset=[t1])
 
         # calculate the processing times
-        d['proc_time'] = pd.to_numeric(d[t1]-d[self.t0])*1e-9  # seconds
+        d['proc_time'] = pd.to_numeric(d[t1]-d[t0])*1e-9  # seconds
         if topic_stub == 'jd':
             d['proc_time'] = d['proc_time'].abs()
 
@@ -176,13 +198,14 @@ class MetadataPlotter:
         # set kwargs
         color = self.colors[topic_stub]
         label = f"{topic_stub} (median* {median}, mean* {mean}+-{pm}, max {max})"
-        alpha = 0.15
+        # alpha = 0.15
+        alpha = 1
 
         # plots
         x, y = d[t1], d['proc_time']
         # scatter
         ax.scatter(x, y, s=5, color=color, label=label, alpha=alpha)
-        # ax.legend(loc=4)
+        ax.legend(loc=2)
         # marginal histograms
         if 'x' in marg_ax.keys():
             marg_ax['x'].hist(
@@ -197,8 +220,7 @@ class MetadataPlotter:
         # set axis stuff
         ax.set_ylim(bottom=0)
         if topic_stub != 'jd':
-            # lbl = 'publish time - ZTF timestamp (sec)'
-            lbl = 'Pub/Sub timestamp - Kafka timestamp (sec)'
+            lbl = f'Pub/Sub timestamp - {tref} timestamp (sec)'
         else:
             lbl = 'ZTF timestamp - start of exposure (sec)'
         ax.set_ylabel(lbl)
@@ -286,7 +308,11 @@ class MetadataPlotter:
 
     def _create_fig_save_path(self, fname_stub):
         format = 'png'
-        fname = f"{self.savefig_dir}/{fname_stub}"
+        if fname_stub.split('-')[0] == 'alert_avros':
+            fstub = '-'.join(['avros'] + fname_stub.split('-')[1:])
+        else:
+            fstub = fname_stub
+        fname = f"{self.savefig_dir}/{fstub}"
         try:
             s, tid, dt = self.query['survey'], self.query['testid'], self.query['date']
             if tid in [False, 'False']:
