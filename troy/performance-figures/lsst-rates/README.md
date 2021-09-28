@@ -120,11 +120,11 @@ Takeaways:
 - The execution time of an individual Cloud Function instance is higher when there are more simultaneous instances (i.e., incoming alert rate is higher). This seems strange to me. But it does explain the 10x billing increase (lots of instances with long execution times).
 - The Cloud Functions that store to BigQuery (*BigQuery* and *SuperNNova*) experience a large number of timeouts (which then get retried) when the incoming rate is high. I assume we are hitting a rate limit for streaming inserts, but I haven't checked.
 
-<img src="avros-CF-execution_time-20210923.png" alt="avros-CF-execution_time-20210923" width="400"/> <img src="avros-CF-instance_status-20210923.png" alt="avros-CF-instance_status-20210923" width="400"/>
-
 __Figures__
 
 [Left] Execution times. [Right] Execution results - ok vs. timeout
+
+<img src="avros-CF-execution_time-20210923.png" alt="avros-CF-execution_time-20210923" width="400"/> <img src="avros-CF-instance_status-20210923.png" alt="avros-CF-instance_status-20210923" width="400"/>
 
 *alert_avros*
 
