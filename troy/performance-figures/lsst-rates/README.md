@@ -26,7 +26,12 @@ Takeaways:
 ## Incoming alert info
 
 - `kafka_timestamp` gets applied at IPAC.
-- There is no timestamp applied at ZADS (to my knowledge). The best info about ZADS rates comes from their Grafana dashboard. Here are a couple screenshots (times are Eastern).
+- There is no timestamp applied at ZADS (to my knowledge). The best info about ZADS rates comes from their Grafana dashboard.
+- Screenshots (times are Eastern). Notes:
+    - Their "Incoming alert rate" reaches \~80,000/min. (IPAC -> ZADS)
+    - Their outgoing alert rate is unknown. (ZADS -> brokers)
+        - The "BytesOut Rate" is the closest indicator. Under normal circumstances, it is \~5x higher than the "BytesIn Rate".
+        - So their outgoing alert rate probably peaks at <20,000 alerts/min.
 
 <img src="ZADS-Grafana-during_alert_dump-20210923.png" alt="ZADS-Grafana-during_alert_dump-20210923" width="800"/>
 
@@ -39,13 +44,15 @@ For reference. ZADS dashboard at the end of the dump (starting at 01:10) for the
 ## Component processing times
 
 __Takeaways:__
-- Our *consumer* can handle the average alert rate expected from LSST (\~17,000 alerts/min). It takes us \~8 minutes to get the alert backlog into the *alerts* stream. It's hard to tell how long it takes ZADS to dump these alerts.
-- The *BigQuery* storage Cloud Function gets backed up; processing times (non-cumulative) spike up to \~15 minutes.
-- All other Cloud Functions seem to handle the high alert rate pretty well.
+- Our *consumer* can handle the average alert rate expected from LSST (\~17,000 alerts/min). It takes us \~8 minutes to get the ZTF alert backlog into the *alerts* stream. It's hard to tell how long it takes ZADS to dump these alerts, so I don't really know what our consumer's latency was relative to our actual incoming alert rate.
+- The *BigQuery* storage Cloud Function gets backed up; processing times for this component (non-cumulative) spike up to \~15 minutes.
+- All other Cloud Functions seem to handle the high alert rate pretty well, with *SuperNNova* a possible exception.
 
 __Figures:__
 
 <img src="alerts-Trigger-ztf-20210923.png" alt="alerts-Trigger-ztf-20210923" width="800"/>
+
+This delay comes from ZADS. The title "processing time" is a misnomer for the *alerts* stream.
 
 <img src="avros-Trigger-ztf-20210923.png" alt="avros-Trigger-ztf-20210923" width="800"/>
 
@@ -110,10 +117,14 @@ def plot_proct():
 ## Cloud Function execution
 
 Takeaways:
-- The execution time of an individual instance is higher when there are more simultaneous instances (i.e., incoming alert rate is higher).
-- The functions that store to BigQuery (*BigQuery* and *SuperNNova*) experience a large number of timeouts (which then get retried) when the incoming rate is high. I assume we are hitting a rate limit for streaming inserts, but I haven't checked.
+- The execution time of an individual Cloud Function instance is higher when there are more simultaneous instances (i.e., incoming alert rate is higher). This seems strange to me. But it does explain the 10x billing increase (lots of instances with long execution times).
+- The Cloud Functions that store to BigQuery (*BigQuery* and *SuperNNova*) experience a large number of timeouts (which then get retried) when the incoming rate is high. I assume we are hitting a rate limit for streaming inserts, but I haven't checked.
 
 <img src="avros-CF-execution_time-20210923.png" alt="avros-CF-execution_time-20210923" width="400"/> <img src="avros-CF-instance_status-20210923.png" alt="avros-CF-instance_status-20210923" width="400"/>
+
+__Figures__
+
+[Left] Execution times. [Right] Execution results - ok vs. timeout
 
 *alert_avros*
 
