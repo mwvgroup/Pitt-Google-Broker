@@ -104,12 +104,12 @@ def _create_sql_stmnt():
     # 30.8874796235 = meters/arcsec on that sphere.
     sql_stmnt = f"""
         CREATE TEMP FUNCTION
-            ArcSecondDistance(p1 GEOGRAPHY, p2 GEOGRAPHY, max_sep_arcsec FLOAT64)
+            IsWithinMaxSep(p1 GEOGRAPHY, p2 GEOGRAPHY, max_sep_arcsec FLOAT64)
                 AS (ST_DISTANCE(p1, p2) < max_sep_arcsec * 30.8874796235);
         SELECT {', '.join(cols)}
         FROM `bigquery-public-data.wise_all_sky_data_release.all_wise`
         WHERE
-            ArcSecondDistance(point, ST_GEOGPOINT(@ra, @dec), @max_sep)
+            IsWithinMaxSep(point, ST_GEOGPOINT(@ra, @dec), @max_sep)
             AND ST_CONTAINS(ST_GEOGFROMTEXT(@polygon), point)
         ORDER BY ST_DISTANCE(point, ST_GEOGPOINT(@ra, @dec))
         LIMIT @limit;
