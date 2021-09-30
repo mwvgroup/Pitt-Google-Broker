@@ -4,9 +4,10 @@
 """This module stores alert data in BigQuery tables."""
 
 import base64
-from google.cloud import functions_v1, logging
 import os
 from typing import Dict, Optional
+
+from google.cloud import functions_v1, logging
 
 from broker_utils import data_utils, gcp_utils, schema_maps
 
