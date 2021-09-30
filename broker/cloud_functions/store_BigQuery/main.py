@@ -4,9 +4,9 @@
 """This module stores alert data in BigQuery tables."""
 
 import base64
-from google.cloud import functions, logging
+from google.cloud import functions_v1, logging
 import os
-from typing import Dict
+from typing import Dict, Optional
 
 from broker_utils import data_utils, gcp_utils, schema_maps
 
@@ -29,7 +29,7 @@ if TESTID != "False":
 schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
 
 
-def run(msg: dict, context: functions.Context) -> None:
+def run(msg: dict, context: functions_v1.context.Context) -> None:
     """Send alert data to various BigQuery tables.
 
     Args:
@@ -142,7 +142,7 @@ def _extract_decat_source(alert_dict: dict):
     return source_dict
 
 
-def publish_pubsub(alert_dict: dict, table_dicts: Dict[dict]):
+def publish_pubsub(alert_dict: dict, table_dicts: Dict[str, Optional[dict]]):
     """Announce the table storage operation to Pub/Sub."""
     # collect attributes
     attrs = {
