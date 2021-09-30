@@ -40,14 +40,22 @@ teardown="False"
 # name some things
 consumerVM="${survey}-consumer-${testid}"
 nconductVM="${survey}-night-conductor-${testid}"
-f1="f1-micro"  # 1 vcpu, 0.6 GB memory
-g1="g1-small"  # 1 vcpu, 1.7 GB memory
+
+# https://cloud.google.com/compute/vm-instance-pricing
+# https://cloud.google.com/compute/docs/instances/creating-instance-with-custom-machine-type#e2_shared-core_custom_machine_types
+f1="f1-micro"  # 1 vcpu (0.2), 0.6 GB memory
+g1="g1-small"  # 1 vcpu (0.5), 1.7 GB memory
+e2m="e2-medium"  # 2 vcpu (1), 4 GB memory
 e22="e2-standard-2"  # 2 vcpu, 8 GB memory
 n24="n2-standard-4"  # 4 vcpu, 16 GB memory
+cpu="micro"  # for custom type
+mem="10GB"  # for custom type
+custom="--custom-vm-type=e2 --custom-cpu=small --custom-memory=4GB" # 2 vcpu (0.5), 4 GB memory
 
 # change machine types. after the installs are done and the machines are off
 gcloud compute instances set-machine-type $consumerVM --machine-type $g1
-gcloud compute instances set-machine-type $nconductVM --machine-type $f1
+# gcloud compute instances set-machine-type $nconductVM --machine-type $e22
+gcloud compute instances set-machine-type $nconductVM --custom-vm-type=e2 --custom-cpu=small --custom-memory=4GB
 ```
 
 
