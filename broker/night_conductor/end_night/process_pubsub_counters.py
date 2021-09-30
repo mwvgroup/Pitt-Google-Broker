@@ -38,6 +38,7 @@ def _resource_names(survey: str, testid: Union[str, bool]):
     # pubsub names as {topic name stub: full subscription name}
     name_stubs = [
         "alerts",
+        "BigQuery",
         "alert_avros",
         "alerts_pure",
         "exgalac_trans",
