@@ -64,6 +64,8 @@ This delay comes from ZADS. The title "processing time" is a misnomer for the *a
 
 __Code to produce plots:__
 ```python
+import figures as figs
+
 query = {
     'survey': 'ztf',
     'testid': False,
