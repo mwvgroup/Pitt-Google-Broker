@@ -18,3 +18,16 @@ def load_alert_file(kwargs={}):
     kwargs.setdefault('schema_map', ztf_schema_map)
 
     return data_utils.decode_alert(alert_avro=fname_test_alert, **kwargs)
+
+
+# --- General Utilities --- #
+class AttributeDict(dict):
+    """Class to access dict keys like attributes."""
+
+    def __getattr__(self, attr):
+        """getattr."""
+        return self[attr]
+
+    def __setattr__(self, attr, value):
+        """setattr."""
+        self[attr] = value

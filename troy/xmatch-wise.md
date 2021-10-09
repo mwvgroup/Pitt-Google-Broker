@@ -4,6 +4,7 @@ Outline:
 - [Create resources and deploy to Cloud Run](#create-resources-and-deploy-to-cloud-run)
 - [Work out the cross match](#work-out-the-cross-match)
     - [Article: Querying the Stars with BigQuery GIS](#article-querying-the-stars-with-bigquery-gis)
+    - [How long does a query take?](#how-long-does-a-query-take)
 
 External links:
 - [AllWISE](https://wise2.ipac.caltech.edu/docs/release/allwise/) (web)
@@ -11,9 +12,8 @@ External links:
     - BigQuery table: `bigquery-public-data:wise_all_sky_data_release.all_wise` contains additional columns:
         - `point` ([GEOGRAPHY](https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types#geography_type)) - useful for cross-matching
         - `single_date` - used to partition the table
-- [Querying the Stars with BigQuery GIS](https://cloud.google.com/blog/products/data-analytics/querying-the-stars-with-bigquery-gis) 
-- Cloud Run
-    - [pubsub trigger](https://cloud.google.com/run/docs/triggering/pubsub-push#command-line_1)
+- [Querying the Stars with BigQuery GIS](https://cloud.google.com/blog/products/data-analytics/querying-the-stars-with-bigquery-gis)
+- [BigQuery query optimization](https://cloud.google.com/architecture/bigquery-data-warehouse#query_optimization)
 
 
 ## Create resources and deploy to Cloud Run
@@ -251,3 +251,78 @@ ArcSecondDistance(p1 GEOGRAPHY, p2 GEOGRAPHY, d FLOAT64)
     AS (ST_DISTANCE(p1, p2) < d * 30.8874796235);
 
 ArcSecondDistance(point, ST_GEOGPOINT(201.5, -2.6), 60)
+
+
+### How long does a query take?
+
+Trying to see whether the AllWISE table indexes by some ID.
+There are (at least) 3 ID columns
+
+```python
+import os
+import timeit
+from broker_utils import gcp_utils
+
+# map allwise/xmatch table column names
+coldict = {
+    'designation': 'allwise0_designation',
+    'cntr': 'allwise0_cntr',
+    'source_id': 'allwise0_source_id',
+}
+
+# get some AllWISE IDs from our xmatch table
+project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
+dataset = 'ztf_alerts'
+table = 'xmatch'
+query = f"""
+    SELECT {','.join(coldict.values())}
+    FROM `{project_id}.{dataset}.{table}`
+    WHERE allwise0_designation!='J235808.26-202256.6'
+    LIMIT 1
+"""
+df = gcp_utils.query_bigquery(query).to_dataframe()
+
+# use the IDs to query AllWISE table
+project_id = 'bigquery-public-data'
+dataset = 'wise_all_sky_data_release'
+table = 'all_wise'
+resultdict = {}
+for awcol, xmcol in coldict.items():
+    if awcol == 'cntr':
+        query = f"""
+            SELECT {awcol}
+            FROM `{project_id}.{dataset}.{table}`
+            WHERE {awcol}={df.loc[0,xmcol]}
+        """
+    else:
+        query = f"""
+            SELECT {awcol}
+            FROM `{project_id}.{dataset}.{table}`
+            WHERE {awcol}='{df.loc[0,xmcol]}'
+        """        
+    start = timeit.default_timer()
+    resultdict[f'{awcol} (all cols)'] = query_job = gcp_utils.query_bigquery(query).to_dataframe()
+    stop = timeit.default_timer()
+    resultdict[f'{awcol} (all cols) time'] = stop - start
+    print('Time: ', stop - start)
+
+# now add a filter on the spt_ind column by which the table is clustered
+for awcol, xmcol in coldict.items():
+    if awcol == 'cntr':
+        query = f"""
+            SELECT {awcol}
+            FROM `{project_id}.{dataset}.{table}`
+            WHERE spt_ind=200102013 AND {awcol}={df.loc[0,xmcol]}
+        """
+    else:
+        query = f"""
+            SELECT {awcol}
+            FROM `{project_id}.{dataset}.{table}`
+            WHERE spt_ind=200102013 AND {awcol}='{df.loc[0,xmcol]}'
+        """        
+    start = timeit.default_timer()
+    resultdict[f'{awcol} (spt_ind)'] = query_job = gcp_utils.query_bigquery(query).to_dataframe()
+    stop = timeit.default_timer()
+    resultdict[f'{awcol} (spt_ind) time'] = stop - start
+    print('Time: ', stop - start)
+```
