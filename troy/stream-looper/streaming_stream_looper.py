@@ -19,69 +19,75 @@ SUBSCRIPTION_NAME = 'ztf-alerts-reservoir'
 
 # LOGGER = gc_logging.Client().logger("stream-looper")
 
-MAX_MESSAGES = 10
-QUEUE = queue.Queue(maxsize=MAX_MESSAGES)  # queue for communication between threads
 
-
-class Publisher:
+class StreamLooper:
     """."""
 
     def __init__(self, topic_name, subscription_name):
         """Run a Consumer; publish messages to topic_name."""
-        self.client = pubsub_v1.PublisherClient()
+        self.subclient = pubsub_v1.SubscriberClient()
+        self.subscription_path = f"projects/{PITTGOOGLE_PROJECT_ID}/subscriptions/{subscription_name}"
+        self.pubclient = pubsub_v1.PublisherClient()
         self.topic_path = f"projects/{PITTGOOGLE_PROJECT_ID}/topics/{topic_name}"
 
-        self.consumer = ConsumerStreamPython(subscription_name)
+        MAX_MESSAGES = 5
+        self.queue = queue.Queue(maxsize=MAX_MESSAGES)
+
+        MAX_BACKLOG = 50
+        self.flow_control = pubsub_v1.types.FlowControl(max_messages=MAX_BACKLOG)
 
     def run_looper(self):
         """Run looper."""
         sleep = 1
 
-        self.consumer.stream_alerts()
+        self.pull_subscription()
 
         while True:
             try:
-                msg_data, attributes = QUEUE.get(block=True)
-                future = self.client.publish(
-                    self.topic_path, msg_data, **attributes
-                )  # non blocking
-                future.add_done_callback(self._callback)  # check for errors in bkgd thread
-                QUEUE.task_done()
+                self.publish_topic()
                 time.sleep(sleep)
 
             except:
-                self.consumer._stop()
+                self._stop()
+                raise
                 break
 
-    def _callback(self, future):
+    def pull_subscription(self, parameters=None):
+        """Execute a streaming pull and process alerts through the `callback`."""
+        # start pulling and processing msgs using the callback, in a background thread
+        self.streaming_pull_future = self.subclient.subscribe(
+            self.subscription_path,
+            self.sub_callback,
+            flow_control=self.flow_control,
+            # scheduler=self.scheduler,
+            # await_callbacks_on_shutdown=True,
+        )
+
+    def publish_topic(self):
+        """."""
+        msg_data, attributes = self.queue.get(block=True)
+        future = self.pubclient.publish(
+            self.topic_path, msg_data, **attributes
+        )  # non blocking
+        # check for errors in bkgd thread
+        # future.add_done_callback(self.pub_callback)
+        future.result()  # raises an exception if publish ultimately failed
+        self.queue.task_done()
+
+    def pub_callback(self, future):
+        """."""
         # Publishing failures are automatically retried,
         # except for errors that do not warrant retries.
         message_id = future.result()  # raises an exception if publish ultimately failed
         # print(message_id)
 
+    def sub_callback(self, message):
+        """Process a single alert; run user filter; save alert; acknowledge Pub/Sub msg.
 
-class ConsumerStreamPython:
-    """Consumer class to manage Pub/Sub connections and work with messages."""
-
-    def __init__(self, subscription_name):
-        """Authenticate user; create client; set subscription path; check connection."""
-        self.client = pubsub_v1.SubscriberClient()
-
-        # subscription
-        self.subscription_name = subscription_name
-        self.subscription_path = f"projects/{PITTGOOGLE_PROJECT_ID}/subscriptions/{subscription_name}"
-
-    def stream_alerts(self, parameters=None):
-        """Execute a streaming pull and process alerts through the `callback`."""
-        flow_control = pubsub_v1.types.FlowControl(max_messages=MAX_MESSAGES)
-        # start pulling and processing msgs using the callback, in a background thread
-        self.streaming_pull_future = self.client.subscribe(
-            self.subscription_path,
-            self.callback,
-            flow_control=flow_control,
-            # scheduler=self.scheduler,
-            # await_callbacks_on_shutdown=True,
-        )
+        Used as the callback for the streaming pull.
+        """
+        self.queue.put((message.data, message.attributes), block=True)
+        message.ack()
 
     def _stop(self):
         """Shutdown the streaming pull in the background thread gracefully.
@@ -92,18 +98,10 @@ class ConsumerStreamPython:
         self.streaming_pull_future.cancel()  # Trigger the shutdown.
         self.streaming_pull_future.result()  # Block until the shutdown is complete.
 
-    def callback(self, message):
-        """Process a single alert; run user filter; save alert; acknowledge Pub/Sub msg.
-
-        Used as the callback for the streaming pull.
-        """
-        QUEUE.put((message.data, message.attributes), block=True)
-        message.ack()
-
     def _log_and_print(self, msg, severity="INFO"):
         # LOGGER.log_text(msg, severity=severity)
         print(msg)
 
 
 if __name__ == "__main__":  # noqa
-    Publisher(TOPIC_NAME, SUBSCRIPTION_NAME).run_looper()
+    StreamLooper(TOPIC_NAME, SUBSCRIPTION_NAME).run_looper()
