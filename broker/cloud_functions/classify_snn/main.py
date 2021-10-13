@@ -63,7 +63,7 @@ def run(msg: dict, context) -> None:
     try:
         snn_dict = _classify_with_snn(alert_dict)
     except Exception as e:
-        logger.log_text(f"{e}", severity="DEBUG")
+        logger.log_text(f"Classify error: {e}", severity="DEBUG")
 
     # announce to pubsub
     attrs = {
@@ -76,7 +76,8 @@ def run(msg: dict, context) -> None:
 
     # store in bigquery
     errors = gcp_utils.insert_rows_bigquery(bq_table, [snn_dict])
-    logger.log_text(f"{errors}", severity="DEBUG")
+    if len(errors) > 0:
+        logger.log_text(f"BigQuery insert error: {errors}", severity="DEBUG")
 
 
 def _classify_with_snn(alert_dict: dict) -> dict:
