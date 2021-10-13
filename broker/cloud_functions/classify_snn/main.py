@@ -60,7 +60,10 @@ def run(msg: dict, context) -> None:
     alert_dict = json.loads(base64.b64decode(msg["data"]).decode("utf-8"))
 
     # classify
-    snn_dict = _classify_with_snn(alert_dict)
+    try:
+        snn_dict = _classify_with_snn(alert_dict)
+    except Exception as e:
+        logger.log_text(f"{e}", severity="DEBUG")
 
     # announce to pubsub
     attrs = {
@@ -72,7 +75,8 @@ def run(msg: dict, context) -> None:
     )
 
     # store in bigquery
-    gcp_utils.insert_rows_bigquery(bq_table, [snn_dict])
+    errors = gcp_utils.insert_rows_bigquery(bq_table, [snn_dict])
+    logger.log_text(f"{errors}", severity="DEBUG")
 
 
 def _classify_with_snn(alert_dict: dict) -> dict:
