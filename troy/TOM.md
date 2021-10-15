@@ -34,7 +34,7 @@ export PITTGOOGLE_OAUTH_CLIENT_SECRET=""
 # /Users/troyraen/Documents/broker/repo/GCP_oauth-client_secret.json
 
 # add tom_pittgoogle to path
-# python -m pip install -e .
+python -m pip install -e .
 # export PYTHONPATH="${PYTHONPATH}:/Users/troyraen/Documents/broker/tom/tom_pittgoogle"
 # export DJANGO_SETTINGS_MODULE=tom_pittgoogle.settings
 
@@ -107,6 +107,20 @@ clean_params = {
     'classtar_threshold': None,
     'classtar_gt_lt': 'gt',
     'max_results': 100,
-    
+
 }
+```
+
+## Message size
+
+```python
+from python_fncs.pubsub_consumer import Consumer as Consumer
+
+consumer = Consumer('ztf-loop')
+msgs = consumer.stream_alerts(parameters={'max_results': 1, 'max_backlog': 1})
+msg = msgs[0]
+msg.size  # bytes
+# result is: 67362
+
+# 1 TiB ~= 1.6e7 alerts = $40
 ```
