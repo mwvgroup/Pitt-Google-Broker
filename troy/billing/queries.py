@@ -11,7 +11,9 @@ BILLING_TABLE = (
 )
 
 PROD_PROJECT_ID = "ardent-cycling-243415"
-PROD_TABLE = f"{PROD_PROJECT_ID}.ztf_alerts.metadata"
+METADATA_TABLE = f"{PROD_PROJECT_ID}.ztf_alerts.metadata"
+ALERTS_TABLE = f"{PROD_PROJECT_ID}.ztf_alerts.alerts"
+DIA_TABLE = f"{PROD_PROJECT_ID}.ztf_alerts.DIASource"
 
 
 def _datetime_to_date(dtime):
@@ -27,6 +29,32 @@ def _datetime_to_date(dtime):
 def count_alerts_by_date(lookback=None, date="today"):
     """Use UTC for everything."""
     query_params = []
+    timecol = "candidate.jd"
+    # timecol = "jd"
+
+    select = """
+        SELECT
+            COUNT(candid) AS num_alerts
+    """
+
+    frm = f"FROM `{ALERTS_TABLE}`"
+    # frm = f"FROM `{DIA_TABLE}`"
+
+    # WHERE
+    t0 = 2459496.50000
+    t1 = 2459497.50000
+    where = f"WHERE {timecol} BETWEEN @t0 AND @t1"
+    query_params.append(bigquery.ScalarQueryParameter("t0", "FLOAT", t0))
+    query_params.append(bigquery.ScalarQueryParameter("t1", "FLOAT", t1))
+
+    query = f"{select} {frm} {where}"
+    job_config = bigquery.QueryJobConfig(query_parameters=query_params)
+    return (query, job_config)
+
+
+def count_metadata_by_date(lookback=None, date="today"):
+    """Use UTC for everything."""
+    query_params = []
     # timecol = "kafka_timestamp__alerts"
     timecol = "publish_time__alerts"
 
@@ -36,7 +64,7 @@ def count_alerts_by_date(lookback=None, date="today"):
             COUNT(candid) AS num_alerts
     """
 
-    frm = f"FROM `{PROD_TABLE}`"
+    frm = f"FROM `{METADATA_TABLE}`"
 
     # WHERE
     now = datetime.datetime.now(timezone.utc)

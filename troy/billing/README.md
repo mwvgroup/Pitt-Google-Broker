@@ -51,8 +51,13 @@ billdf = gcp_utils.query_bigquery(
     query, job_config=job_config, project_id=billing_project_id
 ).to_dataframe()
 
-query, job_config = queries.count_alerts_by_date(date=date)
+query, job_config = queries.count_metadata_by_date(date=date)
 countdf = gcp_utils.query_bigquery(
+    query, job_config=job_config, project_id=project_id
+).to_dataframe()
+
+query, job_config = queries.count_alerts_by_date(date=date)
+acountdf = gcp_utils.query_bigquery(
     query, job_config=job_config, project_id=project_id
 ).to_dataframe()
 
