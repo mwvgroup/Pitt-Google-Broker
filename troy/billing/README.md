@@ -44,19 +44,24 @@ import queries
 project_id = os.getenv('GOOGLE_CLOUD_PROJECT')  # ardent-cycling-243415
 billing_project_id = os.getenv('GOOGLE_CLOUD_PROJECT2')  # light-cycle-328823
 
-query, job_config = queries.where_date(lookback=30)
+date = "2021-10-09"
+
+query, job_config = queries.where_date(date=date)
 billdf = gcp_utils.query_bigquery(
     query, job_config=job_config, project_id=billing_project_id
 ).to_dataframe()
 
-query, job_config = queries.count_alerts_by_date(lookback=30)
+query, job_config = queries.count_alerts_by_date(date=date)
 countdf = gcp_utils.query_bigquery(
     query, job_config=job_config, project_id=project_id
 ).to_dataframe()
 
-date = "2021-10-09"
-query, job_config = queries.count_alerts_by_date(date=date, lookback=None)
-count9df = gcp_utils.query_bigquery(
-    query, job_config=job_config, project_id=project_id
-).to_dataframe()
+# plot cost per alert
+billdf[['service','cost']].groupby('service').sum()
+
+# date = "2021-10-09"
+# query, job_config = queries.count_alerts_by_date(date=date, lookback=None)
+# count9df = gcp_utils.query_bigquery(
+#     query, job_config=job_config, project_id=project_id
+# ).to_dataframe()
 ```

@@ -22,31 +22,17 @@ def _datetime_to_date(dtime):
 # def _date_to_datetime(date):
 #     return datetime.datetime(date)
 
-# query = f"""
-#     SELECT kafka_timestamp__alerts, publish_time__alerts, candid
-#     FROM `{PROD_TABLE}`
-#     WHERE kafka_topic__alerts = 'ztf_20211015_programid1'
-# """
-#     # WHERE kafka_timestamp__alerts BETWEEN @t0 AND @t1
-# df = gcp_utils.query_bigquery(query, job_config=job_config).to_dataframe()
-# dup = df.loc[df.duplicated(subset='candid', keep=False)]
-# for i, cid in enumerate(dup.candid.unique()):
-#     prv = None
-#     for index, row in dup.loc[dup['candid']==cid].iterrows():
-#         if prv is None: prv = row.publish_time__alerts
-#         if not prv == row.publish_time__alerts:
-#             print(index)
-#             print(dup.loc[dup['candid']==cid])
-#             break
-
 
 # ALERT QUERIES
-def count_alerts_by_date(lookback=30, date="today"):
+def count_alerts_by_date(lookback=None, date="today"):
+    """Use UTC for everything."""
     query_params = []
+    # timecol = "kafka_timestamp__alerts"
+    timecol = "publish_time__alerts"
 
-    select = """
+    select = f"""
         SELECT
-            CAST(kafka_timestamp__alerts AS DATE) AS date,
+            CAST({timecol} AS DATE) AS date,
             COUNT(candid) AS num_alerts
     """
 
@@ -57,21 +43,21 @@ def count_alerts_by_date(lookback=30, date="today"):
     replace = {"hour": 0, "minute": 0, "second": 0, "microsecond": 0}
     if lookback is not None:
         t0 = (now - timedelta(days=lookback)).replace(**replace)
-        where = "WHERE kafka_timestamp__alerts >= @t0"
+        where = f"WHERE {timecol} >= @t0"
         query_params.append(bigquery.ScalarQueryParameter("t0", "TIMESTAMP", t0))
     elif date == "today":
         t0 = now.replace(**replace)
-        where = "WHERE kafka_timestamp__alerts >= @t0"
+        where = f"WHERE {timecol} >= @t0"
         query_params.append(bigquery.ScalarQueryParameter("t0", "TIMESTAMP", t0))
     else:
         t0 = datetime.datetime.strptime(f"{date}-+0000", "%Y-%m-%d-%z")
         t1 = t0 + timedelta(days=1)
-        where = "WHERE kafka_timestamp__alerts BETWEEN @t0 AND @t1"
+        where = f"WHERE {timecol} BETWEEN @t0 AND @t1"
         query_params.append(bigquery.ScalarQueryParameter("t0", "TIMESTAMP", t0))
         query_params.append(bigquery.ScalarQueryParameter("t1", "TIMESTAMP", t1))
     # where = f"{where} AND publish_time__alerts IS NOT NULL"
 
-    groupby = "GROUP BY CAST(kafka_timestamp__alerts AS DATE)"
+    groupby = f"GROUP BY CAST({timecol} AS DATE)"
 
     query = f"{select} {frm} {where} {groupby}"
     job_config = bigquery.QueryJobConfig(query_parameters=query_params)
@@ -79,7 +65,7 @@ def count_alerts_by_date(lookback=30, date="today"):
 
 
 # BILLING QUERIES
-def where_date(lookback=30, date="today"):
+def where_date(lookback=None, date="today"):
     query_params = []
 
     select = """
@@ -98,22 +84,25 @@ def where_date(lookback=30, date="today"):
     frm = f"FROM `{BILLING_TABLE}`"
 
     # WHERE
-    now = datetime.datetime.now(timezone.utc)
+    # timecol = "DATE(_PARTITIONTIME)"
+    timecol = "DATE(usage_start_time)"
+    now = _datetime_to_date(datetime.datetime.now(timezone.utc))
     if lookback is not None:
-        where = "WHERE DATE(_PARTITIONTIME) BETWEEN @date1 AND @date2"
-        query_params.append(
-            bigquery.ScalarQueryParameter(
-                "date1", "DATE", _datetime_to_date(now - timedelta(days=lookback))
-            )
-        )
-        query_params.append(
-            bigquery.ScalarQueryParameter("date2", "DATE", _datetime_to_date(now))
-        )
+        where = f"WHERE {timecol} > @date"
+        query_params.append(bigquery.ScalarQueryParameter("date", "DATE", now))
     elif date == "today":
-        where = "WHERE DATE(_PARTITIONTIME) = @date"
-        query_params.append(
-            bigquery.ScalarQueryParameter("date", "DATE", _datetime_to_date(now))
-        )
+        where = f"WHERE {timecol} = @date"
+        query_params.append(bigquery.ScalarQueryParameter("date", "DATE", now))
+    else:
+        y, m, d = date.split("-")
+        t0 = datetime.date(int(y), int(m), int(d))
+        where = f"WHERE {timecol} = @date"
+        query_params.append(bigquery.ScalarQueryParameter("date", "DATE", t0))
+        # t0 = datetime.datetime.strptime(f"{date}-+0000", "%Y-%m-%d-%z")
+        # t1 = t0 + timedelta(days=1)
+        # where = f"WHERE {timecol} BETWEEN @t0 AND @t1"
+        # query_params.append(bigquery.ScalarQueryParameter("t0", "DATE", t0))
+        # query_params.append(bigquery.ScalarQueryParameter("t1", "DATE", t1))
 
     query = f"{select} {frm} {where}"
     job_config = bigquery.QueryJobConfig(query_parameters=query_params)
