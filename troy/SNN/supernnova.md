@@ -118,7 +118,54 @@ snn_msg = gcp_utils.pull_pubsub('test')[0]
 gcp_utils.insert_rows_bigquery(bq_table, [snn_dict])
 ```
 
-### Classify known Ia
+## Classify known Ia's
+
+1. Download csv from TNS website. ([Search](https://www.wis-tns.org/search) for recent Ia's)
+2. Query database to see what SNN classified these as
+
+The docs indicate that "usually" class0 indicates a Ia and class1 indicates non-Ia,
+but this will depend on how the model was trained.
+
+I checked by classifying a objects recently reported to TNS as Ias.
+
+Results indicate the opposite of expected. Will check with Anais.
+
+```python
+import matplotlib.pyplot as plt
+import os
+import pandas as pd
+from broker_utils import gcp_utils
+
+# get objectIds from TNS csv
+f = 'tns_search_SNIa.csv'
+df = pd.read_csv(f)
+ztfdf = df.loc[df['Disc. Internal Name'].str.startswith("ZTF")]
+objectIds = list(ztfdf['Disc. Internal Name'].unique())
+
+# query bigquery
+project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
+dataset = 'ztf_alerts'
+table = 'SuperNNova'
+query = f"""
+    SELECT *
+    FROM `{project_id}.{dataset}.{table}`
+    WHERE objectId IN ('{"','".join(objectIds)}')
+"""
+bqdf = gcp_utils.query_bigquery(query).to_dataframe()
+cleandf = bqdf.sort_values('candid', ascending=False).drop_duplicates(subset='objectId', keep='first')
+
+date = "20211017"
+fout = f"snn_results_{date}.png"
+cleandf.hist(['prob_class0', 'prob_class1'], sharex=True)
+plt.xlabel("SuperNNova result")
+plt.suptitle("recent SNIa's reported to TNS")
+plt.savefig(fout)
+plt.show(block=False)
+```
+
+<img src="snn_results_20211017.png" alt="snn_results_20211017" width="600"/>
+
+### Classify known Ia - Original Test
 
 The docs indicate that "usually" class0 indicates a Ia and class1 indicates non-Ia,
 but this will depend on how the model was trained.
