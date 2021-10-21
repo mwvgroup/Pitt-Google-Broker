@@ -69,8 +69,11 @@ def index():
     topic_path = publisher.topic_path(PROJECT_ID, ps_topic)
     # logger.log_text(f"topic: {topic_path}", severity="DEBUG")
     message = json.dumps({"alert": alert_dict, "Abril_CV": abrilcv_dict}).encode('utf-8')
-    future = publisher.publish(topic_path, data=message, **attrs)
-    future.result()
+    try:
+        future = publisher.publish(topic_path, data=message, **attrs)
+        future.result()
+    except Exception as e:
+        logger.log_text(f"{e}", severity="DEBUG")
 
     if is_abril_cv == 1:
         _store_bigquery(abrilcv_dict, attrs)
@@ -181,12 +184,23 @@ def _store_bigquery(abrilcv_dict, attrs):
         "AbrilCV_HEALPix_17_nested_icrs",
         "AbrilCV_separation"
     ]
-    sdict = {k: v for k, v in store_dict.items() if k in keep_cols}
+
+    def cast_nan_to_none(value):
+        """BigQuery can't handle NaN; replace with None."""
+        return None if pd.isna(value) else value
+    sdict = {
+        k: cast_nan_to_none(v) for k, v in store_dict.items() if k in keep_cols
+    }
+
     bq_client = bigquery.Client(project=PROJECT_ID)
     table = bq_client.get_table(bq_table)
-    errors = bq_client.insert_rows(table, [sdict])
-    if len(errors) > 0:
-        logger.log_text(f"Errors uploading to BigQuery: {errors}", severity="DEBUG")
+    try:
+        errors = bq_client.insert_rows(table, [sdict])
+    except Exception as e:
+        logger.log_text(f"Errors uploading to BigQuery: {e}", severity="DEBUG")
+    else:
+        if len(errors) > 0:
+            logger.log_text(f"Errors uploading to BigQuery: {errors}", severity="DEBUG")
 
 
 if __name__ == "__main__":
