@@ -1,0 +1,98 @@
+[
+  {
+    "description": "object identifier or name",
+    "mode": "REQUIRED",
+    "name": "objectId",
+    "type": "STRING"
+  },
+  {
+    "description": "Candidate ID from operations DB",
+    "mode": "REQUIRED",
+    "name": "candid",
+    "type": "INTEGER"
+  },
+  {
+    "description": "AllWISE (closest match): Sexagesimal, equatorial position-based source name in form: hhmmss.ss+ddmmss.s",
+    "mode": "NULLABLE",
+    "name": "allwise0_designation",
+    "type": "STRING"
+  },
+  {
+    "description": "AllWISE (closest match): Unique ID number for this object in the AllWISE Catalog/Reject Table",
+    "mode": "NULLABLE",
+    "name": "allwise0_cntr",
+    "type": "FLOAT"
+  },
+  {
+    "description": "AllWISE (closest match): Unique source ID",
+    "mode": "NULLABLE",
+    "name": "allwise0_source_id",
+    "type": "STRING"
+  },
+  {
+    "description": "AllWISE (2nd closest match): Sexagesimal, equatorial position-based source name in form: hhmmss.ss+ddmmss.s",
+    "mode": "NULLABLE",
+    "name": "allwise1_designation",
+    "type": "STRING"
+  },
+  {
+    "description": "AllWISE (2nd closest match): Unique ID number for this object in the AllWISE Catalog/Reject Table",
+    "mode": "NULLABLE",
+    "name": "allwise1_cntr",
+    "type": "FLOAT"
+  },
+  {
+    "description": "AllWISE (2nd closest match): Unique source ID",
+    "mode": "NULLABLE",
+    "name": "allwise1_source_id",
+    "type": "STRING"
+  },
+  {
+    "description": "AllWISE (3rd closest match): Sexagesimal, equatorial position-based source name in form: hhmmss.ss+ddmmss.s",
+    "mode": "NULLABLE",
+    "name": "allwise2_designation",
+    "type": "STRING"
+  },
+  {
+    "description": "AllWISE (3rd closest match): Unique ID number for this object in the AllWISE Catalog/Reject Table",
+    "mode": "NULLABLE",
+    "name": "allwise2_cntr",
+    "type": "FLOAT"
+  },
+  {
+    "description": "AllWISE (3rd closest match): Unique source ID",
+    "mode": "NULLABLE",
+    "name": "allwise2_source_id",
+    "type": "STRING"
+  },
+  {
+    "description": "Abril 2020 CV catalog (closest match): Name, as in CV catalog",
+    "mode": "NULLABLE",
+    "name": "AbrilCV_Name",
+    "type": "STRING"
+  },
+  {
+    "description": "Abril 2020 CV catalog (closest match): Type1, CV subtype",
+    "mode": "NULLABLE",
+    "name": "AbrilCV_Type1",
+    "type": "STRING"
+  },
+  {
+    "description": "Abril 2020 CV catalog (closest match): Type2, CV subtype",
+    "mode": "NULLABLE",
+    "name": "AbrilCV_Type2",
+    "type": "STRING"
+  },
+  {
+    "description": "Abril 2020 CV catalog (closest match): HEALPix ID, level 17",
+    "mode": "NULLABLE",
+    "name": "AbrilCV_HEALPix_17_nested_icrs",
+    "type": "INTEGER"
+  },
+  {
+    "description": "Abril 2020 CV catalog (closest match): Separation between CV and alert object (arcsec)",
+    "mode": "NULLABLE",
+    "name": "AbrilCV_separation",
+    "type": "FLOAT"
+  }
+]
