@@ -14,6 +14,7 @@ External links:
         - `single_date` - used to partition the table
 - [Querying the Stars with BigQuery GIS](https://cloud.google.com/blog/products/data-analytics/querying-the-stars-with-bigquery-gis)
 - [BigQuery query optimization](https://cloud.google.com/architecture/bigquery-data-warehouse#query_optimization)
+- [Instructions to create resources with pubsub trigger](https://cloud.google.com/run/docs/triggering/pubsub-push#command-line_1)
 
 
 ## Create resources and deploy to Cloud Run
@@ -46,7 +47,7 @@ gcloud run services add-iam-policy-binding "$SERVICE" \
 Create the subscription with the service account attached
 
 ```bash
-endpoint="https://xmatch-allwise-3tp3qztwza-uc.a.run.app/"
+endpoint="https://xmatch-allwise-3tp3qztwza-uc.a.run.app/"  # get from Run deployment
 survey="ztf"
 topic = "${survey}-alerts"
 subscription="${topic}-xmatch_allwise"
