@@ -61,8 +61,14 @@ acountdf = gcp_utils.query_bigquery(
     query, job_config=job_config, project_id=project_id
 ).to_dataframe()
 
-# plot cost per alert
-billdf[['service','cost']].groupby('service').sum()
+# cost per alert
+num_alerts = countdf.loc[countdf['date'].astype(str)==date, 'num_alerts'].iloc[0]
+
+service_costs = billdf[['service','cost']].groupby('service').sum()
+service_costs['cost_per_alert'] = service_costs['cost'] / num_alerts
+
+cf_costs = billdf.loc[billdf['service']=="Cloud Functions", ['sku','cost']].groupby('sku').sum()
+cf_costs['cost_per_alert'] = cf_costs['cost'] / num_alerts
 
 # date = "2021-10-09"
 # query, job_config = queries.count_alerts_by_date(date=date, lookback=None)
