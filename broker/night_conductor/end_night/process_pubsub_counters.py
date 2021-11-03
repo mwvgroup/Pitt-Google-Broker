@@ -208,6 +208,10 @@ class MetadataCollector:
                 df["kafka.timestamp"] = pd.to_datetime(
                     df["kafka.timestamp"], unit="ms", utc=True
                 )
+                # Pub/Sub schema says message_id is a str,
+                # which I (Troy) confirmed by manually pulling a message.
+                # But for some reason it is a float64 in this df. Convert it.
+                df["message_id"] = df["message_id"].astype(str)
             elif topic_stub == "alert_avros":
                 # convert the eventTime (str, RFC 3339) to np.datetime64
                 df["eventTime"] = pd.to_datetime(df["eventTime"])
