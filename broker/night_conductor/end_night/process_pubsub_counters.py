@@ -41,6 +41,7 @@ def _resource_names(survey: str, testid: Union[str, bool]):
         "BigQuery",
         "alert_avros",
         "alerts_pure",
+        "AllWISE",
         "exgalac_trans",
         "salt2",
         "exgalac_trans_cf",
