@@ -10,10 +10,6 @@
 ###
 
 
-apache_beam[gcp]
-# this is a very large package that will not always be needed.
-# i suggest we make it an optional extra as pgb-utils[beam]
-
 # aplpy
 astropy==3.2.1
 # astropy-healpix==0.6
