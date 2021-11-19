@@ -12,21 +12,21 @@
     "type": "INTEGER"
   },
   {
-    "description": "probability object is non-Ia",
+    "description": "probability object is a type Ia supernova",
     "mode": "NULLABLE",
     "name": "prob_class0",
     "type": "FLOAT"
   },
   {
-    "description": "probability object is Ia",
+    "description": "probability object is non-Ia",
     "mode": "NULLABLE",
     "name": "prob_class1",
     "type": "FLOAT"
   },
   {
-    "description": "predicted class; 0 = non-Ia, 1 = Ia",
+    "description": "predicted class; 0 = Ia, 1 = non-Ia",
     "mode": "NULLABLE",
-    "name": "pred_class",
+    "name": "predicted_class",
     "type": "INTEGER"
   }
 ]

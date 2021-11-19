@@ -302,7 +302,9 @@ def load_dataframe_bigquery(
 
 
 
-def query_bigquery(query: str, project_id: Optional[str] = None):
+def query_bigquery(
+    query: str, project_id: Optional[str] = None
+) -> bigquery.job.QueryJob:
     """Query BigQuery.
 
     Example query:
