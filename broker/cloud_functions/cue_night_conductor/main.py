@@ -20,10 +20,6 @@ SURVEY = os.getenv('SURVEY')
 ZONE = os.getenv('ZONE')
 
 schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
-
-# this script would be much simpler if we could use gcloud on the cmd line,
-# but cloud fnc environments appear not to have the CLI tools.
-# so we have to use the REST API
 service = discovery.build('compute', 'v1')
 
 # connect to the logger
@@ -101,7 +97,6 @@ def cue_night_conductor(cue, attrs):
         'items': update_items + keep_items,
     }
     set_metadata(metadata, request_kwargs)
-    set_machine_type(cue, request_kwargs)
     start_vm(request_kwargs)
 
 def get_update_items(cue, attrs):
@@ -156,43 +151,6 @@ def set_metadata(metadata, request_kwargs):
     """
     request = service.instances().setMetadata(**request_kwargs, body=metadata)
     response = request.execute()
-
-def set_machine_type(cue, request_kwargs):
-    """Set the machine size according to the expected load.
-
-    See also
-    https://cloud.google.com/compute/docs/reference/rest/v1/instances/setMachineType
-    https://cloud.google.com/compute/docs/machine-types
-    https://cloud.google.com/compute/docs/instances/creating-instance-with-custom-machine-type
-    """
-    # decide on a machine type
-    machine_type_stub = f"zones/{ZONE}/machineTypes"
-    if cue == "Start":
-        # night conductor does no processing, it just starts other things
-        # set smallest machine size possible
-        request_body = {"machineType": "/".join([machine_type_stub, "f1-micro"])}
-    elif cue == "End":
-        # night conductor processes pubsub streams for metadata.
-        # a "small", shared-core machine with 4GB memory can handle largest ZTF night
-        memMB = 4 * 1024
-        custom_type = f"e2-custom-small-{memMB}"
-        request_body = {"machineType": "/".join([machine_type_stub, custom_type])}
-
-    # set machine type
-    request = service.instances().setMachineType(body=request_body, **request_kwargs)
-    response = request.execute()
-
-    # check for errors
-    # I (Troy) am confused about the result of the following test:
-    # If the machine is off, this works.
-    # If the machine is on, I expect it to generate an error,
-    # but it neither changes the machine type nor generates an error.
-    # I don't understand why.
-    # I think we are supposed to be able to access errors like this:
-    if "error" in response.keys():
-        logger.log_text(response["error"].errors, severity="DEBUG")
-
-
 
 def start_vm(request_kwargs):
     # start the vm
