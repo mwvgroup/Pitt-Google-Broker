@@ -30,6 +30,10 @@ if [ "$testid" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
 fi
 
+#--- Files this script will write
+fout_run="${workingdir}/run-connector.out"
+fout_topics="${workingdir}/list.topics"
+
 #--- Download config files from GCS (just grab the whole bucket)
 cd ${brokerdir}
 # remove all consumer files except the keytab
@@ -55,7 +59,7 @@ do
             --bootstrap-server public2.alerts.ztf.uw.edu:9094 \
             --list \
             --command-config ${workingdir}/admin.properties \
-            > list.topics
+            > $fout_topics
     } || {
         true
     }
@@ -66,7 +70,7 @@ do
     # passing the error with `|| true`
 
     # check if our topic is in the list
-    if grep -Fq "${KAFKA_TOPIC}" list.topics
+    if grep -Fq "${KAFKA_TOPIC}" $fout_topics
     then
         alerts_flowing=true  # start consuming
     else
@@ -74,7 +78,8 @@ do
     fi
 done
 
-#--- Start the Kafka -> Pub/Sub connector
+#--- Start the Kafka -> Pub/Sub connector, save stdout and stderr to file
 /bin/connect-standalone \
     ${workingdir}/psconnect-worker.properties \
-    ${workingdir}/ps-connector.properties
+    ${workingdir}/ps-connector.properties \
+    &>> ${fout_run}

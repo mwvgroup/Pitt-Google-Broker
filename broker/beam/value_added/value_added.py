@@ -59,17 +59,17 @@ def sink_configs(PROJECTID, SURVEY):
         sink_configs = {'sinkResource_dataDescription': {'config_name': value, }, }
     """
     sink_configs = {
-        'BQ_salt2': {
-            'create_disposition': bqdisp.CREATE_NEVER,
-            'write_disposition': bqdisp.WRITE_APPEND,
-            'insert_retry_strategy': RetryStrategy.RETRY_ON_TRANSIENT_ERROR,
-        },
-        'PS_generic': {
-            'with_attributes': False,  # currently using bytes
-            #  may want to use these in the future:
-            'id_label': None,
-            'timestamp_attribute': None
-        },
+            'BQ_salt2': {
+                'create_disposition': bqdisp.CREATE_NEVER,
+                'write_disposition': bqdisp.WRITE_APPEND,
+                'insert_retry_strategy': RetryStrategy.RETRY_ON_TRANSIENT_ERROR,
+            },
+            'PS_generic': {
+                'with_attributes': True,
+                #  may want to use these in the future:
+                # 'id_label': None,
+                'timestamp_attribute': 'publish_time'
+            },
     }
 
     if SURVEY == 'decat':

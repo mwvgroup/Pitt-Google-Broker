@@ -107,7 +107,10 @@ def _resources(service, survey='ztf', testid='test'):
     """
 
     if service == 'BQ':
-        datasets = {f'{survey}_alerts': ['alerts', 'DIASource', 'salt2']}
+        datasets = {
+            f'{survey}_alerts':
+                ['alerts', 'DIASource', 'salt2', 'SuperNNova', 'metadata']
+        }
 
         # append the testid to the dataset name only
         if testid is not False:
@@ -149,18 +152,24 @@ def _resources(service, survey='ztf', testid='test'):
 
     if service == 'PS':
         topics = {  # '<topic_name>': ['<subscription_name>', ]
-            f'{survey}-alert_avros':
-                [f'{survey}-alert_avros-counter'],
-            f'{survey}-alerts':
-                [f'{survey}-alerts-counter', f'{survey}-alerts-reservoir', ],
-            f'{survey}-alerts_pure':
-                [f'{survey}-alerts_pure-counter', ],
-            f'{survey}-cue_night_conductor':
-                [],
-            f'{survey}-exgalac_trans':
-                [f'{survey}-exgalac_trans-counter'],
-            f'{survey}-salt2':
-                [f'{survey}-salt2-counter'],
+                f'{survey}-BigQuery':
+                    [f'{survey}-BigQuery-counter'],
+                f'{survey}-alert_avros':
+                    [f'{survey}-alert_avros-counter'],
+                f'{survey}-alerts':
+                    [f'{survey}-alerts-counter', f'{survey}-alerts-reservoir', ],
+                f'{survey}-alerts_pure':
+                    [f'{survey}-alerts_pure-counter', ],
+                f'{survey}-cue_night_conductor':
+                    [],
+                f'{survey}-exgalac_trans':
+                    [f'{survey}-exgalac_trans-counter'],
+                f'{survey}-salt2':
+                    [f'{survey}-salt2-counter'],
+                f'{survey}-exgalac_trans_cf':
+                    [f'{survey}-exgalac_trans_cf-counter'],
+                f'{survey}-SuperNNova':
+                    [f'{survey}-SuperNNova-counter'],
         }
 
         # append the testid
@@ -245,8 +254,12 @@ def setup_bigquery(survey='ztf', testid='test', teardown=False) -> None:
             print(f'Deleted dataset {dataset}')
         else:
             # Create dataset
-            bigquery_client.create_dataset(dataset, exists_ok=True)
-            print(f'Created dataset (skipped if previously existed): {dataset}')
+            try:
+                bigquery_client.get_dataset(dataset)
+                print(f"Skipping existing dataset: {dataset}")
+            except NotFound:
+                bigquery_client.create_dataset(dataset)
+                print(f'Created dataset: {dataset}')
 
             # create the tables
             for table in tables:
@@ -255,6 +268,7 @@ def setup_bigquery(survey='ztf', testid='test', teardown=False) -> None:
                     bigquery_client.get_table(table_id)
                     print(f'Skipping existing table: {table_id}.')
                 except NotFound:
+                    # use CLI so we can create the table from a schema file
                     bqmk = f'bq mk --table {PROJECT_ID}:{dataset}.{table} templates/bq_{survey}_{table}_schema.json'
                     out = subprocess.check_output(shlex.split(bqmk))
                     print(f'{out}')  # should be a success message
@@ -408,6 +422,8 @@ def setup_buckets(survey='ztf', testid='test', teardown=False) -> None:
                     pass
                 else:
                     print(f'Deleted bucket {bucket_name}')
+            else:
+                print(f'Skipped existing bucket: {bucket_name}')
 
         # -- Upload any files
         if not teardown and len(files) > 0:
