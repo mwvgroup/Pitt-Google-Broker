@@ -246,6 +246,6 @@ alertDict = bdu.alert_avro_to_dict(f'{localdir}/{filename}')
 
 # load the dict to BigQuery
 table_id = f'{survey}_alerts_{testid}.alerts'
-bgu.bq_insert_rows(table_id, [alertDict])
+bgu.insert_rows_bigquery(table_id, [alertDict])
 ```
 <!-- fe Download and look at an Avro -->

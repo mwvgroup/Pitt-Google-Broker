@@ -18,9 +18,13 @@ echo "Stopping Consumer instance..."
 # echo "Draining Dataflow jobs..."
 # ./drain_beam_jobs.sh "$PROJECT_ID"  # waits for status = "Drained" or "Cancelled"
 
-#--- Reset Pub/Sub counters
+#--- Process Pub/Sub counters
 echo
 echo "Waiting 2 min so Pub/Sub counters have time to register the plateau..."
 sleep 120
-echo "Resetting Pub/Sub counters..."
-./reset_ps_counters.sh "$PROJECT_ID" "$testid" "$survey"
+echo "Processing Pub/Sub counters..."
+if [ "$testid" = "False" ]; then
+    python3 process_pubsub_counters.py --survey="$survey" --production
+else
+    python3 process_pubsub_counters.py --survey="$survey" --testid="$testid"
+fi

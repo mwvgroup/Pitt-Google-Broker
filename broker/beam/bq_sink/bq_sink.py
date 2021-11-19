@@ -9,9 +9,10 @@ Module Documentation
 
 import argparse
 import logging
+
 import apache_beam as beam
 from apache_beam.io import BigQueryDisposition as bqdisp
-from apache_beam.io import ReadFromPubSub, WriteToPubSub, WriteToBigQuery
+from apache_beam.io import ReadFromPubSub, WriteToBigQuery
 from apache_beam.io.gcp.bigquery_tools import RetryStrategy
 from apache_beam.options.pipeline_options import PipelineOptions
 
@@ -22,6 +23,7 @@ from broker_utils import schema_maps as bsm
 def load_schema_map(SURVEY, TESTID):
     # load the schema map from the broker bucket in Cloud Storage
     return bsm.load_schema_map(SURVEY, TESTID)
+
 
 def sink_configs(PROJECTID, SURVEY):
     """Configuration dicts for all pipeline sinks.
@@ -41,10 +43,10 @@ def sink_configs(PROJECTID, SURVEY):
                 'insert_retry_strategy': RetryStrategy.RETRY_ON_TRANSIENT_ERROR,
             },
             'PS_generic': {
-                'with_attributes': False,  # currently using bytes
+                'with_attributes': True,
                 #  may want to use these in the future:
-                'id_label': None,
-                'timestamp_attribute': None
+                # 'id_label': None,
+                'timestamp_attribute': 'publish_time'
             },
     }
 
@@ -55,14 +57,14 @@ def sink_configs(PROJECTID, SURVEY):
 
     return sink_configs
 
+
 def run(schema_map, sources, sinks, sink_configs, pipeline_args):
     """Runs the Alerts -> BigQuery pipeline.
     """
     pipeline_options = PipelineOptions(pipeline_args, streaming=True)
 
     with beam.Pipeline(options=pipeline_options) as pipeline:
-
-        #-- Read from PS and extract data as dicts
+        # -- Read from PS and extract data as dicts
         alert_bytes = (
             pipeline | 'ReadFromPubSub' >>
             ReadFromPubSub(topic=sources['PS_alerts'])
@@ -76,13 +78,13 @@ def run(schema_map, sources, sinks, sink_configs, pipeline_args):
             beam.ParDo(bbt.StripCutouts(schema_map))
         )
 
-        #-- Upload original alert data to BQ
+        # -- Upload original alert data to BQ
         adicts_deadletters = (
             alert_dicts | 'Write Alert BigQuery' >>
             WriteToBigQuery(sinks['BQ_alerts'], **sink_configs['BQ_generic'])
         )  # TODO: track deadletters, get them uploaded to bq
 
-        #-- Extract the DIA source info and upload to BQ
+        # -- Extract the DIA source info and upload to BQ
         dias_dicts = (
             alert_dicts | 'extractDIASource' >>
             beam.ParDo(bbt.ExtractDIASource(schema_map))
@@ -112,7 +114,7 @@ if __name__ == "__main__":  # noqa
     parser.add_argument(
         "--source_PS_alerts",
         help="Pub/Sub topic to read alerts from.\n"
-        '"projects/<PROJECT_NAME>/topics/<TOPIC_NAME>".',
+             '"projects/<PROJECT_NAME>/topics/<TOPIC_NAME>".',
     )
     parser.add_argument(
         "--sink_BQ_alerts",
@@ -128,8 +130,8 @@ if __name__ == "__main__":  # noqa
     schema_map = load_schema_map(known_args.SURVEY, known_args.TESTID)
     sources = {'PS_alerts': known_args.source_PS_alerts}
     sinks = {
-            'BQ_alerts': known_args.sink_BQ_alerts,
-            'BQ_diasource': known_args.sink_BQ_diasource,
+        'BQ_alerts': known_args.sink_BQ_alerts,
+        'BQ_diasource': known_args.sink_BQ_diasource,
     }
     sink_configs = sink_configs(known_args.PROJECTID, known_args.SURVEY)
 
