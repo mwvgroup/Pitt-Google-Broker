@@ -21,7 +21,7 @@ def publish_pubsub(
     topic_name: str,
     message: Union[bytes, dict],
     project_id: Optional[str] = None,
-    attrs: dict = {},
+    attrs: Optional[dict] = None,
     publisher: Optional[pubsub_v1.PublisherClient] = None
 ) -> str:
     """Publish messages to a Pub/Sub topic.
@@ -52,16 +52,16 @@ def publish_pubsub(
     """
     if project_id is None:
         project_id = pgb_project_id
-
     if publisher is None:
         publisher = pubsub_v1.PublisherClient()
+    if attrs is None:
+        attrs = {}
 
-    if type(message) == dict:
+    # enforce bytes type for message
+    if isinstance(message, dict):
         message = json.dumps(message).encode('utf-8')
-    try:
-        assert type(message) == bytes
-    except AssertionError:
-        raise ValueError('`message` must be bytes or a dict.')
+    if not isinstance(message, bytes):
+        raise TypeError('`message` must be bytes or a dict.')
 
     topic_path = publisher.topic_path(project_id, topic_name)
 
