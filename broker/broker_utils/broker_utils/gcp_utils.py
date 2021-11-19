@@ -166,7 +166,8 @@ def streamingPull_pubsub(
     callback: Callable[[PubsubMessage], None],
     project_id: str = None,
     timeout: int = 10,
-    block: bool = True
+    block: bool = True,
+    flow_control: Optional[dict] = None,
 ) -> Union[None, StreamingPullFuture]:
     """Pull and process Pub/Sub messages continuously in a background thread.
 
@@ -199,12 +200,15 @@ def streamingPull_pubsub(
     if project_id is None:
         project_id = pgb_project_id
 
+    if flow_control is None:
+        flow_control = {}
+
     subscriber = pubsub_v1.SubscriberClient()
     subscription_path = subscriber.subscription_path(project_id, subscription_name)
 
     # start receiving and processing messages in a background thread
     streaming_pull_future = subscriber.subscribe(
-        subscription_path, callback
+        subscription_path, callback, flow_control=flow_control
     )
 
     if block:
