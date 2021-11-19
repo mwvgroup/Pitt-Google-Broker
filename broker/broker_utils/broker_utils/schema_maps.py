@@ -6,14 +6,16 @@ Cloud Storage.
 
 from google.cloud import storage
 # from typing import List, Tuple, Optional, Union, Generator
-from typing import Optional
+from typing import Optional, Union
 import yaml
 
 pgb_project_id = 'ardent-cycling-243415'
 storage_client = storage.Client()
 
 
-def load_schema_map(survey: str, testid: str, schema: Optional[str] =None) -> dict:
+def load_schema_map(
+    survey: str, testid: Union[str, bool], schema: Optional[str] = None
+) -> dict:
     """
     Args:
         survey: Name of the survey associated with the broker instance.
@@ -23,6 +25,7 @@ def load_schema_map(survey: str, testid: str, schema: Optional[str] =None) -> di
         testid: Name of the testid associated with the broker instance.
                 Along with the `survey`, this determines which GCS bucket the
                 schema map will be loaded from.
+                If this is a bool, it must be False (indicates a production instance).
         schema: Survey name of the schema to be returned. If not provided, the
                 map corresponding to `survey` will be returned.
     """
@@ -38,7 +41,7 @@ def load_schema_map(survey: str, testid: str, schema: Optional[str] =None) -> di
     return schema_map
 
 def _broker_bucket_name(survey, testid):
-    if testid == "False":
+    if testid in ["False", False]:
         return f'{pgb_project_id}-{survey}-broker_files'
     else:
         return f'{pgb_project_id}-{survey}-broker_files-{testid}'

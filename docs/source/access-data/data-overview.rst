@@ -44,6 +44,10 @@ and then pull and process the message stream(s)
       - Salt2 fits + alert contents of ZTF alerts that passed quality cuts and the
         likely-extragalactic-transients filter.
 
+    * - ztf-SuperNNova
+      - SuperNNova classification results (Ia vs non-Ia) + alert contents of ZTF
+        alerts that passed the likely-extragalactic-transients filter.
+
     * - ztf-alert_avros
       - Notification stream from the ztf-alert_avros Cloud Storage bucket indicating
         that a new alert packet is in file storage.

@@ -11,6 +11,7 @@ Night Conductor
 See also
 
 -   :doc:`auto-scheduler`
+-   :doc:`tracking-metadata.rst`
 -   :doc:`../../broker/run-a-broker-instance/test-an-instance`
 
 What Does Night Conductor Do?
@@ -84,11 +85,8 @@ If the metadata attribute ``NIGHT=END``, night conductor runs the script
 2. Stops the Dataflow jobs. The jobs will stop accepting new alerts and
    finish processing those already in the pipeline. Night conductor
    waits for their status to change to "Drained" or "Cancelled".
-3. Resets the Pub/Sub counters. These are subscriptions that the broker
-   uses to count the number of elements received and processed each
-   night (see the instance
-   :ref:`Dashboard <broker/run-a-broker-instance/view-resources:dashboards>`). They have name stubs
-   like ``<topic_name>-counter``.
+3. Processes the Pub/Sub "counter" subscriptions, extracts metadata, and stores
+   it in BigQuery. See :doc:`tracking-metadata.rst`.
 
 Where to look if there's a problem
 ----------------------------------
