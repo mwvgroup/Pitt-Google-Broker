@@ -204,7 +204,9 @@ def bq_insert_rows(table_id: str, rows: List[dict]):
     return errors
 
 
-def query_bigquery(query: str, project_id: Optional[str] = None):
+def query_bigquery(
+    query: str, project_id: Optional[str] = None
+) -> bigquery.job.QueryJob:
     """Query BigQuery.
 
     Example query:

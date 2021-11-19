@@ -45,6 +45,8 @@ def run(msg: dict, context) -> None:
     For args descriptions, see:
     https://cloud.google.com/functions/docs/writing/background#function_parameters
 
+    This function is intended to be triggered by Pub/Sub messages, via Cloud Functions.
+
     Args:
         msg: Pub/Sub message data and attributes.
             `data` field contains the message data in a base64-encoded string.
@@ -56,28 +58,34 @@ def run(msg: dict, context) -> None:
                 `timestamp`: the Pub/Sub message publish time.
                 `event_type`: for example: "google.pubsub.topic.publish".
                 `resource`: the resource that emitted the event.
+            This argument is not currently used in this function, but the argument is
+            required by Cloud Functions, which will call it.
     """
     alert_dict = json.loads(base64.b64decode(msg["data"]).decode("utf-8"))
 
     # classify
     try:
         snn_dict = _classify_with_snn(alert_dict)
+
+    # if something goes wrong, let's just log it and exit gracefully
+    # once we know more about what might go wrong, we can make this more specific
     except Exception as e:
         logger.log_text(f"Classify error: {e}", severity="DEBUG")
 
-    # announce to pubsub
-    attrs = {
-        schema_map["objectId"]: str(alert_dict[schema_map["objectId"]]),
-        schema_map["sourceId"]: str(alert_dict[schema_map["sourceId"]]),
-    }
-    gcp_utils.publish_pubsub(
-        ps_topic, {"alert": alert_dict, "SuperNNova": snn_dict}, attrs=attrs
-    )
+    else:
+        # announce to pubsub
+        attrs = {
+            schema_map["objectId"]: str(alert_dict[schema_map["objectId"]]),
+            schema_map["sourceId"]: str(alert_dict[schema_map["sourceId"]]),
+        }
+        gcp_utils.publish_pubsub(
+            ps_topic, {"alert": alert_dict, "SuperNNova": snn_dict}, attrs=attrs
+        )
 
-    # store in bigquery
-    errors = gcp_utils.insert_rows_bigquery(bq_table, [snn_dict])
-    if len(errors) > 0:
-        logger.log_text(f"BigQuery insert error: {errors}", severity="DEBUG")
+        # store in bigquery
+        errors = gcp_utils.insert_rows_bigquery(bq_table, [snn_dict])
+        if len(errors) > 0:
+            logger.log_text(f"BigQuery insert error: {errors}", severity="DEBUG")
 
 
 def _classify_with_snn(alert_dict: dict) -> dict:
