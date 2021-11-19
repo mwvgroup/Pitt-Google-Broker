@@ -91,7 +91,7 @@ def alert_avro_to_dict(alert_avro: Union[str, bytes]) -> dict:
             "It must be either the path to a valid Avro file as a string, "
             "or bytes encoding an Avro-formated alert."
         )
-        raise ValueError(msg)
+        raise TypeError(msg)
 
     # we expect the list to contain exactly 1 entry
     if len(alert_list) == 0:
@@ -107,7 +107,7 @@ def alert_dict_to_dataframe(alert_dict: dict, schema_map: dict) -> pd.DataFrame:
     Adapted from: https://github.com/ZwickyTransientFacility/ztf-avro-alert/blob/master/notebooks/Filtering_alerts.ipynb
     """
     if not isinstance(schema_map, dict):
-        raise ValueError("`schema_map` is not a valid dictionary.")
+        raise TypeError("`schema_map` is not a dictionary.")
 
     src_df = pd.DataFrame(alert_dict[schema_map['source']], index=[0])
     prvs_df = pd.DataFrame(alert_dict[schema_map['prvSources']])
