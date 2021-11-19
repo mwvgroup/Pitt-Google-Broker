@@ -4,6 +4,8 @@
 survey and broker data.
 """
 
+from typing import Tuple
+
 from astropy.time import Time
 import fastavro
 from io import BytesIO
@@ -102,6 +104,7 @@ def alert_avro_to_dict(alert_avro: Union[str, bytes]) -> dict:
     alert_dict = alert_list[0]
     return alert_dict
 
+
 def alert_dict_to_dataframe(alert_dict: dict, schema_map: dict) -> pd.DataFrame:
     """ Packages an alert into a dataframe.
     Adapted from: https://github.com/ZwickyTransientFacility/ztf-avro-alert/blob/master/notebooks/Filtering_alerts.ipynb
@@ -143,12 +146,14 @@ def _drop_cutouts(alert_dict: dict, schema_map: dict) -> dict:
 
     return alert_lite
 
-def mag_to_flux(mag: float, zeropoint: float, magerr: float) -> Tuple[float,float]:
+
+def mag_to_flux(mag: float, zeropoint: float, magerr: float) -> Tuple[float, float]:
     """ Converts an AB magnitude and its error to fluxes.
     """
     flux = 10 ** ((zeropoint - mag) / 2.5)
     fluxerr = flux * magerr * np.log(10 / 2.5)
     return flux, fluxerr
+
 
 def jd_to_mjd(jd: float) -> float:
     """ Converts Julian Date to modified Julian Date.

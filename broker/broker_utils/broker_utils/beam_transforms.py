@@ -11,6 +11,7 @@ class ExtractAlertDict(DoFn):
     """Extract the alert packet from a Pub/Sub message (bytes object) and
     return it as a dictionary.
     """
+
     def process(self, msg):
         from io import BytesIO
         from fastavro import reader
@@ -24,6 +25,7 @@ class ExtractAlertDict(DoFn):
 class StripCutouts(DoFn):
     """Drop the cutouts from the alert dictionary.
     """
+
     def __init__(self, schema_map):
         super().__init__()
         self.schema_map = schema_map
@@ -46,7 +48,7 @@ class StripCutouts(DoFn):
                     psource.pop(co, None)
 
         elif schema_map['SURVEY'] == 'ztf':
-            alertStripped = {k:v for k, v in alertDict.items() if k not in cutouts}
+            alertStripped = {k: v for k, v in alertDict.items() if k not in cutouts}
 
         return [alertStripped]
 
@@ -55,6 +57,7 @@ class ExtractDIASource(DoFn):
     """Extract the DIA source` fields and information needed for provenance
     from the alertDict.
     """
+
     def __init__(self, schema_map):
         super().__init__()
         self.schema_map = schema_map
@@ -70,13 +73,13 @@ class ExtractDIASource(DoFn):
 
     def process_decat(self, alertDict):
         # get source
-        dup_cols = ['ra','dec']  # names duplicated in object and source levels
+        dup_cols = ['ra', 'dec']  # names duplicated in object and source levels
         sourcename = lambda x: x if x not in dup_cols else f'source_{x}'
-        src = {sourcename(k):v for k,v in alertDict['triggersource'].items()}
+        src = {sourcename(k): v for k, v in alertDict['triggersource'].items()}
 
         # get info for provenance
         notmetakeys = ['triggersource', 'sources']
-        metadict = {k:v for k,v in alertDict.items() if k not in notmetakeys}
+        metadict = {k: v for k, v in alertDict.items() if k not in notmetakeys}
 
         # get string of previous sources' sourceid, comma-separated
         if alertDict['sources'] is not None:
@@ -92,11 +95,11 @@ class ExtractDIASource(DoFn):
     def process_ztf(self, alertDict):
         # get candidate
         dup_cols = ['candid']  # candid is repeated, drop the one nested here
-        cand = {k:v for k,v in alertDict['candidate'].items() if k not in dup_cols}
+        cand = {k: v for k, v in alertDict['candidate'].items() if k not in dup_cols}
 
         # get info for provenance
         metakeys = ['schemavsn', 'publisher', 'objectId', 'candid']
-        metadict = {k:v for k,v in alertDict.items() if k in metakeys}
+        metadict = {k: v for k, v in alertDict.items() if k in metakeys}
 
         # get string of previous candidates' candid, comma-separated
         if alertDict['prv_candidates'] is not None:
@@ -108,6 +111,7 @@ class ExtractDIASource(DoFn):
         # package it up and return
         candidate = {**metadict, **cand, 'prv_candidates_candids': prv_candids}
         return [candidate]
+
 
 class FormatDictForPubSub(DoFn):
     def process(self, alertDict):

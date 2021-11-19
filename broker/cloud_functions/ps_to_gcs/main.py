@@ -6,18 +6,18 @@ fixing the schema first, if necessary.
 """
 
 import base64
-from exceptions import SchemaParsingError
+import os
+import pickle
+import re
+from pathlib import Path
+from tempfile import SpooledTemporaryFile
+
 import fastavro
 from google.cloud import logging
 from google.cloud import storage
-import os
-from pathlib import Path
-import pickle
-import re
-from tempfile import SpooledTemporaryFile
 
 from broker_utils import schema_maps
-
+from exceptions import SchemaParsingError
 
 PROJECT_ID = os.getenv('GCP_PROJECT')
 TESTID = os.getenv('TESTID')
@@ -41,6 +41,7 @@ bucket = storage_client.get_bucket(bucket_name)
 # By default, spool data in memory to avoid IO unless data is too big
 # LSST alerts are anticipated at 80 kB, so 150 kB should be plenty
 max_alert_packet_size = 150000
+
 
 class TempAlertFile(SpooledTemporaryFile):
     """Subclass of SpooledTemporaryFile that is tied into the log
@@ -66,6 +67,7 @@ class TempAlertFile(SpooledTemporaryFile):
     def seekable(self):  # necessary so that fastavro can write to the file
         return self._file.seekable
 
+
 def run(msg, context) -> None:
     """ Entry point for the Cloud Function
 
@@ -85,6 +87,7 @@ def run(msg, context) -> None:
                 `resource`: the resource that emitted the event.
     """
     upload_bytes_to_bucket(msg, context)
+
 
 def upload_bytes_to_bucket(msg, context) -> None:
     """Uploads the msg data bytes to a GCP storage bucket. Prior to storage,
@@ -132,6 +135,7 @@ def create_filename(alert, attributes):
     filename = f'{oid}.{sid}.{topic}.avro'
     return filename
 
+
 def extract_alert_dict(temp_file):
     """Extracts and returns the alert data as a dict wrapped in a list.
     """
@@ -139,6 +143,7 @@ def extract_alert_dict(temp_file):
     temp_file.seek(0)
     alert = [r for r in fastavro.reader(temp_file)]
     return alert
+
 
 def fix_schema(temp_file, alert, data, filename):
     """ Rewrites the temp_file with a corrected schema header
@@ -168,6 +173,7 @@ def fix_schema(temp_file, alert, data, filename):
     temp_file.seek(0)
 
     logger.log_text(f'Schema header reformatted for {SURVEY} v{version}; file {filename}')
+
 
 def guess_schema_version(alert_bytes: bytes) -> str:
     """Retrieve the ZTF schema version
