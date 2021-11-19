@@ -108,7 +108,7 @@ def _resources(service, survey='ztf', testid='test'):
     if service == 'BQ':
         datasets = {
             f'{survey}_alerts':
-                ['alerts', 'DIASource', 'salt2', 'SuperNNova']
+                ['alerts', 'DIASource', 'salt2', 'SuperNNova', 'metadata']
         }
 
         # append the testid to the dataset name only
@@ -151,6 +151,8 @@ def _resources(service, survey='ztf', testid='test'):
 
     if service == 'PS':
         topics = {  # '<topic_name>': ['<subscription_name>', ]
+                f'{survey}-BigQuery':
+                    [f'{survey}-BigQuery-counter'],
                 f'{survey}-alert_avros':
                     [f'{survey}-alert_avros-counter'],
                 f'{survey}-alerts':

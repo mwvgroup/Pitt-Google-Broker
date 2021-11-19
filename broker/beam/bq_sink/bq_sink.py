@@ -41,10 +41,10 @@ def sink_configs(PROJECTID, SURVEY):
                 'insert_retry_strategy': RetryStrategy.RETRY_ON_TRANSIENT_ERROR,
             },
             'PS_generic': {
-                'with_attributes': False,  # currently using bytes
+                'with_attributes': True,
                 #  may want to use these in the future:
-                'id_label': None,
-                'timestamp_attribute': None
+                # 'id_label': None,
+                'timestamp_attribute': 'publish_time'
             },
     }
 
