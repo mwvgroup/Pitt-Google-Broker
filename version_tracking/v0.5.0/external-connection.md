@@ -60,13 +60,13 @@ PROJECT=$GOOGLE_CLOUD_PROJECT
 
 # create a new Role specifically for this purpose
 roleid="pubsub.topics.attachSubscription"
-roleyaml="/Users/troyraen/Downloads/PS_attachSubscription_role.yaml"
+roleyaml="PS_attachSubscription_role.yaml"
 gcloud iam roles create $roleid --project=$PROJECT --file=$roleyaml
 
 # set a policy on the topic that grants allUsers this role
 TOPIC="test"
 topic_path="projects/${PROJECT}/topics/${TOPIC}"
-fname="/Users/troyraen/Downloads/topic_policy.yaml"
+fname="topic_policy.yaml"
 # download the topic to get the etag
 gcloud pubsub topics get-iam-policy $topic_path --format yaml > $fname
 # update the file with the new policy
@@ -121,4 +121,4 @@ smsg = pgbps.pull(subscription, project_id=my_project)  # EXECUTE FROM EXTERNAL 
 
 ## Setup stream-looper VM and topic
 
-see [stream-looper.md](stream-looper.md) 
+see [stream-looper.md](stream-looper.md)

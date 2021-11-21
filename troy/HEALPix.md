@@ -22,14 +22,13 @@ from astropy.coordinates import ICRS, SkyCoord
 from astropy_healpix import HEALPix
 
 # instantiate a HEALPix pixelization
-n = 11  # ~3 arcsec^2 pixel area
-n = 12  # ~0.74 arcsec^2 pixel area
-n = 13  # ~0.18 arcsec^2 pixel area
+n = 11  # ~3 arcmin^2 pixel area (from O'Mullane fig 6, but note it incorrectly states unit as arcsec^2)
+n = 12  # ~0.74 arcmin^2 pixel area
+n = 13  # ~0.18 arcmin^2 pixel area
 nside = 2**n  # must be a power of 2. the power of 2 = HTM depth
 frame = ICRS()
-order = 'nested'
+order = 'nested'  # efficient for nearest neighbor searches
 hp = HEALPix(nside=nside, order=order, frame=frame)
-# pixel area does not match expectations in comments above (from O'Mullane Figure 6)
 hp.pixel_area.to(u.arcsec*u.arcsec)
 
 cv = {'RAdeg': 313.2196851961664, 'DEdeg': -2.6646887231578, 'name': "J2052-0239"}

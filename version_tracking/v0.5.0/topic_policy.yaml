@@ -1,0 +1,6 @@
+etag: ACAB
+bindings:
+- members:
+  - allUsers
+  role: "projects/ardent-cycling-243415/roles/pubsub.topics.attachSubscription"
+    

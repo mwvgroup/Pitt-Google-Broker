@@ -26,6 +26,9 @@ apt-get update
 apt-get install -y python3-pip wget screen software-properties-common
 pip3 install ipython
 
+# wget https://repo.anaconda.com/archive/Anaconda3-2021.05-Linux-x86_64.sh
+# bash Anaconda-latest-Linux-x86_64.sh
+
 
 #### night conductor install
 #--- download the python requirements.txt file from GCS

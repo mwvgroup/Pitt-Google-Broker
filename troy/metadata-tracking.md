@@ -2,7 +2,8 @@
 
 ## todo
 
-- [ ]  candid should be stored as an int
+- [ ]  candid should be stored as an int, but currently using string f"{message_id}_unknown" for `alerts` stream messages that can't be matched to a candid.
+
 
 ## Testing pieces
 
