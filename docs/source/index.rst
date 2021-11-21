@@ -46,6 +46,13 @@ The Pitt-Google Broker runs on the `Google Cloud Platform <https://cloud.google.
    api/pgb-utils/pubsub
    api/pgb-utils/utils
 
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+   :caption: Working Notes
+
+   working-notes/early-dev/README
+   working-notes/troy/index
 
 ..
 .. Indices and tables

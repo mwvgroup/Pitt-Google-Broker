@@ -1,6 +1,6 @@
 # Project Notes
 
-This directory contains various project documents and notes for use by the developers. 
+This directory contains various project documents and notes for use by the developers early in the project. 
 
 
 
@@ -10,7 +10,7 @@ This directory contains various project documents and notes for use by the devel
 
 - Project notes: [here](./notes/)
 - Online LSST forum for data managment (DM): [community.lsst.org/](https://community.lsst.org/)
-- LSST-DESC Broker Workshop talks [drive.google.com/...](https://drive.google.com/drive/folders/1sjYXbdwTID3VnzZNAkcjLbjRfpwNaO_n?usp=sharing) 
+- LSST-DESC Broker Workshop talks [drive.google.com/...](https://drive.google.com/drive/folders/1sjYXbdwTID3VnzZNAkcjLbjRfpwNaO_n?usp=sharing)
 
 
 
