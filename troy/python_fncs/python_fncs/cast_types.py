@@ -55,7 +55,7 @@ def avro_to_dict(bytes_data):
     """
     if bytes_data is not None:
         with BytesIO(bytes_data) as fin:
-            alert_dicts = [r for r in fastavro.reader(fin)]  # list with single dict
+            alert_dicts = [r for r in fastavro.reader(fin)]  # assume list w single dict
         return alert_dicts[0]
 
 
@@ -70,7 +70,7 @@ def b64avro_to_dict(bytes_data):
     """
     if bytes_data is not None:
         with BytesIO(b64decode(bytes_data)) as fin:
-            alert_dicts = [r for r in fastavro.reader(fin)]  # list with single dict
+            alert_dicts = [r for r in fastavro.reader(fin)]  # assume list w single dict
         return alert_dicts[0]
 
 
