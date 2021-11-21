@@ -18,9 +18,9 @@ Public License for more details.
 You should have received a copy of the GNU General Public License
 along with pgb_broker_utils.  If not, see <http://www.gnu.org/licenses/>."""
 
-from setuptools import setup, find_packages
 import pathlib
 
+from setuptools import find_packages, setup
 
 here = pathlib.Path(__file__).parent.resolve()
 # Get the long description from the README file

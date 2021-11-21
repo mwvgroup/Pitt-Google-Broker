@@ -81,13 +81,14 @@ Module Documentation
 import argparse
 import json
 import os
-from pathlib import Path
 import shlex
 import subprocess
 import sys
+from pathlib import Path
 from warnings import warn
+
 from google.api_core.exceptions import NotFound
-from google.cloud import bigquery, pubsub_v1, logging, storage
+from google.cloud import bigquery, pubsub_v1, storage
 
 PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
 
@@ -131,12 +132,12 @@ def _resources(service, survey='ztf', testid='test'):
 
     if service == 'GCS':
         buckets = {  # '<bucket-name>': ['<file-name to upload>',]
-                f'{PROJECT_ID}-{survey}-broker_files': [],
-                f'{PROJECT_ID}-{survey}-dataflow': [],
-                f'{PROJECT_ID}-{survey}-testing_bucket':
-                    ['ztf_3.3_validschema_1154446891615015011.avro'],
-                f'{PROJECT_ID}-{survey}-alert_avros': [],
-                f'{PROJECT_ID}-{survey}-sncosmo': [],
+            f'{PROJECT_ID}-{survey}-broker_files': [],
+            f'{PROJECT_ID}-{survey}-dataflow': [],
+            f'{PROJECT_ID}-{survey}-testing_bucket':
+                ['ztf_3.3_validschema_1154446891615015011.avro'],
+            f'{PROJECT_ID}-{survey}-alert_avros': [],
+            f'{PROJECT_ID}-{survey}-sncosmo': [],
         }
         # Files are currently expected to reside in the
         # ``../../tests/test_alerts`` directory.
@@ -165,6 +166,8 @@ def _resources(service, survey='ztf', testid='test'):
                     [f'{survey}-exgalac_trans-counter'],
                 f'{survey}-salt2':
                     [f'{survey}-salt2-counter'],
+                f'{survey}-exgalac_trans_cf':
+                    [f'{survey}-exgalac_trans_cf-counter'],
                 f'{survey}-SuperNNova':
                     [f'{survey}-SuperNNova-counter'],
         }
@@ -176,6 +179,7 @@ def _resources(service, survey='ztf', testid='test'):
                 ttmp[key] = [f'{v}-{testid}' for v in val]
             topics = ttmp
         return topics
+
 
 def _do_not_delete_production_resources(survey='ztf', testid='test', teardown=True):
     """ If the user is requesting to delete resources used in production,
@@ -194,6 +198,7 @@ def _do_not_delete_production_resources(survey='ztf', testid='test', teardown=Tr
         msg = (f'\nReceived teardown={teardown} and testid={testid}.\n'
                f'Exiting to prevent the teardown of production resources.\n')
         raise ValueError(msg)
+
 
 def _confirm_options(survey, testid, teardown):
     """ Require the user to confirm options that determine
@@ -214,7 +219,7 @@ def _confirm_options(survey, testid, teardown):
     else:
         resources = f'"{survey}" resources tagged with "{testid}"'
     msg = (f'\nsetup_gcp will {behavior} all bq, gcs, and ps {resources}.\n'
-            'Continue?  [Y/n]:  ')
+           'Continue?  [Y/n]:  ')
     continue_with_setup = input(msg) or 'Y'
 
     if continue_with_setup not in ['Y', 'y']:
@@ -244,13 +249,17 @@ def setup_bigquery(survey='ztf', testid='test', teardown=False) -> None:
     for dataset, tables in datasets.items():
         if teardown:
             # Delete dataset
-            kwargs = {'delete_contents':True, 'not_found_ok':True}
+            kwargs = {'delete_contents': True, 'not_found_ok': True}
             bigquery_client.delete_dataset(dataset, **kwargs)
             print(f'Deleted dataset {dataset}')
         else:
             # Create dataset
-            bigquery_client.create_dataset(dataset, exists_ok=True)
-            print(f'Created dataset (skipped if previously existed): {dataset}')
+            try:
+                bigquery_client.get_dataset(dataset)
+                print(f"Skipping existing dataset: {dataset}")
+            except NotFound:
+                bigquery_client.create_dataset(dataset)
+                print(f'Created dataset: {dataset}')
 
             # create the tables
             for table in tables:
@@ -259,9 +268,11 @@ def setup_bigquery(survey='ztf', testid='test', teardown=False) -> None:
                     bigquery_client.get_table(table_id)
                     print(f'Skipping existing table: {table_id}.')
                 except NotFound:
+                    # use CLI so we can create the table from a schema file
                     bqmk = f'bq mk --table {PROJECT_ID}:{dataset}.{table} templates/bq_{survey}_{table}_schema.json'
                     out = subprocess.check_output(shlex.split(bqmk))
                     print(f'{out}')  # should be a success message
+
 
 def setup_dashboard(survey='ztf', testid='test', teardown=False) -> None:
     """Create a monitoring dashboard for the broker instance.
@@ -311,6 +322,7 @@ def setup_dashboard(survey='ztf', testid='test', teardown=False) -> None:
         gdelete = f'gcloud monitoring dashboards delete projects/{PROJECT_ID}/dashboards/{dashboard_id}'
         __ = subprocess.check_output(shlex.split(gdelete))
 
+
 def _setup_dashboard_json(survey='ztf', testid='test'):
     """Create a new dashboard config json file from a template.
     """
@@ -323,8 +335,8 @@ def _setup_dashboard_json(survey='ztf', testid='test'):
     # change the resource names
     rnames = _setup_dashboard_resource_names(survey=survey, testid=testid)
     # {'old-name': 'new-name'}
-    for k,v in rnames.items():
-        dstring = dstring.replace(k,v)
+    for k, v in rnames.items():
+        dstring = dstring.replace(k, v)
 
     # write the new config file
     if testid != False:
@@ -336,6 +348,7 @@ def _setup_dashboard_json(survey='ztf', testid='test'):
 
     return fname
 
+
 def _setup_dashboard_resource_names(survey='ztf', testid='test'):
     """Get dict mapping resources {'old-name': 'new-name',} which will be used
     to do a find-and-replace in the dashboard's json config file.
@@ -345,8 +358,8 @@ def _setup_dashboard_resource_names(survey='ztf', testid='test'):
     psold = _resources('PS', survey='ztf', testid=False)
     psnew = _resources('PS', survey=survey, testid=testid)
     # get topic names
-    pstopics = {old:new for old,new in zip(psold.keys(),psnew.keys())}
-    #--- Fix some problems: (yes, this is messy)
+    pstopics = {old: new for old, new in zip(psold.keys(), psnew.keys())}
+    # --- Fix some problems: (yes, this is messy)
     # 1) The `alerts_pure` topic/subscription name gets mixed up. fix it
     pspure = {f'-{testid}_pure': f'_pure-{testid}'}
     # 2) Subscription names are topic names with a suffix appended.
@@ -358,7 +371,7 @@ def _setup_dashboard_resource_names(survey='ztf', testid='test'):
     # VMs and Dataflow jobs
     oold = _resources('dashboard', survey='ztf', testid=False)
     onew = _resources('dashboard', survey=survey, testid=testid)
-    othernames = {old:new for old,new in zip(oold,onew)}
+    othernames = {old: new for old, new in zip(oold, onew)}
 
     # add the survey and testid, merge the dicts, and return
     resource_maps = {
@@ -370,6 +383,7 @@ def _setup_dashboard_resource_names(survey='ztf', testid='test'):
         **othernames
     }
     return resource_maps
+
 
 def setup_buckets(survey='ztf', testid='test', teardown=False) -> None:
     """Create new storage buckets and upload testing files.
@@ -390,7 +404,7 @@ def setup_buckets(survey='ztf', testid='test', teardown=False) -> None:
     storage_client = storage.Client()
 
     for bucket_name, files in buckets.items():
-        #-- Create or delete buckets
+        # -- Create or delete buckets
         try:
             bucket = storage_client.get_bucket(bucket_name)
         except NotFound:
@@ -408,9 +422,11 @@ def setup_buckets(survey='ztf', testid='test', teardown=False) -> None:
                     pass
                 else:
                     print(f'Deleted bucket {bucket_name}')
+            else:
+                print(f'Skipped existing bucket: {bucket_name}')
 
-        #-- Upload any files
-        if not teardown and len(files)>0:
+        # -- Upload any files
+        if not teardown and len(files) > 0:
             bucket = storage_client.get_bucket(bucket_name)
             for filename in files:
                 blob = bucket.blob(filename)
@@ -418,6 +434,7 @@ def setup_buckets(survey='ztf', testid='test', teardown=False) -> None:
                 with inpath.open('rb') as infile:
                     blob.upload_from_file(infile)
                 print(f'Uploaded {inpath} to {bucket_name}')
+
 
 def setup_pubsub(survey='ztf', testid='test', teardown=False) -> None:
     """ Create new Pub/Sub topics and subscriptions.
@@ -438,7 +455,7 @@ def setup_pubsub(survey='ztf', testid='test', teardown=False) -> None:
 
     for topic, subscriptions in topics.items():
 
-        #-- Create or delete topic
+        # -- Create or delete topic
         topic_path = publisher.topic_path(PROJECT_ID, topic)
         if teardown:
             # Delete topic
@@ -456,7 +473,7 @@ def setup_pubsub(survey='ztf', testid='test', teardown=False) -> None:
                 publisher.create_topic(name=topic_path)
                 print(f'Created topic {topic}')
 
-        #-- Create or delete subscriptions
+        # -- Create or delete subscriptions
         for sub_name in subscriptions:
             sub_path = subscriber.subscription_path(PROJECT_ID, sub_name)
             if teardown:
@@ -474,6 +491,7 @@ def setup_pubsub(survey='ztf', testid='test', teardown=False) -> None:
                     # Create subscription
                     subscriber.create_subscription(name=sub_path, topic=topic_path)
                     print(f'Created subscription {sub_name}')
+
 
 def auto_setup(survey='ztf', testid='test', teardown=False, confirmed=False) -> None:
     """Create and setup GCP products required by the ``broker`` package.
@@ -546,4 +564,4 @@ if __name__ == "__main__":
                testid=known_args.testid,
                teardown=known_args.teardown,
                confirmed=known_args.confirmed
-    )
+               )

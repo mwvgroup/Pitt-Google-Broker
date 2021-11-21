@@ -4,8 +4,10 @@
 """This module stores alert data in BigQuery tables."""
 
 import base64
-from google.cloud import logging
 import os
+from typing import Dict, Optional
+
+from google.cloud import functions_v1, logging
 
 from broker_utils import data_utils, gcp_utils, schema_maps
 
@@ -28,7 +30,7 @@ if TESTID != "False":
 schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
 
 
-def run(msg: dict, context) -> None:
+def run(msg: dict, context: functions_v1.context.Context) -> None:
     """Send alert data to various BigQuery tables.
 
     Args:
@@ -44,14 +46,14 @@ def run(msg: dict, context) -> None:
     )
 
     # send the alert to BigQuery tables
-    a_table = insert_rows_alerts(alert_dict)
-    d_table = insert_rows_DIASource(alert_dict)
+    alert_table = insert_rows_alerts(alert_dict)
+    source_table = insert_rows_DIASource(alert_dict)
 
     # announce what's been done
-    publish_pubsub(alert_dict, [a_table, d_table])
+    publish_pubsub(alert_dict, [alert_table, source_table])
 
 
-def insert_rows_alerts(alert_dict):
+def insert_rows_alerts(alert_dict: dict):
     """Insert rows into the `alerts` table via the streaming API."""
     # send to bigquery
     table_id = f"{bq_dataset}.alerts"
@@ -68,7 +70,7 @@ def insert_rows_alerts(alert_dict):
     return table_dict
 
 
-def insert_rows_DIASource(alert_dict):
+def insert_rows_DIASource(alert_dict: dict):
     """Insert rows into the `DIASource` table via the streaming API."""
     table_id = f"{bq_dataset}.DIASource"
 
@@ -92,7 +94,7 @@ def insert_rows_DIASource(alert_dict):
     return table_dict
 
 
-def _extract_ztf_source(alert_dict):
+def _extract_ztf_source(alert_dict: dict):
     # get candidate
     dup_cols = ["candid"]  # candid is repeated, drop the one nested here
     cand = {k: v for k, v in alert_dict["candidate"].items() if k not in dup_cols}
@@ -103,8 +105,11 @@ def _extract_ztf_source(alert_dict):
 
     # get string of previous candidates' candid, comma-separated
     if alert_dict["prv_candidates"] is not None:
-        tmp = [pc["candid"] for pc in alert_dict["prv_candidates"]]
-        prv_candids = ",".join([f"{cid}" for cid in tmp if cid is not None])
+        prv_candids = ",".join(
+            str(pc["candid"])
+            for pc in alert_dict["prv_candidates"]
+            if pc["candid"] is not None
+        )
     else:
         prv_candids = None
 
@@ -113,7 +118,7 @@ def _extract_ztf_source(alert_dict):
     return source_dict
 
 
-def _extract_decat_source(alert_dict):
+def _extract_decat_source(alert_dict: dict):
     # get source
     dup_cols = ["ra", "dec"]  # names duplicated in object and source levels
 
@@ -138,7 +143,7 @@ def _extract_decat_source(alert_dict):
     return source_dict
 
 
-def publish_pubsub(alert_dict, table_dicts):
+def publish_pubsub(alert_dict: dict, table_dicts: Dict[str, Optional[dict]]):
     """Announce the table storage operation to Pub/Sub."""
     # collect attributes
     attrs = {

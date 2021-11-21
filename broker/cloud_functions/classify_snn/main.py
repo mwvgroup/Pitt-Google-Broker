@@ -18,7 +18,6 @@ from broker_utils import data_utils, gcp_utils, schema_maps
 PROJECT_ID = os.getenv("GCP_PROJECT")
 TESTID = os.getenv("TESTID")
 SURVEY = os.getenv("SURVEY")
-assert SURVEY in ["ztf", "decat"]
 
 # connect to the logger
 logging_client = logging.Client()
@@ -46,6 +45,8 @@ def run(msg: dict, context) -> None:
     For args descriptions, see:
     https://cloud.google.com/functions/docs/writing/background#function_parameters
 
+    This function is intended to be triggered by Pub/Sub messages, via Cloud Functions.
+
     Args:
         msg: Pub/Sub message data and attributes.
             `data` field contains the message data in a base64-encoded string.
@@ -57,22 +58,34 @@ def run(msg: dict, context) -> None:
                 `timestamp`: the Pub/Sub message publish time.
                 `event_type`: for example: "google.pubsub.topic.publish".
                 `resource`: the resource that emitted the event.
+            This argument is not currently used in this function, but the argument is
+            required by Cloud Functions, which will call it.
     """
-    # logger.log_text(f"{type(msg['data'])}', severity='DEBUG")
-    # logger.log_text(f"{msg['data']}', severity='DEBUG")
-
     alert_dict = json.loads(base64.b64decode(msg["data"]).decode("utf-8"))
-    attrs = {
-        schema_map["objectId"]: str(alert_dict[schema_map["objectId"]]),
-        schema_map["sourceId"]: str(alert_dict[schema_map["sourceId"]]),
-    }
 
-    snn_dict = _classify_with_snn(alert_dict)
+    # classify
+    try:
+        snn_dict = _classify_with_snn(alert_dict)
 
-    gcp_utils.publish_pubsub(
-        ps_topic, {"alert": alert_dict, "SuperNNova": snn_dict}, attrs=attrs
-    )
-    gcp_utils.insert_rows_bigquery(bq_table, [snn_dict])
+    # if something goes wrong, let's just log it and exit gracefully
+    # once we know more about what might go wrong, we can make this more specific
+    except Exception as e:
+        logger.log_text(f"Classify error: {e}", severity="DEBUG")
+
+    else:
+        # announce to pubsub
+        attrs = {
+            schema_map["objectId"]: str(alert_dict[schema_map["objectId"]]),
+            schema_map["sourceId"]: str(alert_dict[schema_map["sourceId"]]),
+        }
+        gcp_utils.publish_pubsub(
+            ps_topic, {"alert": alert_dict, "SuperNNova": snn_dict}, attrs=attrs
+        )
+
+        # store in bigquery
+        errors = gcp_utils.insert_rows_bigquery(bq_table, [snn_dict])
+        if len(errors) > 0:
+            logger.log_text(f"BigQuery insert error: {errors}", severity="DEBUG")
 
 
 def _classify_with_snn(alert_dict: dict) -> dict:
@@ -82,7 +95,7 @@ def _classify_with_snn(alert_dict: dict) -> dict:
     device = "cpu"
 
     # classify
-    ids_preds, pred_probs = classify_lcs(snn_df, model_path, device)
+    _, pred_probs = classify_lcs(snn_df, model_path, device)
 
     # extract results to dict and attach object/source ids.
     # use `.item()` to convert numpy -> python types for later json serialization
@@ -92,7 +105,7 @@ def _classify_with_snn(alert_dict: dict) -> dict:
         schema_map["sourceId"]: snn_df.sourceId,
         "prob_class0": pred_probs[0].item(),
         "prob_class1": pred_probs[1].item(),
-        "pred_class": np.argmax(pred_probs).item(),
+        "predicted_class": np.argmax(pred_probs).item(),
     }
 
     return snn_dict
