@@ -1,4 +1,4 @@
-# CV Catalog from Abril 2020
+# AbrilCVs: CV Catalog from Abril 2020
 
 - [Abril 2020](https://ui.adsabs.harvard.edu/abs/2020MNRAS.492L..40A/abstract)
 - [CV catalog on CDS](https://cdsarc.cds.unistra.fr/viz-bin/cat?J/MNRAS/492/L40) (downloaded to this dir)

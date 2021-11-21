@@ -1,4 +1,4 @@
-# Alerts for Testing Purposes
+# alerts-for-testing: Alerts for Testing Purposes
 
 There are 50 alert avro files in this directory:
 

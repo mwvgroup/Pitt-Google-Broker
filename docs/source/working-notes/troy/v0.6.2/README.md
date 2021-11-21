@@ -1,4 +1,4 @@
-# Issue \#68
+# v0.6.2: Issue \#68
 
 [\#68](https://github.com/mwvgroup/Pitt-Google-Broker/issues/68)
 

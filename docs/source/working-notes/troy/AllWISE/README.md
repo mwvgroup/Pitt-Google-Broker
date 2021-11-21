@@ -1,4 +1,4 @@
-# Cross match with the AllWISE catalog in BigQuery public datasets
+# AllWISE: Cross match with the AllWISE catalog in BigQuery public datasets
 
 Outline:
 - [Create resources and deploy to Cloud Run](#create-resources-and-deploy-to-cloud-run)

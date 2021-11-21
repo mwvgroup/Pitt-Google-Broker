@@ -1,4 +1,4 @@
-# Implementing SuperNNova Classifier
+# SuperNNova: Implementing SuperNNova Classifier
 
 SuperNNova Links:
 - [docs](https://supernnova.readthedocs.io/en/latest/index.html)

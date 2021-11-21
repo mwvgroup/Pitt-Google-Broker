@@ -1,4 +1,4 @@
-# pitt-google-broker-billing
+# billing: pitt-google-broker-billing
 
 - [Export Cloud Billing data to BigQuery](https://cloud.google.com/billing/docs/how-to/export-data-bigquery)
 

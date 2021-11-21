@@ -1,4 +1,4 @@
-## test figures.py
+# performance-figures: test figures.py
 
 ```python
 from matplotlib import pyplot as plt
