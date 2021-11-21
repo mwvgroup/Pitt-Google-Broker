@@ -327,3 +327,104 @@ for awcol, xmcol in coldict.items():
     resultdict[f'{awcol} (spt_ind) time'] = stop - start
     print('Time: ', stop - start)
 ```
+
+## Copy AllWISE table and add HEALPix column
+
+- [x] copy table
+- [ ] add HEALPix
+    - query ra, dec, id -> pandas dataframe
+    - calc and add HEALPix
+    - load dataframe -> new bigquery table
+    - update the allwise table using a join
+- [ ] partition table by HEALPix
+- [ ] cluster table by HEALPix
+- [ ] update run
+
+__Using the test project `avid-heading-329016`__
+
+```bash
+project_id="avid-heading-329016"
+
+export GOOGLE_CLOUD_PROJECT="$project_id"
+export GOOGLE_APPLICATION_CREDENTIALS="<your/path/to/servicecredentialsauthkey.json"
+
+gcloud config set project "$project_id"
+```
+
+### Copy table
+
+Uses the BigQuery transfer service.
+
+```bash
+# enable the API (only needs to be done once for the project)
+gcloud services enable bigquerydatatransfer.googleapis.com
+
+# create a dataset in our project to hold the allwise tables
+new_dataset="wise_all_sky_data_release"
+bq --location=US mk -d --description "Copy of AllWISE, BigQuery public dataset." $new_dataset
+
+# copy the public dataset to our project's new dataset
+bq mk --transfer_config \
+    --display_name="copy allwise dataset" \
+    --project_id=$GOOGLE_CLOUD_PROJECT \
+    --target_dataset="$new_dataset" \
+    --data_source="cross_region_copy" \
+    --params='{"source_dataset_id":"wise_all_sky_data_release","source_project_id":"bigquery-public-data"}'
+# follow instructions to complete OAuth
+# recieved the following output:
+# Transfer configuration 'projects/591409139500/locations/us/transferConfigs/61b6e8c3-0000-24ad-8cae-14c14ef90d6c' successfully created.
+
+# copy using a query and create new table partitioned by htm 7 (spt_ind)
+table="all_wise_htm"
+bq query \
+  --use_legacy_sql=false \
+  --destination_table "${GOOGLE_CLOUD_PROJECT}:${new_dataset}.${table}" \
+  --range_partitioning spt_ind,START,END,INTERVAL \
+  'QUERY_STATEMENT'
+```
+
+### Add HEALPix
+
+Setup
+
+```python
+import os
+
+from astropy import units as u
+from astropy.coordinates import ICRS, SkyCoord
+from astropy_healpix import HEALPix
+import pandas as pd
+
+from broker_utils import gcp_utils
+
+project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
+dataset = "wise_all_sky_data_release"
+table = "all_wise"
+
+def radec_to_skycoord(row):
+    return SkyCoord(row["RAdeg"], row["DEdeg"], frame='icrs', unit='deg')
+def skycoord_to_healpix(row):
+    return hp.skycoord_to_healpix(row['SkyCoord'])
+def radec_to_healpix(row):
+    sc = {"SkyCoord": radec_to_skycoord(row)}
+    healpix = skycoord_to_healpix(sc)
+    return healpix
+```
+
+```python
+# query the data
+query = (
+    "SELECT designation, ra, dec "
+    f"FROM {project_id}.{dataset}.{table}"
+)
+awdf = gcp_utils.query_bigquery(query).to_dataframe()
+
+# add the HEALPix
+n = 16  # gives pixel area ~10.4 arcsec^2
+nside = 2**n  # must be a power of 2. the power of 2 = HTM depth
+frame = ICRS()
+order = 'nested'  # efficient for nearest neighbor searches
+hp = HEALPix(nside=nside, order=order, frame=frame)
+# hp.pixel_area.to(u.arcsec*u.arcsec)
+awdf[f'HEALPix_n{n}'] = awdf.apply(radec_to_healpix, axis=1)
+```
