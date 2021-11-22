@@ -305,9 +305,10 @@ def load_dataframe_bigquery(
         print(msg)
 
 
-
 def query_bigquery(
-    query: str, project_id: Optional[str] = None
+    query: str,
+    project_id: Optional[str] = None,
+    job_config: Optional[bigquery.job.QueryJobConfig] = None,
 ) -> bigquery.job.QueryJob:
     """Query BigQuery.
 
@@ -331,7 +332,7 @@ def query_bigquery(
         project_id = pgb_project_id
 
     bq_client = bigquery.Client(project=project_id)
-    query_job = bq_client.query(query)
+    query_job = bq_client.query(query, job_config=job_config)
 
     return query_job
 
