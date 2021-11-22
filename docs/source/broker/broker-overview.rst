@@ -63,24 +63,7 @@ across GCP.
          [`alerts`] and [`DIASource`]
       -  Publishes to Pub/Sub topic [`BigQuery`]
 
-4. **Data Processing Pipeline** (alert -> {filters, fitters,
-   classifiers} -> {Cloud Storage, BigQuery, Pub/Sub})
-
-   -  Dataflow job [`value-added`]
-
-      -  Listens to PS topic [`alerts`]
-      -  Stores in BQ dataset [`alerts`] in table [`salt2`]
-         (Salt2 fit params)
-      -  Stores in GCS bucket [`sncosmo`] (lightcurve + Salt2
-         fit, png)
-      -  Publishes to PS topics
-
-         -  [`alerts_pure`] (alerts passing the purity filter)
-         -  [`exgalac_trans`] (alerts passing extragalactic
-            transient filter)
-         -  [`salt2`] (Salt2 fit params)
-
-5. **SuperNNova Classifier** (extragalactic transient alert -> SuperNNova ->
+4. **SuperNNova Classifier** (extragalactic transient alert -> SuperNNova ->
    {BigQuery, Pub/Sub})
 
       -  Cloud Function [`classify_with_SuperNNova`]
@@ -94,7 +77,7 @@ across GCP.
          -  Stores in BigQuery table [`SuperNNova`]
          -  Publishes to PS topic [`SuperNNova`]
 
-6. **Night Conductor** (orchestrates GCP resources and jobs to run the
+5. **Night Conductor** (orchestrates GCP resources and jobs to run the
    broker each night; collects metadata)
 
    -  Compute Engine VM [`night-conductor`]

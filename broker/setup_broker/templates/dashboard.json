@@ -138,7 +138,7 @@
               {
                 "timeSeriesQuery": {
                   "timeSeriesFilter": {
-                    "filter": "metric.type=\"pubsub.googleapis.com/subscription/num_undelivered_messages\" resource.type=\"pubsub_subscription\" resource.label.\"subscription_id\"=monitoring.regex.full_match(\"ztf-alerts_pure-counter|ztf-exgalac_trans-counter|ztf-salt2-counter|ztf-SuperNNova-counter\")",
+                    "filter": "metric.type=\"pubsub.googleapis.com/subscription/num_undelivered_messages\" resource.type=\"pubsub_subscription\" resource.label.\"subscription_id\"=monitoring.regex.full_match(\"ztf-alerts_pure-counter|ztf-exgalac_trans_cf-counter|ztf-SuperNNova-counter\")",
                     "aggregation": {
                       "alignmentPeriod": "60s",
                       "perSeriesAligner": "ALIGN_MEAN"
@@ -435,7 +435,7 @@
               {
                 "timeSeriesQuery": {
                   "timeSeriesFilter": {
-                    "filter": "metric.type=\"pubsub.googleapis.com/topic/send_message_operation_count\" resource.type=\"pubsub_topic\" resource.label.\"topic_id\"=monitoring.regex.full_match(\"ztf-alerts_pure|ztf-exgalac_trans|ztf-salt2|ztf-SuperNNova\")",
+                    "filter": "metric.type=\"pubsub.googleapis.com/topic/send_message_operation_count\" resource.type=\"pubsub_topic\" resource.label.\"topic_id\"=monitoring.regex.full_match(\"ztf-alerts_pure|ztf-exgalac_trans_cf|ztf-SuperNNova\")",
                     "aggregation": {
                       "alignmentPeriod": "60s",
                       "perSeriesAligner": "ALIGN_RATE"

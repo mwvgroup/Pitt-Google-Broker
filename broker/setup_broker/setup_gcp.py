@@ -109,7 +109,7 @@ def _resources(service, survey='ztf', testid='test'):
     if service == 'BQ':
         datasets = {
             f'{survey}_alerts':
-                ['alerts', 'DIASource', 'salt2', 'SuperNNova', 'metadata']
+                ['alerts', 'DIASource', 'SuperNNova', 'metadata']
         }
 
         # append the testid to the dataset name only
@@ -137,7 +137,6 @@ def _resources(service, survey='ztf', testid='test'):
             f'{PROJECT_ID}-{survey}-testing_bucket':
                 ['ztf_3.3_validschema_1154446891615015011.avro'],
             f'{PROJECT_ID}-{survey}-alert_avros': [],
-            f'{PROJECT_ID}-{survey}-sncosmo': [],
         }
         # Files are currently expected to reside in the
         # ``../../tests/test_alerts`` directory.
@@ -162,10 +161,6 @@ def _resources(service, survey='ztf', testid='test'):
                     [f'{survey}-alerts_pure-counter', ],
                 f'{survey}-cue_night_conductor':
                     [],
-                f'{survey}-exgalac_trans':
-                    [f'{survey}-exgalac_trans-counter'],
-                f'{survey}-salt2':
-                    [f'{survey}-salt2-counter'],
                 f'{survey}-exgalac_trans_cf':
                     [f'{survey}-exgalac_trans_cf-counter'],
                 f'{survey}-SuperNNova':
