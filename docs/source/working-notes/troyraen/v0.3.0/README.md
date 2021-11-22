@@ -1,10 +1,13 @@
+# v0.3.0
+
 - [`ZTF Stream` Dashboard](https://console.cloud.google.com/monitoring/dashboards/builder/090d10a0-f661-4768-831f-30c67dab50bf?project=ardent-cycling-243415&dashboardBuilderState=%257B%2522editModeEnabled%2522:false%257D&timeDomain=1w)
 
 - [Google Cloud metrics](https://cloud.google.com/monitoring/api/metrics_gcp)
 - [Metrics, time series, and resources](https://cloud.google.com/monitoring/api/v3/metrics)
 - [Creating custom metrics](https://cloud.google.com/monitoring/custom-metrics/creating-metrics#monitoring_write_timeseries-python)
 
-# ToC
+## ToC
+
 - [Dec 22-24, 2020](#dec24)
 - [Dec 27, 2020](#dec27)
 - [Dec 28, 2020](#dec28)
@@ -14,7 +17,7 @@
 ---
 
 <a name="dec24"></a>
-# Dec 22-24, 2020
+## Dec 22-24, 2020
 <!-- fs -->
 - Consumer: custom consumer, running on Compute Engine VM
     - kafka installed with:
@@ -72,7 +75,7 @@ Messages successfully published to PS topic `ztf_alert_data` (blue); failed mess
 <!-- fe Dec 24, 2020 -->
 
 <a name="dec27"></a>
-# Dec 27, 2020
+## Dec 27, 2020
 <!-- fs -->
 - [New] Consumer: Kafka -> PS Connector
     - started consumer when there were
@@ -114,7 +117,7 @@ Ingests the backlog in >20 min; seems to keep up with ZTF for the rest of the ni
 
 
 <a name="dec28"></a>
-# Dec 28, 2020
+## Dec 28, 2020
 <!-- fs -->
 - Consumer: Kafka -> PS Connector
 - GCS Avro storage: PS -> GCS Cloud Function
@@ -148,7 +151,7 @@ Max system lag is about 10 min.
 
 
 <a name="jan1"></a>
-# Jan 01, 2021
+## Jan 01, 2021
 <!-- fs -->
 Dataflow job looked fine (re-ingested at 10am) except for data freshness increased to almost 22 hrs.
 Stopping the job to start fresh for Jan 2.
@@ -185,7 +188,7 @@ ZTF dashboard for Jan 01, 2021.
 
 
 <a name="code"></a>
-# Code Snippets
+## Code Snippets
 <!-- fs -->
 __count the number of objects in the bucket matching day's topic__
 ```bash
