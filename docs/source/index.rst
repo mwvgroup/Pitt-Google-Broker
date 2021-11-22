@@ -52,7 +52,7 @@ The Pitt-Google Broker runs on the `Google Cloud Platform <https://cloud.google.
    :caption: Working Notes
 
    working-notes/early-dev/README
-   working-notes/troy/index
+   working-notes/troyraen/index
 
 ..
 .. Indices and tables
