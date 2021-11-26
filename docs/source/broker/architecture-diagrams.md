@@ -6,7 +6,7 @@
 
 ## Goal
 
-![Current Architecture](architecture-current.svg)
+![Goal Architecture](architecture-goal.svg)
 
 ## Edit these diagrams
 
