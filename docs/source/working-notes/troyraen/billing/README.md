@@ -7,7 +7,7 @@
     - ID: light-cycle-328823
 - Billing account: 0102E2-E3A6BA-C2AFD5
 
-(skip to [Run queries and make figures](#run-queries-and-make-figures) )
+(skip to [Run queries](#run-queries) )
 
 ## Setup: Create a new service account
 
@@ -15,7 +15,7 @@
 
 NAME="tjraen-owner"
 PROJECT_ID="light-cycle-328823"
-FILE_NAME="/Users/troyraen/Documents/broker/repo/GCP_auth_key-broker_billing.json"
+FILE_NAME="/Users/troyraen/Documents/broker/Pitt-Google/repo/GCP_auth_key-broker_billing.json"
 
 gcloud init
 # gcloud config set compute/region us-central1
@@ -29,25 +29,29 @@ gcloud iam service-accounts keys create "$FILE_NAME" \
     --iam-account="${NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 ```
 
-## Run queries and make figures
+## Run queries
 
 ```bash
-pip install --upgrade pyarrow
-pip uninstall pyarrow
-pip install pyarrow==0.17.1
+cd /Users/troyraen/Documents/broker/Pitt-Google/troy/docs/source/working-notes/troyraen/billing
+
+# pip install --upgrade pyarrow
+# pip uninstall pyarrow
+# pip install pyarrow==0.17.1
 ```
 
 ```python
 import os
 from matplotlib import pyplot as plt
 from broker_utils import gcp_utils
+
+import figures
 import queries
 
-project_id = os.getenv('GOOGLE_CLOUD_PROJECT')  # ardent-cycling-243415
-billing_project_id = os.getenv('GOOGLE_CLOUD_PROJECT2')  # light-cycle-328823
+project_id = os.getenv('GOOGLE_CLOUD_PROJECT', 'ardent-cycling-243415')
+billing_project_id = os.getenv('GOOGLE_CLOUD_PROJECT2', 'light-cycle-328823')
 
 # billdf
-lookback = 90
+lookback = 180
 query, job_config = queries.billing(lookback=lookback)
 billdf = gcp_utils.query_bigquery(
     query, job_config=job_config, project_id=billing_project_id
@@ -59,6 +63,46 @@ query, job_config = queries.count_metadata_by_date(lookback=lookback)
 countdf = gcp_utils.query_bigquery(
     query, job_config=job_config, project_id=project_id
 ).to_dataframe()
+```
+
+## Bar chart of cost per sku, colored by service
+
+- [ ] calculate cost per million alerts
+- [ ] separate storage and processing costs
+
+```python
+import datetime
+from matplotlib import cm
+from matplotlib.patches import Patch
+
+
+day = datetime.date(2021, 12, 2)
+gb = ['service', 'sku']
+df = billdf.loc[(billdf['usage_date']==day) & (billdf['project_id']==my_project), gb+['cost']].groupby(gb).sum()
+# df = billdf.loc[billdf['project_id']==my_project, gb+['cost']].groupby(gb).sum()
+df = df.loc[df['cost']>0].reset_index()
+df.sort_values(['service', 'cost'], ascending=[True, False], inplace=True)
+df['short_sku'] = df['sku'].apply(figures.shorten_sku)
+
+# each service gets a color
+clist = cm.get_cmap('Set1').colors
+service_colors = {service: clist[i] for i, service in enumerate(df.service.unique())}
+def set_color(row):
+    return service_colors[row['service']]
+df['color'] = df.apply(set_color, axis=1)
+
+legend_elements = [Patch(color=service_colors[s], label=s) for s in df.service.unique()]
+df.plot.bar(x='short_sku', y='cost', rot=90, color=df.color.tolist())
+plt.legend(handles=legend_elements)
+plt.tight_layout()
+plt.savefig('billing_per_sku.png')
+plt.show(block=False)
+```
+
+<img src="billing_per_sku.png" alt="billing_per_sku.png"/>
+
+## Bar chart cost per day, stack services
+```python
 countdf.set_index('publish_date', inplace=True)
 # date = "2021-08-31"
 # ddate = datetime.datetime.strptime(date, "%Y-%m-%d").date()
@@ -68,20 +112,20 @@ def calc_avg_cost(column):
 per_alert = df.apply(calc_avg_cost, axis=0)
 
 # plot
-project_id = 'ardent-cycling-243415'
+my_project = 'ardent-cycling-243415'
 gb = ['usage_date', 'service']
-df = billdf.loc[billdf['project_id']==project_id, gb+['cost']].groupby(gb).sum()
+df = billdf.loc[billdf['project_id']==my_project, gb+['cost']].groupby(gb).sum()
 df = df.reset_index().pivot(index='usage_date', columns='service', values='cost')
 df = df[df > 1.0].dropna(axis=1, how='all')  # drop cols where all < $1.00
 def rename_column(colname):
     return f"{colname} (${per_alert[colname]:.3e}/alert)"
 df = df.rename(rename_column, axis=1)
 df.plot.bar(stacked=True)
-plt.savefig('billing.png')
+plt.savefig('billing_per_day.png')
 plt.show(block=False)
 ```
 
-<img src="billing.png" alt="billing.png" width="400"/>
+<img src="billing_per_day.png" alt="billing_per_day.png"/>
 
 
 ## OLD

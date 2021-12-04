@@ -123,16 +123,17 @@ def billing(lookback=None, date="today"):
 
     select = """
         SELECT
-          service.description AS service,
-          resource.name AS resource,
-          sku.description AS sku,
-          project.id AS project_id,
-          cost,
-          usage.amount AS usage_amount,
-          usage.unit AS usage_unit,
-          DATE(usage_start_time) as usage_date,
-          usage_start_time,
-          usage_end_time
+            project.id AS project_id,
+            service.description AS service,
+            resource.name AS resource,
+            sku.description AS sku,
+            location.location AS location,
+            cost,
+            usage.amount AS usage_amount,
+            usage.unit AS usage_unit,
+            DATE(usage_start_time) as usage_date,
+            usage_start_time,
+            usage_end_time
     """
 
     frm = f"FROM `{BILLING_TABLE}`"
