@@ -18,50 +18,19 @@ export GOOGLE_CLOUD_PROJECT2="ardent-cycling-243415"    # production project
 # key file will be downloaded to (upon creation) and/or accessed from (queries)
 export GOOGLE_APPLICATION_CREDENTIALS="<path/to/credentials/keyfile.json"
 # export GOOGLE_APPLICATION_CREDENTIALS="/Users/troyraen/Documents/broker/Pitt-Google/repo/GCP_auth_key-broker_billing_bigquery.json"
-# export GOOGLE_APPLICATION_CREDENTIALS="/Users/troyraen/Documents/broker/Pitt-Google/repo/GCP_auth_key-broker_billing.json"
-
-# billing service account that will be used to make queries
-SERVICE_ACCOUNT_NAME="tjraen-bigquery"
-# SERVICE_ACCOUNT_NAME="tjraen-owner"
-SERVICE_ACCOUNT="${SERVICE_ACCOUNT_NAME}@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com"
 ```
 
-## Setup: Create a new service account that can query the billing BigQuery tables
-
-- https://cloud.google.com/iam/docs/creating-managing-service-accounts#iam-service-accounts-create-gcloud
-- https://cloud.google.com/iam/docs/creating-managing-service-account-keys
-- https://cloud.google.com/iam/docs/understanding-roles
-<!-- - https://cloud.google.com/iam/docs/granting-changing-revoking-access
-- https://cloud.google.com/iam/docs/manage-access-other-resources
-    - bigquery has a separate sdk: https://cloud.google.com/bigquery/docs/reference/bq-cli-reference#bq_add-iam-policy-binding
-- https://cloud.google.com/iam/docs/understanding-roles#predefined
-- https://cloud.google.com/sdk/gcloud/reference/resource-manager -->
-
+If you need to create a service account, set these additional variables then follow the link below.
 
 ```bash
-# To run this, you must have a user account (e.g. a Gmail address)
-# that has access to the billing project.
-gcloud init
-# follow prompts and connect to the billing project
-
-# later, you can reactivate this configuration with
-#     gcloud config configurations activate <billing-project>
-# where <billing-project> is the name you assigned to the configuration during init
-
-# create the service account
-gcloud iam service-accounts create "$SERVICE_ACCOUNT_NAME"
-
-# assign the service account a role on the billing account
-role="roles/bigquery.resourceViewer"
-# role="roles/owner"
-gcloud projects add-iam-policy-binding "$GOOGLE_CLOUD_PROJECT" \
-    --member="serviceAccount:${SERVICE_ACCOUNT}" \
-    --role="roles/owner"
-
-# create and download an auth key file
-gcloud iam service-accounts keys create "$GOOGLE_APPLICATION_CREDENTIALS" \
-    --iam-account="$SERVICE_ACCOUNT"
+# billing service account that will be used to make queries
+SERVICE_ACCOUNT_NAME="myaccount-bigquery"
+# SERVICE_ACCOUNT_NAME="tjraen-bigquery"
+SERVICE_ACCOUNT="${SERVICE_ACCOUNT_NAME}@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com"
+ROLE="roles/bigquery.resourceViewer"
 ```
+
+Setup a service account: [../service-account.md](../service-account.md)
 
 This service account will have permission to query the production dataset/table
 because those resources are public access.

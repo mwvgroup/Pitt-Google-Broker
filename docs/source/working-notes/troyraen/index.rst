@@ -9,6 +9,7 @@ However, here are some that might be:
    :caption: Working Notes of Interest
 
    billing/README
+   service-account
    stream-looper/README
 
 ---------
