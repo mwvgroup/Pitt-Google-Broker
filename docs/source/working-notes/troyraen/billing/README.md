@@ -1,6 +1,15 @@
 # billing: pitt-google-broker-billing
 
-- [Export Cloud Billing data to BigQuery](https://cloud.google.com/billing/docs/how-to/export-data-bigquery)
+- [x] [Export Cloud Billing data to BigQuery](https://cloud.google.com/billing/docs/how-to/export-data-bigquery)
+- [x] Pull some data and create figures
+    - [ ] annotate figures with the date range the data comes from
+    - [ ] increase decimal precision for cost annotations showing zero. actual zeros have already been dropped
+    - [ ] specificy that "per million alerts" is the number of ZTF alerts entering our system
+    - [ ] rewrite `transforms._shorten_sku()` to use regex instead of trying to manually map every sku. there's too many.
+    - [ ] move the compute engine PD storage to the mean cost per day figure
+    - [ ] calculate storage cost per number of alerts in storage
+- [ ] Write the table joins and pivots directly into the SQL queries
+- [ ] Create a figure showing total cost of the project over time, from the beginning
 
 - Billing project:
     - Name: pitt-google-broker-billing
@@ -81,7 +90,7 @@ prod_project_id = os.getenv('GOOGLE_CLOUD_PROJECT2', 'ardent-cycling-243415')
 
 ```python
 # load billdf
-f = 'billing_20211203.csv'  # all billing data in the table as of 12/3/2021
+f = 'billing_20211203.csv'  # all data in table as of 12/3/2021. big, so not pushing to git.
 billdf = pd.read_csv(f)
 billdf['usage_date'] = pd.to_datetime(billdf.usage_date, format='%Y-%m-%d').dt.date
 # ALTERNATELY, run a new query to load billdf
