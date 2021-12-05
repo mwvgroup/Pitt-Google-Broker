@@ -15,16 +15,22 @@ References:
 ## Setup
 
 ```bash
+# Enter your own options:
 GOOGLE_CLOUD_PROJECT="project-id"
 GOOGLE_APPLICATION_CREDENTIALS="path/to/GCP_auth_key.json"
 SERVICE_ACCOUNT_NAME="my-account"
+
+# Choose a role using the link above.
+# Here are some basic options, but choose a more fine-grained role(s) if you can.
+ROLE="roles/viewer"
+# ROLE="roles/editor"
+# ROLE="roles/owner"  # Try to avoid the owner role, but here it is for convenience.
+
+# Set this verbatim
 SERVICE_ACCOUNT="${SERVICE_ACCOUNT_NAME}@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com"
-# Try to avoid the owner role, but here it is for convenience.
-# Pick something more specific using the link above.
-ROLE="roles/owner"
 ```
 
-## Create a service account:
+## Create a service account, assign a role, and download a key file
 
 If you are accessing a new project (or perhaps deactivated previous settings)
 you'll need to connect `gcloud` to the project via a
@@ -35,6 +41,8 @@ If you are not accessing a new project, you likely do not need to do this.
 gcloud init
 # follow prompts and connect to the project
 ```
+
+Create, assign, download:
 
 ```bash
 # Create the service account
