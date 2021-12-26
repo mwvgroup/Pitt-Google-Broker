@@ -1,0 +1,46 @@
+# Installs the software required to run the Kafka Consumer.
+# Assumes a Debian 10 OS.
+
+FROM debian:buster
+ENV JAVA_HOME="/usr/lib/jvm/java-11-openjdk-amd64/bin/java"
+ARG CONNECTOR_RELEASE="v0.5-alpha"
+
+#--- Get metadata attributes
+# baseurl="http://metadata.google.internal/computeMetadata/v1"
+# H="Metadata-Flavor: Google"
+# consumerVM=$(curl "${baseurl}/instance/name" -H "${H}")
+# zone=$(curl "${baseurl}/instance/zone" -H "${H}")
+
+#--- Install general utils
+RUN apt-get update &&\
+    apt-get install -y wget screen gnupg software-properties-common
+
+#--- Install Java and the dev kit
+# see https://www.digitalocean.com/community/tutorials/how-to-install-java-with-apt-on-debian-10
+RUN apt-get update &&\
+    apt-get install -y default-jre &&\
+    apt-get install -y default-jdk
+
+#--- Install Confluent Platform (includes Kafka)
+# see https://docs.confluent.io/platform/current/installation/installing_cp/deb-ubuntu.html
+RUN \
+    # install the key used to sign packages
+    wget -qO - https://packages.confluent.io/deb/6.0/archive.key | apt-key add - &&\
+    # add the repository
+    add-apt-repository "deb [arch=amd64] https://packages.confluent.io/deb/6.0 stable main" &&\
+    # install
+    apt-get update &&\
+    apt-get install -y confluent-platform
+
+#--- Install Kafka -> Pub/Sub connector
+# see https://github.com/GoogleCloudPlatform/pubsub/tree/master/kafka-connector
+WORKDIR /usr/local/share/kafka/plugins
+#- install the connector
+RUN wget "https://github.com/GoogleCloudPlatform/pubsub/releases/download/${CONNECTOR_RELEASE}/pubsub-kafka-connector.jar"
+
+#--- Set the startup script and shutdown
+# startupscript="gs://${broker_bucket}/consumer/vm_startup.sh"
+# gcloud compute instances add-metadata "$consumerVM" --zone "$zone" \
+#     --metadata startup-script-url="$startupscript"
+# echo "vm_install.sh is complete. Shutting down."
+# shutdown -h now
