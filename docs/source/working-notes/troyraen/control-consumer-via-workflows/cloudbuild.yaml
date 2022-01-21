@@ -1,0 +1,52 @@
+# uses Secrets Manager to transfer our Rubin password
+---
+steps:
+- name: "gcr.io/cloud-builders/gcloud"
+  args:
+  - "compute"
+  - "instances"
+  - "create"
+  - "${_SURVEY}-consumer${_TESTID}"
+  - "--zone=${_ZONE}"
+  - "--machine-type=e2-standard-2"
+  - "--scopes=cloud-platform"
+  - "--metadata=google-logging-enabled=true,startup-script-url=gs://${PROJECT_ID}-${_SURVEY}-broker_files/consumer/vm_install.sh"
+  - "--tags=ztfport"
+  # env: [string, string, ...]
+  # dir: string
+  # id: string
+  # waitFor: [string, string, ...]
+  # entrypoint: string
+  # secretEnv: string
+#   volumes: object(Volume)
+#   timeout: string (Duration format)
+# - name: string
+#   ...
+# - name: string
+#   ...
+# timeout: string (Duration format)
+# queueTtl: string (Duration format)
+# logsBucket: string
+# options:
+#  env: [string, string, ...]
+#  secretEnv: string
+#  volumes: object(Volume)
+#  sourceProvenanceHash: enum(HashType)
+#  machineType: enum(MachineType)
+#  diskSizeGb: string (int64 format)
+#  substitutionOption: enum(SubstitutionOption)
+#  dynamicSubstitutions: boolean
+#  logStreamingOption: enum(LogStreamingOption)
+#  logging: enum(LoggingMode)
+#  pool: object(PoolOption)
+substitutions:
+  _SURVEY: "rubin"
+  _TESTID: ""
+  _ZONE: "us-central1-a"
+tags: [string, string, ...]
+serviceAccount: string
+secrets: object(Secret)
+availableSecrets: object(Secrets)
+artifacts: object (Artifacts)
+images:
+- [string, string, ...]
