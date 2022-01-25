@@ -30,6 +30,7 @@ PROJECT_ID="avid-heading-329016"  # project: pitt-google-broker-user-test
 survey="rubin"
 broker_bucket="${PROJECT_ID}-${survey}-broker_files"
 consumerVM="${survey}-consumer"
+firewallrule="tcpport9094"
 
 # Replace KAFKA_PASSWORD with the appropriate value.
 # Contact Troy Raen if you don't know the password.
@@ -40,10 +41,28 @@ PUBSUB_TOPIC="rubin-alerts"
 KAFKA_TOPIC="alerts-simulated"
 ```
 
-# Create a Pub/Sub topic for Rubin alerts
+GCP setup
+
+```bash
+# create the broker_bucket (only needs to be done once, per project)
+gsutil mb "gs://${broker_bucket}"
+# upload consumer files
+o="GSUtil:parallel_process_count=1" # disable multiprocessing for Macs
+gsutil -m -o "$o" cp -r broker/consumer "gs://${broker_bucket}"
+
+# create firewall rule to open port 9094
+gcloud compute firewall-rules create "$firewallrule" \
+    --allow=tcp:9094 \
+    --description="Allow incoming traffic on TCP port 9094" \
+    --direction=INGRESS \
+    --enable-logging
+```
+
+# Create a Pub/Sub topic and subscription for Rubin alerts
 
 ```bash
 gcloud pubsub topics create $PUBSUB_TOPIC
+gcloud pubsub subscriptions create $PUBSUB_TOPIC --topic=$PUBSUB_TOPIC
 ```
 
 # Create a Rubin Consumer VM
@@ -54,19 +73,6 @@ zone="us-central1-a"
 machinetype_setup="e2-standard-2"
 machinetype_production="g1-small"
 installscript="gs://${broker_bucket}/consumer/vm_install.sh"
-firewallrule="tcpport9094"
-
-# create the broker_bucket and upload consumer files
-gsutil mb "gs://${broker_bucket}"
-o="GSUtil:parallel_process_count=1" # disable multiprocessing for Macs
-gsutil -m -o "$o" cp -r broker/consumer "gs://${broker_bucket}"
-
-# create firewall rule to open port 9094
-gcloud compute firewall-rules create "$firewallrule" \
-    --allow=tcp:9094 \
-    --description="Allow incoming traffic on TCP port 9094" \
-    --direction=INGRESS \
-    --enable-logging
 
 # create VM
 gcloud compute instances create "$consumerVM" \
@@ -83,6 +89,12 @@ gcloud compute instances set-machine-type "$consumerVM" \
 ```
 
 # Ingest the Rubin test stream
+
+Reference links:
+
+- [Rubin sample alerts: obtaining the data with Kafka](https://github.com/lsst-dm/sample_alert_info#obtaining-the-data-with-kafka)
+- [Rubin Alert Stream Integration Endpoint](https://github.com/lsst-dm/sample_alert_info/blob/main/doc/alert_stream_integration_endpoint.md)
+- [Rubin example: java console consumer](https://github.com/lsst-dm/sample_alert_info/tree/main/examples/alert_stream_integration_endpoint/java_console_consumer)
 
 ## Setup
 
@@ -109,16 +121,17 @@ sudo sed -i "s/KAFKA_PASSWORD/${KAFKA_PASSWORD}/g" "${workingdir}/psconnect-work
 export JAVA_HOME="/usr/lib/jvm/java-11-openjdk-amd64"
 ```
 
-## Check available topics
+## Check available Kafka topics
 
 ```bash
 /bin/kafka-topics \
     --bootstrap-server alert-stream-int.lsst.cloud:9094 \
     --list \
     --command-config "${workingdir}/admin.properties"
+# should see output that includes the topic: alerts-simulated
 ```
 
-## Check the connection using the Kafka console consumer
+## Test the topic connection using the Kafka console consumer
 
 Make a file called 'consumer.properties' and fill it with this
 (change `KAFKA_PASSWORD` to the appropriate value):
@@ -142,12 +155,5 @@ sudo /bin/kafka-avro-console-consumer \
     --property schema.registry.url=https://alert-schemas-int.lsst.cloud \
     --consumer.config consumer.properties \
     --timeout-ms=60000
-
-# try a different way
-sudo /bin/kafka-console-consumer \
-    --bootstrap-server alert-stream-int.lsst.cloud:9094 \
-    --group "${KAFKA_USERNAME}-example-javaconsole" \
-    --topic "$KAFKA_TOPIC" \
-    --consumer.config consumer.properties \
-    --timeout-ms=60000
+# should see a lot of JSON flood the terminal
 ```
