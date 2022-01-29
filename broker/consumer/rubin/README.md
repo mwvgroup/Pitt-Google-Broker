@@ -236,6 +236,10 @@ for received_message in response.received_messages:
 In the future, we should download schemas from the Confluent Schema Registry and store them (assuming we do not use the schema registry directly in the Kafka connector).
 Then for each alert, check the schema version in the Confluent Wire header, and load the schema file using `fastavro`.
 
+Pub/Sub topics can be configured with an Avro schema attached, but it cannot be changed once attached.
+We would have to create a new topic for every schema version.
+Therefore, I don't think we should do it this way.
+
 ### Download a schema from the Confluent Schema Registry using a `GET` request
 
 ```bash
