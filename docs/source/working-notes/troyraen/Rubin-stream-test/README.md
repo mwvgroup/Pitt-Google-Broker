@@ -1,5 +1,8 @@
 # Connect Pitt-Google to the Rubin alert stream testing deployment
 
+THIS README HAS BEEN MOVED TO THE DIRECTORY broker/consumer/rubin.
+BUT STILL LEAVING IT HERE FOR FUTURE REFERENCE.
+
 December 2021 - Author: Troy Raen
 
 Details and access credentials were sent to us by Eric Bellm via email.
