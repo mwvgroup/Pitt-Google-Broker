@@ -236,6 +236,13 @@ for received_message in response.received_messages:
 In the future, we should download schemas from the Confluent Schema Registry and store them (assuming we do not use the schema registry directly in the Kafka connector).
 Then for each alert, check the schema version in the Confluent Wire header, and load the schema file using `fastavro`.
 
+Recommendation from Spencer Nelson:
+
+> You might want to look at how Rubin's alert database ingester works. It does the same steps of deserializing alert packets, but uses the schema registry instead of lsst.alert.packet:
+
+> https://github.com/lsst-dm/alert_database_ingester/blob/main/alertingest/ingester.py#L192-L209
+> https://github.com/lsst-dm/alert_database_ingester/blob/main/alertingest/schema_registry.py
+
 Pub/Sub topics can be configured with an Avro schema attached, but it cannot be changed once attached.
 We would have to create a new topic for every schema version.
 Therefore, I don't think we should do it this way.
