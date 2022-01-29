@@ -2,6 +2,14 @@
 
 December 2021 - Author: Troy Raen
 
+- [Overview](#overview)
+- [Setup](#setup)
+- [Ingest the Rubin test stream](#ingest-the-rubin-test-stream)
+- [Pull a Pub/Sub message and open it](#pull-a-pubsub-message-and-open-it)
+- [Alternative methods for handling the schema](#alternative-methods-for-handling-the-schema) 
+
+# Overview  
+
 Details and access credentials were sent to us by Eric Bellm via email.
 Spencer Nelson provided some additional details specific to our Kafka Connect consumer.
 Here are some links they gave us for reference, which I (Troy Raen) used to set this up:
