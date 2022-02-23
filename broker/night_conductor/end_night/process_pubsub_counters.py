@@ -4,6 +4,7 @@
 
 
 import argparse
+from google import api_core
 from google.cloud import bigquery, logging
 import json
 import numpy as np
@@ -379,7 +380,12 @@ class SubscriptionMetadataCollector:
                 n = n_new
 
         streaming_pull_future.cancel()  # Trigger the shutdown.
-        streaming_pull_future.result()  # Block until the shutdown is complete.
+        # if the subscription doesn't exist,
+        # we don't know it until calling streaming_pull_future.result()
+        try:
+            streaming_pull_future.result()  # Block until the shutdown is complete.
+        except api_core.exceptions.NotFound:
+            _log_and_print(f"Subscription {self.subscription} not found.")
 
         # log the total
         _log_and_print(
