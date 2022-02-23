@@ -31,7 +31,7 @@ schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
 
 
 def run(msg: dict, context) -> None:
-    """Filter for likely extragalactic transients, publish results.
+    """Filter alerts for purity, publish results.
 
     For args descriptions, see:
     https://cloud.google.com/functions/docs/writing/background#function_parameters
