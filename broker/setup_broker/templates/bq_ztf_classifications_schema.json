@@ -1,0 +1,26 @@
+[
+  {
+    "description": "object identifier or name",
+    "mode": "REQUIRED",
+    "name": "objectId",
+    "type": "STRING"
+  },
+  {
+    "description": "Candidate ID from operations DB",
+    "mode": "REQUIRED",
+    "name": "candid",
+    "type": "INTEGER"
+  },
+  {
+    "description": "name of classifier or filter",
+    "mode": "REQUIRED",
+    "name": "classifier",
+    "type": "STRING"
+  },
+  {
+    "description": "predicted class",
+    "mode": "NULLABLE",
+    "name": "predicted_class",
+    "type": "INTEGER"
+  }
+]
