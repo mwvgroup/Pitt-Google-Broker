@@ -293,11 +293,14 @@ class MetadataCollector:
         self.metadata_df = alerts.join(allothers, how="outer")
 
     def _load_metadata_to_bigquery(self):
-        # by default, conforms the dataframe to the table schema
-        # i.e., converts dtypes and drops extra columns
-        gcp_utils.load_dataframe_bigquery(
-            self.bq_table, self.metadata_df, logger=logger
-        )
+        if len(self.metadata_df) > 0:
+            # by default, conforms the dataframe to the table schema
+            # i.e., converts dtypes and drops extra columns
+            gcp_utils.load_dataframe_bigquery(
+                self.bq_table, self.metadata_df, logger=logger
+            )
+        else:
+            _log_and_print("metadata_df contains 0 rows. Skipping BigQuery upload.")
 
 
 class SubscriptionMetadataCollector:
