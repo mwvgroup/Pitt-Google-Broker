@@ -295,9 +295,12 @@ def setup_dashboard(survey='ztf', testid='test', teardown=False) -> None:
         gdescribe = f'gcloud monitoring dashboards describe {dashboard_id}'
         try:
             dboard = subprocess.check_output(shlex.split(gdescribe),
-                                             stderr=subprocess.DEVNULL)
-        except:
+                                             stderr=subprocess.STDOUT)
+        # if the dashboard can't be retrieved there's no need to delete it
+        # just catch the error and move on
+        except subprocess.CalledProcessError:
             pass
+        # if the dashboard was retrieved, delete it
         else:
             gdelete = f'gcloud monitoring dashboards delete projects/{PROJECT_ID}/dashboards/{dashboard_id} --quiet'
             __ = subprocess.check_output(shlex.split(gdelete))
