@@ -333,7 +333,9 @@ def _decode_avro_alert(
     with BytesIO(alert_bytes) as fin:
         alert_dicts = [r for r in reader(fin)]  # list of dicts
     # ZTF alerts are expected to contain one dict in the list
-    assert len(alert_dicts) == 1
+    if len(alert_dicts) != 1:
+        errmsg = f"The alert contains {len(alert_dicts)} records, but 1 was expected."
+        raise ValueError(errmsg)
     alert_dict = alert_dicts[0]
 
     # these streams do not have value added products

@@ -59,7 +59,12 @@ def _create_client_raise_exception_if_not_connected(project_id: str):
 def _check_client_isinstance():
     msg = ("You must create a BigQuery client first. "
            "Run `pgb.bigquery.create_client('your_project_id')`")
-    assert isinstance(user_bq_client, bigquery.client.Client), msg
+    try:
+        assert isinstance(user_bq_client, bigquery.client.Client)
+    except NameError:
+        raise NameError(msg)
+    except AssertionError:
+        raise TypeError(msg)
 
 def _create_client_if_needed():
     stop = False  # will be set to True if the user chooses to exit
@@ -400,9 +405,7 @@ def _query_objects_check_history_column_names(columns: List[str]) -> List[str]:
     """
     goodcols, badcols = _split_good_bad_history_column_names(columns)
 
-    try:
-        assert len(badcols) == 0
-    except AssertionError:
+    if len(badcols) > 0
         msg = (
             '\nYou have requested columns that are not available to `query_objects()`.\n'
             '(To view available columns, use `pgb.bigquery.get_history_column_names()`)\n'
