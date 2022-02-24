@@ -47,7 +47,7 @@ plugindir=/usr/local/share/kafka/plugins
 CONNECTOR_RELEASE=v0.5-alpha
 mkdir -p "$plugindir"
 #- install the connector
-cd "$plugindir"
+cd "$plugindir" || exit
 wget "https://github.com/GoogleCloudPlatform/pubsub/releases/download/${CONNECTOR_RELEASE}/pubsub-kafka-connector.jar"
 echo "Done installing the Kafka -> Pub/Sub connector"
 
