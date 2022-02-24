@@ -23,31 +23,29 @@ if [ "$testid" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
 fi
 
-workingdir=/home/broker/night_conductor
-mkdir -p ${workingdir}
-cd ${workingdir}
+workingdir="/home/broker/night_conductor"
+mkdir -p "$workingdir"
+cd "$workingdir"
 
 if [ "${NIGHT}" = "START" ]
 then
     # replace broker's start_night directory with GCS files and cd in
     rm -r start_night
-    gsutil -m cp -r gs://${broker_bucket}/night_conductor/start_night .
-    cd start_night
-    chmod 744 *.sh
+    gsutil -m cp -r "gs://${broker_bucket}/night_conductor/start_night" .
+    chmod 744 start_night/*.sh
 
     # start up the resources, begin consuming and processing
-    ./start_night.sh ${testid} ${broker_bucket} ${survey}
+    ./start_night/start_night.sh "$testid" "$broker_bucket" "$survey"
 
 elif [ "${NIGHT}" = "END" ]
 then
     # replace broker's end_night directory with GCS files and cd in
     rm -r end_night
-    gsutil -m cp -r gs://${broker_bucket}/night_conductor/end_night .
-    cd end_night
-    chmod 744 *.sh
+    gsutil -m cp -r "gs://${broker_bucket}/night_conductor/end_night" .
+    chmod 744 end_night/*.sh
 
     # stop ingesting and teardown resources
-    ./end_night.sh ${testid} ${survey}
+    ./end_night/end_night.sh "$testid" "$survey"
 fi
 
 # Wait a few minutes, then clear all metadata attributes and shutdown
@@ -55,9 +53,9 @@ fi
 if [ "${NIGHT}" = "START" ] || [ "${NIGHT}" = "END" ]; then
     sleep 120
 
-    zone=us-central1-a
-    gcloud compute instances add-metadata ${nconductVM} --zone=${zone} \
-          --metadata NIGHT="",KAFKA_TOPIC="",PS_TOPIC=""
+    zone="us-central1-a"
+    gcloud compute instances add-metadata "$nconductVM" --zone="$zone" \
+          --metadata="NIGHT=,KAFKA_TOPIC=,PS_TOPIC="
 
     shutdown -h now
 fi

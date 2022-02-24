@@ -67,7 +67,7 @@ else # Deploy the Cloud Functions
         --trigger-topic "$store_bq_trigger_topic" \
         --set-env-vars TESTID="$testid",SURVEY="$survey"
 
-    cd $OGdir
+    cd "$OGdir"
 
 #--- Pub/Sub -> Cloud Storage Avro cloud function
     echo "Deploying Cloud Function: $ps_to_gcs_CF_name"
@@ -97,7 +97,7 @@ else # Deploy the Cloud Functions
         --trigger-topic "$cue_nc_trigger_topic" \
         --set-env-vars TESTID="$testid",SURVEY="$survey",ZONE="$zone"
 
-    cd $OGdir
+    cd "$OGdir"
 
 #--- Check cue response cloud function
     echo "Deploying Cloud Function: $check_cue_CF_name"
@@ -113,7 +113,7 @@ else # Deploy the Cloud Functions
         --set-env-vars TESTID="$testid",SURVEY="$survey",ZONE="$zone" \
         --timeout 540s  # allow the CF to sleep without timing out
 
-    cd $OGdir
+    cd "$OGdir"
 
 #--- classify with SNN cloud function
     echo "Deploying Cloud Function: $classify_snn_CF_name"
@@ -130,7 +130,7 @@ else # Deploy the Cloud Functions
         --trigger-topic "$classify_snn_trigger_topic" \
         --set-env-vars TESTID="$testid",SURVEY="$survey"
 
-    cd $OGdir
+    cd "$OGdir"
 
 #--- filter for extragalactic transients cloud function
     echo "Deploying Cloud Function: $filter_exgal_CF_name"
@@ -145,6 +145,6 @@ else # Deploy the Cloud Functions
         --trigger-topic "$filter_exgal_trigger_topic" \
         --set-env-vars TESTID="$testid",SURVEY="$survey"
 
-    cd $OGdir
+    cd "$OGdir"
 
 fi
