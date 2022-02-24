@@ -405,7 +405,7 @@ def _query_objects_check_history_column_names(columns: List[str]) -> List[str]:
     """
     goodcols, badcols = _split_good_bad_history_column_names(columns)
 
-    if len(badcols) > 0
+    if len(badcols) > 0:
         msg = (
             '\nYou have requested columns that are not available to `query_objects()`.\n'
             '(To view available columns, use `pgb.bigquery.get_history_column_names()`)\n'
