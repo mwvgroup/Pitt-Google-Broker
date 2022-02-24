@@ -293,7 +293,7 @@ class MetadataCollector:
         self.metadata_df = alerts.join(allothers, how="outer")
 
     def _load_metadata_to_bigquery(self):
-        if len(self.metadata_df) > 0:
+        if not self.metadata_df.empty:
             # by default, conforms the dataframe to the table schema
             # i.e., converts dtypes and drops extra columns
             gcp_utils.load_dataframe_bigquery(
