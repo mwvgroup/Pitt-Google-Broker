@@ -82,7 +82,7 @@ else # Deploy the Cloud Functions
         --trigger-topic "$ps_to_gcs_trigger_topic" \
         --set-env-vars TESTID="$testid",SURVEY="$survey"
 
-    cd $OGdir || exit
+    cd "$OGdir" || exit
 
 #--- Cue night-conductor cloud function
     echo "Deploying Cloud Function: $cue_nc_CF_name"
