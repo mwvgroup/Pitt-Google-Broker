@@ -300,7 +300,7 @@ class MetadataCollector:
                 self.bq_table, self.metadata_df, logger=logger
             )
         else:
-            _log_and_print("metadata_df contains 0 rows. Skipping BigQuery upload.")
+            _log_and_print("metadata_df is empty. Skipping BigQuery upload.")
 
 
 class SubscriptionMetadataCollector:
