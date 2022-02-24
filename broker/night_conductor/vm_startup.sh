@@ -32,7 +32,7 @@ then
     # replace broker's start_night directory with GCS files and cd in
     rm -r start_night
     gsutil -m cp -r "gs://${broker_bucket}/night_conductor/start_night" .
-    chmod 744 start_night/*.sh
+    chmod 744 ./start_night/*.sh
 
     # start up the resources, begin consuming and processing
     ./start_night/start_night.sh "$testid" "$broker_bucket" "$survey"
@@ -42,7 +42,7 @@ then
     # replace broker's end_night directory with GCS files and cd in
     rm -r end_night
     gsutil -m cp -r "gs://${broker_bucket}/night_conductor/end_night" .
-    chmod 744 end_night/*.sh
+    chmod 744 ./end_night/*.sh
 
     # stop ingesting and teardown resources
     ./end_night/end_night.sh "$testid" "$survey"
