@@ -36,7 +36,7 @@ then
     chmod 744 *.sh
 
     # start up the resources, begin consuming and processing
-    ./start_night.sh ${PROJECT_ID} ${testid} ${broker_bucket} ${survey}
+    ./start_night.sh ${testid} ${broker_bucket} ${survey}
 
 elif [ "${NIGHT}" = "END" ]
 then
@@ -47,7 +47,7 @@ then
     chmod 744 *.sh
 
     # stop ingesting and teardown resources
-    ./end_night.sh ${PROJECT_ID} ${testid} ${survey}
+    ./end_night.sh ${testid} ${survey}
 fi
 
 # Wait a few minutes, then clear all metadata attributes and shutdown

@@ -11,7 +11,6 @@ workingdir="${brokerdir}/consumer"
 baseurl="http://metadata.google.internal/computeMetadata/v1"
 H="Metadata-Flavor: Google"
 PROJECT_ID=$(curl "${baseurl}/project/project-id" -H "${H}")
-zone=$(curl "${baseurl}/instance/zone" -H "${H}")
 PS_TOPIC=$(curl "${baseurl}/instance/attributes/PS_TOPIC" -H "${H}")
 KAFKA_TOPIC=$(curl "${baseurl}/instance/attributes/KAFKA_TOPIC" -H "${H}")
 # parse the survey name and testid from the VM name
