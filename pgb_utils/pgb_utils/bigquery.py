@@ -60,11 +60,12 @@ def _check_client_isinstance():
     msg = ("You must create a BigQuery client first. "
            "Run `pgb.bigquery.create_client('your_project_id')`")
     try:
-        assert isinstance(user_bq_client, bigquery.client.Client)
+        client_is_instance = isinstance(user_bq_client, bigquery.client.Client)
     except NameError:
         raise NameError(msg)
-    except AssertionError:
-        raise TypeError(msg)
+    else:
+        if not client_is_instance:
+            raise TypeError(msg)
 
 def _create_client_if_needed():
     stop = False  # will be set to True if the user chooses to exit
