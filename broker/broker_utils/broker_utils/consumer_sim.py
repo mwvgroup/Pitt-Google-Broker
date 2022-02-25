@@ -74,8 +74,7 @@ def publish_stream(
             {alerts_per_batch} alerts per batch
             {Nbatches * alerts_per_batch} total alerts
         """
-    )
-    print()
+    print(rate_msg)
 
     # publish the stream
     _do_publish_stream(instance, alerts_per_batch, Nbatches, publish_batch_every, sub_id, topic_id, nack, auto_confirm)
