@@ -110,7 +110,7 @@ def get_table_info(table: Union[str,list] = 'all', dataset: str = 'ztf_alerts'):
     # get the table names in a list
     if table == 'all':
         tables = get_dataset_table_names(dataset=dataset)
-    elif type(table) == str:
+    elif isinstance(table, str):
         tables = [table]
     else:
         tables = table
