@@ -159,7 +159,7 @@ def _load_Avro(fin: Union[Path, BinaryIO]) -> Tuple[dict, List[dict]]:
 
     avro_reader = fastavro.reader(f)
     schema = avro_reader.writer_schema
-    data = [r for r in avro_reader]
+    data = list(avro_reader)
 
     if is_path:
         f.close()

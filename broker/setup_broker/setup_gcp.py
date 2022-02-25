@@ -356,7 +356,7 @@ def _setup_dashboard_resource_names(survey='ztf', testid='test'):
     psold = _resources('PS', survey='ztf', testid=False)
     psnew = _resources('PS', survey=survey, testid=testid)
     # get topic names
-    pstopics = {old: new for old, new in zip(psold.keys(), psnew.keys())}
+    pstopics = dict(zip(psold.keys(), psnew.keys()))
     # --- Fix some problems: (yes, this is messy)
     # 1) The `alerts_pure` topic/subscription name gets mixed up. fix it
     pspure = {f'-{testid}_pure': f'_pure-{testid}'}
@@ -369,7 +369,7 @@ def _setup_dashboard_resource_names(survey='ztf', testid='test'):
     # VMs and Dataflow jobs
     oold = _resources('dashboard', survey='ztf', testid=False)
     onew = _resources('dashboard', survey=survey, testid=testid)
-    othernames = {old: new for old, new in zip(oold, onew)}
+    othernames = dict(zip(oold, onew))
 
     # add the survey and testid, merge the dicts, and return
     resource_maps = {

@@ -332,7 +332,7 @@ def _decode_avro_alert(
 ) -> Union[Tuple[dict, dict], Tuple[dict, None]]:
     # extract the alert data
     with BytesIO(alert_bytes) as fin:
-        alert_dicts = [r for r in reader(fin)]  # list of dicts
+        alert_dicts = list(reader(fin))  # list of dicts
     # ZTF alerts are expected to contain one dict in the list
     if len(alert_dicts) != 1:
         errmsg = f"The alert contains {len(alert_dicts)} records, but 1 was expected."

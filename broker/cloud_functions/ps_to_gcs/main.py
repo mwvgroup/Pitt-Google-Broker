@@ -141,7 +141,7 @@ def extract_alert_dict(temp_file):
     """
     # load the file and get the data with fastavro
     temp_file.seek(0)
-    alert = [r for r in fastavro.reader(temp_file)]
+    alert = list(fastavro.reader(temp_file))
     return alert
 
 
