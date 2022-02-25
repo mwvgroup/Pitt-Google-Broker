@@ -123,13 +123,13 @@ def _resources(service, survey='ztf', testid='test'):
         # get resources not named elsewhere in this function
         dataflow = [f'{survey}-bq-sink', f'{survey}-value-added']
         instances = [f'{survey}-night-conductor', f'{survey}-consumer']
-        all = dataflow + instances
+        all_dash = dataflow + instances
 
         if testid is not False:
-            atmp = [f'{a}-{testid}' for a in all]
-            all = atmp
+            atmp = [f'{a}-{testid}' for a in all_dash]
+            all_dash = atmp
 
-        return all
+        return all_dash
 
     if service == 'GCS':
         buckets = {  # '<bucket-name>': ['<file-name to upload>',]
