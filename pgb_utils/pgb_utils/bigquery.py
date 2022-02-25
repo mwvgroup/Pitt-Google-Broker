@@ -92,7 +92,7 @@ def _create_client_if_needed():
 
 
 #--- Get information about PGB datasets and tables
-def get_table_info(table: Union[str,list] = 'all', dataset: str ='ztf_alerts'):
+def get_table_info(table: Union[str,list] = 'all', dataset: str = 'ztf_alerts'):
     """Retrieves and prints BigQuery table schemas.
 
     Args:
@@ -124,7 +124,7 @@ def get_table_info(table: Union[str,list] = 'all', dataset: str ='ztf_alerts'):
         print(tabulate(df, headers='keys', tablefmt='grid'))  # psql
         print(f'\n{df.table_name} has {df.num_rows} rows.\n')
 
-def get_table_schema(table: str, dataset: str ='ztf_alerts') -> pd.DataFrame:
+def get_table_schema(table: str, dataset: str = 'ztf_alerts') -> pd.DataFrame:
     """Retrieves information about the columns in a BigQuery table and returns
     it as a DataFrame.
 
@@ -146,7 +146,13 @@ def get_table_schema(table: str, dataset: str ='ztf_alerts') -> pd.DataFrame:
 
         if field.field_type == 'RECORD':
             for subfield in field.fields:
-                cols.append((f'{field.name}.{subfield.name}', subfield.description, subfield.field_type))
+                cols.append(
+                    (
+                        f'{field.name}.{subfield.name}',
+                        subfield.description,
+                        subfield.field_type
+                    )
+                )
 
     # cols = [(s.name, s.description, s.field_type, s.mode) for s in bqtable.schema]
     colnames = ['column_name', 'description', 'type']
@@ -527,16 +533,18 @@ def cone_search(center: astropy.coordinates.SkyCoord,
     """
     # make sure we have required columns
     for c in ['jd', 'ra', 'dec']:
-        if c not in columns: columns.append(c)
+        if c not in columns:
+            columns.append(c)
 
     # Performing a dry run prints the SQL query statement, which does not account
     # for the cone search. We'll print some things to reduce user confusion.
-    if dry_run: print('\nInitiating a cone search.')
+    if dry_run:
+        print('\nInitiating a cone search.')
 
     # Query the database for object histories.
     objects = query_objects(columns,
-                            objectIds = objectIds,
-                            format = 'pandas',
+                            objectIds=objectIds,
+                            format='pandas',
                             iterator=iterator,
                             dry_run=dry_run
                             )
@@ -544,14 +552,16 @@ def cone_search(center: astropy.coordinates.SkyCoord,
     if objects is None:
         return
 
-    if dry_run: print('\nFiltering for objects within the given cone.')
+    if dry_run:
+        print('\nFiltering for objects within the given cone.')
 
     # filter out objects not in the cone and return the rest
     objects_in_cone = _do_cone_search(objects, center, radius, format, iterator)
     return objects_in_cone
 
 
-def _do_cone_search(objects: Union[pd.DataFrame,Generator[pd.DataFrame, None, None]],
+def _do_cone_search(objects: Union[pd.DataFrame,
+                    Generator[pd.DataFrame, None, None]],
                     center: astropy.coordinates.SkyCoord,
                     radius: astropy.coordinates.Angle,
                     format: str = 'pandas',
@@ -597,7 +607,11 @@ def _do_cone_search_all(objects: pd.DataFrame, center: astropy.coordinates.SkyCo
         objects_in_cone = objects_in_cone.reset_index().to_json()  # str
     return objects_in_cone
 
-def object_is_in_cone(object: pd.DataFrame, center: astropy.coordinates.SkyCoord, radius: astropy.coordinates.Angle):
+def object_is_in_cone(
+    object: pd.DataFrame,
+    center: astropy.coordinates.SkyCoord,
+    radius: astropy.coordinates.Angle
+):
     """Checks whether the object's most recent observation has a position that
     is within a cone defined by center and radius.
 
