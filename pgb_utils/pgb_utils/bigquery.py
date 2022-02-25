@@ -199,8 +199,6 @@ def get_history_column_names() -> List[str]:
          obsolete if we change the database structure to store only the
          "candidate" observation and metadata.
     """
-    objectcols = ['objectId',]
-    flatcols = ['schemavsn','publisher','candid',]
     dropcols = ['prv_candidates', 'cutoutScience', 'cutoutDifference', 'cutoutTemplate']
 
     sdf = get_table_schema('alerts')
@@ -220,10 +218,6 @@ def get_history_column_names() -> List[str]:
     historycols = [c.replace('candidate.','') for c in historycols]
 
     return historycols
-
-def check_history_column_names(columns: List[str]) -> Union[List[str],bool]:
-    """Make sure user-submitted column names are appropriate to query object histories.
-    """
 
 def _split_good_bad_history_column_names(columns: List[str]) -> Tuple[List[str],List[str]]:
     """Split columns list into "good" and "bad" according to whether they are
