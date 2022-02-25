@@ -6,7 +6,6 @@ Cloud Scheduler cron job -> Pub/Sub -> Cloud Function -> Night Conductor VM star
 
 See [Auto-scheduler](auto-scheduler.md) for more information.
 
-
 ## Links
 
 - [Scheduling compute instances with Cloud Scheduler](https://cloud.google.com/scheduler/docs/start-and-stop-compute-engine-instances-on-a-schedule)

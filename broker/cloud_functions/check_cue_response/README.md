@@ -8,7 +8,6 @@ This Cloud Function is triggered by the auto-scheduler's Pub/Sub topic. For refe
 
 Cloud Scheduler cron job -> Pub/Sub -> Cloud Function -> Night Conductor VM startup
 
-
 ## Alerting policy
 
 An alerting policy was created manually to notify Troy Raen of anything written to the log named `check-cue-response-cloudfnc` that has severity `'CRITICAL'`.
@@ -17,6 +16,7 @@ Therefore, a new policy does not need to be created with each new broker instanc
 (Also, recall that the auto-scheduler is typically only active in Production instances.)
 
 To update the existing policy, or create a new one, see:
+
 - [Managing log-based alerts](https://cloud.google.com/logging/docs/alerting/log-based-alerts)
 - [Managing alerting policies by API](https://cloud.google.com/monitoring/alerts/using-alerting-api)
 - [Managing notification channels](https://cloud.google.com/monitoring/support/notification-options)
