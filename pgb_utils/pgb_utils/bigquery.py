@@ -283,7 +283,7 @@ def object_history_sql_statement(columns: List[str],
         sqlquery = ' '.join([sqlquery, wheres])
 
     # GROUP BY statement
-    groupbys = f'GROUP BY objectId'
+    groupbys = 'GROUP BY objectId'
     sqlquery = ' '.join([sqlquery, groupbys])
 
     # LIMIT statement
@@ -328,7 +328,7 @@ def dry_run(query: str, notify: bool = True):
     if notify:
         nbytes, TiB = query_job.total_bytes_processed, 2**40
         pTiB = nbytes/TiB*100  # nbytes as a percent of 1 TiB
-        print(f'\nQuery statement:')
+        print('\nQuery statement:')
         print(f'\n"{query}"\n')
         print(f'will process {nbytes} bytes of data.')
         print(f'({pTiB:.3}% of your 1 TiB Free Tier monthly allotment.)')
