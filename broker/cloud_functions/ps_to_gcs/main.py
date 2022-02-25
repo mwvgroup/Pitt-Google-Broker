@@ -119,6 +119,7 @@ def upload_bytes_to_bucket(msg, context) -> None:
     logger.log_text(f'Uploaded {filename} to {bucket.name}')
 
 def attach_file_metadata(blob, alert, context):
+    """Attach metadata to the file."""
     metadata = {'file_origin_message_id': context.event_id}
     metadata['objectId'] = alert[0]['objectId']
     metadata['candid'] = alert[0]['candid']
@@ -128,6 +129,7 @@ def attach_file_metadata(blob, alert, context):
     blob.patch()
 
 def create_filename(alert, attributes):
+    """Create a return a filename for the alert."""
     # alert is a single alert dict wrapped in a list
     oid = alert[0][schema_map['objectId']]
     sid = alert[0][schema_map['source']][schema_map['sourceId']]

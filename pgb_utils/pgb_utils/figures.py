@@ -85,7 +85,7 @@ def plot_stamp(stamp, fig=None, subplot=None, **kwargs):
             if subplot is None:
                 subplot = (1,1,1)
             ffig = aplpy.FITSFigure(hdul[0],figure=fig, subplot=subplot, **kwargs)
-            
+
             # the following has been throwing: `ValueError: a must be > 0 and <= 1`
             # this is fixed by requiring astropy==3.2.1
             # Note: I see this related thing: https://github.com/aplpy/aplpy/issues/420

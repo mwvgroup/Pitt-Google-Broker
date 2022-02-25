@@ -143,7 +143,7 @@ def get_kafka_topic(attrs):
 
 
 def get_current_metadata(update_keys, request_kwargs):
-    # get the current metadata and fingerprint
+    """Get the current metadata and fingerprint of a VM."""
     request = service.instances().get(**request_kwargs)
     response = request.execute()  # dict
     fingerprint = response['metadata']['fingerprint']
@@ -161,6 +161,6 @@ def set_metadata(metadata, request_kwargs):
 
 
 def start_vm(request_kwargs):
-    # start the vm
+    """Start a VM using `request_kwargs`."""
     request = service.instances().start(**request_kwargs)
     response = request.execute()
