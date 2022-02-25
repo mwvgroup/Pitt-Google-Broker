@@ -49,4 +49,4 @@ class ReadFromPubSubPGB(beam.PTransform):
             return alertDicts
 
         elif self.source == 'salt2':
-            return
+            return None

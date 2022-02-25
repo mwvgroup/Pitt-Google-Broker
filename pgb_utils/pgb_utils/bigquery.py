@@ -137,7 +137,7 @@ def get_table_schema(table: str, dataset: str = 'ztf_alerts') -> pd.DataFrame:
     # if a bigquery Client does not exist, help the user instantiate one
     stop = _create_client_if_needed()
     if stop:  # the user has chosen to exit rather than create a client
-        return
+        return None
 
     bqtable = user_bq_client.get_table(f'{pgb_project_id}.{dataset}.{table}')
     cols = []
@@ -175,7 +175,7 @@ def get_dataset_table_names(dataset: str ='ztf_alerts') -> List[str]:
     # if a bigquery Client does not exist, help the user instantiate one
     stop = _create_client_if_needed()
     if stop:  # the user has chosen to exit rather than create a client
-        return
+        return None
 
     print(f'Getting table names for dataset: {dataset}')
 
@@ -550,7 +550,7 @@ def cone_search(center: astropy.coordinates.SkyCoord,
                             )
     # == None if user chose to abort; else DataFrame or generator of same
     if objects is None:
-        return
+        return None
 
     if dry_run:
         print('\nFiltering for objects within the given cone.')
