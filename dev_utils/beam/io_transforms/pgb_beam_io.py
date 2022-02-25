@@ -10,7 +10,7 @@ from apache_beam.io import ReadFromPubSub
 from dev_utils.pub_sub_client import decode_streams
 
 
-class extract_ztf_alert_data(DoFn):
+class extract_ztf_alert_data(beam.DoFn):
     """
     """
     def __init__(self, return_format='dict', strip_cutouts=True):
