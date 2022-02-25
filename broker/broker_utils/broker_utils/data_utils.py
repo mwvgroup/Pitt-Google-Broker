@@ -4,15 +4,14 @@
 survey and broker data.
 """
 
-from typing import Tuple
+from io import BytesIO
+import json
+from typing import Optional, Tuple, Union
 
 from astropy.time import Time
 import fastavro
-from io import BytesIO
-import json
 import numpy as np
 import pandas as pd
-from typing import Optional, Tuple, Union
 
 
 def decode_alert(

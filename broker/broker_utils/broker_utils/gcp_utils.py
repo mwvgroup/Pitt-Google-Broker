@@ -4,14 +4,15 @@
 GCP resources.
 """
 
+import json
+from typing import Callable, List, Optional, Union
+
 from concurrent.futures import TimeoutError
 from google.cloud import bigquery, pubsub_v1, storage
 from google.cloud.logging_v2.logger import Logger
 from google.cloud.pubsub_v1.subscriber.futures import StreamingPullFuture
 from google.cloud.pubsub_v1.types import PubsubMessage, ReceivedMessage
-import json
 import pandas as pd
-from typing import Callable, List, Optional, Union
 
 pgb_project_id = 'ardent-cycling-243415'
 
