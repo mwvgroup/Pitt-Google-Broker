@@ -61,8 +61,8 @@ def _check_client_isinstance():
            "Run `pgb.bigquery.create_client('your_project_id')`")
     try:
         client_is_instance = isinstance(user_bq_client, bigquery.client.Client)
-    except NameError:
-        raise NameError(msg)
+    except NameError as e:
+        raise Exception(msg) from e
     else:
         if not client_is_instance:
             raise TypeError(msg)
