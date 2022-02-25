@@ -102,7 +102,7 @@ def _do_publish_stream(
 
     # make the user confirm
     _user_confirm(auto_confirm)
-    print(f"\nPublishing...")
+    print("\nPublishing...")
 
     b = 0
     while b < Nbatches:

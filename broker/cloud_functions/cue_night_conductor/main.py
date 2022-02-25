@@ -60,7 +60,7 @@ def run(msg, context) -> None:
 
 
 def check_cue_value(cue, attrs):
-    # check that the cue is an expected value and log the result
+    """Check that the cue is an expected value and log the result."""
     expected_values = ['START', 'END']
     if cue in expected_values:
         continue_cue = True
