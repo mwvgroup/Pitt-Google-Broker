@@ -164,7 +164,7 @@ def get_table_schema(table: str, dataset: str = 'ztf_alerts') -> pd.DataFrame:
 
     return df
 
-def get_dataset_table_names(dataset: str ='ztf_alerts') -> List[str]:
+def get_dataset_table_names(dataset: str = 'ztf_alerts') -> List[str]:
     """
     Args:
         dataset: Name of the BigQuery dataset.
@@ -429,7 +429,11 @@ def _query_objects_check_history_column_names(columns: List[str]) -> List[str]:
 
 
 #--- Format query results
-def format_history_query_results(query_job: Optional[bigquery.job.QueryJob] = None, row: Optional[bigquery.table.Row] = None, format: str = 'pandas') -> Union[pd.DataFrame,str]:
+def format_history_query_results(
+    query_job: Optional[bigquery.job.QueryJob] = None,
+    row: Optional[bigquery.table.Row] = None,
+    format: str = "pandas",
+) -> Union[pd.DataFrame, str]:
     """Converts the results of a BigQuery query to the desired format.
     Must pass either query_job or row.
     Any duplicate observations will be dropped.
