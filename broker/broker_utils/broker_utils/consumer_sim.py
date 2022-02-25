@@ -318,11 +318,11 @@ def _convert_rate_to_publish_unit(alert_rate, publish_unit='sec'):
 
 
 def _convert_rate_to_tuple(alert_rate):
-    if type(alert_rate) == tuple:
+    if isinstance(alert_rate, tuple):
         # type == tuple, so just return it
         aRate = alert_rate
 
-    elif type(alert_rate) == str:
+    elif isinstance(alert_rate, str):
         aRate = _convert_rate_string_to_tuple(alert_rate)
         # returns tuple or raises ValueError
 
