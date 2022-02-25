@@ -49,7 +49,7 @@ def get_local_releases() -> Iterable[str]:
 
 def get_local_alerts() -> Iterable[int]:
     """Return an iterable list of alert ids for all downloaded alert data
-    
+
     Returns:
         An iterable of alert ID values as ints
     """
