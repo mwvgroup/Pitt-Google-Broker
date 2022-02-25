@@ -3,7 +3,7 @@
 The following is just my raw notes from when I set this up.
 I will clean up this document later.
 
-## Get an alert from PS and figure out how to parse the data/attributes:
+## Get an alert from PS and figure out how to parse the data/attributes
 
 ```python
 from google.cloud import pubsub_v1
