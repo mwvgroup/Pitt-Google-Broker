@@ -1,3 +1,5 @@
+# Consumer
+
 See [`kafka_console_connect.md`](kafka_console_connect.md)
 
 To start the `ztf-consumer` VM and begin ingesting a ZTF topic:
