@@ -304,7 +304,7 @@ def setup_dashboard(survey='ztf', testid='test', teardown=False) -> None:
 
         # create the dashboard
         gboard = f'gcloud monitoring dashboards create --config-from-file={jpath}'
-        __ = subprocess.check_output(shlex.split(gboard))
+        _ = subprocess.check_output(shlex.split(gboard))
 
         # tell the user where to view it
         print('\nA monitoring dashboard has been created for you!\nView it at:')
@@ -553,7 +553,7 @@ if __name__ == "__main__":
         default=False,
         help="User has already confirmed settings; try not to ask again.\n",
     )
-    known_args, __ = parser.parse_known_args()
+    known_args, _ = parser.parse_known_args()
 
     auto_setup(survey=known_args.survey,
                testid=known_args.testid,
