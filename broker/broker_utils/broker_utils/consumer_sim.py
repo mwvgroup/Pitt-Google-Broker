@@ -60,10 +60,14 @@ def publish_stream(
     pbeN, pbeU = publish_batch_every  # shorthand
 
     # get number of alerts to publish per batch
-    alerts_per_batch, aRate_tuple = _get_number_alerts_per_batch(alert_rate, publish_batch_every)  # int, tuple
+    alerts_per_batch, aRate_tuple = _get_number_alerts_per_batch(
+        alert_rate, publish_batch_every
+    )  # int, tuple
 
     # get number of batches to run
-    Nbatches = _convert_runtime_to_Nbatches(runtime, publish_batch_every, aRate_tuple[1])
+    Nbatches = _convert_runtime_to_Nbatches(
+        runtime, publish_batch_every, aRate_tuple[1]
+    )
 
     # tell the user about the rates
     print(f"\nReceived desired alert_rate={aRate_tuple}, runtime={runtime}.")
@@ -77,7 +81,16 @@ def publish_stream(
     print(rate_msg)
 
     # publish the stream
-    _do_publish_stream(instance, alerts_per_batch, Nbatches, publish_batch_every, sub_id, topic_id, nack, auto_confirm)
+    _do_publish_stream(
+        instance,
+        alerts_per_batch,
+        Nbatches,
+        publish_batch_every,
+        sub_id,
+        topic_id,
+        nack,
+        auto_confirm
+    )
 
 
 def _do_publish_stream(
