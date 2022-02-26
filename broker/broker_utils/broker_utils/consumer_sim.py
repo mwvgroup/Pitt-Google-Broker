@@ -11,6 +11,8 @@ from google.cloud import pubsub_v1
 
 PROJECT_ID = 'ardent-cycling-243415'
 
+# disable some linting issues that will not be fixed in this file
+# pylint: disable=invalid-name
 
 def publish_stream(
     alert_rate: Union[Tuple[int, str], str],
