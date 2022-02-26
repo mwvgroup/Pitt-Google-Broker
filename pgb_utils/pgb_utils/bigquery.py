@@ -45,7 +45,8 @@ def _create_client_raise_exception_if_not_connected(project_id: str):
     query = f'SELECT candid FROM `{pgb_project_id}.ztf_alerts.salt2`'
     try:
         dry_run(query, notify=False)
-    except:
+    # TODO: catch a more specific error
+    except Exception:
         user_bq_client = None  # reset so the user can try again
         msg = (
             'You have tried to create a BigQuery Client with the project_id:\n'
