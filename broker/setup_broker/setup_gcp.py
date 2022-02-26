@@ -315,7 +315,7 @@ def setup_dashboard(survey='ztf', testid='test', teardown=False) -> None:
 
     else:  # delete the dashboard
         gdelete = f'gcloud monitoring dashboards delete projects/{PROJECT_ID}/dashboards/{dashboard_id}'
-        __ = subprocess.check_output(shlex.split(gdelete))
+        _ = subprocess.check_output(shlex.split(gdelete))
 
 
 def _setup_dashboard_json(survey='ztf', testid='test'):
