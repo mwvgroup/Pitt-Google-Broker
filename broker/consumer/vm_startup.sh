@@ -45,7 +45,7 @@ gsutil -m cp -r "gs://${broker_bucket}/schema_maps" .
 # Kafka topic name
 kafka_topic_syntax=$(yq ".TOPIC_SYNTAX" "${brokerdir}/schema_maps/${survey}.yaml")
 yyyymmdd=$(date -u '+%Y%m%d')
-KAFKA_TOPIC=$(echo "${kafka_topic_syntax}" | sed "s/yyyymmdd/${yyyymmdd}/" )
+KAFKA_TOPIC=$(echo "${kafka_topic_syntax/yyyymmdd/${yyyymmdd}}")
 
 cd ${workingdir}
 
