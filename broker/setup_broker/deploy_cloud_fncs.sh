@@ -90,8 +90,7 @@ else # Deploy the Cloud Functions
         --entry-point "$check_cue_entry_point" \
         --runtime python37 \
         --trigger-topic "$check_cue_trigger_topic" \
-        --set-env-vars TESTID="$testid",SURVEY="$survey",ZONE="$zone" \
-        --timeout 540s  # allow the CF to sleep without timing out
+        --set-env-vars TESTID="$testid",SURVEY="$survey",ZONE="$zone"
 
     cd $OGdir
 
