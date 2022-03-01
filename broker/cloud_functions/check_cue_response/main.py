@@ -79,15 +79,12 @@ def check_cue_value(cue):
 def check_cue_response(cue, attrs):
     """Check that the broker components responded appropriately to the cue.
     """
-    # sleep so night-conductor has time to boot, then check it
-    time.sleep(30)
-    status, metadata = check_night_conductor()
-
-    # sleep so the rest of the broker has time to respond
-    time.sleep(7 * 60)  # 7 min. Draining Dataflow jobs takes the longest
-
-    # finish the checks
+    # check that consumer has started or stopped, as appropriate
     check_consumer(cue, attrs)
+
+    # check that night conductor has started
+    if cue == "END":
+        _ = check_night_conductor()
 
 
 def check_night_conductor():
