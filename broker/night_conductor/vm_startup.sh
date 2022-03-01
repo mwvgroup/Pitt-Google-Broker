@@ -23,11 +23,13 @@ if [ "$testid" != "False" ]; then
 fi
 
 # copy fresh instructions from the broker bucket
-workingdir="/home/broker/night_conductor"
+brokerdir="/home/broker"
+workingdir="${brokerdir}/night_conductor"
 rm -r "${workingdir}"
 mkdir -p "${workingdir}"
-gsutil -m cp -r "gs://${broker_bucket}/night_conductor" .
-chmod 744 "${workingdir}/*.sh"
+gsutil -m cp -r "gs://${broker_bucket}/night_conductor" "${brokerdir}"
+# make shell and python files executable
+find "${workingdir}" -type f \( -name "*.sh" -o -name "*.py" \) -exec chmod +x {} \;
 
 #--- Process Pub/Sub counters
 echo "Processing Pub/Sub counters..."
