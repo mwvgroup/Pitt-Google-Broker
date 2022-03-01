@@ -19,7 +19,6 @@ SURVEY = os.getenv('SURVEY')
 ZONE = os.getenv('ZONE')
 
 compute_service = discovery.build('compute', 'v1')
-dataflow_service = discovery.build('dataflow', 'v1b3')
 
 # connect to the logger
 logging_client = logging.Client()
@@ -29,13 +28,9 @@ logger = logging_client.logger(log_name)
 # GCP resources used in this module
 consumer = f'{SURVEY}-consumer'  # vm
 night_conductor = f'{SURVEY}-night-conductor'  # vm
-bq_sink = f'{SURVEY}-bq-sink'  # dataflow job
-value_added = f'{SURVEY}-value-added'  # dataflow job
 if TESTID != "False":
     consumer = f'{consumer}-{TESTID}'
     night_conductor = f'{night_conductor}-{TESTID}'
-    bq_sink = f'{bq_sink}-{TESTID}'
-    value_added = f'{value_added}-{TESTID}'
 
 
 def run(msg, context) -> None:
@@ -92,7 +87,6 @@ def check_cue_response(cue, attrs):
     time.sleep(7 * 60)  # 7 min. Draining Dataflow jobs takes the longest
 
     # finish the checks
-    check_dataflow(cue, metadata)
     check_consumer(cue, attrs)
 
 
@@ -117,79 +111,6 @@ def check_night_conductor():
     # in the future, may want to check the metadata as well
 
     return (status, metadata)
-
-
-def check_dataflow(cue, metadata):
-    """Check that the jobs are either running or drained
-    """
-    expected_jobs = [bq_sink, value_added]
-
-    # get the job IDs
-    # if cue == 'END', the job IDs have been deleted from the metadata by now,
-    # so we must use the old metadata
-    # if cue == 'START', the job IDs would not have been set in the
-    # metadata earlier, so we must get the new values now.
-    if cue == 'START':
-        request_kwargs = {
-            'project': PROJECT_ID,
-            'zone': ZONE,
-            'instance': night_conductor
-        }
-        __, metadata = get_vm_info(request_kwargs)
-    jobids = get_dataflow_jobids(metadata)  # list of job IDs
-
-    msg = f'night-conductor metadata: dataflow jobids: {jobids} | metadata: {metadata}'
-    logger.log_text(msg, severity='DEBUG')
-
-    # get the current states
-    job_states = {}  # {job name: current state}}
-    for jobid in jobids:
-        region = '-'.join(ZONE.split('-')[:-1])
-        kwargs = {'projectId': PROJECT_ID, 'location': region, 'jobId': jobid}
-        request = dataflow_service.projects().locations().jobs().get(**kwargs)
-        state = request.execute()
-        job_states[state['name']] = state['currentState']
-
-    if cue == 'START':
-        # check that both the value-added and bq-sink jobs are running
-        for job_name in expected_jobs:
-            if job_name in job_states.keys():
-                # job exists. check the status
-                status = job_states[job_name]
-                if status == 'JOB_STATE_RUNNING':
-                    msg = f'{job_name} Dataflow job is running as expected.'
-                    severity = 'INFO'
-                else:
-                    msg = (f'{job_name} Dataflow job exists, but it is not '
-                           'running as expected. Its status is {}'
-                           )
-                    severity = 'CRITICAL'
-            else:
-                # job does not exist or didn't get recorded properly
-                msg = (f'{job_name} Dataflow job should be running, but it either '
-                       'did not start or its job ID did not get recorded in '
-                       'night-conductor metadata.'
-                       )
-                severity = 'CRITICAL'
-            logger.log_text(msg, severity=severity)
-    else:
-        # check that the jobs have stopped and drained
-        for job_name, state in job_states.items():
-            if state in ['JOB_STATE_DRAINED', 'JOB_STATE_CANCELLED']:
-                msg = f'{job_name} stopped as expected. {state}'
-                severity = 'INFO'
-            else:
-                msg = f'{job_name} should have stopped, but its status is {state}.'
-                severity = 'CRITICAL'
-            logger.log_text(msg, severity=severity)
-
-
-def get_dataflow_jobids(metadata):
-    for item in metadata['items']:
-        if item['key'] == 'RUNNING_BEAM_JOBS':
-            jobid_string = item['value']
-    jobids = jobid_string.split(' ')  # list of job ids
-    return jobids
 
 
 def check_consumer(cue, attrs):
