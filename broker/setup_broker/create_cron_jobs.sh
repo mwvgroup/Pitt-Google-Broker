@@ -32,8 +32,8 @@ if [ "$teardown" = "True" ]; then
 #--- Create jobs that schedule night conductor
 else
     timezone='UTC'  # to avoid daylight savings issues
-    scheduleSTART='30 1 * * *'  # START at 1:30am UTC/5:30pm PDT, everyday
-    scheduleEND='55 13 * * *'  # END at 1:55pm UTC/6:55am PDT, everyday
+    scheduleSTART='31 1 * * *'  # START at 1:31am UTC / 5:31pm PDT, everyday
+    scheduleEND='01 16 * * *'  # END at 4:01pm UTC / 9:01am PDT, everyday
     msgSTART='START'
     msgEND='END'
 
