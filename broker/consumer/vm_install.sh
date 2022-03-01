@@ -10,8 +10,11 @@ zone=$(curl "${baseurl}/instance/zone" -H "${H}")
 
 #--- Install general utils
 apt-get update
-apt-get install -y wget screen software-properties-common
+apt-get install -y wget screen software-properties-common snapd
 # software-properties-common installs add-apt-repository
+# install yq (requires snap)
+snap install core
+snap install yq
 
 #--- Install Java and the dev kit
 # see https://www.digitalocean.com/community/tutorials/how-to-install-java-with-apt-on-debian-10
