@@ -8,7 +8,6 @@ auto-scheduler's cue. If it has not, a message(s) is logged with
 
 import base64
 import os
-import time
 
 from google.cloud import logging
 from googleapiclient import discovery
