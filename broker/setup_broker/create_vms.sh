@@ -31,17 +31,36 @@ if [ "$teardown" = "True" ]; then
 #--- Create resources
 else
 #--- Night Conductor VM
+    # create schedule
+    start_schedule='00 16 * * *'  # 4:00pm UTC / 9:00am PDT, everyday
+    gcloud compute resource-policies create instance-schedule "${nconductVM}" \
+        --description="Start ${nconductVM} each morning." \
+        --vm-start-schedule="${start_schedule}" \
+        --timezone="UTC"
+    # create VM
     installscript="gs://${broker_bucket}/night_conductor/vm_install.sh"
     machinetype=e2-standard-2
     gcloud compute instances create "$nconductVM" \
+        --resource-policies="${nconductVM}" \
         --zone="$zone" \
         --machine-type="$machinetype" \
         --scopes=cloud-platform \
         --metadata=google-logging-enabled=true,startup-script-url="$installscript"
+
 #--- Consumer VM
+    # create schedule
+    start_schedule='30 1 * * *'  # 1:30am UTC / 5:30pm PDT, everyday
+    stop_schedule='55 13 * * *'  # 1:55pm UTC / 6:55am PDT, everyday
+    gcloud compute resource-policies create instance-schedule "${consumerVM}" \
+    --description="Start ${consumerVM} each night, stop each morning." \
+    --vm-start-schedule="${start_schedule}" \
+    --vm-stop-schedule="${stop_schedule}" \
+    --timezone="UTC"
+    # create VM
     installscript="gs://${broker_bucket}/consumer/vm_install.sh"
     machinetype=e2-standard-2
     gcloud compute instances create "$consumerVM" \
+        --resource-policies="${consumerVM}" \
         --zone="$zone" \
         --machine-type="$machinetype" \
         --scopes=cloud-platform \
