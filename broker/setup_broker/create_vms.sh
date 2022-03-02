@@ -28,9 +28,9 @@ if [ "$teardown" = "True" ]; then
         gcloud compute instances delete "$consumerVM" "$nconductVM" --zone="$zone"
     fi
 
-#--- Create resources
+    #--- Create resources
 else
-#--- Night Conductor VM
+    #--- Night Conductor VM
     installscript="gs://${broker_bucket}/night_conductor/vm_install.sh"
     machinetype=e2-standard-2
     gcloud compute instances create "$nconductVM" \
@@ -38,7 +38,7 @@ else
         --machine-type="$machinetype" \
         --scopes=cloud-platform \
         --metadata=google-logging-enabled=true,startup-script-url="$installscript"
-#--- Consumer VM
+    #--- Consumer VM
     installscript="gs://${broker_bucket}/consumer/vm_install.sh"
     machinetype=e2-standard-2
     gcloud compute instances create "$consumerVM" \
