@@ -36,9 +36,13 @@ kafka_topic_syntax=$(cat "${brokerdir}/schema_maps/${survey}.yaml" | yq ".TOPIC_
 yyyymmdd=$(date -u '+%Y%m%d')
 KAFKA_TOPIC_DEFAULT="${kafka_topic_syntax/yyyymmdd/${yyyymmdd}}"
 
-#--- Set the topic names to metadata attributes if exist, else defaults defined above
+#--- Set the topic names to the "FORCE" metadata attributes if exist, else defaults
 KAFKA_TOPIC="${KAFKA_TOPIC_FORCE:-${KAFKA_TOPIC_DEFAULT}}"
 PS_TOPIC="${PS_TOPIC_FORCE:-${PS_TOPIC_DEFAULT}}"
+# set VM metadata, just for clarity and easy viewing
+gcloud compute instances add-metadata "$consumerVM" --zone "$zone" \
+    --metadata="PS_TOPIC=${PS_TOPIC},KAFKA_TOPIC=${KAFKA_TOPIC}"
+
 
 #--- Files this script will write
 fout_run="${workingdir}/run-connector.out"
@@ -59,9 +63,6 @@ fconfig=ps-connector.properties
 sed -i "s/PROJECT_ID/${PROJECT_ID}/g" ${fconfig}
 sed -i "s/PS_TOPIC/${PS_TOPIC}/g" ${fconfig}
 sed -i "s/KAFKA_TOPIC/${KAFKA_TOPIC}/g" ${fconfig}
-# set VM metadata, just for clarity and easy viewing
-gcloud compute instances add-metadata "$consumerVM" --zone "$zone" \
-    --metadata="PS_TOPIC=${PS_TOPIC},KAFKA_TOPIC=${KAFKA_TOPIC}"
 
 #--- Check until alerts start streaming into the topic
 alerts_flowing=false
