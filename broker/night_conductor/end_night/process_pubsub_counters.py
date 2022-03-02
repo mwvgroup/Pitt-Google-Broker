@@ -287,8 +287,8 @@ class MetadataCollector:
 
     def _join_metadata(self):
         # join the subscription dfs on index
-        # if alerts subscription was empty, use an empty dataframe with correct index
-        alerts = self.metadata_dfs_dict.get("alerts", pd.DataFrame(index=self.index))
+        # if alerts subscription was empty, use an empty dataframe
+        alerts = self.metadata_dfs_dict.get("alerts", pd.DataFrame())
         allothers = [df for t, df in self.metadata_dfs_dict.items() if t != "alerts"]
         self.metadata_df = alerts.join(allothers, how="outer")
 
