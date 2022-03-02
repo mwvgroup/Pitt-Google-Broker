@@ -122,13 +122,13 @@ def _resources(service, survey="ztf", testid="test"):
         # get resources not named elsewhere in this function
         dataflow = [f"{survey}-bq-sink", f"{survey}-value-added"]
         instances = [f"{survey}-night-conductor", f"{survey}-consumer"]
-        all = dataflow + instances
+        all_dash = dataflow + instances
 
         if testid is not False:
-            atmp = [f"{a}-{testid}" for a in all]
-            all = atmp
+            atmp = [f"{a}-{testid}" for a in all_dash]
+            all_dash = atmp
 
-        return all
+        return all_dash
 
     if service == "GCS":
         buckets = {  # '<bucket-name>': ['<file-name to upload>',]
@@ -175,14 +175,11 @@ def _resources(service, survey="ztf", testid="test"):
         return topics
 
 
-def _do_not_delete_production_resources(survey="ztf", testid="test", teardown=True):
+def _do_not_delete_production_resources(testid="test", teardown=True):
     """If the user is requesting to delete resources used in production,
     throw an error.
 
     Args:
-        survey (str): which astronomical survey the broker instance will
-                      connect to. Controls the names of resources and the
-                      behavior of functions that rely on schemas.
         testid (False or str): False: Use production resources.
                                 str: Use test resources. (This string is
                                 appended to the resource names.)
@@ -239,7 +236,7 @@ def setup_bigquery(survey="ztf", testid="test", teardown=False) -> None:
     New datasets include:
       ``{survey}-alerts``
     """
-    _do_not_delete_production_resources(survey=survey, testid=testid, teardown=teardown)
+    _do_not_delete_production_resources(testid=testid, teardown=teardown)
 
     datasets = _resources("BQ", survey=survey, testid=testid)
     bigquery_client = bigquery.Client()
@@ -299,18 +296,19 @@ def setup_dashboard(survey="ztf", testid="test", teardown=False) -> None:
         # if the dashboard already exists, delete it so we can make a new one
         gdescribe = f"gcloud monitoring dashboards describe {dashboard_id}"
         try:
-            dboard = subprocess.check_output(
-                shlex.split(gdescribe), stderr=subprocess.DEVNULL
-            )
-        except:
+            subprocess.check_output(shlex.split(gdescribe), stderr=subprocess.DEVNULL)
+        # if the dashboard can't be retrieved there's no need to delete it
+        # just catch the error and move on
+        except subprocess.CalledProcessError:
             pass
+        # if the dashboard was retrieved, delete it
         else:
             gdelete = f"gcloud monitoring dashboards delete projects/{PROJECT_ID}/dashboards/{dashboard_id} --quiet"
-            __ = subprocess.check_output(shlex.split(gdelete))
+            _ = subprocess.check_output(shlex.split(gdelete))
 
         # create the dashboard
         gboard = f"gcloud monitoring dashboards create --config-from-file={jpath}"
-        __ = subprocess.check_output(shlex.split(gboard))
+        _ = subprocess.check_output(shlex.split(gboard))
 
         # tell the user where to view it
         print("\nA monitoring dashboard has been created for you!\nView it at:")
@@ -321,7 +319,7 @@ def setup_dashboard(survey="ztf", testid="test", teardown=False) -> None:
 
     else:  # delete the dashboard
         gdelete = f"gcloud monitoring dashboards delete projects/{PROJECT_ID}/dashboards/{dashboard_id}"
-        __ = subprocess.check_output(shlex.split(gdelete))
+        _ = subprocess.check_output(shlex.split(gdelete))
 
 
 def _setup_dashboard_json(survey="ztf", testid="test"):
@@ -358,7 +356,7 @@ def _setup_dashboard_resource_names(survey="ztf", testid="test"):
     psold = _resources("PS", survey="ztf", testid=False)
     psnew = _resources("PS", survey=survey, testid=testid)
     # get topic names
-    pstopics = {old: new for old, new in zip(psold.keys(), psnew.keys())}
+    pstopics = dict(zip(psold.keys(), psnew.keys()))
     # --- Fix some problems: (yes, this is messy)
     # 1) The `alerts_pure` topic/subscription name gets mixed up. fix it
     pspure = {f"-{testid}_pure": f"_pure-{testid}"}
@@ -371,7 +369,7 @@ def _setup_dashboard_resource_names(survey="ztf", testid="test"):
     # VMs and Dataflow jobs
     oold = _resources("dashboard", survey="ztf", testid=False)
     onew = _resources("dashboard", survey=survey, testid=testid)
-    othernames = {old: new for old, new in zip(oold, onew)}
+    othernames = dict(zip(oold, onew))
 
     # add the survey and testid, merge the dicts, and return
     resource_maps = {
@@ -398,7 +396,7 @@ def setup_buckets(survey="ztf", testid="test", teardown=False) -> None:
                                 appended to the resource names.)
         teardown (bool): if True, delete resources rather than setting them up
     """
-    _do_not_delete_production_resources(survey=survey, testid=testid, teardown=teardown)
+    _do_not_delete_production_resources(testid=testid, teardown=teardown)
 
     buckets = _resources("GCS", survey=survey, testid=testid)
     storage_client = storage.Client()
@@ -447,7 +445,7 @@ def setup_pubsub(survey="ztf", testid="test", teardown=False) -> None:
                                 appended to the resource names.)
         teardown (bool): if True, delete resources rather than setting them up
     """
-    _do_not_delete_production_resources(survey=survey, testid=testid, teardown=teardown)
+    _do_not_delete_production_resources(testid=testid, teardown=teardown)
 
     topics = _resources("PS", survey=survey, testid=testid)
     publisher = pubsub_v1.PublisherClient()
@@ -508,7 +506,7 @@ def auto_setup(survey="ztf", testid="test", teardown=False, confirmed=False) -> 
                           and tries not to ask again.
 
     """
-    _do_not_delete_production_resources(survey=survey, testid=testid, teardown=teardown)
+    _do_not_delete_production_resources(testid=testid, teardown=teardown)
     if not confirmed:
         _confirm_options(survey, testid, teardown)
 
@@ -558,7 +556,7 @@ if __name__ == "__main__":
         default=False,
         help="User has already confirmed settings; try not to ask again.\n",
     )
-    known_args, __ = parser.parse_known_args()
+    known_args, _ = parser.parse_known_args()
 
     auto_setup(
         survey=known_args.survey,

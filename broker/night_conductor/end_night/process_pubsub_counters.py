@@ -176,7 +176,7 @@ class MetadataCollector:
             later, at the time of collection.
         """
         # field name(s) that will serve as the index to join the dfs
-        requested_fields = [i for i in self.index]
+        requested_fields = list(self.index)
 
         # field names from this topic to be loaded to bigquery (minus self.index).
         # parse these from the existing bigquery column names.
