@@ -20,8 +20,9 @@ You should have received a copy of the GNU General Public License
 along with pgb_utils.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from setuptools import setup, find_packages
 import pathlib
+
+from setuptools import setup, find_packages
 
 
 here = pathlib.Path(__file__).parent.resolve()

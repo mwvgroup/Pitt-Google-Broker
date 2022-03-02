@@ -4,10 +4,11 @@
 """Classify alerts using SuperNNova (M¨oller & de Boissi`ere 2019)."""
 
 import base64
-from google.cloud import logging
 import json
-import numpy as np
 import os
+
+from google.cloud import logging
+import numpy as np
 import pandas as pd
 from pathlib import Path
 from supernnova.validation.validate_onthefly import classify_lcs

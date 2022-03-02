@@ -5,9 +5,10 @@
 and services.
 """
 
-import pkg_resources  # part of setuptools
 import os as _os
 from warnings import warn as _warn
+
+import pkg_resources  # part of setuptools
 
 from . import bigquery, figures, pubsub, utils
 

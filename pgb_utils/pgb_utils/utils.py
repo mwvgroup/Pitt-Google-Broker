@@ -6,8 +6,9 @@ Pitt-Google Broker's data and services.
 """
 
 
-from astropy.table import Table
 from collections import OrderedDict
+
+from astropy.table import Table
 import pandas as pd
 
 

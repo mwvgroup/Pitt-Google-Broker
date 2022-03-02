@@ -3,11 +3,12 @@
 
 """Filter alerts for likely extragalactic transients."""
 
-import astropy.units as u
 import base64
+import os
+
+import astropy.units as u
 from google.cloud import logging
 import numpy as np
-import os
 
 from broker_utils import data_utils, gcp_utils, schema_maps
 

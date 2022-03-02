@@ -5,6 +5,7 @@ Most of these are essentially wrappers for Beam's native GCP IO transforms.
 """
 
 import apache_beam as beam
+from apache_beam.io import ReadFromPubSub
 
 from dev_utils.pub_sub_client import decode_streams
 

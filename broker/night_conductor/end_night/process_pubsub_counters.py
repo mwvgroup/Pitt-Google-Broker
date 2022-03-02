@@ -3,13 +3,14 @@
 """Collect and store metadata from Pub/Sub subscriptions."""
 
 
-import argparse
-from google.cloud import bigquery, logging
 import json
-import numpy as np
-import pandas as pd
 import time
 from typing import List, Optional, Tuple, Union
+
+import argparse
+from google.cloud import bigquery, logging
+import numpy as np
+import pandas as pd
 
 from broker_utils import gcp_utils, schema_maps
 
