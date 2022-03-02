@@ -2,10 +2,9 @@
 # Start/setup up all GCS resources required to ingest and process
 # the ZTF stream.
 
-PROJECT_ID=$1
-testid=$2
-broker_bucket=$3
-survey="${4:-ztf}"
+testid=$1
+broker_bucket=$2
+survey="${3:-ztf}"
 
 brokerdir=/home/broker
 mkdir -p "${brokerdir}"

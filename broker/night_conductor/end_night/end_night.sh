@@ -2,9 +2,8 @@
 # Stop all VM instances, Beam/Dataflow jobs, and other resources
 # related to running the nightly broker
 
-PROJECT_ID=$1
-testid=$2
-survey="${3:-ztf}"
+testid=$1
+survey="${2:-ztf}"
 
 #--- Stop the ztf-consumer VM instance
 echo
