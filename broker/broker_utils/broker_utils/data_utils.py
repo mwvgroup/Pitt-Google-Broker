@@ -80,12 +80,12 @@ def alert_avro_to_dict(alert_avro: Union[str, bytes]) -> dict:
                 # throughout broker to give users a consistent end-product.
                 # then this except block will be unnecessary.
                 alert_list = [json.loads(alert_avro.decode("UTF-8"))]  # list of dicts
-            except ValueError:
+            except ValueError as e:
                 msg = (
                     "alert_avro is a bytes object, but does not seem to be either "
                     "json or Avro encoded. Cannot decode."
                 )
-                raise ValueError(msg)
+                raise Exception(msg) from e
     else:
         msg = (
             "Unable to open alert_avro. "

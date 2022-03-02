@@ -47,7 +47,7 @@ def run(msg: dict, context: functions_v1.context.Context) -> None:
 
     # send the alert to BigQuery tables
     alert_table = insert_rows_alerts(alert_dict)
-    source_table = insert_rows_DIASource(alert_dict)
+    source_table = insert_rows_diasource(alert_dict)
 
     # announce what's been done
     publish_pubsub(alert_dict, [alert_table, source_table])
@@ -70,7 +70,7 @@ def insert_rows_alerts(alert_dict: dict):
     return table_dict
 
 
-def insert_rows_DIASource(alert_dict: dict):
+def insert_rows_diasource(alert_dict: dict):
     """Insert rows into the `DIASource` table via the streaming API."""
     table_id = f"{bq_dataset}.DIASource"
 

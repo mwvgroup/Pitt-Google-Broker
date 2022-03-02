@@ -339,7 +339,7 @@ def _setup_dashboard_json(survey="ztf", testid="test"):
         dstring = dstring.replace(k, v)
 
     # write the new config file
-    if testid != False:
+    if testid is not False:
         fname = f"templates/dashboard-{survey}-{testid}.json"
     else:
         fname = f"templates/dashboard-{survey}-production.json"
