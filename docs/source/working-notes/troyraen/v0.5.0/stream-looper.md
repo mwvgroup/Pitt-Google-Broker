@@ -1,6 +1,15 @@
-# Setup stream-looper VM and topic
+# Setup stream-looper VM and topic<a name="setup-stream-looper-vm-and-topic"></a>
 
-## Create the Pub/Sub topic and allow public subscriptions
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
+
+- [Setup stream-looper VM and topic](#setup-stream-looper-vm-and-topic)
+  - [Create the Pub/Sub topic and allow public subscriptions](#create-the-pubsub-topic-and-allow-public-subscriptions)
+  - [Create the VM and setup the consumer simulator](#create-the-vm-and-setup-the-consumer-simulator)
+    - [Set a startup script to run consumer simulator indefinitely](#set-a-startup-script-to-run-consumer-simulator-indefinitely)
+
+<!-- mdformat-toc end -->
+
+## Create the Pub/Sub topic and allow public subscriptions<a name="create-the-pubsub-topic-and-allow-public-subscriptions"></a>
 
 ```bash
 PROJECT=$GOOGLE_CLOUD_PROJECT
@@ -16,7 +25,7 @@ gcloud pubsub topics get-iam-policy $topic_path --format yaml > $fnametmp
 gcloud pubsub topics set-iam-policy $topic_path $fname
 ```
 
-## Create the VM and setup the consumer simulator
+## Create the VM and setup the consumer simulator<a name="create-the-vm-and-setup-the-consumer-simulator"></a>
 
 ```bash
 vmname="stream-looper"
@@ -39,11 +48,10 @@ gcloud compute instances add-metadata "$vmname" --zone="$zone" --metadata=startu
 # gcloud compute ssh $vmname
 ```
 
-### Set a startup script to run consumer simulator indefinitely
+### Set a startup script to run consumer simulator indefinitely<a name="set-a-startup-script-to-run-consumer-simulator-indefinitely"></a>
 
-Python script to trigger at startup.
-Save the following code to a root-executable file at
-/home/consumer_sim/run-looper-indefinitely.py:
+Python script to trigger at startup. Save the following code to a root-executable file
+at /home/consumer_sim/run-looper-indefinitely.py:
 
 ```python
 #!/usr/bin/env python3
@@ -51,14 +59,14 @@ Save the following code to a root-executable file at
 from broker_utils import consumer_sim as bcs
 
 # set args to publish 1 alert every second
-alert_rate = (60, 'perMin')
+alert_rate = (60, "perMin")
 kwargs = {
-    'instance': None,
-    'runtime': (1, 'night'),
-    'publish_batch_every': (1, 'sec'),
-    'sub_id': 'ztf-alerts-reservoir',
-    'topic_id': 'ztf-loop',
-    'auto_confirm': True,
+    "instance": None,
+    "runtime": (1, "night"),
+    "publish_batch_every": (1, "sec"),
+    "sub_id": "ztf-alerts-reservoir",
+    "topic_id": "ztf-loop",
+    "auto_confirm": True,
 }
 
 # run indefinitely
@@ -67,6 +75,7 @@ while True:
 ```
 
 Set a startup script to execute the python file in a background thread:
+
 ```bash
 startupscript="#! /bin/bash
 dir=/home/consumer_sim/
@@ -78,6 +87,7 @@ gcloud compute instances add-metadata "$vmname" --metadata=startup-script="$star
 ```
 
 Stop and restart the vm:
+
 ```bash
 gcloud compute instances stop "$vmname"
 gcloud compute instances start "$vmname"

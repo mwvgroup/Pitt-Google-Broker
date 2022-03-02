@@ -1,9 +1,20 @@
-# Admin tasks for GCP projects
+# Admin tasks for GCP projects<a name="admin-tasks-for-gcp-projects"></a>
+
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
+
+- [Admin tasks for GCP projects](#admin-tasks-for-gcp-projects)
+  - [Links](#links)
+  - [Cloud Run](#cloud-run)
+  - [Pub/Sub](#pubsub)
+  - [Service account](#service-account)
+
+<!-- mdformat-toc end -->
+
+## Links<a name="links"></a>
 
 - [`gcloud` reference](https://cloud.google.com/sdk/gcloud/reference)
 
-
-## Cloud Run
+## Cloud Run<a name="cloud-run"></a>
 
 - [Instructions to create resources with pubsub trigger](https://cloud.google.com/run/docs/triggering/pubsub-push#command-line)
 
@@ -12,9 +23,9 @@ Initialize variables
 ```bash
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT
 PROJECT_NUMBER=$(gcloud projects list \
-    --filter="$(gcloud config get-value project)" \
-    --format="value(PROJECT_NUMBER)" \
-)
+        --filter="$(gcloud config get-value project)" \
+        --format="value(PROJECT_NUMBER)" \
+    )
 
 # broker instance keywords
 SURVEY="ztf"
@@ -77,12 +88,12 @@ Allow Pub/Sub to create authentication tokens in the project:
 
 ```bash
 gcloud projects add-iam-policy-binding ${PROJECT_ID} \
-     --member=serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com \
-     --role=roles/iam.serviceAccountTokenCreator
+    --member=serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com \
+    --role=roles/iam.serviceAccountTokenCreator
 ```
 
-Create a service account and give it permission to invoke cloud run.
-Alternately, you can re-use an existing service account, just add the policy binding.
+Create a service account and give it permission to invoke cloud run. Alternately, you
+can re-use an existing service account, just add the policy binding.
 
 ```bash
 gcloud iam service-accounts create "$SERVICE_ACCOUNT_NAME" \
@@ -104,8 +115,7 @@ gcloud pubsub subscriptions create "$SUBSCRIPTION" \
     --ack-deadline="$ACK_DEADLINE"
 ```
 
-
-## Pub/Sub
+## Pub/Sub<a name="pubsub"></a>
 
 - [https://cloud.google.com/sdk/gcloud/reference/pubsub](https://cloud.google.com/sdk/gcloud/reference/pubsub)
 
@@ -123,7 +133,7 @@ gcloud pubsub subscriptions create "$SUBSCRIPTION" \
     --topic-project="$TOPIC_PROJECT"
 ```
 
-## Service account
+## Service account<a name="service-account"></a>
 
 ```bash
 NAME="tjraen-owner"

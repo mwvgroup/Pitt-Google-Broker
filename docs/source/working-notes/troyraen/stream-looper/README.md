@@ -14,14 +14,13 @@ gcloud compute instances add-metadata stream-looper --metadata=startup-script="$
 gcloud compute instances start stream-looper
 ```
 
-
 Run this in `screen` to debug
 
 ```python
 from streaming_stream_looper import StreamLooper
 
-TOPIC_NAME = 'ztf-loop'
-SUBSCRIPTION_NAME = 'ztf-alerts-reservoir'
+TOPIC_NAME = "ztf-loop"
+SUBSCRIPTION_NAME = "ztf-alerts-reservoir"
 looper = StreamLooper(TOPIC_NAME, SUBSCRIPTION_NAME)
 looper.run_looper()
 ```

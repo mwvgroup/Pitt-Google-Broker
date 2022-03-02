@@ -1,23 +1,24 @@
-# v0.6.2: Issue \#68
+# v0.6.2: Issue #68
 
-[\#68](https://github.com/mwvgroup/Pitt-Google-Broker/issues/68)
+[#68](https://github.com/mwvgroup/Pitt-Google-Broker/issues/68)
 
 Solution summary:
+
 - require astropy==3.2.1
-    - fix utils module to accomodate this astropy version
+  - fix utils module to accomodate this astropy version
 
 Note the specific error from issue 68
-`OSError: No SIMPLE card found, this file does not appear to be a valid FITS file`
-can be avoided by added the kwarg `ignore_missing_simple=True`
-to the function `astropy.io.fits.open()`.
-However, then we run into the ValueError documented in `pgb_utils.figures.plot_stamp()`,
-and fixing this requires astropy 3.2.1.
+`OSError: No SIMPLE card found, this file does not appear to be a valid FITS file` can
+be avoided by added the kwarg `ignore_missing_simple=True` to the function
+`astropy.io.fits.open()`. However, then we run into the ValueError documented in
+`pgb_utils.figures.plot_stamp()`, and fixing this requires astropy 3.2.1.
 
 Work details:
 
 pgb-utils v0.2.5 throws an error when trying to plot cutouts.
 
 Try with colab version of pgb-utils to make sure it still works with a new alert:
+
 ```bash
 conda create -n pgbutils1 python=3.7
 conda activate pgbutils1
@@ -32,8 +33,8 @@ import fastavro
 from matplotlib import pyplot as plt
 import pgb_utils as pgb
 
-fname = 'ZTF18acegotq.1680242110915010008.ztf_20210808_programid1.avro'
-with open(fname, 'rb') as fin:
+fname = "ZTF18acegotq.1680242110915010008.ztf_20210808_programid1.avro"
+with open(fname, "rb") as fin:
     alert_list = [r for r in fastavro.reader(fin)]
 pgb.figures.plot_lightcurve_cutouts(alert_list[0])
 plt.show(block=False)
@@ -61,13 +62,14 @@ cd ~/Documents/broker/repo2/pgb_utils/pgb_utils
 ```python
 import fastavro
 from matplotlib import pyplot as plt
+
 # import pgb_utils.figures
 import figures as pfig
 
-dname = '/Users/troyraen/Documents/broker/repo2/version_tracking/v0.6.0/'
-fname = 'ZTF18acegotq.1680242110915010008.ztf_20210808_programid1.avro'
+dname = "/Users/troyraen/Documents/broker/repo2/version_tracking/v0.6.0/"
+fname = "ZTF18acegotq.1680242110915010008.ztf_20210808_programid1.avro"
 
-with open(f'{dname}{fname}', 'rb') as fin:
+with open(f"{dname}{fname}", "rb") as fin:
     alert_list = [r for r in fastavro.reader(fin)]
 alert_dict = alert_list[0]
 
@@ -75,8 +77,8 @@ pfig.plot_cutouts(alert_dict)
 plt.show(block=False)
 ```
 
-Now Issue 68 is fixed, but this breaks utils.alert_dict_to_table() because dicts do not necessarily have the same keys().
-Fix it:
+Now Issue 68 is fixed, but this breaks utils.alert_dict_to_table() because dicts do not
+necessarily have the same keys(). Fix it:
 
 ```python
 import utils as put
@@ -104,10 +106,10 @@ import pgb_utils.figures as pfig
 import pgb_utils.utils as put
 
 # open the alert
-dname = '/Users/troyraen/Documents/broker/repo2/version_tracking/v0.6.0/'
-fname = 'ZTF18acegotq.1680242110915010008.ztf_20210808_programid1.avro'
+dname = "/Users/troyraen/Documents/broker/repo2/version_tracking/v0.6.0/"
+fname = "ZTF18acegotq.1680242110915010008.ztf_20210808_programid1.avro"
 
-with open(f'{dname}{fname}', 'rb') as fin:
+with open(f"{dname}{fname}", "rb") as fin:
     alert_list = [r for r in fastavro.reader(fin)]
 alert_dict = alert_list[0]
 

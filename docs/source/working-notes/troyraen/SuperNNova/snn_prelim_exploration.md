@@ -2,7 +2,8 @@
 
 (see also: [snn_train_a_model.md](snn_train_a_model.md))
 
-Following [run_onthefly.py](https://github.com/supernnova/SuperNNova/blob/master/run_onthefly.py)
+Following
+[run_onthefly.py](https://github.com/supernnova/SuperNNova/blob/master/run_onthefly.py)
 
 ```bash
 pip install supernnova
@@ -22,34 +23,28 @@ import pandas as pd
 from pgb_utils import pubsub as pgbps
 from supernnova.validation.validate_onthefly import classify_lcs
 
-COLUMN_NAMES = [
-    "SNID",
-    "MJD",
-    "FLUXCAL",
-    "FLUXCALERR",
-    "FLT"
-]
-cols = ['objectId', 'jd', 'magpsf', 'sigmapsf', 'magzpsci', 'fid']
-ztf_fid_names = {1:'g', 2:'r', 3:'i'}
+COLUMN_NAMES = ["SNID", "MJD", "FLUXCAL", "FLUXCALERR", "FLT"]
+cols = ["objectId", "jd", "magpsf", "sigmapsf", "magzpsci", "fid"]
+ztf_fid_names = {1: "g", 2: "r", 3: "i"}
 
-device='cpu'
-model_file='/Users/troyraen/Documents/broker/SNN/ZTF_DMAM_V19_NoC_SNIa_vs_CC_forFink/vanilla_S_0_CLF_2_R_none_photometry_DF_1.0_N_global_lstm_32x2_0.05_128_True_mean.pt'
+device = "cpu"
+model_file = "/Users/troyraen/Documents/broker/SNN/ZTF_DMAM_V19_NoC_SNIa_vs_CC_forFink/vanilla_S_0_CLF_2_R_none_photometry_DF_1.0_N_global_lstm_32x2_0.05_128_True_mean.pt"
 # rnn_state = torch.load(model_file, map_location=lambda storage, loc: storage)
 
-subscription = 'ztf-loop'
+subscription = "ztf-loop"
 msgs = pgbps.pull(subscription, max_messages=10)
 # dflist = [pgbps.decode_ztf_alert(m, return_format='df') for m in msgs]
 dflist = []
 for m in msgs:
-    df = pgbps.decode_ztf_alert(m, return_format='df')
-    df['objectId'] = df.objectId
+    df = pgbps.decode_ztf_alert(m, return_format="df")
+    df["objectId"] = df.objectId
     df = df[cols]
 
-    df['SNID'] = df['objectId']
-    df['MJD'] = Time(df['jd'], format='jd').mjd
-    df['FLUXCAL'] = 10 ** ((df['magzpsci'] - df['magpsf']) / 2.5)
-    df['FLUXCALERR'] = df['FLUXCAL'] * df['sigmapsf'] * np.log(10 / 2.5)
-    df['FLT'] = df['fid'].map(ztf_fid_names)
+    df["SNID"] = df["objectId"]
+    df["MJD"] = Time(df["jd"], format="jd").mjd
+    df["FLUXCAL"] = 10 ** ((df["magzpsci"] - df["magpsf"]) / 2.5)
+    df["FLUXCALERR"] = df["FLUXCAL"] * df["sigmapsf"] * np.log(10 / 2.5)
+    df["FLT"] = df["fid"].map(ztf_fid_names)
 
     dflist.append(df)
 dfs = pd.concat(dflist)
@@ -58,9 +53,8 @@ ids_preds, pred_probs = classify_lcs(dfs, model_file, device)
 preds_df = reformat_to_df(pred_probs, ids=ids_preds)
 
 
-
 def reformat_to_df(pred_probs, ids=None):
-    """ Reformat SNN predictions to a DataFrame
+    """Reformat SNN predictions to a DataFrame
     # TO DO: suppport nb_inference != 1
     """
     num_inference_samples = 1

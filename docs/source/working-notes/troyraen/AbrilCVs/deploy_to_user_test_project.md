@@ -10,9 +10,9 @@ Initialize variables
 ```bash
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT
 PROJECT_NUMBER=$(gcloud projects list \
-    --filter="$(gcloud config get-value project)" \
-    --format="value(PROJECT_NUMBER)" \
-)
+        --filter="$(gcloud config get-value project)" \
+        --format="value(PROJECT_NUMBER)" \
+    )
 
 # broker instance keywords
 SURVEY="ztf"
@@ -53,7 +53,8 @@ fi
 ACK_DEADLINE=300
 ```
 
-Follow instructions in [../gcloud-exmples.md](../gcloud-exmples.md) to create the resources and deploy the service.
+Follow instructions in [../gcloud-exmples.md](../gcloud-exmples.md) to create the
+resources and deploy the service.
 
 Create additional resources:
 
