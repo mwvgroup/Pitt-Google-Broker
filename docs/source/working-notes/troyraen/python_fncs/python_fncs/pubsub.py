@@ -11,7 +11,7 @@ from google.cloud import pubsub_v1
 from google.cloud.pubsub_v1.types import ReceivedMessage
 
 
-pgb_project_id = 'ardent-cycling-243415'
+pgb_project_id = "ardent-cycling-243415"
 
 
 def pull_pubsub(
@@ -106,7 +106,11 @@ def pull_pubsub(
         return len(message_list)
 
 
-def create_subscription(topic_name: str, subscription_name: Optional[str] = None, project_id: Optional[str] = None):
+def create_subscription(
+    topic_name: str,
+    subscription_name: Optional[str] = None,
+    project_id: Optional[str] = None,
+):
     """Try to create the subscription."""
     subscriber = pubsub_v1.SubscriberClient()
 
@@ -120,9 +124,7 @@ def create_subscription(topic_name: str, subscription_name: Optional[str] = None
     topic_path = f"projects/{project_id}/topics/{subscription_name}"
 
     try:
-        subscriber.create_subscription(
-            name=subscription_path, topic=topic_path
-        )
+        subscriber.create_subscription(name=subscription_path, topic=topic_path)
     except NotFound:
         # suitable topic does not exist in the Pitt-Google project
         raise ValueError(
@@ -160,27 +162,28 @@ def delete_subscription(subscription_name: str, project_id: Optional[str] = None
     except NotFound:
         pass
     else:
-        print(f'Deleted subscription: {subscription_path}')
+        print(f"Deleted subscription: {subscription_path}")
 
 
 # subscriber, sub_path, request = setup_subscribe(alerts_per_batch, sub_id)
 def setup_subscribe(alerts_per_batch, sub_id=None):
     subscriber = pubsub.SubscriberClient()
 
-    if sub_id is None: sub_id = 'ztf_alert_data-reservoir'
+    if sub_id is None:
+        sub_id = "ztf_alert_data-reservoir"
 
     sub_path = subscriber.subscription_path(PROJECT_ID, sub_id)
 
     request = {
-            "subscription": sub_path,
-            "max_messages": alerts_per_batch,
-        }
+        "subscription": sub_path,
+        "max_messages": alerts_per_batch,
+    }
 
     return (subscriber, sub_path, request)
 
+
 def handle_acks(subscriber, sub_path, ack_ids=[], nack=False):
-    """ If nack is False, acknowledge messages, else nack them so they stay in the reservoir.
-    """
+    """If nack is False, acknowledge messages, else nack them so they stay in the reservoir."""
     if not nack:
         subscriber.acknowledge(
             request={
@@ -197,6 +200,7 @@ def handle_acks(subscriber, sub_path, ack_ids=[], nack=False):
             }
         )
 
+
 # response = subscriber.pull(request=request)
 # for msg in response.received_messages:
 #     # print("Received message:", msg.message.data)
@@ -208,22 +212,22 @@ def handle_acks(subscriber, sub_path, ack_ids=[], nack=False):
 # handle_acks(subscriber, sub_path, ack_ids, nack)
 
 
-#-- Create or delete subscriptions
+# -- Create or delete subscriptions
 
-    # for sub_name in subscriptions:
-    #     sub_path = subscriber.subscription_path(PROJECT_ID, sub_name)
-    #     if teardown:
-    #         # Delete subscription
-    #         try:
-    #             subscriber.delete_subscription(request={"subscription": sub_path})
-    #         except NotFound:
-    #             pass
-    #         else:
-    #             print(f'Deleted subscription {sub_name}')
-    #     else:
-    #         try:
-    #             subscriber.get_subscription(subscription=sub_path)
-    #         except NotFound:
-    #             # Create subscription
-    #             subscriber.create_subscription(name=sub_path, topic=topic_path)
-    #             print(f'Created subscription {sub_name}')
+# for sub_name in subscriptions:
+#     sub_path = subscriber.subscription_path(PROJECT_ID, sub_name)
+#     if teardown:
+#         # Delete subscription
+#         try:
+#             subscriber.delete_subscription(request={"subscription": sub_path})
+#         except NotFound:
+#             pass
+#         else:
+#             print(f'Deleted subscription {sub_name}')
+#     else:
+#         try:
+#             subscriber.get_subscription(subscription=sub_path)
+#         except NotFound:
+#             # Create subscription
+#             subscriber.create_subscription(name=sub_path, topic=topic_path)
+#             print(f'Created subscription {sub_name}')

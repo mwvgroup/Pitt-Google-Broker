@@ -7,9 +7,11 @@
 
 class CloudConnectionError(Exception):
     """Error connecting to one or more Google Cloud services"""
+
     pass
 
 
 class SchemaParsingError(Exception):
     """Error parsing or guessing properties of an alert schema"""
+
     pass

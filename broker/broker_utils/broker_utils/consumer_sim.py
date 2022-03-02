@@ -9,18 +9,21 @@ from typing import Optional, Tuple, Union
 
 from google.cloud import pubsub_v1
 
-PROJECT_ID = 'ardent-cycling-243415'
+PROJECT_ID = "ardent-cycling-243415"
+
+# disable some linting issues that will not be fixed in this file
+# pylint: disable=invalid-name
 
 
 def publish_stream(
     alert_rate: Union[Tuple[int, str], str],
     instance: Optional[Tuple[str, str]] = None,
     runtime: Optional[Tuple[int, str]] = None,
-    publish_batch_every: Tuple[int, str] = (5, 'sec'),
+    publish_batch_every: Tuple[int, str] = (5, "sec"),
     sub_id: Optional[str] = None,
     topic_id: Optional[str] = None,
     nack: bool = False,
-    auto_confirm: bool = False
+    auto_confirm: bool = False,
 ):
     """Pulls messages from from a Pub/Sub subscription determined by either
     `instance` or `sub_id`, and publishes them to a topic determined by either
@@ -60,18 +63,37 @@ def publish_stream(
     pbeN, pbeU = publish_batch_every  # shorthand
 
     # get number of alerts to publish per batch
-    alerts_per_batch, aRate_tuple = _get_number_alerts_per_batch(alert_rate, publish_batch_every)  # int, tuple
+    alerts_per_batch, aRate_tuple = _get_number_alerts_per_batch(
+        alert_rate, publish_batch_every
+    )  # int, tuple
 
     # get number of batches to run
-    Nbatches = _convert_runtime_to_Nbatches(runtime, publish_batch_every, aRate_tuple[1])
+    Nbatches = _convert_runtime_to_Nbatches(
+        runtime, publish_batch_every, aRate_tuple[1]
+    )
 
     # tell the user about the rates
     print(f"\nReceived desired alert_rate={aRate_tuple}, runtime={runtime}.")
-    print(
-        f"\nPublishing:\n\t{Nbatches} batches\n\teach with {alerts_per_batch} alerts\n\tat a rate of 1 batch per {pbeN} {pbeU} (plus processing time)\n\tfor a total of {Nbatches * alerts_per_batch} alerts")
+    rate_msg = f"""
+        Publishing:
+            {Nbatches} batches
+            1 batch per {pbeN} {pbeU} (plus processing time)
+            {alerts_per_batch} alerts per batch
+            {Nbatches * alerts_per_batch} total alerts
+        """
+    print(rate_msg)
 
     # publish the stream
-    _do_publish_stream(instance, alerts_per_batch, Nbatches, publish_batch_every, sub_id, topic_id, nack, auto_confirm)
+    _do_publish_stream(
+        instance,
+        alerts_per_batch,
+        Nbatches,
+        publish_batch_every,
+        sub_id,
+        topic_id,
+        nack,
+        auto_confirm,
+    )
 
 
 def _do_publish_stream(
@@ -82,10 +104,10 @@ def _do_publish_stream(
     sub_id=None,
     topic_id=None,
     nack=False,
-    auto_confirm=False
+    auto_confirm=False,
 ):
     # check units
-    if publish_batch_every[1] != 'sec':
+    if publish_batch_every[1] != "sec":
         raise ValueError("Units of publish_batch_every must = 'sec'.")
 
     # setup for subscription pulls and publishing
@@ -96,7 +118,7 @@ def _do_publish_stream(
 
     # make the user confirm
     _user_confirm(auto_confirm)
-    print(f"\nPublishing...")
+    print("\nPublishing...")
 
     b = 0
     while b < Nbatches:
@@ -118,19 +140,19 @@ def _do_publish_stream(
 
 def _user_confirm(auto_confirm=False):
     if not auto_confirm:
-        cont = input('Continue? [Y/n]: ') or 'Y'
-        if cont not in ['Y', 'y']:
-            sys.exit('Exiting consumer simulator.')
+        cont = input("Continue? [Y/n]: ") or "Y"
+        if cont not in ["Y", "y"]:
+            sys.exit("Exiting consumer simulator.")
 
 
 def _setup_subscribe(alerts_per_batch, instance=None, sub_id=None):
     if (instance is None) and (sub_id is None):
-        raise ValueError('Must provide either `instance` or `sub_id`.')
+        raise ValueError("Must provide either `instance` or `sub_id`.")
 
     if sub_id is None:
         # use the reservoir of the production instance for this survey
         survey = instance[0]
-        sub_id = f'{survey}-alerts-reservoir'
+        sub_id = f"{survey}-alerts-reservoir"
 
     subscriber = pubsub_v1.SubscriberClient()
     sub_path = subscriber.subscription_path(PROJECT_ID, sub_id)
@@ -144,11 +166,11 @@ def _setup_subscribe(alerts_per_batch, instance=None, sub_id=None):
 
 def _setup_publish(alerts_per_batch, instance=None, topic_id=None):
     if (instance is None) and (topic_id is None):
-        raise ValueError('Must provide either `instance` or `topic_id`.')
+        raise ValueError("Must provide either `instance` or `topic_id`.")
 
     if topic_id is None:
         survey, testid = instance
-        topic_id = f'{survey}-alerts-{testid}'
+        topic_id = f"{survey}-alerts-{testid}"
 
     # calls to publish are batched automatically
     # let's try to get all alerts into 1 publisher batch
@@ -164,20 +186,20 @@ def _setup_publish(alerts_per_batch, instance=None, topic_id=None):
 
 
 def _publish_received_messages(publisher, topic_path, sub_response):
-    """ Iterate through messages and publish them, along with their attributes, to the Pub/Sub topic.
-    """
+    """Iterate through messages and publish them, along with their attributes, to the Pub/Sub topic."""
     for msg in sub_response.received_messages:
         # print("Received message:", msg.message.data)
         attrs = msg.message.attributes  # pass msg attributes through
 
-        future = publisher.publish(topic_path, msg.message.data, **attrs)  # non blocking
+        future = publisher.publish(
+            topic_path, msg.message.data, **attrs
+        )  # non blocking
 
         future.add_done_callback(_callback)  # check for errors in a separate thread
 
 
 def _handle_acks(subscriber, sub_path, ack_ids=[], nack=False):
-    """ If nack is False, acknowledge messages, else nack them so they stay in the reservoir.
-    """
+    """If nack is False, acknowledge messages, else nack them so they stay in the reservoir."""
     if not nack:
         request = {
             "subscription": sub_path,
@@ -200,7 +222,7 @@ def _callback(future):
 
 
 def _convert_runtime_to_Nbatches(runtime, publish_batch_every, aRate_unit):
-    if aRate_unit == 'once':
+    if aRate_unit == "once":
         Nbatches = 1
 
     elif type(runtime) != tuple:
@@ -241,14 +263,14 @@ def _convert_time_to_publish_unit(runtime, publish_unit):
     rtN, rtU = runtime
 
     # convert the time to (N, 'sec')
-    if publish_unit == 'sec':
-        if rtU == 'sec':
+    if publish_unit == "sec":
+        if rtU == "sec":
             publish_runtime = rtN
-        elif rtU == 'min':
+        elif rtU == "min":
             publish_runtime = rtN * 60
-        elif rtU == 'hr':
+        elif rtU == "hr":
             publish_runtime = rtN * 3600
-        elif rtU == 'night':
+        elif rtU == "night":
             publish_runtime = rtN * 10 * 3600
 
     else:
@@ -259,20 +281,23 @@ def _convert_time_to_publish_unit(runtime, publish_unit):
 
 
 def _get_number_alerts_per_batch(alert_rate, publish_batch_every):
-    """ Find the number of alerts to publish per batch
-    """
+    """Find the number of alerts to publish per batch"""
 
     aRate_tuple = _convert_rate_to_tuple(alert_rate)  # tuple
 
     # if user requested 1 batch, return their number
-    if aRate_tuple[1] == 'once':
+    if aRate_tuple[1] == "once":
         alerts_per_batch = aRate_tuple[0]
 
     # else convert to batch rate
     else:
         pbeN, pbeU = publish_batch_every
-        avg_publish_rate = _convert_rate_to_publish_unit(aRate_tuple, publish_unit=pbeU)  # float
-        alerts_per_batch = _get_number_alerts_per_batch_from_avg(avg_publish_rate, pbeN)  # int, per batch
+        avg_publish_rate = _convert_rate_to_publish_unit(
+            aRate_tuple, publish_unit=pbeU
+        )  # float
+        alerts_per_batch = _get_number_alerts_per_batch_from_avg(
+            avg_publish_rate, pbeN
+        )  # int, per batch
 
     return (alerts_per_batch, aRate_tuple)
 
@@ -281,7 +306,7 @@ def _get_number_alerts_per_batch_from_avg(avg_publish_rate, publish_interval):
     return int(avg_publish_rate * publish_interval)
 
 
-def _convert_rate_to_publish_unit(alert_rate, publish_unit='sec'):
+def _convert_rate_to_publish_unit(alert_rate, publish_unit="sec"):
     """
     Args:
         alert_rate (int, str): (number, unit) to convert to publish_unit
@@ -294,14 +319,14 @@ def _convert_rate_to_publish_unit(alert_rate, publish_unit='sec'):
     arN, arU = alert_rate
 
     # convert the rate to (N, 'perSec')
-    if publish_unit == 'sec':
-        if arU == 'perSec':
+    if publish_unit == "sec":
+        if arU == "perSec":
             alerts_per_unit = arN
-        if arU == 'perMin':
+        if arU == "perMin":
             alerts_per_unit = arN / 60
-        if arU == 'perHr':
+        if arU == "perHr":
             alerts_per_unit = arN / 3600
-        if arU == 'perNight':
+        if arU == "perNight":
             alerts_per_unit = arN / 10 / 3600
 
     else:
@@ -312,16 +337,16 @@ def _convert_rate_to_publish_unit(alert_rate, publish_unit='sec'):
 
 
 def _convert_rate_to_tuple(alert_rate):
-    if type(alert_rate) == tuple:
+    if isinstance(alert_rate, tuple):
         # type == tuple, so just return it
         aRate = alert_rate
 
-    elif type(alert_rate) == str:
+    elif isinstance(alert_rate, str):
         aRate = _convert_rate_string_to_tuple(alert_rate)
         # returns tuple or raises ValueError
 
     else:
-        msg = 'alert_rate must be a tuple or a string'
+        msg = "alert_rate must be a tuple or a string"
         raise ValueError(msg)
 
     return aRate
@@ -330,14 +355,14 @@ def _convert_rate_to_tuple(alert_rate):
 def _convert_rate_string_to_tuple(alert_rate):
     # convert strings to tuples
 
-    if alert_rate == 'ztf-active-avg':
-        aRate = (300000, 'perNight')
+    if alert_rate == "ztf-active-avg":
+        aRate = (300000, "perNight")
 
-    elif alert_rate == 'ztf-live-max':
-        aRate = (200, 'perSec')
+    elif alert_rate == "ztf-live-max":
+        aRate = (200, "perSec")
 
     else:
-        msg = f"'ztf-active-avg' and 'ztf-live-max' are the only strings currently configured for the alert_rate"
+        msg = "alert_rate must be one of: ztf-active-avg, ztf-live-max"
         raise ValueError(msg)
 
     return aRate

@@ -1,11 +1,23 @@
-# external-connection
+# external-connection<a name="external-connection"></a>
+
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
+
+- [external-connection](#external-connection)
+  - [GCP and local setup for external account](#gcp-and-local-setup-for-external-account)
+  - [Setup IAM permissions on the Pub/Sub topic](#setup-iam-permissions-on-the-pubsub-topic)
+  - [Create subscription and pull](#create-subscription-and-pull)
+  - [Setup stream-looper VM and topic](#setup-stream-looper-vm-and-topic)
+
+<!-- mdformat-toc end -->
 
 Goal: Try to listen to and process one of our Pub/Sub streams as an outside user.
 
+## GCP and local setup for external account<a name="gcp-and-local-setup-for-external-account"></a>
 
-## GCP and local setup for external account
 <!-- fs -->
+
 Following [initial-setup.md](initial-setup.md)
+
 ```bash
 PROJECT_ID=my-pgb-project-3  # through account raen.troy@gmail.com
 ZONE=us-central1-a
@@ -49,9 +61,12 @@ python -m pip install -e .
 
 <!-- fe GCP and local setup -->
 
-## Setup IAM permissions on the Pub/Sub topic
+## Setup IAM permissions on the Pub/Sub topic<a name="setup-iam-permissions-on-the-pubsub-topic"></a>
+
 <!-- fs -->
+
 Allow any GCP user to attach a subscription to our topic.
+
 - https://cloud.google.com/pubsub/docs/access-control#setting_a_policy
 - https://cloud.google.com/iam/docs/creating-custom-roles#creating_a_custom_role
 
@@ -76,9 +91,12 @@ gcloud pubsub topics set-iam-policy $topic_path $fname
 
 <!-- fe IAM permissions -->
 
-## Create subscription and pull
+## Create subscription and pull<a name="create-subscription-and-pull"></a>
+
 <!-- fs -->
+
 __Command line:__
+
 - [Quickstart using the gcloud command-line tool](https://cloud.google.com/pubsub/docs/quickstart-cli)
 - [gcloud pubsub subscriptions pull](https://cloud.google.com/sdk/gcloud/reference/pubsub/subscriptions/pull)
 
@@ -93,15 +111,16 @@ gcloud pubsub subscriptions pull my-sub --auto-ack --limit=$limit
 ```
 
 __Python:__
+
 ```python
 from google.cloud import pubsub_v1
 import os
 
-my_project = os.getenv('GOOGLE_CLOUD_PROJECT')
-pgb_project = 'ardent-cycling-243415'
+my_project = os.getenv("GOOGLE_CLOUD_PROJECT")
+pgb_project = "ardent-cycling-243415"
 
-subscription = 'test'
-topic = 'test'
+subscription = "test"
+topic = "test"
 
 subscriber = pubsub_v1.SubscriberClient()
 publisher = pubsub_v1.PublisherClient()
@@ -112,13 +131,14 @@ subscriber.create_subscription(sub_path, topic_path)
 
 # test it
 from pgb_utils import pubsub as pgbps
-msg = b'TESTmsg'
+
+msg = b"TESTmsg"
 pgbps.publish(topic, msg)  # EXECUTE FROM PGB ACCOUNT
 smsg = pgbps.pull(subscription, project_id=my_project)  # EXECUTE FROM EXTERNAL ACCOUNT
-
 ```
+
 <!-- fe subscription -->
 
-## Setup stream-looper VM and topic
+## Setup stream-looper VM and topic<a name="setup-stream-looper-vm-and-topic"></a>
 
 see [stream-looper.md](stream-looper.md)

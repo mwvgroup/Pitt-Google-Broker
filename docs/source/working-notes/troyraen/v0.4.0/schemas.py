@@ -14,12 +14,13 @@ import os
 decam_dir = os.path.dirname(__file__)
 repo_dir = os.path.dirname(decam_dir)
 
+
 def create_bq_table_schemas(
-    fdsource = f'{decam_dir}/decat_schema/decat_source.avsc',
-    fdobject = f'{decam_dir}/decat_schema/decat_object.avsc',
-    falerts = f'{repo_dir}/broker/setup_broker/templates/bq_decat_alerts_schema.json',
-    fsource = f'{repo_dir}/broker/setup_broker/templates/bq_decat_DIASource_schema.json'
-    ):
+    fdsource=f"{decam_dir}/decat_schema/decat_source.avsc",
+    fdobject=f"{decam_dir}/decat_schema/decat_object.avsc",
+    falerts=f"{repo_dir}/broker/setup_broker/templates/bq_decat_alerts_schema.json",
+    fsource=f"{repo_dir}/broker/setup_broker/templates/bq_decat_DIASource_schema.json",
+):
     """
     Create alerts and diasource table schemas for bq.
     Args:
@@ -28,24 +29,24 @@ def create_bq_table_schemas(
         falerts (str):  path to write the BigQuery alerts table schema
         fsource (str):  path to write the BigQuery DIASource table schema
     """
-    dsource = load_schema(fdsource)['fields']
-    dobject = load_schema(fdobject)['fields']
+    dsource = load_schema(fdsource)["fields"]
+    dobject = load_schema(fdobject)["fields"]
     alerts_schema_bq, DIASource_schema_bq = [], []
     for oitem in dobject:
         column = {
-            'description': oitem['doc'],
-            'mode': get_mode(oitem),
-            'name': oitem['name'],
-            'type': get_type(oitem),
+            "description": oitem["doc"],
+            "mode": get_mode(oitem),
+            "name": oitem["name"],
+            "type": get_type(oitem),
         }
-        if column['type'] == 'RECORD':
-            column['fields'] = create_source_bq_schema()
+        if column["type"] == "RECORD":
+            column["fields"] = create_source_bq_schema()
 
         # collect alerts columns
         alerts_schema_bq.append(column)
 
         # collect diasource columns
-        if column['name'] != 'sources':
+        if column["name"] != "sources":
             col = get_diasource_fields(deepcopy(column))
             if type(col) == list:
                 DIASource_schema_bq = DIASource_schema_bq + col
@@ -60,71 +61,79 @@ def create_bq_table_schemas(
 
     return (alerts_schema_bq, DIASource_schema_bq)
 
+
 def get_mode(oitem):
-    otype = oitem['type']
-    if type(otype)==list and otype[0]=='null':
-        mode = 'NULLABLE'
-    elif type(otype)==dict and otype['type'] == 'array':
-        mode = 'REPEATED'
+    otype = oitem["type"]
+    if type(otype) == list and otype[0] == "null":
+        mode = "NULLABLE"
+    elif type(otype) == dict and otype["type"] == "array":
+        mode = "REPEATED"
     else:
-        mode = 'REQUIRED'
+        mode = "REQUIRED"
     return mode
 
+
 def get_type(oitem):
-    otype = oitem['type']
+    otype = oitem["type"]
     if type(otype) == str:
         typ = otype.upper()
     elif type(otype) == list:
         typ = otype[-1].upper()
-    elif type(otype)==dict and otype['type'] == 'array':
-        if otype['items'] == 'decat.source':
-            typ = 'RECORD'
+    elif type(otype) == dict and otype["type"] == "array":
+        if otype["items"] == "decat.source":
+            typ = "RECORD"
         else:
-            typ = otype['items'].upper()
-    if typ == 'INT': typ = 'INTEGER'
-    if typ == 'DECAT.SOURCE': typ = 'RECORD'
+            typ = otype["items"].upper()
+    if typ == "INT":
+        typ = "INTEGER"
+    if typ == "DECAT.SOURCE":
+        typ = "RECORD"
     return typ
 
+
 def get_diasource_fields(column):
-    if column['name'] != 'triggersource':
+    if column["name"] != "triggersource":
         return column
     else:
         # collect de-nested columns
-        cols = [c for c in column['fields']]
+        cols = [c for c in column["fields"]]
         # rename columns with same names as an object-level attribute
-        dup_cols = ['ra','dec']
-        sourcename = lambda x: x if x not in dup_cols else f'source_{x}'
+        dup_cols = ["ra", "dec"]
+        sourcename = lambda x: x if x not in dup_cols else f"source_{x}"
         for c in cols:
-            c['name'] = sourcename(c['name'])
+            c["name"] = sourcename(c["name"])
         return cols
+
 
 def add_diasource_prvsources_column():
     descrip = "Source IDs from previous sources in the original alert packet (sources.sourceid)"
     column = {
-        'description': descrip,
-        'mode': 'NULLABLE',
-        'name': 'sources_sourceids',
-        'type': 'STRING',
+        "description": descrip,
+        "mode": "NULLABLE",
+        "name": "sources_sourceids",
+        "type": "STRING",
     }
     return column
 
-def create_source_bq_schema(fdsource='decat_schema/decat_source.avsc'):
-    dsource = load_schema(fdsource)['fields']
+
+def create_source_bq_schema(fdsource="decat_schema/decat_source.avsc"):
+    dsource = load_schema(fdsource)["fields"]
     dsource_bq = []
     for item in dsource:
         column = {
-            'description': item['doc'],
-            'mode': get_mode(item),
-            'name': item['name'],
-            'type': get_type(item),
+            "description": item["doc"],
+            "mode": get_mode(item),
+            "name": item["name"],
+            "type": get_type(item),
         }
-        if item['name'] not in ['scicutout', 'refcutout', 'diffcutout']:
+        if item["name"] not in ["scicutout", "refcutout", "diffcutout"]:
             dsource_bq.append(column)
     return dsource_bq
+
 
 def write_bq_table_schemas(alerts_schema_bq, DIASource_schema_bq, falerts, fsource):
     z = zip([falerts, fsource], [alerts_schema_bq, DIASource_schema_bq])
     for ff, schema in z:
-        with open(ff, 'w') as f:
+        with open(ff, "w") as f:
             json.dump(schema, f, indent=2)
-        print(f'BigQuery schema written to {ff}.')
+        print(f"BigQuery schema written to {ff}.")

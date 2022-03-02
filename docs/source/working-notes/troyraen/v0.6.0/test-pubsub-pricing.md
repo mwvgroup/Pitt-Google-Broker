@@ -1,6 +1,16 @@
-# Testing Pub/Sub tutorial from external account.
+# Testing Pub/Sub tutorial from external account.<a name="testing-pubsub-tutorial-from-external-account"></a>
 
-## Summary:
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
+
+- [Testing Pub/Sub tutorial from external account.](#testing-pubsub-tutorial-from-external-account)
+  - [Summary:](#summary)
+  - [Initial thoughts:](#initial-thoughts)
+  - [Outline:](#outline)
+  - [Code to do it:](#code-to-do-it)
+
+<!-- mdformat-toc end -->
+
+## Summary:<a name="summary"></a>
 
 Date of tests: 8/6/2021 (note there were no live ZTF streams Aug 5-7)
 
@@ -12,30 +22,36 @@ ardent-cycling-243415 account:
 
 my-pgb-project-3 account:
 
-I pulled and processed ~375000 messages with an average of 70607 bytes =~ 26.5 GB of data.
-This should have been >2x the data allowed in the Free Tier.
-I don't know why it didn't cut me off.
-I successfully pulled all this stuff from a VM in Germany with no egress restrictions/fees.
+I pulled and processed ~375000 messages with an average of 70607 bytes =~ 26.5 GB of
+data. This should have been >2x the data allowed in the Free Tier. I don't know why it
+didn't cut me off. I successfully pulled all this stuff from a VM in Germany with no
+egress restrictions/fees.
 
-There is no way for this account to be charged.
-Billing is disabled and I have never created a billing account.
-I can't even see a billing report because I don't have a billing account.
+There is no way for this account to be charged. Billing is disabled and I have never
+created a billing account. I can't even see a billing report because I don't have a
+billing account.
 
-## Initial thoughts:
+## Initial thoughts:<a name="initial-thoughts"></a>
 
 - Testing pricing, free tier, egress, msg delivery
 - What happens if you don't enable billing and reach the Free Tier limit?
-- Does "message delivery" mean delivered to the subscription or delivered to the user (on pull request)?
-    - Note on [Pub/Sub pricing page](https://cloud.google.com/pubsub/pricing#pubsub) it says: "Storage of unacknowledged messages does not result in fees."
+- Does "message delivery" mean delivered to the subscription or delivered to the user
+  (on pull request)?
+  - Note on [Pub/Sub pricing page](https://cloud.google.com/pubsub/pricing#pubsub) it
+    says: "Storage of unacknowledged messages does not result in fees."
 
-## Outline:
+## Outline:<a name="outline"></a>
 
-- streamed ~300,000 messages to the subscription projects/my-pgb-project-3/subscriptions/test
+- streamed ~300,000 messages to the subscription
+  projects/my-pgb-project-3/subscriptions/test
 - setup a compute engine in Germany to pull the messages
-    - compute engine is in pgb project since can't do VMs with free accounts. setup credentials to project my-pgb-project-3 following [v0.5.0/external-connection.md](../v0.5.0/external-connection.md)
-- pulled the messages from the test subscription and wrote a sampling of message sizes to file
+  - compute engine is in pgb project since can't do VMs with free accounts. setup
+    credentials to project my-pgb-project-3 following
+    [v0.5.0/external-connection.md](../v0.5.0/external-connection.md)
+- pulled the messages from the test subscription and wrote a sampling of message sizes
+  to file
 
-## Code to do it:
+## Code to do it:<a name="code-to-do-it"></a>
 
 Use the stream-looper VM to publish the messages.
 
@@ -63,19 +79,21 @@ Pull and process messages:
 import pgb_utils as pgb
 import random
 
+
 def callback(message):
     # save some stuff from a sampling of messages
-    n = random.uniform(0,1)
+    n = random.uniform(0, 1)
     if n > 0.99:
         try:
-            fout = 'track-msgs.txt'
-            with open(fout, 'a') as f:
-                f.write(f'{message.size}\n')
+            fout = "track-msgs.txt"
+            with open(fout, "a") as f:
+                f.write(f"{message.size}\n")
         except:
             pass
     # acknowledge
     message.ack()
 
-sub_name = 'test'
+
+sub_name = "test"
 pgb.pubsub.streamingPull(sub_name, callback, timeout=None)
 ```

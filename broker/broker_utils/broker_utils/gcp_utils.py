@@ -4,16 +4,17 @@
 GCP resources.
 """
 
+import json
+from typing import Callable, List, Optional, Union
+
 from concurrent.futures import TimeoutError
 from google.cloud import bigquery, pubsub_v1, storage
 from google.cloud.logging_v2.logger import Logger
 from google.cloud.pubsub_v1.subscriber.futures import StreamingPullFuture
 from google.cloud.pubsub_v1.types import PubsubMessage, ReceivedMessage
-import json
 import pandas as pd
-from typing import Callable, List, Optional, Union
 
-pgb_project_id = 'ardent-cycling-243415'
+pgb_project_id = "ardent-cycling-243415"
 
 
 # --- Pub/Sub --- #
@@ -22,7 +23,7 @@ def publish_pubsub(
     message: Union[bytes, dict],
     project_id: Optional[str] = None,
     attrs: Optional[dict] = None,
-    publisher: Optional[pubsub_v1.PublisherClient] = None
+    publisher: Optional[pubsub_v1.PublisherClient] = None,
 ) -> str:
     """Publish messages to a Pub/Sub topic.
 
@@ -59,9 +60,9 @@ def publish_pubsub(
 
     # enforce bytes type for message
     if isinstance(message, dict):
-        message = json.dumps(message).encode('utf-8')
+        message = json.dumps(message).encode("utf-8")
     if not isinstance(message, bytes):
-        raise TypeError('`message` must be bytes or a dict.')
+        raise TypeError("`message` must be bytes or a dict.")
 
     topic_path = publisher.topic_path(project_id, topic_name)
 
@@ -279,9 +280,9 @@ def load_dataframe_bigquery(
         my_df = my_df[bq_col_names]
         # tell the user what happened
         if len(dropped) > 0:
-            msg = f'Dropping columns not in the table schema: {dropped}'
+            msg = f"Dropping columns not in the table schema: {dropped}"
             if logger is not None:
-                logger.log_text(msg, severity='INFO')
+                logger.log_text(msg, severity="INFO")
             else:
                 print(msg)
 
@@ -299,7 +300,7 @@ def load_dataframe_bigquery(
         f"The following errors were generated: {job.errors}"
     )
     if logger is not None:
-        severity = 'DEBUG' if job.errors is not None else 'INFO'
+        severity = "DEBUG" if job.errors is not None else "INFO"
         logger.log_text(msg, severity=severity)
     else:
         print(msg)
@@ -349,19 +350,21 @@ def cs_download_file(localdir: str, bucket_id: str, filename: Optional[str] = No
     """
     # connect to the bucket and get an iterator that finds blobs in the bucket
     storage_client = storage.Client(pgb_project_id)
-    bucket_name = f'{pgb_project_id}-{bucket_id}'
-    print(f'Connecting to bucket {bucket_name}')
+    bucket_name = f"{pgb_project_id}-{bucket_id}"
+    print(f"Connecting to bucket {bucket_name}")
     bucket = storage_client.get_bucket(bucket_name)
     blobs = storage_client.list_blobs(bucket, prefix=filename)  # iterator
 
     # download the files
     for blob in blobs:
-        local_path = f'{localdir}/{blob.name}'
+        local_path = f"{localdir}/{blob.name}"
         blob.download_to_filename(local_path)
-        print(f'Downloaded {local_path}')
+        print(f"Downloaded {local_path}")
 
 
-def cs_upload_file(local_file: str, bucket_id: str, bucket_filename: Optional[str] = None):
+def cs_upload_file(
+    local_file: str, bucket_id: str, bucket_filename: Optional[str] = None
+):
     """
     Args:
         local_file: Path of the file to upload.
@@ -372,15 +375,15 @@ def cs_upload_file(local_file: str, bucket_id: str, bucket_filename: Optional[st
                             bucket_filename = local_filename.
     """
     if bucket_filename is None:
-        bucket_filename = local_file.split('/')[-1]
+        bucket_filename = local_file.split("/")[-1]
 
     # connect to the bucket
     storage_client = storage.Client(pgb_project_id)
-    bucket_name = f'{pgb_project_id}-{bucket_id}'
-    print(f'Connecting to bucket {bucket_name}')
+    bucket_name = f"{pgb_project_id}-{bucket_id}"
+    print(f"Connecting to bucket {bucket_name}")
     bucket = storage_client.get_bucket(bucket_name)
 
     # upload
     blob = bucket.blob(bucket_filename)
     blob.upload_from_filename(local_file)
-    print(f'Uploaded {local_file} as {bucket_filename}')
+    print(f"Uploaded {local_file} as {bucket_filename}")

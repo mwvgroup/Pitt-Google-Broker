@@ -83,7 +83,7 @@ def _xmatch_wise(alert_dict):
 
     results = {}
     for r, row in enumerate(query_job):
-        results[f'allwise{r}'] = dict(row)
+        results[f"allwise{r}"] = dict(row)
 
     return results
 
@@ -121,13 +121,13 @@ def _create_sql_stmnt():
 def _allwise_cols_to_select():
     return [
         # Sexagesimal, equatorial position-based source name in form: hhmmss.ss+ddmmss.s
-        'designation',
-        'ra',  # J2000 right asc. wrt 2MASS PSC ref frame, non-moving src extraction
-        'dec',  # J2000 declination wrt 2MASS PSC ref frame, non-moving src extraction
+        "designation",
+        "ra",  # J2000 right asc. wrt 2MASS PSC ref frame, non-moving src extraction
+        "dec",  # J2000 declination wrt 2MASS PSC ref frame, non-moving src extraction
         # 'sigra',  # One-sigma uncertainty in ra from the non-moving source extraction
         # 'sigdec',  # One-sigma uncertainty in dec from the non-moving source extraction
-        'cntr',  # Unique ID number for this object in the AllWISE Catalog/Reject Table
-        'source_id',  # Unique source ID
+        "cntr",  # Unique ID number for this object in the AllWISE Catalog/Reject Table
+        "source_id",  # Unique source ID
         # # W1 magnitude measured with profile-fitting photometry, or the magnitude of the
         # # 95% confidence brightness upper limit if the W4 flux measurement has SNR<2
         # 'w1mpro',
@@ -185,7 +185,7 @@ def _create_job_config(alert_dict):
     limit = 3  # max number of matches to return (ordered by separation distance)
     # alert source position
     source = schema_map["source"]
-    ra, dec = alert_dict[source]['ra'], alert_dict[source]['dec']
+    ra, dec = alert_dict[source]["ra"], alert_dict[source]["dec"]
     if ra > 180.0:
         ra = ra - 360.0
     # Polygon that bounds the ra/dec. Restricts the BigQuery search region.
@@ -223,10 +223,10 @@ def _store_bigquery(wise_dict, attrs):
     # create dict to upload to bigquery
     store_dict = dict(attrs)
     # don't store everything. store just enough to re-query the AllWISE catalog.
-    keep_allwise_cols = ['designation', 'cntr', 'source_id']
+    keep_allwise_cols = ["designation", "cntr", "source_id"]
     for allwiseN, wdict in wise_dict.items():
         store_dict.update(
-            {f'{allwiseN}_{k}': v for k, v in wdict.items() if k in keep_allwise_cols}
+            {f"{allwiseN}_{k}": v for k, v in wdict.items() if k in keep_allwise_cols}
         )
     # store to bigquery
     gcp_utils.insert_rows_bigquery(bq_table, [store_dict])

@@ -16,8 +16,8 @@ def get_ztf_data_dir() -> Path:
         A ``Path`` object
     """
 
-    if 'PGB_DATA_DIR' in os.environ:
-        return Path(os.environ['PGB_DATA_DIR']) / 'ztf_archive'
+    if "PGB_DATA_DIR" in os.environ:
+        return Path(os.environ["PGB_DATA_DIR"]) / "ztf_archive"
 
     else:
-        return Path(__file__).resolve().parent / 'ztf_archive/data'
+        return Path(__file__).resolve().parent / "ztf_archive/data"

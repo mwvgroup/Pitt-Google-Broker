@@ -1,11 +1,21 @@
-# Metadata Tracking System
+# Metadata Tracking System<a name="metadata-tracking-system"></a>
 
-## todo
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
 
-- [ ]  candid should be stored as an int, but currently using string f"{message_id}_unknown" for `alerts` stream messages that can't be matched to a candid.
+- [Metadata Tracking System](#metadata-tracking-system)
+  - [todo](#todo)
+  - [Testing pieces](#testing-pieces)
+  - [Broker Testing Instance](#broker-testing-instance)
 
+<!-- mdformat-toc end -->
 
-## Testing pieces
+## todo<a name="todo"></a>
+
+- [ ] candid should be stored as an int, but currently using string
+  f"{message_id}\_unknown" for `alerts` stream messages that can't be matched to a
+  candid.
+
+## Testing pieces<a name="testing-pieces"></a>
 
 ```bash
 export GCP_PROJECT=$GOOGLE_CLOUD_PROJECT
@@ -20,18 +30,19 @@ import troy_fncs as troy
 import main
 
 
-msgs = gcp_utils.pull_pubsub('ztf-alerts-reservoir', msg_only=False)
+msgs = gcp_utils.pull_pubsub("ztf-alerts-reservoir", msg_only=False)
 msg = msgs[0].message
-attributes = {'kafka.topic': 'ztf_yyyymmdd'}
-context = {'attributes': attributes, 'event_id': '1234'}
+attributes = {"kafka.topic": "ztf_yyyymmdd"}
+context = {"attributes": attributes, "event_id": "1234"}
 
 blob, alert = main.upload_bytes_to_bucket(alert_bytes, attributes)
 main.attach_file_metadata(blob, alert, context)
 ```
 
+## Broker Testing Instance<a name="broker-testing-instance"></a>
 
-## Broker Testing Instance
 Create/delete a broker testing instance
+
 ```bash
 # get the code
 git clone https://github.com/mwvgroup/Pitt-Google-Broker
@@ -68,7 +79,6 @@ gcloud compute instances set-machine-type $consumerVM --machine-type g1-small
 gcloud compute instances set-machine-type $nconductVM --custom-vm-type=e2 --custom-cpu=small --custom-memory=4GB
 ```
 
-
 <!-- Start the broker
 ```bash
 topic="${survey}-cue_night_conductor-${testid}"
@@ -79,20 +89,23 @@ gcloud pubsub topics publish "$topic" --message="$cue" --attribute="$attr"
 ``` -->
 
 Run the consumer simulator long enough to get alerts in every counter
+
 ```python
 from broker_utils import consumer_sim
 
-testid = 'metatrack'
-survey = 'ztf'
+testid = "metatrack"
+survey = "ztf"
 instance = (survey, testid)
 # alert_rate = (25, 'once')
-alert_rate = 'ztf-active-avg'
-runtime = (10, 'min')  # options: 'sec', 'min', 'hr', 'night'(=10 hrs)
+alert_rate = "ztf-active-avg"
+runtime = (10, "min")  # options: 'sec', 'min', 'hr', 'night'(=10 hrs)
 
 consumer_sim.publish_stream(alert_rate, instance, runtime)
 ```
 
-Stop the broker, which triggers night conductor to shut everything down and process the streams.
+Stop the broker, which triggers night conductor to shut everything down and process the
+streams.
+
 ```bash
 topic="${survey}-cue_night_conductor-${testid}"
 cue=END

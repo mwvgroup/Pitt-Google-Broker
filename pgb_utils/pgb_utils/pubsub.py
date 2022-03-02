@@ -3,17 +3,21 @@
 
 """The `pubsub` module facilitates access to Pitt-Google Pub/Sub streams."""
 
-from astropy.table import Table
-from fastavro import reader
-from google.cloud import pubsub_v1
-# note: the 'v1' refers to the underlying API, not the google.cloud.pubsub version
-from google.cloud.pubsub_v1.subscriber.futures import StreamingPullFuture
-from google.cloud.pubsub_v1.types import PubsubMessage, ReceivedMessage, Subscription
+# pylint: skip-file
+
 from io import BytesIO
 import json
 import os
-import pandas as pd
 from typing import Callable, List, Optional, Tuple, Union
+
+from astropy.table import Table
+from fastavro import reader
+from google.cloud import pubsub_v1
+
+# note: the 'v1' refers to the underlying API, not the google.cloud.pubsub version
+from google.cloud.pubsub_v1.subscriber.futures import StreamingPullFuture
+from google.cloud.pubsub_v1.types import PubsubMessage, ReceivedMessage, Subscription
+import pandas as pd
 
 from . import utils as pgbu
 
@@ -93,7 +97,7 @@ def streamingPull(
     subscription_name: str,
     callback: Callable[[PubsubMessage], None],
     project_id: str = None,
-    block: bool = True
+    block: bool = True,
 ) -> Union[None, StreamingPullFuture]:
     """Pull and process Pub/Sub messages continuously in streaming mode.
 
@@ -342,9 +346,7 @@ def _decode_avro_alert(
     return alert_dict, va_dict
 
 
-def _decode_json_msg(
-    msg_bytes: bytes
-) -> Union[Tuple[dict, dict], Tuple[dict, None]]:
+def _decode_json_msg(msg_bytes: bytes) -> Union[Tuple[dict, dict], Tuple[dict, None]]:
     # decode to a dict
     dict_str = msg_bytes.decode("UTF-8")
     dic = json.loads(dict_str)
@@ -363,7 +365,6 @@ def _decode_json_msg(
 
 def _raise_decode_error():
     errmsg = (
-        "Unable to decode the message. "
-        "It does not seem to be of an expected type."
+        "Unable to decode the message. " "It does not seem to be of an expected type."
     )
     raise ValueError(errmsg)

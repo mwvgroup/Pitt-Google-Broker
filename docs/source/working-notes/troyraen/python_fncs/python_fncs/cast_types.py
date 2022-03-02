@@ -28,7 +28,7 @@ def bytes_to_64utf8(bytes_data):
         A string in UTF-8 format
     """
     if bytes_data is not None:
-        return b64encode(bytes_data).decode('utf-8')
+        return b64encode(bytes_data).decode("utf-8")
 
 
 def base64_to_dict(bytes_data):
@@ -83,7 +83,7 @@ def jd_to_readable_date(jd):
     Returns:
         String in 'day mon year hour:min' format
     """
-    return Time(jd, format='jd').strftime("%d %b %Y - %H:%M:%S")
+    return Time(jd, format="jd").strftime("%d %b %Y - %H:%M:%S")
 
 
 def urlparams(**kwargs):
@@ -94,6 +94,6 @@ def urlparams(**kwargs):
     """
     safe_args = {k: v for k, v in kwargs.items() if v is not None}
     if safe_args:
-        return '?{}'.format(urlencode(safe_args))
+        return "?{}".format(urlencode(safe_args))
 
-    return ''
+    return ""

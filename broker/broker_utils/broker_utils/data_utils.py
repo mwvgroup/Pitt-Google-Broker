@@ -4,20 +4,19 @@
 survey and broker data.
 """
 
-from typing import Tuple
+from io import BytesIO
+import json
+from typing import Optional, Tuple, Union
 
 from astropy.time import Time
 import fastavro
-from io import BytesIO
-import json
 import numpy as np
 import pandas as pd
-from typing import Optional, Tuple, Union
 
 
 def decode_alert(
     alert_avro: Union[str, bytes],
-    return_as: str = 'dict',
+    return_as: str = "dict",
     schema_map: Optional[dict] = None,
     drop_cutouts: bool = False,
 ) -> Union[dict, pd.DataFrame]:
@@ -68,7 +67,7 @@ def alert_avro_to_dict(alert_avro: Union[str, bytes]) -> dict:
         alert as a dict
     """
     if isinstance(alert_avro, str):
-        with open(alert_avro, 'rb') as fin:
+        with open(alert_avro, "rb") as fin:
             alert_list = [r for r in fastavro.reader(fin)]  # list of dicts
     elif isinstance(alert_avro, bytes):
         try:
@@ -81,12 +80,12 @@ def alert_avro_to_dict(alert_avro: Union[str, bytes]) -> dict:
                 # throughout broker to give users a consistent end-product.
                 # then this except block will be unnecessary.
                 alert_list = [json.loads(alert_avro.decode("UTF-8"))]  # list of dicts
-            except ValueError:
+            except ValueError as e:
                 msg = (
                     "alert_avro is a bytes object, but does not seem to be either "
                     "json or Avro encoded. Cannot decode."
                 )
-                raise ValueError(msg)
+                raise Exception(msg) from e
     else:
         msg = (
             "Unable to open alert_avro. "
@@ -97,65 +96,64 @@ def alert_avro_to_dict(alert_avro: Union[str, bytes]) -> dict:
 
     # we expect the list to contain exactly 1 entry
     if len(alert_list) == 0:
-        raise ValueError('The alert Avro contains 0 valid entries.')
+        raise ValueError("The alert Avro contains 0 valid entries.")
     if len(alert_list) > 1:
-        raise ValueError('The alert Avro contains >1 entry.')
+        raise ValueError("The alert Avro contains >1 entry.")
 
     alert_dict = alert_list[0]
     return alert_dict
 
 
 def alert_dict_to_dataframe(alert_dict: dict, schema_map: dict) -> pd.DataFrame:
-    """ Packages an alert into a dataframe.
+    """Packages an alert into a dataframe.
     Adapted from: https://github.com/ZwickyTransientFacility/ztf-avro-alert/blob/master/notebooks/Filtering_alerts.ipynb
     """
     if not isinstance(schema_map, dict):
         raise TypeError("`schema_map` is not a dictionary.")
 
-    src_df = pd.DataFrame(alert_dict[schema_map['source']], index=[0])
-    prvs_df = pd.DataFrame(alert_dict[schema_map['prvSources']])
+    src_df = pd.DataFrame(alert_dict[schema_map["source"]], index=[0])
+    prvs_df = pd.DataFrame(alert_dict[schema_map["prvSources"]])
     df = pd.concat([src_df, prvs_df], ignore_index=True)
 
     # attach some metadata. note this may not be preserved after all operations
     # https://stackoverflow.com/questions/14688306/adding-meta-information-metadata-to-pandas-dataframe
     # make sure this does not overwrite existing columns
     if "objectId" not in df.keys():
-        df.objectId = alert_dict[schema_map['objectId']]
+        df.objectId = alert_dict[schema_map["objectId"]]
     if "sourceId" not in df.keys():
-        df.sourceId = alert_dict[schema_map['sourceId']]
+        df.sourceId = alert_dict[schema_map["sourceId"]]
 
     return df
+
 
 def _drop_cutouts(alert_dict: dict, schema_map: dict) -> dict:
     """Drop the cutouts from the alert dictionary."""
     cutouts = [
-        schema_map['cutoutScience'],
-        schema_map['cutoutTemplate'],
-        schema_map['cutoutDifference']
+        schema_map["cutoutScience"],
+        schema_map["cutoutTemplate"],
+        schema_map["cutoutDifference"],
     ]
 
-    if schema_map['SURVEY'] == 'decat':
+    if schema_map["SURVEY"] == "decat":
         alert_lite = {k: v for k, v in alert_dict.items()}
         for co in cutouts:
-            alert_lite[schema_map['source']].pop(co, None)
-            for psource in alert_lite[schema_map['prvSources']]:
+            alert_lite[schema_map["source"]].pop(co, None)
+            for psource in alert_lite[schema_map["prvSources"]]:
                 psource.pop(co, None)
 
-    elif schema_map['SURVEY'] == 'ztf':
+    elif schema_map["SURVEY"] == "ztf":
         alert_lite = {k: v for k, v in alert_dict.items() if k not in cutouts}
 
     return alert_lite
 
 
 def mag_to_flux(mag: float, zeropoint: float, magerr: float) -> Tuple[float, float]:
-    """ Converts an AB magnitude and its error to fluxes.
-    """
+    """Converts an AB magnitude and its error to fluxes."""
     flux = 10 ** ((zeropoint - mag) / 2.5)
     fluxerr = flux * magerr * np.log(10 / 2.5)
     return flux, fluxerr
 
 
 def jd_to_mjd(jd: float) -> float:
-    """ Converts Julian Date to modified Julian Date.
-    """
-    return Time(jd, format='jd').mjd
+    """Converts Julian Date to modified Julian Date."""
+    return Time(jd, format="jd").mjd

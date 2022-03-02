@@ -19,22 +19,22 @@ from google.cloud import storage
 from broker_utils import schema_maps
 from exceptions import SchemaParsingError
 
-PROJECT_ID = os.getenv('GCP_PROJECT')
-TESTID = os.getenv('TESTID')
-SURVEY = os.getenv('SURVEY')
+PROJECT_ID = os.getenv("GCP_PROJECT")
+TESTID = os.getenv("TESTID")
+SURVEY = os.getenv("SURVEY")
 
 schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
 storage_client = storage.Client()
 
 # connect to the cloud logger
 logging_client = logging.Client()
-log_name = 'ps-to-gcs-cloudfnc'
+log_name = "ps-to-gcs-cloudfnc"
 logger = logging_client.logger(log_name)
 
 # GCP resources used in this module
-bucket_name = f'{PROJECT_ID}-{SURVEY}-alert_avros'  # store the Avro files
+bucket_name = f"{PROJECT_ID}-{SURVEY}-alert_avros"  # store the Avro files
 if TESTID != "False":
-    bucket_name = f'{bucket_name}-{TESTID}'
+    bucket_name = f"{bucket_name}-{TESTID}"
 # connect to the avro bucket
 bucket = storage_client.get_bucket(bucket_name)
 
@@ -52,7 +52,9 @@ class TempAlertFile(SpooledTemporaryFile):
     def rollover(self) -> None:
         """Move contents of the spooled file from memory onto disk"""
 
-        log.warning(f'Alert size exceeded max memory size: {self._max_size}')
+        logger.log_text(
+            f"Alert size exceeded max memory size: {self._max_size}", severity="WARN"
+        )
         super().rollover()
 
     @property
@@ -69,7 +71,7 @@ class TempAlertFile(SpooledTemporaryFile):
 
 
 def run(msg, context) -> None:
-    """ Entry point for the Cloud Function
+    """Entry point for the Cloud Function
 
     For args descriptions, see:
     https://cloud.google.com/functions/docs/writing/background#function_parameters
@@ -96,19 +98,19 @@ def upload_bytes_to_bucket(msg, context) -> None:
     associated pickle file in the valid_schemas directory.
     """
 
-    data = base64.b64decode(msg['data'])  # alert packet, bytes
-    attributes = msg['attributes']
+    data = base64.b64decode(msg["data"])  # alert packet, bytes
+    attributes = msg["attributes"]
     # Get the survey name and version
     # survey = guess_schema_survey(data)
 
-    with TempAlertFile(max_size=max_alert_packet_size, mode='w+b') as temp_file:
+    with TempAlertFile(max_size=max_alert_packet_size, mode="w+b") as temp_file:
         temp_file.write(data)
         temp_file.seek(0)
 
         alert = extract_alert_dict(temp_file)
         temp_file.seek(0)
         filename = create_filename(alert, attributes)
-        if SURVEY == 'ztf':
+        if SURVEY == "ztf":
             fix_schema(temp_file, alert, data, filename)
         temp_file.seek(0)
 
@@ -116,37 +118,40 @@ def upload_bytes_to_bucket(msg, context) -> None:
         blob.upload_from_file(temp_file)
         attach_file_metadata(blob, alert, context)  # must be after file upload
 
-    logger.log_text(f'Uploaded {filename} to {bucket.name}')
+    logger.log_text(f"Uploaded {filename} to {bucket.name}")
+
 
 def attach_file_metadata(blob, alert, context):
-    metadata = {'file_origin_message_id': context.event_id}
-    metadata['objectId'] = alert[0]['objectId']
-    metadata['candid'] = alert[0]['candid']
-    metadata['ra'] = alert[0][schema_map['source']]['ra']
-    metadata['dec'] = alert[0][schema_map['source']]['dec']
+    """Attach metadata to the file."""
+    metadata = {"file_origin_message_id": context.event_id}
+    metadata["objectId"] = alert[0]["objectId"]
+    metadata["candid"] = alert[0]["candid"]
+    metadata["ra"] = alert[0][schema_map["source"]]["ra"]
+    metadata["dec"] = alert[0][schema_map["source"]]["dec"]
     blob.metadata = metadata
     blob.patch()
 
+
 def create_filename(alert, attributes):
+    """Create a return a filename for the alert."""
     # alert is a single alert dict wrapped in a list
-    oid = alert[0][schema_map['objectId']]
-    sid = alert[0][schema_map['source']][schema_map['sourceId']]
-    topic = attributes['kafka.topic']
-    filename = f'{oid}.{sid}.{topic}.avro'
+    oid = alert[0][schema_map["objectId"]]
+    sid = alert[0][schema_map["source"]][schema_map["sourceId"]]
+    topic = attributes["kafka.topic"]
+    filename = f"{oid}.{sid}.{topic}.avro"
     return filename
 
 
 def extract_alert_dict(temp_file):
-    """Extracts and returns the alert data as a dict wrapped in a list.
-    """
+    """Extracts and returns the alert data as a dict wrapped in a list."""
     # load the file and get the data with fastavro
     temp_file.seek(0)
-    alert = [r for r in fastavro.reader(temp_file)]
+    alert = list(fastavro.reader(temp_file))
     return alert
 
 
 def fix_schema(temp_file, alert, data, filename):
-    """ Rewrites the temp_file with a corrected schema header
+    """Rewrites the temp_file with a corrected schema header
         so that it is valid for upload to BigQuery.
 
     Args:
@@ -156,13 +161,15 @@ def fix_schema(temp_file, alert, data, filename):
 
     # get the corrected schema if it exists, else return
     try:
-        fpkl = f'valid_schemas/{SURVEY}_v{version}.pkl'
+        fpkl = f"valid_schemas/{SURVEY}_v{version}.pkl"
         inpath = Path(__file__).resolve().parent / fpkl
-        with inpath.open('rb') as infile:
+        with inpath.open("rb") as infile:
             valid_schema = pickle.load(infile)
 
     except FileNotFoundError:
-        msg = f'Original schema header retained for {SURVEY} v{version}; file {filename}'
+        msg = (
+            f"Original schema header retained for {SURVEY} v{version}; file {filename}"
+        )
         logger.log_text(msg)
         return
 
@@ -172,7 +179,9 @@ def fix_schema(temp_file, alert, data, filename):
     temp_file.truncate()  # removes leftover data
     temp_file.seek(0)
 
-    logger.log_text(f'Schema header reformatted for {SURVEY} v{version}; file {filename}')
+    logger.log_text(
+        f"Schema header reformatted for {SURVEY} v{version}; file {filename}"
+    )
 
 
 def guess_schema_version(alert_bytes: bytes) -> str:
@@ -188,8 +197,8 @@ def guess_schema_version(alert_bytes: bytes) -> str:
     version_regex_pattern = b'("version":\s")([0-9]*\.[0-9]*)(")'
     version_match = re.search(version_regex_pattern, alert_bytes)
     if version_match is None:
-        err_msg = f'Could not guess schema version for alert {alert_bytes}'
-        logger.log_text(err_msg, severity='ERROR')
+        err_msg = f"Could not guess schema version for alert {alert_bytes}"
+        logger.log_text(err_msg, severity="ERROR")
         raise SchemaParsingError(err_msg)
 
     return version_match.group(2).decode()

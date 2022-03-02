@@ -3,13 +3,14 @@
 """Collect and store metadata from Pub/Sub subscriptions."""
 
 
-import argparse
-from google.cloud import bigquery, logging
 import json
-import numpy as np
-import pandas as pd
 import time
 from typing import List, Optional, Tuple, Union
+
+import argparse
+from google.cloud import bigquery, logging
+import numpy as np
+import pandas as pd
 
 from broker_utils import gcp_utils, schema_maps
 
@@ -61,7 +62,10 @@ def _log_and_print(msg, severity="INFO"):
 
 
 def run(
-    survey: str, testid: Union[str, bool], timeout: int, testrun: bool,
+    survey: str,
+    testid: Union[str, bool],
+    timeout: int,
+    testrun: bool,
 ):
     """Collect and store all metadata in the Pub/Sub counters."""
     collector = MetadataCollector(survey, testid, timeout, testrun)
@@ -172,7 +176,7 @@ class MetadataCollector:
             later, at the time of collection.
         """
         # field name(s) that will serve as the index to join the dfs
-        requested_fields = [i for i in self.index]
+        requested_fields = list(self.index)
 
         # field names from this topic to be loaded to bigquery (minus self.index).
         # parse these from the existing bigquery column names.

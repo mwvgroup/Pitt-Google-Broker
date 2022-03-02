@@ -2,7 +2,8 @@
 
 Started stream-looper around 11:00 am ET on Aug 7, publishing 1 alert/sec.
 
-It ran for about 20 hours, which is 2 "night"s, or two iterations of the while loop. Then it quit with this error:
+It ran for about 20 hours, which is 2 "night"s, or two iterations of the while loop.
+Then it quit with this error:
 
 ```
 Traceback (most recent call last):

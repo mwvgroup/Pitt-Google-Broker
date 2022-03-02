@@ -1,11 +1,12 @@
 # Night Conductor
 
-See the broker-level [../README.md](../README.md) for instructions on setting up a broker instance.
+See the broker-level [../README.md](../README.md) for instructions on setting up a
+broker instance.
 
 - [`gcloud compute instances create`](https://cloud.google.com/sdk/gcloud/reference/compute/instances/create)
 - [Startup scripts](https://cloud.google.com/compute/docs/startupscript)
 - [Storing and retrieving instance metadata](https://cloud.google.com/compute/docs/storing-retrieving-metadata)
-    - [Setting custom metadata](https://cloud.google.com/compute/docs/storing-retrieving-metadata#custom)
+  - [Setting custom metadata](https://cloud.google.com/compute/docs/storing-retrieving-metadata#custom)
 - [Filtering and formatting fun with `gcloud`](https://cloud.google.com/blog/products/gcp/filtering-and-formatting-fun-with)
 
 ## Auto-schedule
