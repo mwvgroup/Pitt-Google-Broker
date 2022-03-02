@@ -13,7 +13,7 @@ temp_dir = TemporaryDirectory()
 
 # Metadata about the data downloaded by this test
 TEST_DATE = (2018, 6, 26)
-TEST_RELEASE = '20180626'
+TEST_RELEASE = "20180626"
 NUM_TEST_ALERTS = 23553
 
 
@@ -23,7 +23,7 @@ def setUpModule():
     temp_dir_path = Path(temp_dir.name)
     ztfa._parse_data.DATA_DIR = temp_dir_path
     ztfa._download_data.DATA_DIR = temp_dir_path
-    ztfa._download_data.ALERT_LOG = temp_dir_path / 'alert_log.txt'
+    ztfa._download_data.ALERT_LOG = temp_dir_path / "alert_log.txt"
 
     try:
         ztfa.download_data_date(*TEST_DATE)
@@ -61,8 +61,8 @@ class DownloadLogging(TestCase):
         releases = ztfa.get_local_releases()
         self.assertIsInstance(releases, types.GeneratorType)
         self.assertSequenceEqual(
-            [TEST_RELEASE], list(releases),
-            'Expected release not in local release list')
+            [TEST_RELEASE], list(releases), "Expected release not in local release list"
+        )
 
     def test_local_alert_list(self):
         """Test ``get_local_alert_list``

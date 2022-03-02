@@ -24,40 +24,35 @@ from setuptools import find_packages, setup
 
 here = pathlib.Path(__file__).parent.resolve()
 # Get the long description from the README file
-long_description = (here / 'README.md').read_text(encoding='utf-8')
+long_description = (here / "README.md").read_text(encoding="utf-8")
 
-with open('requirements.txt') as f:
+with open("requirements.txt") as f:
     requirements = f.read().splitlines()
 
 setup(
-    name='pgb_broker_utils',
-    version='0.2.25',
-    description='Tools used by the Pitt-Google astronomical alert broker.',
+    name="pgb_broker_utils",
+    version="0.2.25",
+    description="Tools used by the Pitt-Google astronomical alert broker.",
     long_description=long_description,
-    long_description_content_type='text/markdown',
+    long_description_content_type="text/markdown",
     classifiers=[
-        'Development Status :: 3 - Alpha',
-        'Intended Audience :: Science/Research',
-        'Topic :: Scientific/Engineering :: Astronomy',
-        'Topic :: Scientific/Engineering :: Physics',
-        'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3 :: Only',
+        "Development Status :: 3 - Alpha",
+        "Intended Audience :: Science/Research",
+        "Topic :: Scientific/Engineering :: Astronomy",
+        "Topic :: Scientific/Engineering :: Physics",
+        "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3 :: Only",
     ],
-    keywords='astronomy, alert broker',
-
-    url='https://github.com/mwvgroup/Pitt-Google-Broker',
-    author='Troy Raen',
-    author_email='troy.raen@pitt.edu',
-
+    keywords="astronomy, alert broker",
+    url="https://github.com/mwvgroup/Pitt-Google-Broker",
+    author="Troy Raen",
+    author_email="troy.raen@pitt.edu",
     packages=find_packages(),  # Required
-
     # For an analysis of "install_requires" vs pip's requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=requirements
-
     # python_requires='>=3.6, <4',
-
     # If there are data files included in your packages that need to be
     # installed, specify them here.
     # package_data={  # Optional

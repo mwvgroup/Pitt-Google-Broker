@@ -34,16 +34,16 @@ from broker.alert_ingestion import consume
 from broker.alert_ingestion.gen_valid_schema import _load_Avro
 
 
-dataset_id = 'testing_dataset'
+dataset_id = "testing_dataset"
 max_alert_size = 150000  # for creating temporary files
-test_alerts_dir = Path(__file__).parent / 'test_alerts'
+test_alerts_dir = Path(__file__).parent / "test_alerts"
 test_alert_path = {
-            'ztf_3.3': test_alerts_dir / 'ztf_3.3_1154308030015010004.avro',
+    "ztf_3.3": test_alerts_dir / "ztf_3.3_1154308030015010004.avro",
 }
 
 
 def run_consume_fix_schema(path: Path, temp_file: BinaryIO):
-    """ Loads the file at path into the temp_file and runs
+    """Loads the file at path into the temp_file and runs
     consume.GCSKafkaConsumer.fix_schema() on the temp_file object.
 
     Usage Example
@@ -57,9 +57,9 @@ def run_consume_fix_schema(path: Path, temp_file: BinaryIO):
             # temp_file now contains the reformatted alert
 
     """
-    survey, version, __ = path.stem.split('_')
+    survey, version, __ = path.stem.split("_")
 
-    with open(path, 'rb') as f:
+    with open(path, "rb") as f:
         temp_file.write(f.read())
     temp_file.seek(0)
     consume.GCSKafkaConsumer.fix_schema(temp_file, survey, version)
@@ -68,10 +68,9 @@ def run_consume_fix_schema(path: Path, temp_file: BinaryIO):
 
 
 def load_Avro_bytes(path: Path) -> BinaryIO:
-    """ Loads an Avro file to a bytes object and returns it.
-    """
+    """Loads an Avro file to a bytes object and returns it."""
 
-    with open(path, 'rb') as f:
+    with open(path, "rb") as f:
         bytes = f.read()
         return bytes
 
@@ -82,33 +81,35 @@ class AlertFormattingDataUnchanged(TestCase):
     """
 
     def test_data_unchanged_ztf_3_3(self):
-        """ ZTF version 3.3 formatting, test that data is unchanged. """
+        """ZTF version 3.3 formatting, test that data is unchanged."""
 
-        survey, version = 'ztf', '3.3'
-        self.data_unchanged(test_alert_path[f'{survey}_{version}'])
+        survey, version = "ztf", "3.3"
+        self.data_unchanged(test_alert_path[f"{survey}_{version}"])
 
     def data_unchanged(self, path: Path):
-        """ Tests that the data in the path file is unchanged when reformatting
+        """Tests that the data in the path file is unchanged when reformatting
         the schema header with `consume.GCSKafkaConsumer.fix_schema()`.
         """
-        survey, version, __ = path.stem.split('_')
+        survey, version, __ = path.stem.split("_")
 
         # Get the original data
         __, original_data = _load_Avro(str(path))
 
         # Correct the schema and get the data again
-        with consume.TempAlertFile(max_size=max_alert_size, mode='w+b') as temp_file:
+        with consume.TempAlertFile(max_size=max_alert_size, mode="w+b") as temp_file:
             run_consume_fix_schema(path, temp_file)
             __, corrected_data = _load_Avro(temp_file)
 
         # test data unchanged
-        msg = (f'Data was changed while correcting the schema header'
-               f' for {survey} version {version}')
+        msg = (
+            f"Data was changed while correcting the schema header"
+            f" for {survey} version {version}"
+        )
         self.assertEqual(original_data, corrected_data, msg)
 
 
 class AlertFormattedForBigQuery(TestCase):
-    """ Test that the alerts are formatted properly for import into BigQuery.
+    """Test that the alerts are formatted properly for import into BigQuery.
     This test clears the BQ test table before uploading an alert and therefore
     does _NOT_ test whether different survey/version combinations are
     compatible for upload to the same BQ table.
@@ -120,7 +121,7 @@ class AlertFormattedForBigQuery(TestCase):
     def setUpClass(cls):
         cls.client = bigquery.Client()
         cls.dataset_id = dataset_id
-        cls.table_id = 'temp_table'  # created automatically if needed
+        cls.table_id = "temp_table"  # created automatically if needed
 
         cls.dataset_ref = cls.client.dataset(cls.dataset_id)
         cls.table_ref = cls.dataset_ref.table(cls.table_id)
@@ -130,25 +131,25 @@ class AlertFormattedForBigQuery(TestCase):
         cls.job_config.autodetect = True  # enable schema autodetection
 
     def test_BQupload_ztf_3_3(self):
-        """ ZTF version 3.3 upload to BigQuery test. """
+        """ZTF version 3.3 upload to BigQuery test."""
 
-        survey, version = 'ztf', '3.3'
-        path = test_alert_path[f'{survey}_{version}']
+        survey, version = "ztf", "3.3"
+        path = test_alert_path[f"{survey}_{version}"]
 
         # Correct the schema and upload to BQ
-        with consume.TempAlertFile(max_size=max_alert_size, mode='r+b') as temp_file:
+        with consume.TempAlertFile(max_size=max_alert_size, mode="r+b") as temp_file:
             run_consume_fix_schema(path, temp_file)
             self.assert_alert_uploads_to_BigQuery(temp_file)
 
     def assert_alert_uploads_to_BigQuery(self, temp_file):
-        """ Tests whether an alert is formatted correctly for insertion into a
+        """Tests whether an alert is formatted correctly for insertion into a
         BigQuery table.
         """
 
         temp_file.seek(0)
-        job = self.client.load_table_from_file(temp_file,
-                                               self.table_ref,
-                                               job_config=self.job_config)
+        job = self.client.load_table_from_file(
+            temp_file, self.table_ref, job_config=self.job_config
+        )
 
         try:
             job.result()  # Waits for table load to complete.
@@ -169,8 +170,8 @@ class SchemaVersionGuessing(TestCase):
         """
 
         # load the alert as a bytes object
-        survey, version = 'ztf', '3.3'
-        path = test_alert_path[f'{survey}_{version}']
+        survey, version = "ztf", "3.3"
+        path = test_alert_path[f"{survey}_{version}"]
         alert_bytes = load_Avro_bytes(path)
 
         # extract the version and check that it is as expected
@@ -179,7 +180,7 @@ class SchemaVersionGuessing(TestCase):
         except exceptions.SchemaParsingError as e:
             self.fail(str(e))
         else:
-            msg = f'guess_schema_version() failed for {survey} version {version}'
+            msg = f"guess_schema_version() failed for {survey} version {version}"
             self.assertEqual(version, schema_version, msg)
 
 
@@ -192,8 +193,8 @@ class SchemaSurveyGuessing(TestCase):
         """
 
         # load the alert as a bytes object
-        survey, version = 'ztf', '3.3'
-        path = test_alert_path[f'{survey}_{version}']
+        survey, version = "ztf", "3.3"
+        path = test_alert_path[f"{survey}_{version}"]
         alert_bytes = load_Avro_bytes(path)
 
         # extract the survey and check that it is as expected

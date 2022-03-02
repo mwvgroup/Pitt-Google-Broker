@@ -27,14 +27,15 @@ def get_remote_md5_table() -> Table:
         A list of file names for alerts published on the ZTF Alerts Archive
     """
 
-    md5_url = requests.compat.urljoin(ZTF_URL, 'MD5SUMS')
+    md5_url = requests.compat.urljoin(ZTF_URL, "MD5SUMS")
     md5_table = requests.get(md5_url).content.decode()
     out_table = Table(
-        names=['md5', 'file'],
-        dtype=['U32', 'U1000'],
-        rows=[row.split() for row in md5_table.split('\n')[:-1]])
+        names=["md5", "file"],
+        dtype=["U32", "U1000"],
+        rows=[row.split() for row in md5_table.split("\n")[:-1]],
+    )
 
-    return out_table['file', 'md5']
+    return out_table["file", "md5"]
 
 
 def get_local_releases() -> Iterable[str]:
@@ -44,24 +45,22 @@ def get_local_releases() -> Iterable[str]:
         An iterable of downloaded release dates from the ZTF Alerts Archive
     """
 
-    return (p.name.lstrip('ztf_public_') for p in ZTF_DATA_DIR.glob('*'))
+    return (p.name.lstrip("ztf_public_") for p in ZTF_DATA_DIR.glob("*"))
 
 
 def get_local_alerts() -> Iterable[int]:
     """Return an iterable list of alert ids for all downloaded alert data
-    
+
     Returns:
         An iterable of alert ID values as ints
     """
 
-    return (int(p.stem) for p in ZTF_DATA_DIR.glob('*/*.avro'))
+    return (int(p.stem) for p in ZTF_DATA_DIR.glob("*/*.avro"))
 
 
 def _download_alerts_file(
-        file_name: str,
-        out_dir: str,
-        block_size: int,
-        verbose: bool = True) -> None:
+    file_name: str, out_dir: str, block_size: int, verbose: bool = True
+) -> None:
     """Download a file from the ZTF Alerts Archive
 
     Args:
@@ -76,17 +75,15 @@ def _download_alerts_file(
     file_data = requests.get(url, stream=True)
 
     # Get size of data to be downloaded
-    total_size = int(file_data.headers.get('content-length', 0))
+    total_size = int(file_data.headers.get("content-length", 0))
     iteration_number = np.ceil(total_size // block_size)
 
     # Construct progress bar iterable
     data_iterable = file_data.iter_content(block_size)
     if verbose:
         data_iterable = tqdm(
-            data_iterable,
-            total=iteration_number,
-            unit='KB',
-            unit_scale=True)
+            data_iterable, total=iteration_number, unit="KB", unit_scale=True
+        )
 
     # write data to file
     with TemporaryFile() as ofile:
@@ -94,7 +91,7 @@ def _download_alerts_file(
             ofile.write(data)
 
         if verbose:
-            tqdm.write('Unzipping alert data...')
+            tqdm.write("Unzipping alert data...")
 
         ofile.seek(0)
         with tarfile.open(fileobj=ofile, mode="r:gz") as data:
@@ -102,11 +99,8 @@ def _download_alerts_file(
 
 
 def download_data_date(
-        year: int,
-        month: int,
-        day: int,
-        block_size: int = 1024,
-        verbose: bool = True) -> None:
+    year: int, month: int, day: int, block_size: int = 1024, verbose: bool = True
+) -> None:
     """Download ZTF alerts for a given date
 
     Does not skip releases that are were previously downloaded.
@@ -119,16 +113,17 @@ def download_data_date(
         verbose: Display a progress bar (Default: True)
     """
 
-    file_name = f'ztf_public_{year}{month:02d}{day:02d}.tar.gz'
-    out_dir = ZTF_DATA_DIR / file_name.rstrip('.tar.gz')
+    file_name = f"ztf_public_{year}{month:02d}{day:02d}.tar.gz"
+    out_dir = ZTF_DATA_DIR / file_name.rstrip(".tar.gz")
     _download_alerts_file(file_name, out_dir, block_size, verbose)
 
 
 def download_recent_data(
-        max_downloads: int = 1,
-        block_size: int = 1024,
-        verbose: bool = True,
-        stop_on_exist: bool = False) -> None:
+    max_downloads: int = 1,
+    block_size: int = 1024,
+    verbose: bool = True,
+    stop_on_exist: bool = False,
+) -> None:
     """Download recent alert data from the ZTF alerts archive
 
     Data is downloaded in reverse chronological order. Skip releases that are
@@ -141,7 +136,7 @@ def download_recent_data(
         stop_on_exist: Exit when encountering an alert that is already downloaded
     """
 
-    file_names = get_remote_md5_table()['file']
+    file_names = get_remote_md5_table()["file"]
     num_downloads = min(max_downloads, len(file_names))
     for i, f_name in enumerate(file_names):
         if i >= max_downloads:
@@ -149,16 +144,15 @@ def download_recent_data(
 
         # Skip download if data was already downloaded
         if f_name in list(get_local_releases()):
-            tqdm.write(
-                f'Already Downloaded ({i + 1}/{num_downloads}): {f_name}')
+            tqdm.write(f"Already Downloaded ({i + 1}/{num_downloads}): {f_name}")
 
             if stop_on_exist:
                 return
 
             continue
 
-        out_dir = ZTF_DATA_DIR / f_name.rstrip('.tar.gz')
-        tqdm.write(f'Downloading ({i + 1}/{num_downloads}): {f_name}')
+        out_dir = ZTF_DATA_DIR / f_name.rstrip(".tar.gz")
+        tqdm.write(f"Downloading ({i + 1}/{num_downloads}): {f_name}")
         _download_alerts_file(f_name, out_dir, block_size, verbose)
 
 
@@ -170,9 +164,8 @@ def delete_local_data() -> None:
 
 
 def create_ztf_sync_table(
-        bucket_name: str = None,
-        out_path: str = None,
-        verbose: bool = True) -> Table:
+    bucket_name: str = None, out_path: str = None, verbose: bool = True
+) -> Table:
     """Create a table for uploading ZTF releases to a GCP bucket
 
     Only include files not already present in the bucket
@@ -194,32 +187,32 @@ def create_ztf_sync_table(
         bucket = storage_client.get_bucket(bucket_name)
         existing_files = [blob.name for blob in bucket.list_blobs()]
 
-        is_new = ~np.isin(release_table['file'], existing_files)
+        is_new = ~np.isin(release_table["file"], existing_files)
         release_table = release_table[is_new]
 
-    files = release_table['file']
+    files = release_table["file"]
     if verbose:
-        files = tqdm(files, desc='Requesting file sizes')
+        files = tqdm(files, desc="Requesting file sizes")
 
     # Get file sizes
     url_list, size_list = [], []
     for file_name in files:
         url = requests.compat.urljoin(ZTF_URL, file_name)
-        file_size = requests.head(url).headers['Content-Length']
+        file_size = requests.head(url).headers["Content-Length"]
         url_list.append(url)
         size_list.append(file_size)
 
-    out_table = Table(
-        {'url': url_list, 'size': size_list, 'md5': release_table['md5']})
+    out_table = Table({"url": url_list, "size": size_list, "md5": release_table["md5"]})
 
     if out_path:
         # Format for compatibility with GCP data transfer service
-        out_table.meta['comments'] = ['TsvHttpData-1.0']
+        out_table.meta["comments"] = ["TsvHttpData-1.0"]
         out_table.write(
             out_path,
-            format='ascii.no_header',
-            delimiter='\t',
+            format="ascii.no_header",
+            delimiter="\t",
             overwrite=True,
-            comment='')
+            comment="",
+        )
 
     return out_table

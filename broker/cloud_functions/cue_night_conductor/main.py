@@ -14,27 +14,27 @@ from googleapiclient import discovery
 
 from broker_utils import schema_maps
 
-PROJECT_ID = os.getenv('GCP_PROJECT')
-TESTID = os.getenv('TESTID')
-SURVEY = os.getenv('SURVEY')
-ZONE = os.getenv('ZONE')
+PROJECT_ID = os.getenv("GCP_PROJECT")
+TESTID = os.getenv("TESTID")
+SURVEY = os.getenv("SURVEY")
+ZONE = os.getenv("ZONE")
 
 schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
-service = discovery.build('compute', 'v1')
+service = discovery.build("compute", "v1")
 
 # connect to the logger
 logging_client = logging.Client()
-log_name = 'cue-night-conductor-cloudfnc'  # same log for all broker instances
+log_name = "cue-night-conductor-cloudfnc"  # same log for all broker instances
 logger = logging_client.logger(log_name)
 
 # GCP resources used in this module
-instance_name = f'{SURVEY}-night-conductor'
+instance_name = f"{SURVEY}-night-conductor"
 if TESTID != "False":
-    instance_name = f'{instance_name}-{TESTID}'
+    instance_name = f"{instance_name}-{TESTID}"
 
 
 def run(msg, context) -> None:
-    """ Entry point for the Cloud Function
+    """Entry point for the Cloud Function
     Args:
         msg (dict): Pub/Sub message.
 
@@ -51,8 +51,8 @@ def run(msg, context) -> None:
          metadata. The `event_id` field contains the Pub/Sub message ID. The
          `timestamp` field contains the publish time.
     """
-    cue = base64.b64decode(msg['data']).decode('utf-8')  # str
-    attrs = msg['attributes']  # dict
+    cue = base64.b64decode(msg["data"]).decode("utf-8")  # str
+    attrs = msg["attributes"]  # dict
 
     continue_cue = check_cue_value(cue, attrs)  # check that cue is an expected value
     if continue_cue:
@@ -60,20 +60,22 @@ def run(msg, context) -> None:
 
 
 def check_cue_value(cue, attrs):
-    # check that the cue is an expected value and log the result
-    expected_values = ['START', 'END']
+    """Check that the cue is an expected value and log the result."""
+    expected_values = ["START", "END"]
     if cue in expected_values:
         continue_cue = True
-        msg = (f'cloud fnc with keywords [{SURVEY}, {TESTID}] received '
-               f'cue = {cue}; attrs = {attrs}. Cueing night-conductor.'
-               )
-        severity = 'INFO'
+        msg = (
+            f"cloud fnc with keywords [{SURVEY}, {TESTID}] received "
+            f"cue = {cue}; attrs = {attrs}. Cueing night-conductor."
+        )
+        severity = "INFO"
     else:
         continue_cue = False
-        msg = (f'Valid cues are {expected_values}, but '
-               f'cloud fnc with keywords [{SURVEY}, {TESTID}] received cue = {cue}. Exiting.'
-               )
-        severity = 'CRITICAL'
+        msg = (
+            f"Valid cues are {expected_values}, but "
+            f"cloud fnc with keywords [{SURVEY}, {TESTID}] received cue = {cue}. Exiting."
+        )
+        severity = "CRITICAL"
     logger.log_text(msg, severity=severity)
 
     return continue_cue
@@ -86,47 +88,42 @@ def cue_night_conductor(cue, attrs):
         attrs (dict): Used to determine the topic to be ingested.
                       Expect empty dict or one key of ['topic_date', 'KAFKA_TOPIC']
     """
-    request_kwargs = {
-        'project': PROJECT_ID,
-        'zone': ZONE,
-        'instance': instance_name
-    }
+    request_kwargs = {"project": PROJECT_ID, "zone": ZONE, "instance": instance_name}
 
     update_items = get_update_items(cue, attrs)
-    update_keys = [ui['key'] for ui in update_items]
+    update_keys = [ui["key"] for ui in update_items]
     fingerprint, keep_items = get_current_metadata(update_keys, request_kwargs)
     metadata = {
-        'fingerprint': fingerprint,
-        'items': update_items + keep_items,
+        "fingerprint": fingerprint,
+        "items": update_items + keep_items,
     }
     set_metadata(metadata, request_kwargs)
     start_vm(request_kwargs)
 
 
 def get_update_items(cue, attrs):
-    """Metadata items to update.
-    """
-    update_items = [{'key': 'NIGHT', 'value': cue}]
-    if cue == 'START':
-        update_items.append({'key': 'KAFKA_TOPIC', 'value': get_kafka_topic(attrs)})
+    """Metadata items to update."""
+    update_items = [{"key": "NIGHT", "value": cue}]
+    if cue == "START":
+        update_items.append({"key": "KAFKA_TOPIC", "value": get_kafka_topic(attrs)})
     return update_items
 
 
 def get_kafka_topic(attrs):
     # If a specific topic or date was reqested in the attrs, set it.
     # otherwise, set topic for today's date UTC
-    TOPIC_SYNTAX = schema_map['TOPIC_SYNTAX']
-    replace = 'yyyymmdd'
+    TOPIC_SYNTAX = schema_map["TOPIC_SYNTAX"]
+    replace = "yyyymmdd"
     set_today = False
 
     if attrs is None:
         set_today = True
 
-    elif 'KAFKA_TOPIC' in attrs.keys():
-        KAFKA_TOPIC = attrs['KAFKA_TOPIC']
+    elif "KAFKA_TOPIC" in attrs.keys():
+        KAFKA_TOPIC = attrs["KAFKA_TOPIC"]
 
-    elif 'topic_date' in attrs.keys():
-        KAFKA_TOPIC = TOPIC_SYNTAX.replace(replace, attrs['topic_date'])
+    elif "topic_date" in attrs.keys():
+        KAFKA_TOPIC = TOPIC_SYNTAX.replace(replace, attrs["topic_date"])
 
     else:
         set_today = True
@@ -136,31 +133,30 @@ def get_kafka_topic(attrs):
         KAFKA_TOPIC = TOPIC_SYNTAX.replace(replace, yyyymmdd)
 
     # log the topic
-    msg = f'cloud fnc with keywords [{SURVEY}, {TESTID}] will set KAFKA_TOPIC={KAFKA_TOPIC}'
-    logger.log_text(msg, severity='INFO')
+    msg = f"cloud fnc with keywords [{SURVEY}, {TESTID}] will set KAFKA_TOPIC={KAFKA_TOPIC}"
+    logger.log_text(msg, severity="INFO")
 
     return KAFKA_TOPIC
 
 
 def get_current_metadata(update_keys, request_kwargs):
-    # get the current metadata and fingerprint
+    """Get the current metadata and fingerprint of a VM."""
     request = service.instances().get(**request_kwargs)
     response = request.execute()  # dict
-    fingerprint = response['metadata']['fingerprint']
-    current_items = response['metadata']['items']
-    keep_items = [dic for dic in current_items if dic['key'] not in update_keys]
+    fingerprint = response["metadata"]["fingerprint"]
+    current_items = response["metadata"]["items"]
+    keep_items = [dic for dic in current_items if dic["key"] not in update_keys]
 
     return (fingerprint, keep_items)
 
 
 def set_metadata(metadata, request_kwargs):
-    """Set attributes on night-conductor
-    """
+    """Set attributes on night-conductor"""
     request = service.instances().setMetadata(**request_kwargs, body=metadata)
     response = request.execute()
 
 
 def start_vm(request_kwargs):
-    # start the vm
+    """Start a VM using `request_kwargs`."""
     request = service.instances().start(**request_kwargs)
     response = request.execute()

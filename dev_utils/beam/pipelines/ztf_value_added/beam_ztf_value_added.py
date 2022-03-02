@@ -42,6 +42,11 @@ from beam_helpers.filters import is_extragalactic_transient
 import beam_helpers.salt2_utils as s2
 
 
+# disable some linting issues that will not be fixed in this file
+# pylint: skip-file
+# pylint: disable=line-too-long
+
+
 def sink_configs(PROJECTID):
     """Configuration dicts for all pipeline sinks.
 
@@ -52,26 +57,26 @@ def sink_configs(PROJECTID):
         snkconf = {'sinkResource_dataDescription': {'config_name': value, }, }
     """
     snkconf = {
-            'BQ_salt2': {
-                'schema': 'objectId:STRING, candid:INTEGER, success:INTEGER, ncall:INTEGER, chisq:FLOAT, ndof:INTEGER, z:FLOAT, z_err:FLOAT, t0:FLOAT, t0_err:FLOAT, x0:FLOAT, x0_err:FLOAT, x1:FLOAT, x1_err:FLOAT, c:FLOAT, c_err:FLOAT, z_z_cov:FLOAT, z_t0_cov:FLOAT, z_x0_cov:FLOAT, z_x1_cov:FLOAT, z_c_cov:FLOAT, t0_z_cov:FLOAT, t0_t0_cov:FLOAT, t0_x0_cov:FLOAT, t0_x1_cov:FLOAT, t0_c_cov:FLOAT, x0_z_cov:FLOAT, x0_t0_cov:FLOAT, x0_x0_cov:FLOAT, x0_x1_cov:FLOAT, x0_c_cov:FLOAT, x1_z_cov:FLOAT, x1_t0_cov:FLOAT, x1_x0_cov:FLOAT, x1_x1_cov:FLOAT, x1_c_cov:FLOAT, c_z_cov:FLOAT, c_t0_cov:FLOAT, c_x0_cov:FLOAT, c_x1_cov:FLOAT, c_c_cov:FLOAT, plot_lc_bytes:BYTES',
-                'create_disposition': bqdisp.CREATE_NEVER,
-                'write_disposition': bqdisp.WRITE_APPEND,
-                'insert_retry_strategy': RetryStrategy.RETRY_NEVER,
-                # 'batch_size': 50,
-            },
-            'PS_generic': {
-                'with_attributes': False,  # currently using bytes
-                #  may want to use these in the future:
-                'id_label': None,
-                'timestamp_attribute': None
-            },
+        "BQ_salt2": {
+            "schema": "objectId:STRING, candid:INTEGER, success:INTEGER, ncall:INTEGER, chisq:FLOAT, ndof:INTEGER, z:FLOAT, z_err:FLOAT, t0:FLOAT, t0_err:FLOAT, x0:FLOAT, x0_err:FLOAT, x1:FLOAT, x1_err:FLOAT, c:FLOAT, c_err:FLOAT, z_z_cov:FLOAT, z_t0_cov:FLOAT, z_x0_cov:FLOAT, z_x1_cov:FLOAT, z_c_cov:FLOAT, t0_z_cov:FLOAT, t0_t0_cov:FLOAT, t0_x0_cov:FLOAT, t0_x1_cov:FLOAT, t0_c_cov:FLOAT, x0_z_cov:FLOAT, x0_t0_cov:FLOAT, x0_x0_cov:FLOAT, x0_x1_cov:FLOAT, x0_c_cov:FLOAT, x1_z_cov:FLOAT, x1_t0_cov:FLOAT, x1_x0_cov:FLOAT, x1_x1_cov:FLOAT, x1_c_cov:FLOAT, c_z_cov:FLOAT, c_t0_cov:FLOAT, c_x0_cov:FLOAT, c_x1_cov:FLOAT, c_c_cov:FLOAT, plot_lc_bytes:BYTES",
+            "create_disposition": bqdisp.CREATE_NEVER,
+            "write_disposition": bqdisp.WRITE_APPEND,
+            "insert_retry_strategy": RetryStrategy.RETRY_NEVER,
+            # 'batch_size': 50,
+        },
+        "PS_generic": {
+            "with_attributes": False,  # currently using bytes
+            #  may want to use these in the future:
+            "id_label": None,
+            "timestamp_attribute": None,
+        },
     }
 
     return snkconf
 
 
 class Salt2(beam.PTransform):
-    """ Composite PTransform of all Salt2-related transforms:
+    """Composite PTransform of all Salt2-related transforms:
     1. Extract epochs
     2. Filter out alerts that do not meet minimum data quality
     3. Perform Salt2 fit
@@ -79,6 +84,7 @@ class Salt2(beam.PTransform):
     5. Store fit results in BigQuery
     6. Publish fit results to Pub/Sub
     """
+
     def __init__(self, sinks, sink_configs, salt2_configs):
         super().__init__()
         self.sinks = sinks
@@ -96,78 +102,70 @@ class Salt2(beam.PTransform):
         s2conf = self.salt2_configs
 
         # extract the epochs and some stats
-        epochInfoDicts = (alert_PColl | 'FormatForSalt2' >>
-                      beam.ParDo(s2.FormatForSalt2(s2conf))
-                     )
+        epochInfoDicts = alert_PColl | "FormatForSalt2" >> beam.ParDo(
+            s2.FormatForSalt2(s2conf)
+        )
 
         # drop alerts that do not meet minimum data quality
-        epochInfoDictsQC = (epochInfoDicts | 'filterSalt2QualityCuts' >>
-                          beam.Filter(s2.salt2_quality_cuts, s2conf)
-                         )
+        epochInfoDictsQC = epochInfoDicts | "filterSalt2QualityCuts" >> beam.Filter(
+            s2.salt2_quality_cuts, s2conf
+        )
 
         # fit with Salt2. Yields 2 output collections
-        salt2Dicts = (epochInfoDictsQC | 'FitSalt2' >>
-                      beam.ParDo(s2.FitSalt2()).with_outputs('salt2Fit4Figure', main='salt2FitResult')
-                     )
+        salt2Dicts = epochInfoDictsQC | "FitSalt2" >> beam.ParDo(
+            s2.FitSalt2()
+        ).with_outputs("salt2Fit4Figure", main="salt2FitResult")
         salt2FitResult = salt2Dicts.salt2FitResult  # PCollection of dicts
         salt2Fit4Figure = salt2Dicts.salt2Fit4Figure  # PCollection of dicts
 
         # Store a lightcurve + Salt2 fit figure in Cloud Storage
-        __ = (salt2Fit4Figure | 'StoreSalt2FitFigure' >>
-                beam.ParDo(s2.StoreSalt2FitFigure(sinks['CS_salt2']))
-            )
+        __ = salt2Fit4Figure | "StoreSalt2FitFigure" >> beam.ParDo(
+            s2.StoreSalt2FitFigure(sinks["CS_salt2"])
+        )
 
         # Store the fit params in BigQuery
-        bqSalt2Deadletters = (salt2FitResult | 'salt2ToBQ' >>
-                              WriteToBigQuery(sinks['BQ_salt2'],
-                                              **snkconf['BQ_salt2'])
-                             )  # ToDo: handle deadletters
+        bqSalt2Deadletters = salt2FitResult | "salt2ToBQ" >> WriteToBigQuery(
+            sinks["BQ_salt2"], **snkconf["BQ_salt2"]
+        )  # ToDo: handle deadletters
 
         # Announce the fit params to Pub/Sub
-        salt2PS = (salt2FitResult | 'salt2FormatDictForPubSub' >>
-                   beam.ParDo(dutil.formatDictForPubSub())
-                  )
-        psSalt2Deadletters = (salt2PS | 'salt2ToPubSub' >>
-                              WriteToPubSub(sinks['PS_salt2'],
-                                            **snkconf['PS_generic'])
-                             )  # ToDo: handle deadletters
+        salt2PS = salt2FitResult | "salt2FormatDictForPubSub" >> beam.ParDo(
+            dutil.formatDictForPubSub()
+        )
+        psSalt2Deadletters = salt2PS | "salt2ToPubSub" >> WriteToPubSub(
+            sinks["PS_salt2"], **snkconf["PS_generic"]
+        )  # ToDo: handle deadletters
 
         return salt2FitResult
 
 
 def run(PROJECTID, sources, sinks, pipeline_args, salt2_configs):
-    """Runs the ZTF Beam pipeline.
-    """
+    """Runs the ZTF Beam pipeline."""
 
     pipeline_options = PipelineOptions(pipeline_args, streaming=True)
     snkconf = sink_configs(PROJECTID)
 
     with beam.Pipeline(options=pipeline_options) as pipeline:
 
-        #-- Read from PS and extract data as dicts
-        PSin = (pipeline | 'ReadFromPubSub' >>
-                ReadFromPubSub(topic=sources['PS_ztf']))
-        alertDicts = (PSin | 'ExtractAlertDict' >>
-                      beam.ParDo(dutil.extractAlertDict()))
-        alertDictsSC = (alertDicts | 'StripCutouts' >>
-                        beam.ParDo(dutil.stripCutouts()))
+        # -- Read from PS and extract data as dicts
+        PSin = pipeline | "ReadFromPubSub" >> ReadFromPubSub(topic=sources["PS_ztf"])
+        alertDicts = PSin | "ExtractAlertDict" >> beam.ParDo(dutil.extractAlertDict())
+        alertDictsSC = alertDicts | "StripCutouts" >> beam.ParDo(dutil.stripCutouts())
 
-        #-- Filter for extragalactic transients
-        adscExgalTrans = (alertDictsSC | 'filterExgalTrans' >>
-                          beam.Filter(is_extragalactic_transient)
-                         )
+        # -- Filter for extragalactic transients
+        adscExgalTrans = alertDictsSC | "filterExgalTrans" >> beam.Filter(
+            is_extragalactic_transient
+        )
         # to PubSub
-        egtPS = (adscExgalTrans | 'exgalTransFormatDictForPubSub' >>
-                 beam.ParDo(dutil.formatDictForPubSub())
-                )
-        psEgtDeadletters = (egtPS | 'exgalTransToPubSub' >>
-                            WriteToPubSub(sinks['PS_exgalTrans'],
-                                          **snkconf['PS_generic'])
-                           )  # ToDo: handle deadletters
+        egtPS = adscExgalTrans | "exgalTransFormatDictForPubSub" >> beam.ParDo(
+            dutil.formatDictForPubSub()
+        )
+        psEgtDeadletters = egtPS | "exgalTransToPubSub" >> WriteToPubSub(
+            sinks["PS_exgalTrans"], **snkconf["PS_generic"]
+        )  # ToDo: handle deadletters
 
-        #-- Fit with Salt2, store and announce results
-        __ = adscExgalTrans | 'Salt2' >> Salt2(sinks, snkconf, salt2_configs)
-
+        # -- Fit with Salt2, store and announce results
+        __ = adscExgalTrans | "Salt2" >> Salt2(sinks, snkconf, salt2_configs)
 
 
 if __name__ == "__main__":
@@ -201,7 +199,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--salt2_SNthresh",
-        default=5.,
+        default=5.0,
         help="S/N threshold. Minimum S/N necessary to fit Salt2. Also, Salt2 param t0 constrained around first epoch with S/N > salt2_SNthresh.\n",
     )
     parser.add_argument(
@@ -217,17 +215,17 @@ if __name__ == "__main__":
 
     known_args, pipeline_args = parser.parse_known_args()
 
-    sources = {'PS_ztf': known_args.source_PS_ztf}
+    sources = {"PS_ztf": known_args.source_PS_ztf}
     sinks = {
-            'BQ_salt2': known_args.sink_BQ_salt2,
-            'CS_salt2': known_args.sink_CS_salt2,
-            'PS_exgalTrans': known_args.sink_PS_exgalTrans,
-            'PS_salt2': known_args.sink_PS_salt2,
+        "BQ_salt2": known_args.sink_BQ_salt2,
+        "CS_salt2": known_args.sink_CS_salt2,
+        "PS_exgalTrans": known_args.sink_PS_exgalTrans,
+        "PS_salt2": known_args.sink_PS_salt2,
     }
 
     salt2_configs = {
-                    'SNthresh': float(known_args.salt2_SNthresh),
-                    'minNdetections': int(known_args.salt2_minNdetections),
+        "SNthresh": float(known_args.salt2_SNthresh),
+        "minNdetections": int(known_args.salt2_minNdetections),
     }
 
     run(known_args.PROJECTID, sources, sinks, pipeline_args, salt2_configs)
