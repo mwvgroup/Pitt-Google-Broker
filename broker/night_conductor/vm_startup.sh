@@ -55,7 +55,7 @@ if [ "${NIGHT}" = "START" ] || [ "${NIGHT}" = "END" ]; then
 
     zone="us-central1-a"
     gcloud compute instances add-metadata "${nconductVM}" --zone="${zone}" \
-          --metadata="NIGHT=,KAFKA_TOPIC=,PS_TOPIC="
+        --metadata="NIGHT=,KAFKA_TOPIC=,PS_TOPIC="
 
     shutdown -h now
 fi

@@ -29,7 +29,7 @@ if [ "${teardown}" = "True" ]; then
         gcloud scheduler jobs delete "${night_conductor_END}"
     fi
 
-#--- Create jobs that schedule night conductor
+    #--- Create jobs that schedule night conductor
 else
     timezone='UTC'  # to avoid daylight savings issues
     scheduleSTART='30 1 * * *'  # START at 1:30am UTC/5:30pm PDT, everyday

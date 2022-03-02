@@ -80,20 +80,20 @@ echo "Setting up Cloud Scheduler cron jobs"
 
 if [ "${teardown}" != "True" ]; then
 
-#--- Setup the Pub/Sub notifications on ZTF Avro storage bucket
+    #--- Setup the Pub/Sub notifications on ZTF Avro storage bucket
     echo
     echo "Configuring Pub/Sub notifications on GCS bucket..."
     # metadata attached after file upload, so triggering on OBJECT_FINALIZE is too soon
     trigger_event=OBJECT_METADATA_UPDATE
     format=json  # json or none; if json, file metadata sent in message body
     gsutil notification create \
-                -t "${avro_topic}" \
-                -e "${trigger_event}" \
-                -f "${format}" \
-                "gs://${avro_bucket}"
+        -t "${avro_topic}" \
+        -e "${trigger_event}" \
+        -f "${format}" \
+        "gs://${avro_bucket}"
 
-#--- Create a firewall rule to open the port used by Kafka/ZTF
-# on any instance with the flag --tags=ztfport
+    #--- Create a firewall rule to open the port used by Kafka/ZTF
+    # on any instance with the flag --tags=ztfport
     echo
     echo "Configuring ZTF/Kafka firewall rule..."
     gcloud compute firewall-rules create 'ztfport' \

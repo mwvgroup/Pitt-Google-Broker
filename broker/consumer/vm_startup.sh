@@ -59,12 +59,12 @@ do
             --list \
             --command-config "${workingdir}/admin.properties" \
             > "${fout_topics}"
-    } || {
+        } || {
         true
     }
     # /bin/kafka-topics works, but exits with:
-        # TGT renewal thread has been interrupted and will exit.
-        # (org.apache.kafka.common.security.kerberos.KerberosLogin)""
+    # TGT renewal thread has been interrupted and will exit.
+    # (org.apache.kafka.common.security.kerberos.KerberosLogin)""
     # which kills the while loop. no working suggestions found.
     # passing the error with `|| true`
 

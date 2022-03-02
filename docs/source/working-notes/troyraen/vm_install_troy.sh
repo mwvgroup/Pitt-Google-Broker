@@ -5,10 +5,10 @@
 # machinetype="n2-standard-4"
 # zone="us-central1-a"
 # gcloud compute instances create troy \
-#     --zone="$zone" \
-#     --machine-type="$machinetype" \
-#     --scopes=cloud-platform \
-#     --metadata=google-logging-enabled=true,startup-script-url="$installscript"
+    #     --zone="$zone" \
+    #     --machine-type="$machinetype" \
+    #     --scopes=cloud-platform \
+    #     --metadata=google-logging-enabled=true,startup-script-url="$installscript"
 
 
 #--- Get metadata attributes

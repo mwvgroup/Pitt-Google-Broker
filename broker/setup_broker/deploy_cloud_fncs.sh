@@ -54,7 +54,7 @@ if [ "${teardown}" = "True" ]; then
 else # Deploy the Cloud Functions
     OGdir=$(pwd)
 
-#--- BigQuery storage cloud function
+    #--- BigQuery storage cloud function
     echo "Deploying Cloud Function: ${store_bq_CF_name}"
     store_bq_entry_point="run"
 
@@ -69,7 +69,7 @@ else # Deploy the Cloud Functions
 
     cd "${OGdir}" || exit
 
-#--- Pub/Sub -> Cloud Storage Avro cloud function
+    #--- Pub/Sub -> Cloud Storage Avro cloud function
     echo "Deploying Cloud Function: ${ps_to_gcs_CF_name}"
     ps_to_gcs_entry_point="run"
 
@@ -84,7 +84,7 @@ else # Deploy the Cloud Functions
 
     cd "${OGdir}" || exit
 
-#--- Cue night-conductor cloud function
+    #--- Cue night-conductor cloud function
     echo "Deploying Cloud Function: ${cue_nc_CF_name}"
     cue_nc_entry_point="run"
 
@@ -99,7 +99,7 @@ else # Deploy the Cloud Functions
 
     cd "${OGdir}" || exit
 
-#--- Check cue response cloud function
+    #--- Check cue response cloud function
     echo "Deploying Cloud Function: ${check_cue_CF_name}"
     check_cue_entry_point="run"
 
@@ -115,7 +115,7 @@ else # Deploy the Cloud Functions
 
     cd "${OGdir}" || exit
 
-#--- classify with SNN cloud function
+    #--- classify with SNN cloud function
     echo "Deploying Cloud Function: ${classify_snn_CF_name}"
     classify_snn_entry_point="run"
     memory=512MB  # standard 256MB is too small here
@@ -132,7 +132,7 @@ else # Deploy the Cloud Functions
 
     cd "${OGdir}" || exit
 
-#--- filter for extragalactic transients cloud function
+    #--- filter for extragalactic transients cloud function
     echo "Deploying Cloud Function: ${filter_exgal_CF_name}"
     filter_exgal_entry_point="run"
 
