@@ -41,9 +41,8 @@ gcloud compute instances add-metadata "$vmname" --zone="$zone" --metadata=startu
 
 ### Set a startup script to run consumer simulator indefinitely
 
-Python script to trigger at startup.
-Save the following code to a root-executable file at
-/home/consumer_sim/run-looper-indefinitely.py:
+Python script to trigger at startup. Save the following code to a root-executable file
+at /home/consumer_sim/run-looper-indefinitely.py:
 
 ```python
 #!/usr/bin/env python3
@@ -51,14 +50,14 @@ Save the following code to a root-executable file at
 from broker_utils import consumer_sim as bcs
 
 # set args to publish 1 alert every second
-alert_rate = (60, 'perMin')
+alert_rate = (60, "perMin")
 kwargs = {
-    'instance': None,
-    'runtime': (1, 'night'),
-    'publish_batch_every': (1, 'sec'),
-    'sub_id': 'ztf-alerts-reservoir',
-    'topic_id': 'ztf-loop',
-    'auto_confirm': True,
+    "instance": None,
+    "runtime": (1, "night"),
+    "publish_batch_every": (1, "sec"),
+    "sub_id": "ztf-alerts-reservoir",
+    "topic_id": "ztf-loop",
+    "auto_confirm": True,
 }
 
 # run indefinitely
@@ -67,6 +66,7 @@ while True:
 ```
 
 Set a startup script to execute the python file in a background thread:
+
 ```bash
 startupscript="#! /bin/bash
 dir=/home/consumer_sim/
@@ -78,6 +78,7 @@ gcloud compute instances add-metadata "$vmname" --metadata=startup-script="$star
 ```
 
 Stop and restart the vm:
+
 ```bash
 gcloud compute instances stop "$vmname"
 gcloud compute instances start "$vmname"

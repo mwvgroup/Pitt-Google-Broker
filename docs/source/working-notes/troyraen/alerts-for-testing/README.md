@@ -63,14 +63,15 @@ There are 50 alert avro files in this directory:
 ```python
 from broker_utils import data_utils, gcp_utils
 
-project_id = 'ardent-cycling-243415'
-dataset = 'ztf_alerts'
-table = 'metadata'
-bucket_id = 'ztf-alert_avros'
-kafka_topic = 'ztf_20210901_programid1'
+project_id = "ardent-cycling-243415"
+dataset = "ztf_alerts"
+table = "metadata"
+bucket_id = "ztf-alert_avros"
+kafka_topic = "ztf_20210901_programid1"
 ```
 
 Find and download alerts that pass all filters
+
 ```python
 query = (
     f"SELECT * "
@@ -84,12 +85,13 @@ df = query_job.to_dataframe()
 d = df.dropna()
 
 fnames_pass_all = d.filename__alert_avros.tolist()
-localdir = '/Users/troyraen/Documents/broker/repotroy/troy/alerts-for-testing'
+localdir = "/Users/troyraen/Documents/broker/repotroy/troy/alerts-for-testing"
 for f in fnames:
     gcp_utils.cs_download_file(localdir, bucket_id, f)
 ```
 
 Find and download alerts that pass no filters/classifiers, but do pass everything else
+
 ```python
 query = (
     f"SELECT * "
@@ -102,12 +104,12 @@ query_job = gcp_utils.query_bigquery(query)
 df = query_job.to_dataframe()
 
 # drop alerts that passed any filters
-d = df.dropna(axis=1, how='all')
+d = df.dropna(axis=1, how="all")
 null_cols = [
-    'publish_time__exgalac_trans',
-    'publish_time__salt2',
-    'publish_time__SuperNNova',
-    'publish_time__exgalac_trans_cf',
+    "publish_time__exgalac_trans",
+    "publish_time__salt2",
+    "publish_time__SuperNNova",
+    "publish_time__exgalac_trans_cf",
 ]
 d = d.loc[d[null_cols].isnull().all(1)]
 

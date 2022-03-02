@@ -1,21 +1,25 @@
 # AllWISE: Cross match with the AllWISE catalog in BigQuery public datasets
 
 Outline:
+
 - [Create resources and deploy to Cloud Run](#create-resources-and-deploy-to-cloud-run)
 - [Work out the cross match](#work-out-the-cross-match)
-    - [Article: Querying the Stars with BigQuery GIS](#article-querying-the-stars-with-bigquery-gis)
-    - [How long does a query take?](#how-long-does-a-query-take)
+  - [Article: Querying the Stars with BigQuery GIS](#article-querying-the-stars-with-bigquery-gis)
+  - [How long does a query take?](#how-long-does-a-query-take)
 
 External links:
+
 - [AllWISE](https://wise2.ipac.caltech.edu/docs/release/allwise/) (web)
-    - [column names and descriptions](https://wise2.ipac.caltech.edu/docs/release/allwise/expsup/sec2_1a.html)
-    - BigQuery table: `bigquery-public-data:wise_all_sky_data_release.all_wise` contains additional columns:
-        - `point` ([GEOGRAPHY](https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types#geography_type)) - useful for cross-matching
-        - `single_date` - used to partition the table
+  - [column names and descriptions](https://wise2.ipac.caltech.edu/docs/release/allwise/expsup/sec2_1a.html)
+  - BigQuery table: `bigquery-public-data:wise_all_sky_data_release.all_wise` contains
+    additional columns:
+    - `point`
+      ([GEOGRAPHY](https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types#geography_type))
+      \- useful for cross-matching
+    - `single_date` - used to partition the table
 - [Querying the Stars with BigQuery GIS](https://cloud.google.com/blog/products/data-analytics/querying-the-stars-with-bigquery-gis)
 - [BigQuery query optimization](https://cloud.google.com/architecture/bigquery-data-warehouse#query_optimization)
 - [Instructions to create resources with pubsub trigger](https://cloud.google.com/run/docs/triggering/pubsub-push#command-line_1)
-
 
 ## Create resources and deploy to Cloud Run
 
@@ -24,8 +28,8 @@ Allow Pub/Sub to create authentication tokens in the project:
 ```bash
 project_number=591409139500
 gcloud projects add-iam-policy-binding ${GOOGLE_CLOUD_PROJECT} \
-     --member=serviceAccount:service-${project_number}@gcp-sa-pubsub.iam.gserviceaccount.com \
-     --role=roles/iam.serviceAccountTokenCreator
+    --member=serviceAccount:service-${project_number}@gcp-sa-pubsub.iam.gserviceaccount.com \
+    --role=roles/iam.serviceAccountTokenCreator
 ```
 
 Create service account and give it permission to invoke cloud run
@@ -35,13 +39,13 @@ SERVICE_ACCOUNT_NAME="cloud-run-invoker"
 DISPLAYED_SERVICE_ACCOUNT_NAME="Cloud Run Invoker Service Account"
 
 gcloud iam service-accounts create "$SERVICE_ACCOUNT_NAME" \
-   --display-name "$DISPLAYED_SERVICE_ACCOUNT_NAME"
+    --display-name "$DISPLAYED_SERVICE_ACCOUNT_NAME"
 
 SERVICE="xmatch-allwise"
 
 gcloud run services add-iam-policy-binding "$SERVICE" \
-   --member=serviceAccount:"${SERVICE_ACCOUNT_NAME}@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com" \
-   --role=roles/run.invoker
+    --member=serviceAccount:"${SERVICE_ACCOUNT_NAME}@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com" \
+    --role=roles/run.invoker
 ```
 
 Create the subscription with the service account attached
@@ -54,9 +58,9 @@ subscription="${topic}-xmatch_allwise"
 ack_deadline=300
 
 gcloud pubsub subscriptions create "$subscription" --topic "$topic" \
-   --push-endpoint="$endpoint" \
-   --push-auth-service-account="${SERVICE_ACCOUNT_NAME}@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com" \
-   --ack-deadline="$ack_deadline"
+    --push-endpoint="$endpoint" \
+    --push-auth-service-account="${SERVICE_ACCOUNT_NAME}@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com" \
+    --ack-deadline="$ack_deadline"
 ```
 
 Create bigquery table
@@ -94,17 +98,18 @@ Create AllWISE topic
 ```python
 from google.cloud import pubsub_v1
 import os
-PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
-survey = 'ztf'
-testid = 'allwise'
+
+PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT")
+survey = "ztf"
+testid = "allwise"
 publisher = pubsub_v1.PublisherClient()
 subscriber = pubsub_v1.SubscriberClient()
 
 # create topic and counter subscription
-topic = f'{survey}-AllWISE'
+topic = f"{survey}-AllWISE"
 topic_path = publisher.topic_path(PROJECT_ID, topic)
 publisher.create_topic(topic_path)
-subscription = f'{topic}-counter'
+subscription = f"{topic}-counter"
 sub_path = subscriber.subscription_path(PROJECT_ID, subscription)
 subscriber.create_subscription(name=sub_path, topic=topic_path)
 ```
@@ -116,69 +121,68 @@ from google.cloud import bigquery
 import data_utils, gcp_utils
 import troy_fncs as tfncs
 
-alert_dict = tfncs.load_alert_file({'drop_cutouts': True})
+alert_dict = tfncs.load_alert_file({"drop_cutouts": True})
 # f = '/Users/troyraen/Documents/broker/troy/troy/alerts-for-testing/ZTF18aazyhkf.1704216964315015009.ztf_20210901_programid1.avro'
 # alert_dict = data_utils.decode_alert(f)
 
 # all_wise_table = 'bigquery-public-data:wise_all_sky_data_release.all_wise'
 all_wise_col_list = [
     # Sexagesimal, equatorial position-based source name in the form: hhmmss.ss+ddmmss.s
-    'designation',
-    'ra',  # J2000 right ascension w.r.t. 2MASS PSC ref frame, non-moving src extraction
-    'dec',  # J2000 declination w.r.t. 2MASS PSC ref frame, non-moving src extraction
-    'sigra',  # One-sigma uncertainty in ra from the non-moving source extraction
-    'sigdec',  # One-sigma uncertainty in dec from the non-moving source extraction
-    'cntr',  # Unique ID number for this object in the AllWISE Catalog/Reject Table
-    'source_id',  # Unique source ID
+    "designation",
+    "ra",  # J2000 right ascension w.r.t. 2MASS PSC ref frame, non-moving src extraction
+    "dec",  # J2000 declination w.r.t. 2MASS PSC ref frame, non-moving src extraction
+    "sigra",  # One-sigma uncertainty in ra from the non-moving source extraction
+    "sigdec",  # One-sigma uncertainty in dec from the non-moving source extraction
+    "cntr",  # Unique ID number for this object in the AllWISE Catalog/Reject Table
+    "source_id",  # Unique source ID
     # W1 magnitude measured with profile-fitting photometry, or the magnitude of the
     # 95% confidence brightness upper limit if the W4 flux measurement has SNR<2
-    'w1mpro',
-    'w1sigmpro',  # W1 profile-fit photometric measurement uncertainty in mag units
-    'w1snr',  # W1 profile-fit measurement signal-to-noise ratio
-    'w1rchi2',  # Reduced χ2 of the W1 profile-fit photometry
+    "w1mpro",
+    "w1sigmpro",  # W1 profile-fit photometric measurement uncertainty in mag units
+    "w1snr",  # W1 profile-fit measurement signal-to-noise ratio
+    "w1rchi2",  # Reduced χ2 of the W1 profile-fit photometry
     # W2 magnitude measured with profile-fitting photometry, or the magnitude of the
     # 95% confidence brightness upper limit if the W4 flux measurement has SNR<2
-    'w2mpro',
-    'w2sigmpro',  # W2 profile-fit photometric measurement uncertainty in mag units
-    'w2snr',  # W2 profile-fit measurement signal-to-noise ratio
-    'w2rchi2',  # Reduced χ2 of the W2 profile-fit photometry
+    "w2mpro",
+    "w2sigmpro",  # W2 profile-fit photometric measurement uncertainty in mag units
+    "w2snr",  # W2 profile-fit measurement signal-to-noise ratio
+    "w2rchi2",  # Reduced χ2 of the W2 profile-fit photometry
     # W3 magnitude measured with profile-fitting photometry, or the magnitude of the
     # 95% confidence brightness upper limit if the W4 flux measurement has SNR<2
-    'w3mpro',
-    'w3sigmpro',  # W3 profile-fit photometric measurement uncertainty in mag units
-    'w3snr',  # W3 profile-fit measurement signal-to-noise ratio
-    'w3rchi2',  # Reduced χ2 of the W3 profile-fit photometry
+    "w3mpro",
+    "w3sigmpro",  # W3 profile-fit photometric measurement uncertainty in mag units
+    "w3snr",  # W3 profile-fit measurement signal-to-noise ratio
+    "w3rchi2",  # Reduced χ2 of the W3 profile-fit photometry
     # W4 magnitude measured with profile-fitting photometry, or the magnitude of the
     # 95% confidence brightness upper limit if the W4 flux measurement has SNR<2
-    'w4mpro',
-    'w4sigmpro',  # W4 profile-fit photometric measurement uncertainty in mag units
-    'w4snr',  # W4 profile-fit measurement signal-to-noise ratio
-    'w4rchi2',  # Reduced χ2 of the W4 profile-fit photometry
-    'nb',  # Number of PSF components used simultaneously in profile-fitting this source
-    'na',  # Active deblending flag.
-    'pmra',  # The apparent (not proper!) motion in right ascension estimated for source
-    'sigpmra',  # Uncertainty in the RA motion estimation.
-    'pmdec',  # The apparent (not proper!) motion in declination estimated for source
-    'sigpmdec',  # Uncertainty in the Dec motion estimated for this source
-    'ext_flg',  # Extended source flag
-    'var_flg',  # Variability flag
+    "w4mpro",
+    "w4sigmpro",  # W4 profile-fit photometric measurement uncertainty in mag units
+    "w4snr",  # W4 profile-fit measurement signal-to-noise ratio
+    "w4rchi2",  # Reduced χ2 of the W4 profile-fit photometry
+    "nb",  # Number of PSF components used simultaneously in profile-fitting this source
+    "na",  # Active deblending flag.
+    "pmra",  # The apparent (not proper!) motion in right ascension estimated for source
+    "sigpmra",  # Uncertainty in the RA motion estimation.
+    "pmdec",  # The apparent (not proper!) motion in declination estimated for source
+    "sigpmdec",  # Uncertainty in the Dec motion estimated for this source
+    "ext_flg",  # Extended source flag
+    "var_flg",  # Variability flag
     # Unique ID of closest source in 2MASS Point Source Catalog (PSC)
     # that falls within 3" of the non-motion fit position
-    'tmass_key',
-    'r_2mass',  # Distance between WISE source and associated 2MASS PSC source
-    'n_2mass',  # num 2MASS PSC entries within a 3" radius of the WISE source position
-    'j_m_2mass',  # 2MASS J-band magnitude or magnitude upper limit
-    'j_msig_2mass',  # 2MASS J-band corrected photometric uncertainty
-    'h_m_2mass',  # 2MASS H-band magnitude or magnitude upper limit
-    'h_msig_2mass',  # 2MASS H-band corrected photometric uncertainty
-    'k_m_2mass',  # 2MASS K_s-band magnitude or magnitude upper limit
-    'k_msig_2mass',  # 2MASS K_s-band corrected photometric uncertainty
-
+    "tmass_key",
+    "r_2mass",  # Distance between WISE source and associated 2MASS PSC source
+    "n_2mass",  # num 2MASS PSC entries within a 3" radius of the WISE source position
+    "j_m_2mass",  # 2MASS J-band magnitude or magnitude upper limit
+    "j_msig_2mass",  # 2MASS J-band corrected photometric uncertainty
+    "h_m_2mass",  # 2MASS H-band magnitude or magnitude upper limit
+    "h_msig_2mass",  # 2MASS H-band corrected photometric uncertainty
+    "k_m_2mass",  # 2MASS K_s-band magnitude or magnitude upper limit
+    "k_msig_2mass",  # 2MASS K_s-band corrected photometric uncertainty
 ]
-all_wise_cols = ','.join(all_wise_col_list)
+all_wise_cols = ",".join(all_wise_col_list)
 
-ra = alert_dict['candidate']['ra']
-dec = alert_dict['candidate']['dec']
+ra = alert_dict["candidate"]["ra"]
+dec = alert_dict["candidate"]["dec"]
 # ra, dec = 201.5, -2.6
 d_sep = 60  # units?
 
@@ -218,8 +222,7 @@ query = """
 
 query_job = gcp_utils.query_bigquery(query, job_config=job_config)
 df = query_job.to_dataframe()
-aw_dict = df.to_dict(orient='records')
-
+aw_dict = df.to_dict(orient="records")
 ```
 
 ### Article: Querying the Stars with BigQuery GIS
@@ -245,19 +248,17 @@ WHERE
 
 query_job = gcp_utils.query_bigquery(query)
 df = query_job.to_dataframe()
-
 ```
 
-ArcSecondDistance(p1 GEOGRAPHY, p2 GEOGRAPHY, d FLOAT64)
-    AS (ST_DISTANCE(p1, p2) < d * 30.8874796235);
+ArcSecondDistance(p1 GEOGRAPHY, p2 GEOGRAPHY, d FLOAT64) AS (ST_DISTANCE(p1, p2) \< d \*
+30.8874796235);
 
 ArcSecondDistance(point, ST_GEOGPOINT(201.5, -2.6), 60)
 
-
 ### How long does a query take?
 
-Trying to see whether the AllWISE table indexes by some ID.
-There are (at least) 3 ID columns
+Trying to see whether the AllWISE table indexes by some ID. There are (at least) 3 ID
+columns
 
 ```python
 import os
@@ -266,15 +267,15 @@ from broker_utils import gcp_utils
 
 # map allwise/xmatch table column names
 coldict = {
-    'designation': 'allwise0_designation',
-    'cntr': 'allwise0_cntr',
-    'source_id': 'allwise0_source_id',
+    "designation": "allwise0_designation",
+    "cntr": "allwise0_cntr",
+    "source_id": "allwise0_source_id",
 }
 
 # get some AllWISE IDs from our xmatch table
-project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
-dataset = 'ztf_alerts'
-table = 'xmatch'
+project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
+dataset = "ztf_alerts"
+table = "xmatch"
 query = f"""
     SELECT {','.join(coldict.values())}
     FROM `{project_id}.{dataset}.{table}`
@@ -284,12 +285,12 @@ query = f"""
 df = gcp_utils.query_bigquery(query).to_dataframe()
 
 # use the IDs to query AllWISE table
-project_id = 'bigquery-public-data'
-dataset = 'wise_all_sky_data_release'
-table = 'all_wise'
+project_id = "bigquery-public-data"
+dataset = "wise_all_sky_data_release"
+table = "all_wise"
 resultdict = {}
 for awcol, xmcol in coldict.items():
-    if awcol == 'cntr':
+    if awcol == "cntr":
         query = f"""
             SELECT {awcol}
             FROM `{project_id}.{dataset}.{table}`
@@ -300,16 +301,18 @@ for awcol, xmcol in coldict.items():
             SELECT {awcol}
             FROM `{project_id}.{dataset}.{table}`
             WHERE {awcol}='{df.loc[0,xmcol]}'
-        """        
+        """
     start = timeit.default_timer()
-    resultdict[f'{awcol} (all cols)'] = query_job = gcp_utils.query_bigquery(query).to_dataframe()
+    resultdict[f"{awcol} (all cols)"] = query_job = gcp_utils.query_bigquery(
+        query
+    ).to_dataframe()
     stop = timeit.default_timer()
-    resultdict[f'{awcol} (all cols) time'] = stop - start
-    print('Time: ', stop - start)
+    resultdict[f"{awcol} (all cols) time"] = stop - start
+    print("Time: ", stop - start)
 
 # now add a filter on the spt_ind column by which the table is clustered
 for awcol, xmcol in coldict.items():
-    if awcol == 'cntr':
+    if awcol == "cntr":
         query = f"""
             SELECT {awcol}
             FROM `{project_id}.{dataset}.{table}`
@@ -320,22 +323,24 @@ for awcol, xmcol in coldict.items():
             SELECT {awcol}
             FROM `{project_id}.{dataset}.{table}`
             WHERE spt_ind=200102013 AND {awcol}='{df.loc[0,xmcol]}'
-        """        
+        """
     start = timeit.default_timer()
-    resultdict[f'{awcol} (spt_ind)'] = query_job = gcp_utils.query_bigquery(query).to_dataframe()
+    resultdict[f"{awcol} (spt_ind)"] = query_job = gcp_utils.query_bigquery(
+        query
+    ).to_dataframe()
     stop = timeit.default_timer()
-    resultdict[f'{awcol} (spt_ind) time'] = stop - start
-    print('Time: ', stop - start)
+    resultdict[f"{awcol} (spt_ind) time"] = stop - start
+    print("Time: ", stop - start)
 ```
 
 ## Copy AllWISE table and add HEALPix column
 
 - [x] copy table
 - [ ] add HEALPix
-    - query ra, dec, id -> pandas dataframe
-    - calc and add HEALPix
-    - load dataframe -> new bigquery table
-    - update the allwise table using a join
+  - query ra, dec, id -> pandas dataframe
+  - calc and add HEALPix
+  - load dataframe -> new bigquery table
+  - update the allwise table using a join
 - [ ] partition table by HEALPix
 - [ ] cluster table by HEALPix
 - [ ] update run
@@ -377,10 +382,10 @@ bq mk --transfer_config \
 # copy using a query and create new table partitioned by htm 7 (spt_ind)
 table="all_wise_htm"
 bq query \
-  --use_legacy_sql=false \
-  --destination_table "${GOOGLE_CLOUD_PROJECT}:${new_dataset}.${table}" \
-  --range_partitioning spt_ind,START,END,INTERVAL \
-  'QUERY_STATEMENT'
+    --use_legacy_sql=false \
+    --destination_table "${GOOGLE_CLOUD_PROJECT}:${new_dataset}.${table}" \
+    --range_partitioning spt_ind,START,END,INTERVAL \
+    'QUERY_STATEMENT'
 ```
 
 ### Add HEALPix
@@ -401,10 +406,15 @@ project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
 dataset = "wise_all_sky_data_release"
 table = "all_wise"
 
+
 def radec_to_skycoord(row):
-    return SkyCoord(row["RAdeg"], row["DEdeg"], frame='icrs', unit='deg')
+    return SkyCoord(row["RAdeg"], row["DEdeg"], frame="icrs", unit="deg")
+
+
 def skycoord_to_healpix(row):
-    return hp.skycoord_to_healpix(row['SkyCoord'])
+    return hp.skycoord_to_healpix(row["SkyCoord"])
+
+
 def radec_to_healpix(row):
     sc = {"SkyCoord": radec_to_skycoord(row)}
     healpix = skycoord_to_healpix(sc)
@@ -413,18 +423,15 @@ def radec_to_healpix(row):
 
 ```python
 # query the data
-query = (
-    "SELECT designation, ra, dec "
-    f"FROM {project_id}.{dataset}.{table}"
-)
+query = "SELECT designation, ra, dec " f"FROM {project_id}.{dataset}.{table}"
 awdf = gcp_utils.query_bigquery(query).to_dataframe()
 
 # add the HEALPix
 n = 16  # gives pixel area ~10.4 arcsec^2
 nside = 2**n  # must be a power of 2. the power of 2 = HTM depth
 frame = ICRS()
-order = 'nested'  # efficient for nearest neighbor searches
+order = "nested"  # efficient for nearest neighbor searches
 hp = HEALPix(nside=nside, order=order, frame=frame)
 # hp.pixel_area.to(u.arcsec*u.arcsec)
-awdf[f'HEALPix_n{n}'] = awdf.apply(radec_to_healpix, axis=1)
+awdf[f"HEALPix_n{n}"] = awdf.apply(radec_to_healpix, axis=1)
 ```

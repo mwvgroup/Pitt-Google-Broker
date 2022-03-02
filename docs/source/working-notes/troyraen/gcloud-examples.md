@@ -2,7 +2,6 @@
 
 - [`gcloud` reference](https://cloud.google.com/sdk/gcloud/reference)
 
-
 ## Cloud Run
 
 - [Instructions to create resources with pubsub trigger](https://cloud.google.com/run/docs/triggering/pubsub-push#command-line)
@@ -12,9 +11,9 @@ Initialize variables
 ```bash
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT
 PROJECT_NUMBER=$(gcloud projects list \
-    --filter="$(gcloud config get-value project)" \
-    --format="value(PROJECT_NUMBER)" \
-)
+        --filter="$(gcloud config get-value project)" \
+        --format="value(PROJECT_NUMBER)" \
+    )
 
 # broker instance keywords
 SURVEY="ztf"
@@ -77,12 +76,12 @@ Allow Pub/Sub to create authentication tokens in the project:
 
 ```bash
 gcloud projects add-iam-policy-binding ${PROJECT_ID} \
-     --member=serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com \
-     --role=roles/iam.serviceAccountTokenCreator
+    --member=serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com \
+    --role=roles/iam.serviceAccountTokenCreator
 ```
 
-Create a service account and give it permission to invoke cloud run.
-Alternately, you can re-use an existing service account, just add the policy binding.
+Create a service account and give it permission to invoke cloud run. Alternately, you
+can re-use an existing service account, just add the policy binding.
 
 ```bash
 gcloud iam service-accounts create "$SERVICE_ACCOUNT_NAME" \
@@ -103,7 +102,6 @@ gcloud pubsub subscriptions create "$SUBSCRIPTION" \
     --push-auth-service-account="$SERVICE_ACCOUNT_ADDRESS" \
     --ack-deadline="$ACK_DEADLINE"
 ```
-
 
 ## Pub/Sub
 

@@ -2,7 +2,6 @@
 
 Skip to [Test the end result](#test-the-end-result)
 
-
 ## Test pieces of the cloud fnc
 
 ```bash
@@ -18,7 +17,7 @@ from broker_utils import data_utils, gcp_utils, schema_maps
 import main
 
 schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
-kwargs = {'drop_cutouts': True, 'schema_map': schema_map}
+kwargs = {"drop_cutouts": True, "schema_map": schema_map}
 alert_dict = troy.load_alert_file(kwargs)
 
 gcp_utils.insert_rows_bigquery(table_id, [alert_dict])
@@ -27,6 +26,7 @@ gcp_utils.insert_rows_bigquery(table_id, [alert_dict])
 ## setup/run/stop/delete the testing instance
 
 Create/delete a broker testing instance
+
 ```bash
 # get the code
 git clone https://github.com/mwvgroup/Pitt-Google-Broker
@@ -45,7 +45,6 @@ nconductVM="${survey}-night-conductor-${testid}"
 gcloud compute instances set-machine-type $nconductVM --machine-type g1-small
 ```
 
-
 <!-- Start the broker
 ```bash
 topic="${survey}-cue_night_conductor-${testid}"
@@ -56,14 +55,15 @@ gcloud pubsub topics publish "$topic" --message="$cue" --attribute="$attr"
 ``` -->
 
 Push some alerts through
+
 ```python
 from broker_utils import consumer_sim
 
-testid = 'storebq'
-survey = 'ztf'
+testid = "storebq"
+survey = "ztf"
 instance = (survey, testid)
 
-alert_rate = (100, 'once')
+alert_rate = (100, "once")
 consumer_sim.publish_stream(alert_rate, instance)
 
 # alert_rate = 'ztf-active-avg'
@@ -71,12 +71,15 @@ consumer_sim.publish_stream(alert_rate, instance)
 # consumer_sim.publish_stream(alert_rate, instance, runtime)
 ```
 
-Stop the broker, which triggers night conductor to shut everything down and process the streams.
+Stop the broker, which triggers night conductor to shut everything down and process the
+streams.
+
 ```bash
 topic="${survey}-cue_night_conductor-${testid}"
 cue=END
 gcloud pubsub topics publish "$topic" --message="$cue"
 ```
+
 <!--
 
 ## Test the end result
