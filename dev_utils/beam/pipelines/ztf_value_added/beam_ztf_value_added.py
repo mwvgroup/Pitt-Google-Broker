@@ -43,6 +43,7 @@ import beam_helpers.salt2_utils as s2
 
 
 # disable some linting issues that will not be fixed in this file
+# pylint: skip-file
 # pylint: disable=line-too-long
 
 

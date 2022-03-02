@@ -4,6 +4,8 @@
 """``figures`` contains functions for plotting alert and history data.
 """
 
+# pylint: skip-file
+
 import gzip
 import io
 from typing import Optional

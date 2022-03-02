@@ -6,6 +6,8 @@ Pitt-Google Broker's data and services.
 """
 
 
+# pylint: skip-file
+
 from collections import OrderedDict
 
 from astropy.table import Table

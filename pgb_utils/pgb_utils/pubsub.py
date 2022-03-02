@@ -3,6 +3,8 @@
 
 """The `pubsub` module facilitates access to Pitt-Google Pub/Sub streams."""
 
+# pylint: skip-file
+
 from io import BytesIO
 import json
 import os

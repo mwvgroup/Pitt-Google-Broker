@@ -15,6 +15,7 @@ from typing import List, Tuple, Optional, Union, Generator
 pgb_project_id = "ardent-cycling-243415"
 
 # disable some linting issues that will not be fixed in this file
+# pylint: skip-file
 # redefined-builtin format, object
 # pylint: disable=redefined-builtin
 
