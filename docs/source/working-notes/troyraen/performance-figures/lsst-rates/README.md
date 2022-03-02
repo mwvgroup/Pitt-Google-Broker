@@ -1,12 +1,17 @@
-# Pipeline Performance at approx. LSST rates - Sept 23, 2021
+# Pipeline Performance at approx. LSST rates - Sept 23, 2021<a name="pipeline-performance-at-approx-lsst-rates---sept-23-2021"></a>
 
-- [Overview](#overview)
-- [Incoming alert info](#incoming-alert-info)
-- [Component processing times](#component-processing-times)
-- [Cloud Function execution](#cloud-function-execution)
-- [Billing](#billing)
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
 
-## Overview
+- [Pipeline Performance at approx. LSST rates - Sept 23, 2021](#pipeline-performance-at-approx-lsst-rates---sept-23-2021)
+  - [Overview](#overview)
+  - [Incoming alert info](#incoming-alert-info)
+  - [Component processing times](#component-processing-times)
+  - [Cloud Function execution](#cloud-function-execution)
+  - [Billing](#billing)
+
+<!-- mdformat-toc end -->
+
+## Overview<a name="overview"></a>
 
 On Sept 23, incoming alert rates were very high for the first ~10 minutes, close to
 expected LSST-scale. Here I (Troy) document some aspects of how the pipeline performed.
@@ -40,7 +45,7 @@ Takeaways:
 - The combination of many simultaneous Cloud Function instances and their large
   execution times results in high costs (>6x normal ZTF).
 
-## Incoming alert info
+## Incoming alert info<a name="incoming-alert-info"></a>
 
 - `kafka_timestamp` gets applied at IPAC.
 - There is no timestamp applied at ZADS (to my knowledge). The best info about ZADS
@@ -61,7 +66,7 @@ ZADS dashboard during the dump and shortly after.
 For reference. ZADS dashboard at the end of the dump (starting at 01:10) for the next
 few hours.
 
-## Component processing times
+## Component processing times<a name="component-processing-times"></a>
 
 __Takeaways:__
 
@@ -155,7 +160,7 @@ def plot_proct():
         plt.close(fig)
 ```
 
-## Cloud Function execution
+## Cloud Function execution<a name="cloud-function-execution"></a>
 
 Takeaways:
 
@@ -191,7 +196,7 @@ __Figures__
 
 *SuperNNova*
 
-## Billing
+## Billing<a name="billing"></a>
 
 Takeaways:
 

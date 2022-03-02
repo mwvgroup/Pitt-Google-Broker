@@ -1,25 +1,32 @@
-# Train a SuperNNova Model
+# Train a SuperNNova Model<a name="train-a-supernnova-model"></a>
+
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
+
+- [Train a SuperNNova Model](#train-a-supernnova-model)
+  - [Intro](#intro)
+  - [setup](#setup)
+  - [train and validate a model using the test set](#train-and-validate-a-model-using-the-test-set)
+
+<!-- mdformat-toc end -->
+
+## Intro<a name="intro"></a>
 
 Links
 
 - [github.com/supernnova/SuperNNova](https://github.com/supernnova/SuperNNova)
-
 - [readthedocs](https://supernnova.readthedocs.io/en/latest/)
-
 - [arXiv paper](https://arxiv.org/pdf/1901.06384.pdf)
 
+Notes
+
 - ssh into `troy`
-
 - create env
-
 - download data
-
 - train models
-
   - random forest from salt2 fits
   - bayesian RNN
 
-## setup
+## setup<a name="setup"></a>
 
 folowing the two quickstarts in readthedocs:
 
@@ -42,7 +49,7 @@ pip install supernnova
 ipython
 ```
 
-## train and validate a model using the test set
+## train and validate a model using the test set<a name="train-and-validate-a-model-using-the-test-set"></a>
 
 ```bash
 gcloud compute instances start troy

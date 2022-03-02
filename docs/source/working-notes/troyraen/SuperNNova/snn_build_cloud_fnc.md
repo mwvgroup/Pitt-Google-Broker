@@ -1,6 +1,16 @@
-# SuperNNova - build, deploy, test the Cloud Function
+# SuperNNova - build, deploy, test the Cloud Function<a name="supernnova---build-deploy-test-the-cloud-function"></a>
 
-## Test the Cloud Function pieces locally
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
+
+- [SuperNNova - build, deploy, test the Cloud Function](#supernnova---build-deploy-test-the-cloud-function)
+  - [Test the Cloud Function pieces locally](#test-the-cloud-function-pieces-locally)
+  - [Local, full test](#local-full-test)
+  - [Deploy Cloud Function](#deploy-cloud-function)
+  - [Test changes to broker utils](#test-changes-to-broker-utils)
+
+<!-- mdformat-toc end -->
+
+## Test the Cloud Function pieces locally<a name="test-the-cloud-function-pieces-locally"></a>
 
 ```bash
 export GCP_PROJECT=$GOOGLE_CLOUD_PROJECT
@@ -26,7 +36,7 @@ snn_msg = gcp_utils.pull_pubsub("test")[0]
 gcp_utils.insert_rows_bigquery(bq_table, [snn_dict])
 ```
 
-## Local, full test
+## Local, full test<a name="local-full-test"></a>
 
 ```bash
 conda create -n snn python=3.7
@@ -82,7 +92,7 @@ for r, row in enumerate(snn_queryjob):
 
 This works.
 
-## Deploy Cloud Function
+## Deploy Cloud Function<a name="deploy-cloud-function"></a>
 
 ```bash
 survey="ztf"
@@ -143,7 +153,7 @@ libraries. See
 
 Fixed by providing a direct URL in requirements.txt.
 
-## Test changes to broker utils
+## Test changes to broker utils<a name="test-changes-to-broker-utils"></a>
 
 ```bash
 cd /Users/troyraen/Documents/broker/snn/broker/broker_utils

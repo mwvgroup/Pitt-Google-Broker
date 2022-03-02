@@ -1,6 +1,16 @@
-# Testing Pub/Sub tutorial from external account.
+# Testing Pub/Sub tutorial from external account.<a name="testing-pubsub-tutorial-from-external-account"></a>
 
-## Summary:
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
+
+- [Testing Pub/Sub tutorial from external account.](#testing-pubsub-tutorial-from-external-account)
+  - [Summary:](#summary)
+  - [Initial thoughts:](#initial-thoughts)
+  - [Outline:](#outline)
+  - [Code to do it:](#code-to-do-it)
+
+<!-- mdformat-toc end -->
+
+## Summary:<a name="summary"></a>
 
 Date of tests: 8/6/2021 (note there were no live ZTF streams Aug 5-7)
 
@@ -21,7 +31,7 @@ There is no way for this account to be charged. Billing is disabled and I have n
 created a billing account. I can't even see a billing report because I don't have a
 billing account.
 
-## Initial thoughts:
+## Initial thoughts:<a name="initial-thoughts"></a>
 
 - Testing pricing, free tier, egress, msg delivery
 - What happens if you don't enable billing and reach the Free Tier limit?
@@ -30,7 +40,7 @@ billing account.
   - Note on [Pub/Sub pricing page](https://cloud.google.com/pubsub/pricing#pubsub) it
     says: "Storage of unacknowledged messages does not result in fees."
 
-## Outline:
+## Outline:<a name="outline"></a>
 
 - streamed ~300,000 messages to the subscription
   projects/my-pgb-project-3/subscriptions/test
@@ -41,7 +51,7 @@ billing account.
 - pulled the messages from the test subscription and wrote a sampling of message sizes
   to file
 
-## Code to do it:
+## Code to do it:<a name="code-to-do-it"></a>
 
 Use the stream-looper VM to publish the messages.
 

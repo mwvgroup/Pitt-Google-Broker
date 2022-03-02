@@ -1,8 +1,14 @@
-# Cloud Function to load alerts to BigQuery tables
+# Cloud Function to load alerts to BigQuery tables<a name="cloud-function-to-load-alerts-to-bigquery-tables"></a>
 
-Skip to [Test the end result](#test-the-end-result)
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
 
-## Test pieces of the cloud fnc
+- [Cloud Function to load alerts to BigQuery tables](#cloud-function-to-load-alerts-to-bigquery-tables)
+  - [Test pieces of the cloud fnc](#test-pieces-of-the-cloud-fnc)
+  - [setup/run/stop/delete the testing instance](#setuprunstopdelete-the-testing-instance)
+
+<!-- mdformat-toc end -->
+
+## Test pieces of the cloud fnc<a name="test-pieces-of-the-cloud-fnc"></a>
 
 ```bash
 export GCP_PROJECT=$GOOGLE_CLOUD_PROJECT
@@ -23,7 +29,7 @@ alert_dict = troy.load_alert_file(kwargs)
 gcp_utils.insert_rows_bigquery(table_id, [alert_dict])
 ```
 
-## setup/run/stop/delete the testing instance
+## setup/run/stop/delete the testing instance<a name="setuprunstopdelete-the-testing-instance"></a>
 
 Create/delete a broker testing instance
 

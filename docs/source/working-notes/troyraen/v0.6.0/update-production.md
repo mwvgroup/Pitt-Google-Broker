@@ -1,4 +1,13 @@
-# Update the ZTF production broker to current
+# Update the ZTF production broker to current<a name="update-the-ztf-production-broker-to-current"></a>
+
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
+
+- [Update the ZTF production broker to current](#update-the-ztf-production-broker-to-current)
+  - [run setup_broker.sh](#run-setup_brokersh)
+  - [push some alerts through](#push-some-alerts-through)
+  - [pull the alerts and make sure they are as expected](#pull-the-alerts-and-make-sure-they-are-as-expected)
+
+<!-- mdformat-toc end -->
 
 Functionality of current production broker should be the same as current repo code, but
 some of the resource names (e.g., pubsub) have not yet been updated to the new syntax
@@ -22,7 +31,7 @@ rules. Doing that now.
     each table.
   - [x] cloud function ps_to_gcs will be updated with a new name and to use broker_utils
 
-## run setup_broker.sh
+## run setup_broker.sh<a name="run-setup_brokersh"></a>
 
 Run the setup script:
 
@@ -54,7 +63,7 @@ broker_bucket="${PROJECT_ID}-${survey}-broker_files"
 ./create_vms.sh "$broker_bucket" "$testid" "$teardown" "$survey" 2>&1 | tee $fout
 ```
 
-## push some alerts through
+## push some alerts through<a name="push-some-alerts-through"></a>
 
 Start the broker without the consumer
 
@@ -89,7 +98,7 @@ cue=END
 gcloud pubsub topics publish "$topic" --message="$cue"
 ```
 
-## pull the alerts and make sure they are as expected
+## pull the alerts and make sure they are as expected<a name="pull-the-alerts-and-make-sure-they-are-as-expected"></a>
 
 ```python
 from google.cloud import storage

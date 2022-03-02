@@ -1,4 +1,20 @@
-# AllWISE: Cross match with the AllWISE catalog in BigQuery public datasets
+# AllWISE: Cross match with the AllWISE catalog in BigQuery public datasets<a name="allwise-cross-match-with-the-allwise-catalog-in-bigquery-public-datasets"></a>
+
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
+
+- [AllWISE: Cross match with the AllWISE catalog in BigQuery public datasets](#allwise-cross-match-with-the-allwise-catalog-in-bigquery-public-datasets)
+  - [Intro](#intro)
+  - [Create resources and deploy to Cloud Run](#create-resources-and-deploy-to-cloud-run)
+  - [Work out the cross match](#work-out-the-cross-match)
+    - [Article: Querying the Stars with BigQuery GIS](#article-querying-the-stars-with-bigquery-gis)
+    - [How long does a query take?](#how-long-does-a-query-take)
+  - [Copy AllWISE table and add HEALPix column](#copy-allwise-table-and-add-healpix-column)
+    - [Copy table](#copy-table)
+    - [Add HEALPix](#add-healpix)
+
+<!-- mdformat-toc end -->
+
+## Intro<a name="intro"></a>
 
 Outline:
 
@@ -21,7 +37,7 @@ External links:
 - [BigQuery query optimization](https://cloud.google.com/architecture/bigquery-data-warehouse#query_optimization)
 - [Instructions to create resources with pubsub trigger](https://cloud.google.com/run/docs/triggering/pubsub-push#command-line_1)
 
-## Create resources and deploy to Cloud Run
+## Create resources and deploy to Cloud Run<a name="create-resources-and-deploy-to-cloud-run"></a>
 
 Allow Pub/Sub to create authentication tokens in the project:
 
@@ -114,7 +130,7 @@ sub_path = subscriber.subscription_path(PROJECT_ID, subscription)
 subscriber.create_subscription(name=sub_path, topic=topic_path)
 ```
 
-## Work out the cross match
+## Work out the cross match<a name="work-out-the-cross-match"></a>
 
 ```python
 from google.cloud import bigquery
@@ -225,7 +241,7 @@ df = query_job.to_dataframe()
 aw_dict = df.to_dict(orient="records")
 ```
 
-### Article: Querying the Stars with BigQuery GIS
+### Article: Querying the Stars with BigQuery GIS<a name="article-querying-the-stars-with-bigquery-gis"></a>
 
 https://cloud.google.com/blog/products/data-analytics/querying-the-stars-with-bigquery-gis
 
@@ -255,7 +271,7 @@ ArcSecondDistance(p1 GEOGRAPHY, p2 GEOGRAPHY, d FLOAT64) AS (ST_DISTANCE(p1, p2)
 
 ArcSecondDistance(point, ST_GEOGPOINT(201.5, -2.6), 60)
 
-### How long does a query take?
+### How long does a query take?<a name="how-long-does-a-query-take"></a>
 
 Trying to see whether the AllWISE table indexes by some ID. There are (at least) 3 ID
 columns
@@ -333,7 +349,7 @@ for awcol, xmcol in coldict.items():
     print("Time: ", stop - start)
 ```
 
-## Copy AllWISE table and add HEALPix column
+## Copy AllWISE table and add HEALPix column<a name="copy-allwise-table-and-add-healpix-column"></a>
 
 - [x] copy table
 - [ ] add HEALPix
@@ -356,7 +372,7 @@ export GOOGLE_APPLICATION_CREDENTIALS="<your/path/to/servicecredentialsauthkey.j
 gcloud config set project "$project_id"
 ```
 
-### Copy table
+### Copy table<a name="copy-table"></a>
 
 Uses the BigQuery transfer service.
 
@@ -388,7 +404,7 @@ bq query \
     'QUERY_STATEMENT'
 ```
 
-### Add HEALPix
+### Add HEALPix<a name="add-healpix"></a>
 
 Setup
 

@@ -1,26 +1,29 @@
-# v0.3.0
+# v0.3.0<a name="v030"></a>
+
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
+
+- [v0.3.0](#v030)
+- [Links](#links)
+  - [Dec 22-24, 2020](#dec-22-24-2020)
+  - [Dec 27, 2020](#dec-27-2020)
+  - [Dec 28, 2020](#dec-28-2020)
+  - [Jan 01, 2021](#jan-01-2021)
+  - [Code Snippets](#code-snippets)
+
+<!-- mdformat-toc end -->
+
+# Links<a name="links"></a>
 
 - [`ZTF Stream` Dashboard](https://console.cloud.google.com/monitoring/dashboards/builder/090d10a0-f661-4768-831f-30c67dab50bf?project=ardent-cycling-243415&dashboardBuilderState=%257B%2522editModeEnabled%2522:false%257D&timeDomain=1w)
-
 - [Google Cloud metrics](https://cloud.google.com/monitoring/api/metrics_gcp)
-
 - [Metrics, time series, and resources](https://cloud.google.com/monitoring/api/v3/metrics)
-
 - [Creating custom metrics](https://cloud.google.com/monitoring/custom-metrics/creating-metrics#monitoring_write_timeseries-python)
-
-## ToC
-
-- [Dec 22-24, 2020](#dec24)
-- [Dec 27, 2020](#dec27)
-- [Dec 28, 2020](#dec28)
-- [Dec 30, 2020](#dec30)
-- [Code Snippets](#code)
 
 ______________________________________________________________________
 
 <a name="dec24"></a>
 
-## Dec 22-24, 2020
+## Dec 22-24, 2020<a name="dec-22-24-2020"></a>
 
 <!-- fs -->
 
@@ -93,7 +96,7 @@ Messages successfully published to PS topic `ztf_alert_data` (blue); failed mess
 
 <a name="dec27"></a>
 
-## Dec 27, 2020
+## Dec 27, 2020<a name="dec-27-2020"></a>
 
 <!-- fs -->
 
@@ -141,7 +144,7 @@ ZTF dashboard for Dec 27, 2020.
 
 <a name="dec28"></a>
 
-## Dec 28, 2020
+## Dec 28, 2020<a name="dec-28-2020"></a>
 
 <!-- fs -->
 
@@ -178,7 +181,7 @@ Max system lag is about 10 min.
 
 <a name="jan1"></a>
 
-## Jan 01, 2021
+## Jan 01, 2021<a name="jan-01-2021"></a>
 
 <!-- fs -->
 
@@ -216,7 +219,7 @@ ZTF dashboard for Jan 01, 2021.
 
 <a name="code"></a>
 
-## Code Snippets
+## Code Snippets<a name="code-snippets"></a>
 
 <!-- fs -->
 

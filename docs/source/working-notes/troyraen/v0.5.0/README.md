@@ -1,12 +1,20 @@
-# v0.5.0
+# v0.5.0<a name="v050"></a>
 
-- [Results Summary](#results-summary)
-- [Documentation of Changes](#documentation-of-changes)
-- [Test the Changes](#test-the-changes)
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
+
+- [v0.5.0](#v050)
+  - [Results Summary](#results-summary)
+  - [Documentation of Changes](#documentation-of-changes)
+  - [Test the Changes](#test-the-changes)
+    - [Create/delete a broker instance](#createdelete-a-broker-instance)
+    - [Test the broker](#test-the-broker)
+      - [Test the auto-scheduler](#test-the-auto-scheduler)
+
+<!-- mdformat-toc end -->
 
 ______________________________________________________________________
 
-## Results Summary
+## Results Summary<a name="results-summary"></a>
 
 Auto-scheduler and cue-response checker appear to be working smoothly.
 
@@ -14,7 +22,7 @@ Documentation is back up on ReadTheDocs.
 
 ______________________________________________________________________
 
-## Documentation of Changes
+## Documentation of Changes<a name="documentation-of-changes"></a>
 
 - PR [#62](https://github.com/mwvgroup/Pitt-Google-Broker/pull/62)
 - Auto-scheduler: [schedule-night-conductor.md](schedule-night-conductor.md)
@@ -30,14 +38,14 @@ Started but didn't finish; TODO in a future version (this is v0.7.0):
 
 ______________________________________________________________________
 
-## Test the Changes
+## Test the Changes<a name="test-the-changes"></a>
 
 - [Create/delete a broker instance](#createdelete-a-broker-instance)
 - [Test the broker](#test-the-broker)
 
 <!-- fs -->
 
-### Create/delete a broker instance
+### Create/delete a broker instance<a name="createdelete-a-broker-instance"></a>
 
 Create instance
 
@@ -76,9 +84,9 @@ sudo mkdir -p $consumerDir
 sudo mv ~/pitt-reader.user.keytab ${consumerDir}/.
 ```
 
-### Test the broker
+### Test the broker<a name="test-the-broker"></a>
 
-#### Test the auto-scheduler
+#### Test the auto-scheduler<a name="test-the-auto-scheduler"></a>
 
 Schedule the broker to ingest a live topic for a few minutes and then shutdown.
 

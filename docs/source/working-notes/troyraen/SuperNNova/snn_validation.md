@@ -1,4 +1,14 @@
-# SuperNNova validation: Classify known Ia's
+# SuperNNova validation: Classify known Ia's<a name="supernnova-validation-classify-known-ias"></a>
+
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
+
+- [SuperNNova validation: Classify known Ia's](#supernnova-validation-classify-known-ias)
+  - [Intro](#intro)
+    - [Classify known Ia - Original Test](#classify-known-ia---original-test)
+
+<!-- mdformat-toc end -->
+
+## Intro<a name="intro"></a>
 
 1. Download csv from TNS website. ([Search](https://www.wis-tns.org/search) for recent
    Ia's)
@@ -48,7 +58,7 @@ plt.show(block=False)
 
 <img src="snn_results_20211017.png" alt="snn_results_20211017" width="600"/>
 
-### Classify known Ia - Original Test
+### Classify known Ia - Original Test<a name="classify-known-ia---original-test"></a>
 
 The docs indicate that "usually" class0 indicates a Ia and class1 indicates non-Ia, but
 this will depend on how the model was trained.

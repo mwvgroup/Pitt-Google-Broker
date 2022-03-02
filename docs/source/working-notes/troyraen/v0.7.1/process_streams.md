@@ -1,8 +1,20 @@
-# Create and test process_pubsub_counters.py
+# Create and test process_pubsub_counters.py<a name="create-and-test-process_pubsub_counterspy"></a>
 
 - [broker/night_conductor/end_night/process_pubsub_counters.py](../../../broker/night_conductor/end_night/process_pubsub_counters.py)
 
-## Make the BigQuery table
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
+
+- [Create and test process_pubsub_counters.py](#create-and-test-process_pubsub_counterspy)
+  - [Make the BigQuery table](#make-the-bigquery-table)
+  - [Timestamps exploration](#timestamps-exploration)
+  - [Test process_pubsub_counters.py on the SuperNNova cloud function](#test-process_pubsub_counterspy-on-the-supernnova-cloud-function)
+  - [Test process_pubsub_counters.py on the full pipeline](#test-process_pubsub_counterspy-on-the-full-pipeline)
+  - [Process last night's ZTF stream](#process-last-nights-ztf-stream)
+    - [Streaming](#streaming)
+
+<!-- mdformat-toc end -->
+
+## Make the BigQuery table<a name="make-the-bigquery-table"></a>
 
 ```bash
 cd /Users/troyraen/Documents/broker/repo3/broker/setup_broker
@@ -13,7 +25,7 @@ survey=ztf
 bq mk --table ${PROJECT_ID}:${dataset}.${table} templates/bq_${survey}_${table}_schema.json
 ```
 
-## Timestamps exploration
+## Timestamps exploration<a name="timestamps-exploration"></a>
 
 ```python
 import time
@@ -35,7 +47,7 @@ fseconds = float(f"{seconds}.{tmpnano}")
 dt = datetime.utcfromtimestamp(fseconds)
 ```
 
-## Test process_pubsub_counters.py on the SuperNNova cloud function
+## Test process_pubsub_counters.py on the SuperNNova cloud function<a name="test-process_pubsub_counterspy-on-the-supernnova-cloud-function"></a>
 
 ```bash
 cd /Users/troyraen/Documents/broker/repo3/broker/night_conductor/end_night/
@@ -77,7 +89,7 @@ gcp_utils.insert_rows_bigquery(collector.bq_table, collector.metadata_dicts_list
 # collector.collect_and_store_all_metadata()
 ```
 
-## Test process_pubsub_counters.py on the full pipeline
+## Test process_pubsub_counters.py on the full pipeline<a name="test-process_pubsub_counterspy-on-the-full-pipeline"></a>
 
 ```bash
 cd /Users/troyraen/Documents/broker/repo3/broker/night_conductor/end_night/
@@ -119,7 +131,7 @@ collector._join_metadata()  # collector.metadata_df
 collector._load_metadata_to_bigquery()
 ```
 
-## Process last night's ZTF stream
+## Process last night's ZTF stream<a name="process-last-nights-ztf-stream"></a>
 
 In python:
 
@@ -149,7 +161,7 @@ python3 process_pubsub_counters.py --survey=$survey --production --timeout=$t
 # python3 process_pubsub_counters.py --survey=$survey --production --batch_size=$b --single_batch=$sb
 ```
 
-### Streaming
+### Streaming<a name="streaming"></a>
 
 ```python
 import process_pubsub_counters as ppc

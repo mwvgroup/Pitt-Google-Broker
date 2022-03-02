@@ -1,4 +1,13 @@
-## Make the BigQuery table
+## Make the BigQuery table<a name="make-the-bigquery-table"></a>
+
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
+
+- [Make the BigQuery table](#make-the-bigquery-table)
+- [Timestamps exploration](#timestamps-exploration)
+- [Test process_pubsub_counters.py](#test-process_pubsub_counterspy)
+- [Process last night's ZTF stream](#process-last-nights-ztf-stream)
+
+<!-- mdformat-toc end -->
 
 ```bash
 cd /Users/troyraen/Documents/broker/repo3/broker/setup_broker
@@ -9,7 +18,7 @@ survey=ztf
 bq mk --table ${PROJECT_ID}:${dataset}.${table} templates/bq_${survey}_${table}_schema.json
 ```
 
-## Timestamps exploration
+## Timestamps exploration<a name="timestamps-exploration"></a>
 
 ```python
 import time
@@ -94,7 +103,7 @@ df.rename(columns=lambda x: f'{x}.{subscription}', inplace=True)
 metadata_dfs_list.append(df)
 ``` -->
 
-## Test process_pubsub_counters.py
+## Test process_pubsub_counters.py<a name="test-process_pubsub_counterspy"></a>
 
 ```bash
 cd /Users/troyraen/Documents/broker/repo3/broker/night_conductor/end_night/
@@ -136,7 +145,7 @@ gcp_utils.insert_rows_bigquery(collector.bq_table, collector.metadata_dicts_list
 # collector.collect_and_store_all_metadata()
 ```
 
-## Process last night's ZTF stream
+## Process last night's ZTF stream<a name="process-last-nights-ztf-stream"></a>
 
 ```python
 import process_pubsub_counters as ppc

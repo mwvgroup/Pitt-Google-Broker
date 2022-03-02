@@ -1,6 +1,11 @@
-# AllWISE BigQuery cross match
+# AllWISE BigQuery cross match<a name="allwise-bigquery-cross-match"></a>
 
-[billing#billing](<>)
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
+
+- [AllWISE BigQuery cross match](#allwise-bigquery-cross-match)
+  - [Billing](#billing)
+
+<!-- mdformat-toc end -->
 
 ```python
 from matplotlib import pyplot
@@ -67,7 +72,7 @@ def plot_proct():
         plt.close(fig)
 ```
 
-## Billing
+## Billing<a name="billing"></a>
 
 <img src="GCPbilling-bigquery-20210926.png" alt="GCPbilling-bigquery-20210926.png" width="800"/>
 

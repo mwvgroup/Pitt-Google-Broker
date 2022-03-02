@@ -1,14 +1,17 @@
-# Rename resources
+# Rename resources<a name="rename-resources"></a>
 
-__Table of Contents__
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
 
-- [Names](#names)
-- [Test the changes](#test-the-changes)
-- [Update ZTF production broker](#update-ztf-production-broker)
+- [Rename resources](#rename-resources)
+  - [Names](#names)
+  - [Test the changes](#test-the-changes)
+  - [Update ZTF production broker](#update-ztf-production-broker)
+
+<!-- mdformat-toc end -->
 
 ______________________________________________________________________
 
-## Names
+## Names<a name="names"></a>
 
 <!-- fs -->
 
@@ -49,7 +52,7 @@ defined as a keyword when setting up the broker instance.
 
 ______________________________________________________________________
 
-## Test the changes
+## Test the changes<a name="test-the-changes"></a>
 
 <!-- fs -->
 
@@ -162,7 +165,7 @@ teardown="True"
 
 ______________________________________________________________________
 
-## Update ZTF production broker
+## Update ZTF production broker<a name="update-ztf-production-broker"></a>
 
 <!-- fs -->
 

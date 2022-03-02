@@ -1,8 +1,18 @@
-# external-connection
+# external-connection<a name="external-connection"></a>
+
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
+
+- [external-connection](#external-connection)
+  - [GCP and local setup for external account](#gcp-and-local-setup-for-external-account)
+  - [Setup IAM permissions on the Pub/Sub topic](#setup-iam-permissions-on-the-pubsub-topic)
+  - [Create subscription and pull](#create-subscription-and-pull)
+  - [Setup stream-looper VM and topic](#setup-stream-looper-vm-and-topic)
+
+<!-- mdformat-toc end -->
 
 Goal: Try to listen to and process one of our Pub/Sub streams as an outside user.
 
-## GCP and local setup for external account
+## GCP and local setup for external account<a name="gcp-and-local-setup-for-external-account"></a>
 
 <!-- fs -->
 
@@ -51,7 +61,7 @@ python -m pip install -e .
 
 <!-- fe GCP and local setup -->
 
-## Setup IAM permissions on the Pub/Sub topic
+## Setup IAM permissions on the Pub/Sub topic<a name="setup-iam-permissions-on-the-pubsub-topic"></a>
 
 <!-- fs -->
 
@@ -81,7 +91,7 @@ gcloud pubsub topics set-iam-policy $topic_path $fname
 
 <!-- fe IAM permissions -->
 
-## Create subscription and pull
+## Create subscription and pull<a name="create-subscription-and-pull"></a>
 
 <!-- fs -->
 
@@ -129,6 +139,6 @@ smsg = pgbps.pull(subscription, project_id=my_project)  # EXECUTE FROM EXTERNAL 
 
 <!-- fe subscription -->
 
-## Setup stream-looper VM and topic
+## Setup stream-looper VM and topic<a name="setup-stream-looper-vm-and-topic"></a>
 
 see [stream-looper.md](stream-looper.md)

@@ -1,6 +1,13 @@
-# Rubin DPO
+# Rubin DPO<a name="rubin-dpo"></a>
 
-## TAP
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
+
+- [Rubin DPO](#rubin-dpo)
+  - [TAP](#tap)
+
+<!-- mdformat-toc end -->
+
+## TAP<a name="tap"></a>
 
 - [PyVO](https://pyvo.readthedocs.io/en/latest/index.html)
 - [get TAP service. source code for DP0 notebook](https://github.com/lsst-sqre/rubin-jupyter-lab/blob/master/rubin_jupyter_utils/lab/notebook/catalog.py)

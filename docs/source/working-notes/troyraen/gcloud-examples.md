@@ -1,8 +1,20 @@
-# Admin tasks for GCP projects
+# Admin tasks for GCP projects<a name="admin-tasks-for-gcp-projects"></a>
+
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
+
+- [Admin tasks for GCP projects](#admin-tasks-for-gcp-projects)
+  - [Links](#links)
+  - [Cloud Run](#cloud-run)
+  - [Pub/Sub](#pubsub)
+  - [Service account](#service-account)
+
+<!-- mdformat-toc end -->
+
+## Links<a name="links"></a>
 
 - [`gcloud` reference](https://cloud.google.com/sdk/gcloud/reference)
 
-## Cloud Run
+## Cloud Run<a name="cloud-run"></a>
 
 - [Instructions to create resources with pubsub trigger](https://cloud.google.com/run/docs/triggering/pubsub-push#command-line)
 
@@ -103,7 +115,7 @@ gcloud pubsub subscriptions create "$SUBSCRIPTION" \
     --ack-deadline="$ACK_DEADLINE"
 ```
 
-## Pub/Sub
+## Pub/Sub<a name="pubsub"></a>
 
 - [https://cloud.google.com/sdk/gcloud/reference/pubsub](https://cloud.google.com/sdk/gcloud/reference/pubsub)
 
@@ -121,7 +133,7 @@ gcloud pubsub subscriptions create "$SUBSCRIPTION" \
     --topic-project="$TOPIC_PROJECT"
 ```
 
-## Service account
+## Service account<a name="service-account"></a>
 
 ```bash
 NAME="tjraen-owner"

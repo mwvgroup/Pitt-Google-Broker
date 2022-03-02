@@ -1,4 +1,15 @@
-# v0.7.1
+# v0.7.1<a name="v071"></a>
+
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
+
+- [v0.7.1](#v071)
+  - [Intro](#intro)
+  - [Test the changes](#test-the-changes)
+    - [Code used to create and run the broker testing instance](#code-used-to-create-and-run-the-broker-testing-instance)
+
+<!-- mdformat-toc end -->
+
+## Intro<a name="intro"></a>
 
 Starts a system to track metadata for provenance and performance benchmarking.
 
@@ -13,14 +24,14 @@ Working notes:
 
 - [process_streams.md](process_streams.md) (setup/test the processing script)
 
-## Test the changes
+## Test the changes<a name="test-the-changes"></a>
 
 For the results of the tests, see:
 
 - [logs: process-pubsub-counters](https://console.cloud.google.com/logs/query;query=logName%3D%22projects%2Fardent-cycling-243415%2Flogs%2Fprocess-pubsub-counters%22;timeRange=P7D;cursorTimestamp=2021-08-23T03:06:56.058162537Z?project=ardent-cycling-243415)
 - [BigQuery metadata table](https://console.cloud.google.com/bigquery?project=ardent-cycling-243415&d=ztf_alerts_v071&p=ardent-cycling-243415&t=metadata&page=table&ws=!1m5!1m4!4m3!1sardent-cycling-243415!2sztf_alerts_v071!3smetadata)
 
-### Code used to create and run the broker testing instance
+### Code used to create and run the broker testing instance<a name="code-used-to-create-and-run-the-broker-testing-instance"></a>
 
 Create/delete a broker testing instance
 

@@ -1,4 +1,15 @@
-# v0.7.0
+# v0.7.0<a name="v070"></a>
+
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
+
+- [v0.7.0](#v070)
+  - [Intro](#intro)
+  - [Test the changes](#test-the-changes)
+    - [Code used to create and run the broker testing instance](#code-used-to-create-and-run-the-broker-testing-instance)
+
+<!-- mdformat-toc end -->
+
+## Intro<a name="intro"></a>
 
 - Implements SuperNNova as a Cloud Function.
 - Adds the extragalactic transients filter as a Cloud Function, emitting the Pub/Sub
@@ -14,7 +25,7 @@ Working notes:
 - [supernnova_train_a_model.md](https://github.com/mwvgroup/Pitt-Google-Broker/tree/troy/troy/SNN/supernnova_train_a_model.md)
   (not necessary for this PR, but good for future reference)
 
-## Test the changes
+## Test the changes<a name="test-the-changes"></a>
 
 Note: The best place to see that/how well this is working is the ZTF *production*
 instance, not the testing instance created below. The Cloud Function, etc. is isolated
@@ -35,7 +46,7 @@ production early on. See:
 
   - [ztf_alerts.SuperNNova](https://console.cloud.google.com/bigquery?project=ardent-cycling-243415&d=ztf_alerts&p=ardent-cycling-243415&t=SuperNNova&page=table&ws=!1m5!1m4!4m3!1sardent-cycling-243415!2sztf_alerts!3sSuperNNova)
 
-### Code used to create and run the broker testing instance
+### Code used to create and run the broker testing instance<a name="code-used-to-create-and-run-the-broker-testing-instance"></a>
 
 Create/delete a broker testing instance
 

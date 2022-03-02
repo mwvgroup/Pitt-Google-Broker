@@ -1,15 +1,18 @@
-# Schemas
+# Schemas<a name="schemas"></a>
 
-Table of Contents:
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
 
-- [Create Schema Maps for `broker_utils`](#create-schema-maps-for-broker_utils)
-- [BigQuery schema json](#bigquery-schema-json)
-- [Test the changes](#test-the-changes)
-- [Download and look at an Avro](#download-and-look-at-an-avro)
+- [Schemas](#schemas)
+  - [Create Schema Maps for `broker_utils`](#create-schema-maps-for-broker_utils)
+  - [BigQuery schema json](#bigquery-schema-json)
+  - [Test the changes](#test-the-changes)
+  - [Download and look at an Avro](#download-and-look-at-an-avro)
+
+<!-- mdformat-toc end -->
 
 ______________________________________________________________________
 
-## Create Schema Maps for `broker_utils`
+## Create Schema Maps for `broker_utils`<a name="create-schema-maps-for-broker_utils"></a>
 
 <!-- fs -->
 
@@ -87,7 +90,7 @@ for fname in [fztf, fdecat]:
 
 ______________________________________________________________________
 
-## BigQuery schema json
+## BigQuery schema json<a name="bigquery-schema-json"></a>
 
 <!-- fs -->
 
@@ -139,7 +142,7 @@ bq rm --table "${projectid}:${dataset}.salt2"
 
 ______________________________________________________________________
 
-## Test the changes
+## Test the changes<a name="test-the-changes"></a>
 
 <!-- fs -->
 
@@ -249,7 +252,7 @@ teardown="True"
 
 ______________________________________________________________________
 
-## Download and look at an Avro
+## Download and look at an Avro<a name="download-and-look-at-an-avro"></a>
 
 <!-- fs -->
 

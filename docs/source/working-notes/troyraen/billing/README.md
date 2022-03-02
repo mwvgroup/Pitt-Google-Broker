@@ -1,17 +1,31 @@
-# billing: pitt-google-broker-billing
+# billing: pitt-google-broker-billing<a name="billing-pitt-google-broker-billing"></a>
+
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
+
+- [billing: pitt-google-broker-billing](#billing-pitt-google-broker-billing)
+  - [Intro](#intro)
+  - [Setup: Create a new service account](#setup-create-a-new-service-account)
+  - [Run queries and make figures](#run-queries-and-make-figures)
+  - [OLD](#old)
+
+<!-- mdformat-toc end -->
+
+## Intro<a name="intro"></a>
+
+Links
 
 - [Export Cloud Billing data to BigQuery](https://cloud.google.com/billing/docs/how-to/export-data-bigquery)
 
-- Billing project:
+Billing info
 
+- Billing project:
   - Name: pitt-google-broker-billing
   - ID: light-cycle-328823
-
 - Billing account: 0102E2-E3A6BA-C2AFD5
 
 (skip to [Run queries and make figures](#run-queries-and-make-figures) )
 
-## Setup: Create a new service account
+## Setup: Create a new service account<a name="setup-create-a-new-service-account"></a>
 
 ```bash
 
@@ -31,7 +45,7 @@ gcloud iam service-accounts keys create "$FILE_NAME" \
     --iam-account="${NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 ```
 
-## Run queries and make figures
+## Run queries and make figures<a name="run-queries-and-make-figures"></a>
 
 ```bash
 pip install --upgrade pyarrow
@@ -91,7 +105,7 @@ plt.show(block=False)
 
 <img src="billing.png" alt="billing.png" width="400"/>
 
-## OLD
+## OLD<a name="old"></a>
 
 ```python
 date = "2021-10-09"

@@ -1,4 +1,18 @@
-# Implementing SuperNNova Classifier
+# Implementing SuperNNova Classifier<a name="implementing-supernnova-classifier"></a>
+
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
+
+- [Implementing SuperNNova Classifier](#implementing-supernnova-classifier)
+  - [Intro](#intro)
+  - [Preliminary exploration](#preliminary-exploration)
+  - [Test the Cloud Function pieces locally](#test-the-cloud-function-pieces-locally)
+    - [Classify known Ia](#classify-known-ia)
+  - [Local, full test](#local-full-test)
+  - [Deploy Cloud Function](#deploy-cloud-function)
+
+<!-- mdformat-toc end -->
+
+## Intro<a name="intro"></a>
 
 SuperNNova Links:
 
@@ -9,7 +23,7 @@ SuperNNova Links:
 The following is mostly code to develop and test and Cloud Function. This uses a
 pre-trained model provided by the SuperNNova team.
 
-## Preliminary exploration
+## Preliminary exploration<a name="preliminary-exploration"></a>
 
 Following
 [run_onthefly.py](https://github.com/supernnova/SuperNNova/blob/master/run_onthefly.py)
@@ -86,7 +100,7 @@ def reformat_to_df(pred_probs, ids=None):
     return preds_df
 ```
 
-## Test the Cloud Function pieces locally
+## Test the Cloud Function pieces locally<a name="test-the-cloud-function-pieces-locally"></a>
 
 ```bash
 export GCP_PROJECT=$GOOGLE_CLOUD_PROJECT
@@ -112,7 +126,7 @@ snn_msg = gcp_utils.pull_pubsub("test")[0]
 gcp_utils.insert_rows_bigquery(bq_table, [snn_dict])
 ```
 
-### Classify known Ia
+### Classify known Ia<a name="classify-known-ia"></a>
 
 The docs indicate that "usually" class0 indicates a Ia and class1 indicates non-Ia, but
 this will depend on how the model was trained.
@@ -147,7 +161,7 @@ snn_dict
 }
 ```
 
-## Local, full test
+## Local, full test<a name="local-full-test"></a>
 
 ```bash
 conda create -n snn python=3.7
@@ -203,7 +217,7 @@ for r, row in enumerate(snn_queryjob):
 
 This works.
 
-## Deploy Cloud Function
+## Deploy Cloud Function<a name="deploy-cloud-function"></a>
 
 ```bash
 survey="ztf"

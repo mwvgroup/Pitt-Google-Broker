@@ -1,12 +1,21 @@
-# Metadata Tracking System
+# Metadata Tracking System<a name="metadata-tracking-system"></a>
 
-## todo
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
+
+- [Metadata Tracking System](#metadata-tracking-system)
+  - [todo](#todo)
+  - [Testing pieces](#testing-pieces)
+  - [Broker Testing Instance](#broker-testing-instance)
+
+<!-- mdformat-toc end -->
+
+## todo<a name="todo"></a>
 
 - [ ] candid should be stored as an int, but currently using string
   f"{message_id}\_unknown" for `alerts` stream messages that can't be matched to a
   candid.
 
-## Testing pieces
+## Testing pieces<a name="testing-pieces"></a>
 
 ```bash
 export GCP_PROJECT=$GOOGLE_CLOUD_PROJECT
@@ -30,7 +39,7 @@ blob, alert = main.upload_bytes_to_bucket(alert_bytes, attributes)
 main.attach_file_metadata(blob, alert, context)
 ```
 
-## Broker Testing Instance
+## Broker Testing Instance<a name="broker-testing-instance"></a>
 
 Create/delete a broker testing instance
 

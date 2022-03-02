@@ -1,34 +1,44 @@
-# AbrilCVs: CV Catalog from Abril 2020
+# AbrilCVs: CV Catalog from Abril 2020<a name="abrilcvs-cv-catalog-from-abril-2020"></a>
+
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
+
+- [AbrilCVs: CV Catalog from Abril 2020](#abrilcvs-cv-catalog-from-abril-2020)
+  - [Intro](#intro)
+  - [Catalog](#catalog)
+  - [Calculate HEALPix indexes of CV catalog and use to xmatch](#calculate-healpix-indexes-of-cv-catalog-and-use-to-xmatch)
+  - [Try TNS CVs](#try-tns-cvs)
+  - [Try some ASAS-SN data](#try-some-asas-sn-data)
+  - [Test Cloud Run module](#test-cloud-run-module)
+
+<!-- mdformat-toc end -->
+
+## Intro<a name="intro"></a>
+
+Links
 
 - [Abril 2020](https://ui.adsabs.harvard.edu/abs/2020MNRAS.492L..40A/abstract)
-
 - [CV catalog on CDS](https://cdsarc.cds.unistra.fr/viz-bin/cat?J/MNRAS/492/L40)
   (downloaded to this dir)
 
-- Michael:
+Notes
 
+- Michael:
   - number of dimensions to parameters. maybe dataset of only 2000 is ok. make the model
     smarter (vs data augmentation)
-
 - Brett:
-
   - get ~2000 Gaia stars, combine with these CVs
   - mags, etc.
   - random forest
-
 - Abril20
-
   - CMD
     - trends with subtypes and periods
     - population density distributions
-
 - Questions:
-
   - Periods of hours. could you predict the magnitude based on different periods, and
     then check whether alert is consistent? or are the uncertainties too big? mags,
     period.
 
-## Catalog
+## Catalog<a name="catalog"></a>
 
 ```python
 import os
@@ -86,7 +96,7 @@ names = [
 abrildf = pd.read_fwf(fcat, names=names, header=None, index=None)
 ```
 
-## Calculate HEALPix indexes of CV catalog and use to xmatch
+## Calculate HEALPix indexes of CV catalog and use to xmatch<a name="calculate-healpix-indexes-of-cv-catalog-and-use-to-xmatch"></a>
 
 Calculate indexes
 
@@ -162,7 +172,7 @@ stop = timeit.default_timer()
 print("Time: ", stop - start)
 ```
 
-## Try TNS CVs
+## Try TNS CVs<a name="try-tns-cvs"></a>
 
 ```python
 # get positions of TNS CVs
@@ -192,7 +202,7 @@ for _, cv in abrildf.iterrows():
             matches[alert["objectId"]] = (alert, cv)
 ```
 
-## Try some ASAS-SN data
+## Try some ASAS-SN data<a name="try-some-asas-sn-data"></a>
 
 ```python
 # load asassn
@@ -208,7 +218,7 @@ for _, cv in abrildf.iterrows():
             break
 ```
 
-## Test Cloud Run module
+## Test Cloud Run module<a name="test-cloud-run-module"></a>
 
 ```python
 from broker_utils import gcp_utils

@@ -1,6 +1,15 @@
-# Setup stream-looper VM and topic
+# Setup stream-looper VM and topic<a name="setup-stream-looper-vm-and-topic"></a>
 
-## Create the Pub/Sub topic and allow public subscriptions
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
+
+- [Setup stream-looper VM and topic](#setup-stream-looper-vm-and-topic)
+  - [Create the Pub/Sub topic and allow public subscriptions](#create-the-pubsub-topic-and-allow-public-subscriptions)
+  - [Create the VM and setup the consumer simulator](#create-the-vm-and-setup-the-consumer-simulator)
+    - [Set a startup script to run consumer simulator indefinitely](#set-a-startup-script-to-run-consumer-simulator-indefinitely)
+
+<!-- mdformat-toc end -->
+
+## Create the Pub/Sub topic and allow public subscriptions<a name="create-the-pubsub-topic-and-allow-public-subscriptions"></a>
 
 ```bash
 PROJECT=$GOOGLE_CLOUD_PROJECT
@@ -16,7 +25,7 @@ gcloud pubsub topics get-iam-policy $topic_path --format yaml > $fnametmp
 gcloud pubsub topics set-iam-policy $topic_path $fname
 ```
 
-## Create the VM and setup the consumer simulator
+## Create the VM and setup the consumer simulator<a name="create-the-vm-and-setup-the-consumer-simulator"></a>
 
 ```bash
 vmname="stream-looper"
@@ -39,7 +48,7 @@ gcloud compute instances add-metadata "$vmname" --zone="$zone" --metadata=startu
 # gcloud compute ssh $vmname
 ```
 
-### Set a startup script to run consumer simulator indefinitely
+### Set a startup script to run consumer simulator indefinitely<a name="set-a-startup-script-to-run-consumer-simulator-indefinitely"></a>
 
 Python script to trigger at startup. Save the following code to a root-executable file
 at /home/consumer_sim/run-looper-indefinitely.py:

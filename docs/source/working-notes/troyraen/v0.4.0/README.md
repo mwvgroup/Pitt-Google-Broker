@@ -1,12 +1,17 @@
-# v0.4.0
+# v0.4.0<a name="v040"></a>
 
-- [Documentation of Changes](#documentation-of-changes)
-- [Test the Changes](#test-the-changes)
-- [Results Summary](#results-summary)
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
+
+- [v0.4.0](#v040)
+  - [Documentation of Changes](#documentation-of-changes)
+  - [Test the Changes](#test-the-changes)
+  - [Results Summary](#results-summary)
+
+<!-- mdformat-toc end -->
 
 ______________________________________________________________________
 
-## Documentation of Changes
+## Documentation of Changes<a name="documentation-of-changes"></a>
 
 - PR [#60](https://github.com/mwvgroup/Pitt-Google-Broker/pull/60)
 - [rename-resources.md](rename-resources.md): accommodate generic survey
@@ -16,7 +21,7 @@ ______________________________________________________________________
 
 ______________________________________________________________________
 
-## Test the Changes
+## Test the Changes<a name="test-the-changes"></a>
 
 __Dashboards__ (linked to specific times of tests below):
 
@@ -110,7 +115,7 @@ teardown="True"
 
 ______________________________________________________________________
 
-## Results Summary
+## Results Summary<a name="results-summary"></a>
 
 ZTF broker seems to run like normal, no more or different bugs/errors than normal.
 
