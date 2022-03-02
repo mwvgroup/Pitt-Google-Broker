@@ -22,8 +22,10 @@ Basic workflow:
 # from django.conf import settings
 from google.api_core.exceptions import NotFound
 from google.cloud import pubsub_v1
+
 # from google.cloud.pubsub_v1.subscriber.scheduler import ThreadScheduler
 from google.cloud import logging as gc_logging
+
 # from google_auth_oauthlib.helpers import credentials_from_session
 # from requests_oauthlib import OAuth2Session
 import queue
@@ -46,7 +48,9 @@ class Consumer:
         self.client = pubsub_v1.SubscriberClient()
 
         self.subscription_name = subscription_name
-        self.subscription_path = f"projects/{user_project}/subscriptions/{subscription_name}"
+        self.subscription_path = (
+            f"projects/{user_project}/subscriptions/{subscription_name}"
+        )
         # Topic to connect the subscription to, if it needs to be created.
         # If the subscription already exists but is connected to a different topic,
         # the user will be notified and this topic_path will be updated for consistency.
@@ -59,9 +63,7 @@ class Consumer:
         # queue for communication between threads. Enforces stopping conditions.
         self.queue = queue.Queue()
 
-    def stream_alerts(
-        self, user_filter=None, user_callback=None, **user_kwargs
-    ):
+    def stream_alerts(self, user_filter=None, user_callback=None, **user_kwargs):
         """Execute a streaming pull and process alerts through the `callback`.
 
         The streaming pull happens in a background thread. A `queue.Queue` is used
@@ -101,7 +103,7 @@ class Consumer:
         }
 
         # avoid pulling down a large number of alerts that don't get processed
-        flow_control = pubsub_v1.types.FlowControl(max_messages=kwargs['max_backlog'])
+        flow_control = pubsub_v1.types.FlowControl(max_messages=kwargs["max_backlog"])
 
         # Google API has a thread scheduler that can run multiple background threads
         # and includes a queue, but I (Troy) haven't gotten it working yet.
@@ -123,12 +125,12 @@ class Consumer:
             num_saved = 0
             while True:
                 try:
-                    num_saved += self.queue.get(block=True, timeout=kwargs['timeout'])
+                    num_saved += self.queue.get(block=True, timeout=kwargs["timeout"])
                 except Empty:
                     break
                 else:
                     self.queue.task_done()
-                    if kwargs['max_results'] & num_saved >= kwargs['max_results']:
+                    if kwargs["max_results"] & num_saved >= kwargs["max_results"]:
                         break
             self._stop()
 
@@ -142,10 +144,10 @@ class Consumer:
 
     def _add_default_kwargs(self, **kwargs):
         defaults = {
-            'max_results': None,
-            'timeout': 30,
-            'max_backlog': 1000,
-            'return_msg': False,
+            "max_results": None,
+            "timeout": 30,
+            "max_backlog": 1000,
+            "return_msg": False,
         }
         if kwargs is None:
             kwargs = {}
@@ -165,7 +167,7 @@ class Consumer:
         """
         kwargs = self.callback_kwargs
 
-        if kwargs['return_msg']:
+        if kwargs["return_msg"]:
             self._callback_return_full_message(message)
             return
 
@@ -217,7 +219,7 @@ class Consumer:
             # communicate with the main thread
             self.queue.put(1)  # 1 alert successfully processed
             # block until main thread acknowledges so we don't ack msgs that get lost
-            if kwargs['max_results'] is not None:
+            if kwargs["max_results"] is not None:
                 self.queue.join()  # single background thread => one-in-one-out
 
         else:
@@ -234,7 +236,7 @@ class Consumer:
         # communicate with the main thread
         self.queue.put(count)
         # block until main thread acknowledges so we don't ack msgs that get lost
-        if kwargs['max_results'] is not None:
+        if kwargs["max_results"] is not None:
             self.queue.join()  # single background thread => one-in-one-out
 
         message.ack()
@@ -258,9 +260,18 @@ class Consumer:
             self.save_fields = fields
         else:
             self.save_fields = {
-                "top-level": ["objectId", "candid", ],
-                "candidate": ["jd", "ra", "dec", "magpsf", "classtar", ],
-                "metadata": ["message_id", "publish_time", "kafka.timestamp"]
+                "top-level": [
+                    "objectId",
+                    "candid",
+                ],
+                "candidate": [
+                    "jd",
+                    "ra",
+                    "dec",
+                    "magpsf",
+                    "classtar",
+                ],
+                "metadata": ["message_id", "publish_time", "kafka.timestamp"],
             }
 
     def _extract_metadata(self, message):
@@ -339,7 +350,7 @@ class Consumer:
         except NotFound:
             pass
         else:
-            self._log_and_print(f'Deleted subscription: {self.subscription_path}')
+            self._log_and_print(f"Deleted subscription: {self.subscription_path}")
 
     def _log_and_print(self, msg, severity="INFO"):
         # self.logger.log_text(msg, severity=severity)

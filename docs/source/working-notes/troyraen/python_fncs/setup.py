@@ -31,27 +31,21 @@ import pathlib
 #     requirements = f.read().splitlines()
 
 setup(
-    name='troys_python_fncs',  # Required
-    version='0.1.0',  # Required
-    description='Tools to interact with Pitt-Google Broker data products and services.',
+    name="troys_python_fncs",  # Required
+    version="0.1.0",  # Required
+    description="Tools to interact with Pitt-Google Broker data products and services.",
     # long_description=long_description,
     # long_description_content_type='text/markdown',
-
-    url='https://github.com/mwvgroup/Pitt-Google-Broker/troy',
-    author='Troy Raen',
-    author_email='troy.raen@pitt.edu',
-
+    url="https://github.com/mwvgroup/Pitt-Google-Broker/troy",
+    author="Troy Raen",
+    author_email="troy.raen@pitt.edu",
     packages=find_packages(),  # Required
-
     # install_requires=requirements,
-
     # https://setuptools.readthedocs.io/en/latest/userguide/dependency_management.html#optional-dependencies
     # extras_require={
     #         "beam":  ["apache_beam[gcp]"],
     #     },
-
     # python_requires='>=3.6, <4',
-
     # If there are data files included in your packages that need to be
     # installed, specify them here.
     # package_data={  # Optional

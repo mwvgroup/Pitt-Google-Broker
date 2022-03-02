@@ -70,6 +70,7 @@ def count_alerts_by_date(lookback=None, date="today"):
 #     job_config = bigquery.QueryJobConfig(query_parameters=query_params)
 #     return (query, job_config)
 
+
 def _where_datetime(timecol, query_params, lookback=None, date="2021-10-09"):
     if lookback is not None:
         today_0000 = datetime.datetime.combine(
@@ -158,11 +159,11 @@ def billing(lookback=None, date="today"):
     #     t0 = datetime.date(int(y), int(m), int(d))
     #     where = f"WHERE {timecol} = @date"
     #     query_params.append(bigquery.ScalarQueryParameter("date", "DATE", t0))
-        # t0 = datetime.datetime.strptime(f"{date}-+0000", "%Y-%m-%d-%z")
-        # t1 = t0 + timedelta(days=1)
-        # where = f"WHERE {timecol} BETWEEN @t0 AND @t1"
-        # query_params.append(bigquery.ScalarQueryParameter("t0", "DATE", t0))
-        # query_params.append(bigquery.ScalarQueryParameter("t1", "DATE", t1))
+    # t0 = datetime.datetime.strptime(f"{date}-+0000", "%Y-%m-%d-%z")
+    # t1 = t0 + timedelta(days=1)
+    # where = f"WHERE {timecol} BETWEEN @t0 AND @t1"
+    # query_params.append(bigquery.ScalarQueryParameter("t0", "DATE", t0))
+    # query_params.append(bigquery.ScalarQueryParameter("t1", "DATE", t1))
 
     query = f"{select} {frm} {where}"
     job_config = bigquery.QueryJobConfig(query_parameters=query_params)

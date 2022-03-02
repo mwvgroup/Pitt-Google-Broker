@@ -61,7 +61,10 @@ def _log_and_print(msg, severity="INFO"):
 
 
 def run(
-    survey: str, testid: Union[str, bool], timeout: int, testrun: bool,
+    survey: str,
+    testid: Union[str, bool],
+    timeout: int,
+    testrun: bool,
 ):
     """Collect and store all metadata in the Pub/Sub counters."""
     collector = MetadataCollector(survey, testid, timeout, testrun)

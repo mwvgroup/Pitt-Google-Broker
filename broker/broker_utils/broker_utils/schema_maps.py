@@ -9,7 +9,7 @@ from typing import Optional
 import yaml
 from google.cloud import storage
 
-pgb_project_id = 'ardent-cycling-243415'
+pgb_project_id = "ardent-cycling-243415"
 storage_client = storage.Client()
 
 
@@ -27,7 +27,8 @@ def load_schema_map(survey: str, testid: str, schema: Optional[str] = None) -> d
         schema: Survey name of the schema to be returned. If not provided, the
                 map corresponding to `survey` will be returned.
     """
-    if schema is None: schema = survey
+    if schema is None:
+        schema = survey
 
     # load the map from the yaml in cloud storage
     broker_bucket_name = _broker_bucket_name(survey, testid)
@@ -41,10 +42,10 @@ def load_schema_map(survey: str, testid: str, schema: Optional[str] = None) -> d
 
 def _broker_bucket_name(survey, testid):
     if testid in ["False", False]:
-        return f'{pgb_project_id}-{survey}-broker_files'
+        return f"{pgb_project_id}-{survey}-broker_files"
     else:
-        return f'{pgb_project_id}-{survey}-broker_files-{testid}'
+        return f"{pgb_project_id}-{survey}-broker_files-{testid}"
 
 
 def _schema_file_name(survey):
-    return f'schema_maps/{survey}.yaml'
+    return f"schema_maps/{survey}.yaml"

@@ -34,7 +34,7 @@ def _parse_alert_file(path: Union[Path, str], raw: bool = False) -> _AVRO_DATA:
         The file contents as a dictionary or bytes
     """
 
-    with open(path, 'rb') as f:
+    with open(path, "rb") as f:
         if raw:
             return f.read()
 
@@ -54,13 +54,12 @@ def get_alert_data(alert_id: int, raw: bool = False) -> _AVRO_DATA:
     """
 
     # Search for avro file in subdirectories
-    path = next(ZTF_DATA_DIR.glob(f'*/{alert_id}.avro'))
+    path = next(ZTF_DATA_DIR.glob(f"*/{alert_id}.avro"))
     try:
         return _parse_alert_file(path, raw)
 
     except FileNotFoundError:
-        raise ValueError(
-            f'Data for "{alert_id}" not locally available (at {path}).')
+        raise ValueError(f'Data for "{alert_id}" not locally available (at {path}).')
 
 
 def iter_alerts(num_alerts: int = None, raw: bool = False) -> _AVRO_DATA:
@@ -77,7 +76,7 @@ def iter_alerts(num_alerts: int = None, raw: bool = False) -> _AVRO_DATA:
         A list of dictionaries or bytes representing ZTF alert data
     """
 
-    err_msg = 'num_alerts argument must be an int >= 1'
+    err_msg = "num_alerts argument must be an int >= 1"
     if num_alerts and num_alerts <= 0:
         raise ValueError(err_msg)
 
@@ -112,14 +111,14 @@ def plot_cutout(packet: dict, fig: Figure = None, subplot: tuple = (1, 1, 1)) ->
         A matplotlib figure
     """
 
-    stamp = packet['cutoutScience']['stampData']
-    with gzip.open(io.BytesIO(stamp), 'rb') as f:
+    stamp = packet["cutoutScience"]["stampData"]
+    with gzip.open(io.BytesIO(stamp), "rb") as f:
         with fits.open(io.BytesIO(f.read())) as hdul:
             if fig is None:
                 fig = plt.figure(figsize=(4, 4))
 
             ffig = aplpy.FITSFigure(hdul[0], figure=fig, subplot=subplot)
-            ffig.show_grayscale(stretch='arcsinh')
+            ffig.show_grayscale(stretch="arcsinh")
 
     return fig
 
@@ -135,7 +134,7 @@ def plot_stamps(packet: dict) -> Figure:
     """
 
     fig = plt.figure(figsize=(12, 4))
-    for i, cutout in enumerate(['Science', 'Template', 'Difference']):
+    for i, cutout in enumerate(["Science", "Template", "Difference"]):
         ffig = plot_cutout(packet, fig=fig, subplot=(1, 3, i + 1))
         ffig.suptitle(cutout)
 
