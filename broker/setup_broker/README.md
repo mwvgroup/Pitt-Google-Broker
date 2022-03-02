@@ -2,7 +2,8 @@
 
 See the broker-level [../README.md](../README.md) for instructions on setting up a broker instance.
 
-# Helpful Links
+## Helpful Links
+
 - Cloud Storage
     - [Using Pub/Sub notifications for Cloud Storage](https://cloud.google.com/storage/docs/reporting-changes#gsutil)
 - Compute Engine

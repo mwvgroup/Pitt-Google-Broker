@@ -3,7 +3,8 @@
 The following is just my raw notes from when I set this up.
 I will clean up this document later.
 
-__Get an alert from PS and figure out how to parse the data/attributes:__
+## Get an alert from PS and figure out how to parse the data/attributes
+
 ```python
 from google.cloud import pubsub_v1
 import main as mn
@@ -21,7 +22,8 @@ data = msg.data  # alert packet, bytes
 atrs = msg.attributes  # dict of custom attributes
 ```
 
-__test the fnc; fix schema and upload__
+## test the fnc; fix schema and upload
+
 ```python
 filename = f"{atrs['kafka.topic']}_{atrs['kafka.timestamp']}_trial.avro"
 # bucket_name = 'ardent-cycling-243415_ztf_alert_avro_bucket'
@@ -53,8 +55,8 @@ with mn.TempAlertFile(max_size=max_alert_packet_size, mode='w+b') as temp_file:
 
 Logging: [Using the Logging Client Libraries](https://cloud.google.com/logging/docs/reference/libraries)
 
+## Deploy the Cloud Function
 
-__Deploy the Cloud Function__
 ```bash
 cd deploy2cloud_Aug2020/ps-to-gcs/
 # topic=troy_test_topic
@@ -63,7 +65,8 @@ gcloud functions deploy upload_bytes_to_bucket \
     --trigger-topic ${topic}
 ```
 
-__Trigger the cloud function by publishing the msg we pulled earlier__
+## Trigger the cloud function by publishing the msg we pulled earlier
+
 ```python
 publisher = pubsub_v1.PublisherClient()
 topic_name = 'troy_test_topic'
@@ -73,7 +76,8 @@ attrs = {'kafka.topic': msg.attributes['kafka.topic'],
 future = publisher.publish(topic_path, data=msg.data, **attrs)
 ```
 
-__download file from GCS and see if i can open/read it__
+## download file from GCS and see if i can open/read it
+
 ```python
 # download the file
 gcs_fname = f"{atrs['kafka.topic']}_{atrs['kafka.timestamp']}_trial.avro"
@@ -90,7 +94,8 @@ schema, data = _load_Avro(gcs_fname)
 # this works
 ```
 
-__Setup PubSub notifications on GCS bucket__
+## Setup PubSub notifications on GCS bucket
+
 - [Using Pub/Sub notifications for Cloud Storage](https://cloud.google.com/storage/docs/reporting-changes#gsutil)
 
 ```bash
@@ -112,7 +117,8 @@ CONFIGURATION_NAME=11  # get from list command above
 gsutil notification delete projects/_/buckets/${BUCKET_NAME}/notificationConfigs/${CONFIGURATION_NAME}
 ```
 
-__count the number of objects in the bucket matching day's topic__
+## count the number of objects in the bucket matching day's topic
+
 ```bash
 gsutil ls gs://ardent-cycling-243415_ztf_alert_avro_bucket/ztf_20201227_programid1_*.avro > dec27.count
 wc -l dec27.count
