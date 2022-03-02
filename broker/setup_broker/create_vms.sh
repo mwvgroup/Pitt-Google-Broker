@@ -63,12 +63,16 @@ else
     # create VM
     installscript="gs://${broker_bucket}/consumer/vm_install.sh"
     machinetype=e2-standard-2
+    # metadata
+    googlelogging="google-logging-enabled=true"
+    startupscript="startup-script-url=${installscript}"
+    forcetopics="KAFKA_TOPIC_FORCE=,PS_TOPIC_FORCE="  # create empty attributes
     gcloud compute instances create "$consumerVM" \
         --resource-policies="${consumerVMsched}" \
         --zone="$zone" \
         --machine-type="$machinetype" \
         --scopes=cloud-platform \
-        --metadata=google-logging-enabled=true,startup-script-url="$installscript" \
+        --metadata="${googlelogging},${startupscript},${forcetopics}" \
         --tags=ztfport # for the firewall rule to open the port
 
 #--- Disable the schedules for testing instances
