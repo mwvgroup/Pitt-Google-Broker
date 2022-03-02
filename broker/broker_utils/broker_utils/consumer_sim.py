@@ -71,9 +71,14 @@ def publish_stream(
 
     # tell the user about the rates
     print(f"\nReceived desired alert_rate={aRate_tuple}, runtime={runtime}.")
-    print(
-        f"\nPublishing:\n\t{Nbatches} batches\n\teach with {alerts_per_batch} alerts\n\tat a rate of 1 batch per {pbeN} {pbeU} (plus processing time)\n\tfor a total of {Nbatches * alerts_per_batch} alerts"
-    )
+    rate_msg = f"""
+        Publishing:
+            {Nbatches} batches
+            1 batch per {pbeN} {pbeU} (plus processing time)
+            {alerts_per_batch} alerts per batch
+            {Nbatches * alerts_per_batch} total alerts
+        """
+    print(rate_msg)
 
     # publish the stream
     _do_publish_stream(
@@ -110,7 +115,7 @@ def _do_publish_stream(
 
     # make the user confirm
     _user_confirm(auto_confirm)
-    print(f"\nPublishing...")
+    print("\nPublishing...")
 
     b = 0
     while b < Nbatches:
@@ -354,7 +359,7 @@ def _convert_rate_string_to_tuple(alert_rate):
         aRate = (200, "perSec")
 
     else:
-        msg = f"'ztf-active-avg' and 'ztf-live-max' are the only strings currently configured for the alert_rate"
+        msg = "alert_rate must be one of: ztf-active-avg, ztf-live-max"
         raise ValueError(msg)
 
     return aRate

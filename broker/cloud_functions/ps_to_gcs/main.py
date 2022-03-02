@@ -52,7 +52,9 @@ class TempAlertFile(SpooledTemporaryFile):
     def rollover(self) -> None:
         """Move contents of the spooled file from memory onto disk"""
 
-        log.warning(f"Alert size exceeded max memory size: {self._max_size}")
+        logger.log_text(
+            f"Alert size exceeded max memory size: {self._max_size}", severity="WARN"
+        )
         super().rollover()
 
     @property
@@ -120,6 +122,7 @@ def upload_bytes_to_bucket(msg, context) -> None:
 
 
 def attach_file_metadata(blob, alert, context):
+    """Attach metadata to the file."""
     metadata = {"file_origin_message_id": context.event_id}
     metadata["objectId"] = alert[0]["objectId"]
     metadata["candid"] = alert[0]["candid"]
@@ -130,6 +133,7 @@ def attach_file_metadata(blob, alert, context):
 
 
 def create_filename(alert, attributes):
+    """Create a return a filename for the alert."""
     # alert is a single alert dict wrapped in a list
     oid = alert[0][schema_map["objectId"]]
     sid = alert[0][schema_map["source"]][schema_map["sourceId"]]

@@ -31,7 +31,8 @@ Production or Testing Resources:
 (See Usage Examples below.)
 The default behavior is to operate on _testing_ resources, since they will be
 setup/torndown much more frequently than production resources.
-To control the tag that is appended to resource names, use the ``testid`` argument (e.g., ``testid=mytest``).
+To control the tag that is appended to resource names, use the ``testid``
+argument (e.g., ``testid=mytest``).
 To operate on production resources:
 - from the command line, use the ``--production`` argument
 - in Python, use ``testid=False``

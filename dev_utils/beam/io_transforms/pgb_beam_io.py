@@ -38,7 +38,7 @@ class ReadFromPubSubPGB(beam.PTransform):
         self.source_configs = source_configs
 
     def expand(self, alert_PColl):
-        # -- Read from PS and extract data as dicts
+        """Read from PS and extract data as dicts."""
         PSin = pipeline | "ReadFromPubSub" >> ReadFromPubSub(topic=self.source)
 
         if self.source == "ztf_alert_data":

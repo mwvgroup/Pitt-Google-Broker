@@ -61,7 +61,7 @@ def run(msg, context) -> None:
 
 
 def check_cue_value(cue):
-    # check that the cue is an expected value and log result
+    """Check that the cue is an expected value and log result."""
     expected_values = ["START", "END"]
 
     if cue in expected_values:
@@ -99,6 +99,7 @@ def check_cue_response(cue, attrs):
 
 
 def check_night_conductor():
+    """Get and log night-conductor VM status."""
     # night-conductor should start in response to either cue
     request_kwargs = {"project": PROJECT_ID, "zone": ZONE, "instance": night_conductor}
     status, metadata = get_vm_info(request_kwargs)
@@ -192,6 +193,7 @@ def get_dataflow_jobids(metadata):
 
 
 def check_consumer(cue, attrs):
+    """Check that the consumer VM is either running or terminated as expected."""
     request_kwargs = {"project": PROJECT_ID, "zone": ZONE, "instance": consumer}
     status, metadata = get_vm_info(request_kwargs)
 
@@ -233,6 +235,7 @@ def check_consumer(cue, attrs):
 
 
 def get_vm_info(request_kwargs):
+    """Get VM status and metadata."""
     request = compute_service.instances().get(**request_kwargs)
     response = request.execute()  # dict
 
