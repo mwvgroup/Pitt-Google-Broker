@@ -88,10 +88,11 @@ Resource name stubs are given below in brackets []. See :doc:`../broker-instance
 
 3. Create and configure the Compute Engine instances
    night-conductor] and consumer].
+   with start/stop schedules. Disable the schedules on testing brokers.
 
 4. Create Cloud Scheduler cron jobs cue_night_conductor_START]
-   and cue_night_conductor_END] to put night-conductor] on
-   an auto-schedule. Print the schedule and the code needed to change
+   and cue_night_conductor_END] to check that the VM's start/stop as expected.
+   Print the schedule and the code needed to change
    it. If this is a Testing instance, pause the jobs and print the code
    needed to resume them.
 
@@ -103,5 +104,4 @@ Resource name stubs are given below in brackets []. See :doc:`../broker-instance
    don't need a separate rule for testing resources. *You can ignore
    it.*
 
-7. Deploy Cloud Functions upload_bytes_to_bucket],
-   cue_night_conductor], and check_cue_response].
+7. Deploy Cloud Functions.

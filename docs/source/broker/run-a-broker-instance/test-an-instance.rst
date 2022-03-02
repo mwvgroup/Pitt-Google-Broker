@@ -12,16 +12,14 @@ Run, develop, and test a broker instance.
 
 **Workflow:**
 
-1. :ref:`broker/run-a-broker-instance/run-broker:start the broker` with the attribute
-   ``KAFKA_TOPIC`` set to ``NONE``. This will start up everything except
-   the consumer VM. Dataflow jobs will not receive alerts published before
-   they start, so make sure they've started.
-2. Run the :doc:`consumer-simulator`.
-3. Make code changes and updates to the instance components, as desired.
-4. Repeat steps 2 and 3, as desired.
-5. :ref:`broker/run-a-broker-instance/run-broker:stop the broker`.
+1. Run the :doc:`consumer-simulator`.
+2. Make code changes and updates to the instance components, as desired.
+3. Repeat steps 1 and 2, as desired.
 
-See also: :doc:`view-resources`
+See also:
+
+- :doc:`view-resources`
+- :doc:`run-broker` (e.g., more info on consumer and night-conductor VMs)
 
 --------------
 
