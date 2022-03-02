@@ -34,13 +34,13 @@ fout_run="${workingdir}/run-connector.out"
 fout_topics="${workingdir}/list.topics"
 
 #--- Download config files from GCS (just grab the whole bucket)
-cd ${brokerdir}
+cd "${brokerdir}" || exit
 # remove all consumer files except the keytab
 find "${workingdir}" -type f -not -name 'pitt-reader.user.keytab' -delete
 # download fresh files
 gsutil -m cp -r "gs://${broker_bucket}/consumer" .
 
-cd ${workingdir}
+cd "${workingdir}" || exit
 
 #--- Set project and topic configs using the instance metadata
 fconfig=ps-connector.properties

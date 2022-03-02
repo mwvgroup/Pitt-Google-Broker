@@ -23,9 +23,9 @@ if [ "${testid}" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
 fi
 
-workingdir=/home/broker/night_conductor
-mkdir -p ${workingdir}
-cd ${workingdir}
+workingdir="/home/broker/night_conductor"
+mkdir -p "${workingdir}"
+cd "${workingdir}" || exit
 
 if [ "${NIGHT}" = "START" ]
 then
