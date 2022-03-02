@@ -27,7 +27,8 @@ The two VMs (consumer and night-conductor) can be started manually using the cod
 Start-up scripts are configured during broker setup. They are stored in the
 ``broker_files`` Cloud Storage bucket, and the address is added to the instance's
 metadata using the key ``startup-script-url``.
-See :ref:`View and Access Resources: Compute Engine VMs <broker/run-a-broker-instance/view-resources:Compute Engine VMs>`
+To start a VM without triggering the start-up script, unset the startup script url.
+See :ref:`View and Access Resources: Compute Engine VMs <broker/run-a-broker-instance/view-resources:Compute Engine VMs>`.
 
 Components running on Cloud Functions or Cloud Run are always on, listening for alerts.
 
