@@ -9,6 +9,8 @@ from apache_beam.io import ReadFromPubSub
 
 from dev_utils.pub_sub_client import decode_streams
 
+# disable some linting issues that will not be fixed in this file
+# pylint: disable=too-few-public-methods,invalid-name,empty-docstring,no-name-in-module
 
 class extract_ztf_alert_data(DoFn):
     """ """

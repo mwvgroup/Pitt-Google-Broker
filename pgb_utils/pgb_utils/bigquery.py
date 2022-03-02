@@ -14,6 +14,10 @@ from typing import List, Tuple, Optional, Union, Generator
 
 pgb_project_id = "ardent-cycling-243415"
 
+# disable some linting issues that will not be fixed in this file
+# redefined-builtin format, object
+# pylint: disable=redefined-builtin
+
 # --- BigQuery Client
 user_bq_client, user_project_id = None, None  # module's global Client, related id
 

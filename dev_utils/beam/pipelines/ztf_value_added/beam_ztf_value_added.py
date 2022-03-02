@@ -42,6 +42,10 @@ from beam_helpers.filters import is_extragalactic_transient
 import beam_helpers.salt2_utils as s2
 
 
+# disable some linting issues that will not be fixed in this file
+# pylint: disable=line-too-long
+
+
 def sink_configs(PROJECTID):
     """Configuration dicts for all pipeline sinks.
 
