@@ -20,6 +20,15 @@ To manually start/stop an instance, see
 Uptime Check Schedules
 ----------------------
 
+.. note::
+
+	The following setup is cumbersome and has the further disadvantage that it has
+    to be scheduled separately from the VMs. Fixing it is part of 
+    `#109 <https://github.com/mwvgroup/Pitt-Google-Broker/issues/109>`__.
+
+The Cloud Function ``check_cue_response`` checks whether instances are running or
+terminated, as appropriate for the time of day.
+
 The process looks like this:
 
 Cloud Scheduler cron job -> Pub/Sub message -> Cloud Function
