@@ -11,6 +11,9 @@ survey="${3:-ztf}"
 # name of the survey this broker instance will ingest
 
 #--- GCP resources used in this script
+# "cue_night_conductor" is a misnomer. "broker_admin" would be more appropriatiate.
+# but these are Pub/Sub topics and Scheduler cron jobs (global resources),
+# so leaving for now...
 cue_night_conductor="${survey}-cue_night_conductor"
 night_conductor_START="${survey}-cue_night_conductor_START"
 night_conductor_END="${survey}-cue_night_conductor_END"
@@ -29,11 +32,11 @@ if [ "$teardown" = "True" ]; then
         gcloud scheduler jobs delete $night_conductor_END
     fi
 
-#--- Create jobs that schedule night conductor
+#--- Create cron jobs
 else
     timezone='UTC'  # to avoid daylight savings issues
-    scheduleSTART='31 1 * * *'  # START at 1:31am UTC / 5:31pm PDT, everyday
-    scheduleEND='01 16 * * *'  # END at 4:01pm UTC / 9:01am PDT, everyday
+    scheduleSTART='00 2 * * *'  # START at 2:00am UTC / 6:00pm PDT, everyday
+    scheduleEND='05 16 * * *'  # END at 4:05pm UTC / 9:05am PDT, everyday
     msgSTART='START'
     msgEND='END'
 
