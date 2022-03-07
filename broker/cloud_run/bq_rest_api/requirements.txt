@@ -1,0 +1,7 @@
+Flask
+flask-marshmallow
+Flask-RESTful
+pyarrow
+python-dotenv
+SQLAlchemy
+sqlalchemy-bigquery
