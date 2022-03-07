@@ -7,12 +7,14 @@ import base64
 from google.cloud import logging
 import os
 
-from broker_utils import data_utils, gcp_utils, schema_maps
+# Add these to requirements.txt but check to make sure that the format of adding is correct
+from broker_utils import data_utils, gcp_utils, schema_maps 
+
 
 
 PROJECT_ID = os.getenv("GCP_PROJECT")
-TESTID = os.getenv("TESTID")
-SURVEY = os.getenv("SURVEY")
+TESTID = os.getenv("TESTID") # I am guessing this returns True?
+SURVEY = os.getenv("SURVEY") # I am guessing this return ztf
 
 # connect to the logger
 logging_client = logging.Client()
@@ -21,13 +23,48 @@ logger = logging_client.logger(log_name)
 
 # GCP resources used in this module
 bq_dataset = f"{SURVEY}_alerts"
-ps_topic = f"{SURVEY}-exgalac_trans_cf"
+
+# Changed the name stub of ps_topic from exgalac_trans_cs to alerts_pure
+ps_topic = f"{SURVEY}-alerts_pure" ## I think that this is for BigQuery Database Storage name stub
 if TESTID != "False":  # attach the testid to the names
     bq_dataset = f"{bq_dataset}_{TESTID}"
     ps_topic = f"{ps_topic}-{TESTID}"
-bq_table = f"{bq_dataset}.SuperNNova"
+
+# Changed the name stub of the BigQuery table from SuperNNova to classifications
+bq_table = f"{bq_dataset}.classifications"
 
 schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
+
+
+def is_pure(alert, schema_map):
+    """Adapted from: https://zwickytransientfacility.github.io/ztf-avro-alert/filtering.html
+
+    Quoted from the source:
+
+    ZTF alert streams contain an nearly entirely unfiltered stream of all
+    5-sigma (only the most obvious artefacts are rejected). Depending on your
+    science case, you may wish to improve the purity of your sample by filtering
+    the data on the included attributes.
+
+    Based on tests done at IPAC (F. Masci, priv. comm), the following filter
+    delivers a relatively pure sample.
+    """
+    source = alert[schema_map['source']]
+
+    rb = (source['rb'] >= 0.65)  # RealBogus score
+
+    if schema_map['SURVEY'] == 'decat':
+        is_pure = rb
+
+    elif schema_map['SURVEY'] == 'ztf':
+        nbad = (source['nbad'] == 0)  # num bad pixels
+        fwhm = (source['fwhm'] <= 5)  # Full Width Half Max, SExtractor [pixels]
+        elong = (source['elong'] <= 1.2)  # major / minor axis, SExtractor
+        magdiff = (abs(source['magdiff']) <= 0.1)  # aperture - psf [mag]
+        is_pure = (rb and nbad and fwhm and elong and magdiff)
+
+    return is_pure
+
 
 
 def run(msg: dict, context) -> None:
@@ -53,26 +90,35 @@ def run(msg: dict, context) -> None:
 
     alert_dict = data_utils.decode_alert(
         base64.b64decode(msg["data"]), drop_cutouts=True, schema_map=schema_map
-    )
+    ) # this decodes the alert
     attrs = {
         schema_map["objectId"]: str(alert_dict[schema_map["objectId"]]),
         schema_map["sourceId"]: str(alert_dict[schema_map["sourceId"]]),
-    }
+    } # this gets the custom attr for filtering
 
     # # run the alert through the filter.
     # alert_is_pure = <set to boolean. True if alert passes purity filter, else False>
     #
+    alert_is_pure = is_pure(alert_dict, schema_map) ## Should I use attrs instead of schema map?
+
     # # if it passes the filter, publish to Pub/Sub:
     # gcp_utils.publish_pubsub(ps_topic, alert_dict, attrs=attrs)
     #
+    if alert_is_pure:
+        gcp_utils.publish_pubsub(ps_topic, alert_dict, attrs=attrs)
+
+
     # # store results to BigQuery, regardless of whether it passes the filter
-    # purity_dict = {
-    #     **attrs,  # objectId and sourceId
-    #     'classifier': 'is_pure',
-    #     'predicted_class': int(alert_is_pure),
-    # }
-    # errors = gcp_utils.insert_rows_bigquery(bq_table, [purity_dict])
-    # if len(errors) > 0:
-    #     logger.log_text(f"BigQuery insert error: {errors}", severity="DEBUG")
+    purity_dict = {
+        **attrs,  # objectId and sourceId
+        'classifier': 'is_pure',
+        'predicted_class': int(alert_is_pure), ## Why do we turn the bool alert_is_pure to an int?
+    } # Need some clarification on what this is doing
+    
+    errors = gcp_utils.insert_rows_bigquery(bq_table, [purity_dict])
+    if len(errors) > 0:
+        logger.log_text(f"BigQuery insert error: {errors}", severity="DEBUG")
+
+
 
     return
