@@ -111,7 +111,7 @@ def _resources(service, survey='ztf', testid='test'):
             f"{survey}_alerts": [
                 "alerts",
                 "class_descriptions",
-                "classifiers"
+                "classifications"
                 "DIASource",
                 "metadata",
                 "purity"
