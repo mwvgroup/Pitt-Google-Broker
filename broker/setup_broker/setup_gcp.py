@@ -108,15 +108,23 @@ def _resources(service, survey='ztf', testid='test'):
 
     if service == 'BQ':
         datasets = {
-            f'{survey}_alerts':
-                ['alerts', 'DIASource', 'SuperNNova', 'metadata']
+            f"{survey}_alerts": [
+                "alerts",
+                "class_descriptions",
+                "classifiers"
+                "DIASource",
+                "metadata",
+                "purity"
+                "SuperNNova",
+            ]
         }
+        table_data = {"class_descriptions": "class_descriptions_data"}
 
         # append the testid to the dataset name only
         if testid is not False:
             dtmp = {f'{key}_{testid}': val for key, val in datasets.items()}
             datasets = dtmp
-        return datasets
+        return (datasets, table_data)
 
     if service == 'dashboard':
         # get resources not named elsewhere in this function
@@ -238,7 +246,7 @@ def setup_bigquery(survey='ztf', testid='test', teardown=False) -> None:
     """
     _do_not_delete_production_resources(survey=survey, testid=testid, teardown=teardown)
 
-    datasets = _resources('BQ', survey=survey, testid=testid)
+    (datasets, table_data) = _resources('BQ', survey=survey, testid=testid)
     bigquery_client = bigquery.Client()
 
     for dataset, tables in datasets.items():
@@ -257,16 +265,27 @@ def setup_bigquery(survey='ztf', testid='test', teardown=False) -> None:
                 print(f'Created dataset: {dataset}')
 
             # create the tables
+            # use the bq CLI so we can create the table from a schema file
             for table in tables:
-                table_id = f'{PROJECT_ID}.{dataset}.{table}'
                 try:
+                    table_id = f'{PROJECT_ID}.{dataset}.{table}'
                     bigquery_client.get_table(table_id)
                     print(f'Skipping existing table: {table_id}.')
                 except NotFound:
-                    # use CLI so we can create the table from a schema file
-                    bqmk = f'bq mk --table {PROJECT_ID}:{dataset}.{table} templates/bq_{survey}_{table}_schema.json'
-                    out = subprocess.check_output(shlex.split(bqmk))
-                    print(f'{out}')  # should be a success message
+                    table_id = f"{PROJECT_ID}:{dataset}.{table}"
+                    schema = f"templates/bq_{survey}_{table}_schema"
+                    if table_data.get(table):
+                        # make the table and load the data
+                        data = f"templates/bq_{survey}_{table_data['table']}.csv"
+                        flags = f"--schema={schema} --source_format=csv"
+                        bqload = f'bq load {table_id} {data} {flags}'
+                        out = subprocess.check_output(shlex.split(bqload))
+                        print(f'{out}')  # should be a success message
+                    else:
+                        # no data to load, just create the table
+                        bqmk = f'bq mk --table {table_id} {schema}.json'
+                        out = subprocess.check_output(shlex.split(bqmk))
+                        print(f'{out}')  # should be a success message
 
 
 def setup_dashboard(survey='ztf', testid='test', teardown=False) -> None:
