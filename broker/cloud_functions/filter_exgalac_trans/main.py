@@ -81,7 +81,8 @@ def _is_extragalactic_transient(alert_dict: dict) -> bool:
         dflc = data_utils.alert_dict_to_dataframe(alert_dict, schema_map)
         candidate = dflc.loc[0]
 
-        is_positive_sub = candidate["isdiffpos"] == "t"
+        # include both encodings of a positive image subtraction (sci minus ref)
+        is_positive_sub = (candidate["isdiffpos"] in ["t", 1])
 
         if (candidate["distpsnr1"] is None) or (candidate["distpsnr1"] > 1.5):  # arcsec
             no_pointsource_counterpart = True
