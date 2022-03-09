@@ -34,4 +34,4 @@ jobs:
             echo -en \\b']'
           )
           
-          echo "::set-output name=service_list::DIRS"
+          echo "::set-output name=service_list::$DIRS"
