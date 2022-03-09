@@ -11,8 +11,6 @@ jobs:
   discover_services: # Identify any microservices that have an associated test suite
     name: Discover Microservices
     uses: ./.github/workflows/FindMicroservices.yml
-    with:
-      parent_directory: "broker/cloud_functions"
 
   run_tests: # Run the tests for each service
     name: Test Service

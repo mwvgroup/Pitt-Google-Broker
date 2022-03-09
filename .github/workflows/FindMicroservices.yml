@@ -4,7 +4,8 @@ on:
   workflow_call:
     inputs:
       parent_directory:
-        required: true
+        required: false
+        default: broker/*/*/tests/
         type: string
 
     outputs:
@@ -26,4 +27,4 @@ jobs:
 
       - id: create-output-matrix
         name: Create list of microservices
-        run: echo "::set-output name=service_list::$(ls ${{ inputs.parent_directory }} |jq -cnR '[inputs | select(length>0)]')"
+        run: echo "::set-output name=service_list::$(ls -d ${{ inputs.discovery_pattern }} | jq -cnR '[inputs | select(length>0)]')"
