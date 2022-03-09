@@ -20,7 +20,7 @@ jobs:
         run: |
           directories=$(ls -d broker/cloud_functions/*)
           dir_with_quotes=$(for file in $files; do echo "\"$file\","; done)
-          echo "::set-output name=service_list::"[$dir_with_quotes]"
+          echo "::set-output name=service_list::$("[$dir_with_quotes]")"
 
     outputs:
       microservices: ${{ steps.create-output-matrix.outputs.service_list }}
@@ -32,7 +32,7 @@ jobs:
 
     strategy:
       matrix:
-        service: ${{ needs.find_services.outputs.microservices }}
+        service: ${{ fromJson(needs.find_services.outputs.microservices) }}
 
     steps:
       - uses: actions/checkout@v2
