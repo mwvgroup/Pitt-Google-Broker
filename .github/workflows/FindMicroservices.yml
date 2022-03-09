@@ -27,8 +27,6 @@ jobs:
         name: Create list of microservices
         run: |
           
-          testvar="['a','b']"
-          
           for DIR in $(ls -d ./*); do
               echo -n \"${DIR}\",
             done
@@ -41,4 +39,5 @@ jobs:
             echo -en \\b']'
           )
           
-          echo "::set-output name=microservices::$testvar"
+          testvar="['a','b']"
+          echo "::set-output name=service_list:['a','b']"
