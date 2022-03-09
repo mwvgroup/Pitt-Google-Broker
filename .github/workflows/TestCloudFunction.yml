@@ -27,8 +27,12 @@ jobs:
     needs: find_services
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        service: ${{ fromJson(needs.find_services.outputs.service_list) }}
+
     steps:
       - uses: actions/checkout@v2
         name: Checkout repositotory
       - run: ls -dm broker/cloud_functions/*
-      - run: echo ${{ needs.find_services.outputs.service_list }}
+      - run: echo ${{ matrix.service }}
