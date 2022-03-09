@@ -1,35 +1,40 @@
-name: Run Unit Tests
+name: Run Tests
 
-on:
+on: 
+  workflow_dispatch:
   push:
   pull_request:
-    branches:
+    branches: 
       - '**:**'  # Only run for pull requests submitted from forks
 
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-
 jobs:
-  python_tests:
+  find_services:  # Identify any microservices that have an associated test suite
+    name: Find Testable Services 
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        name: Checkout repositotory 
+        
+      - id: set-matrix
+        name: Create list of microservices
+        run: echo "::set-output name=service_list::['a', 'b']"
+
+    outputs:
+        service_list: ${{ steps.set-matrix.outputs.service_list }}
+    
+  run_tests:  # Run the tests for each service
+    name: Execute Test Suite
+    needs: find_services
+    runs-on: ubuntu-latest
+
     strategy:
       matrix:
-        python-version: [ 3.7, 3.8, 3.9 ]
+        container: ${{ fromJson(needs.find_services.outputs.service_list) }}
+
+    container:
+      image: ${{ matrix.container }}
 
     steps:
-      - name: Checkout source
-        uses: actions/checkout@master
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@master
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install package dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
       - name: Install test dependencies
         run: |
           pip install coverage
@@ -37,4 +42,26 @@ jobs:
       - name: Run tests with coverage
         run: |
           coverage run -m unittest
+          coverage xml -o report_${{ matrix.python }}.xml
           coverage report
+          
+      - name: Archive coverage results
+        uses: actions/upload-artifact@v3
+        with:
+          path: report_${{ matrix.python }}.xml
+          
+      # Report test coverage to codacy for the current set of tests
+      - name: Report partial coverage results
+        run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report --partial -l Python -r report_${{ matrix.python-version }}.xml
+        env:
+          CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+
+  codacy-coverage-reporter:  # Tell codacy we are done reporting test coverage
+    name: Report code coverage
+    runs-on: ubuntu-latest
+    needs: run_tests
+    steps:
+      - name: Finish reporting coverage
+        run: bash <(curl -Ls https://coverage.codacy.com/get.sh) final
+        env:
+          CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
