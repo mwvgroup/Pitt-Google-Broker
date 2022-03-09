@@ -30,8 +30,8 @@ jobs:
           testvar="['a','b']"
           subdirectoriesx=$(
               echo -n '['
-              for FILE in $(ls ${{ inputs.parent_directory }}/* -d | sed -e 's/"/\\"/g'); do
-                echo -n \"${FILE}\",
+              for DIR in $(ls ./* -d | sed -e 's/"/\\"/g'); do
+                echo -n \"${DIR}\",
               done
               echo -en \\b']'
           
@@ -39,4 +39,4 @@ jobs:
           
           echo $testvar
           echo $subdirectories
-          echo "::set-output name=service_list::$testvar"
+          echo "::set-output name=service_list::$subdirectories"
