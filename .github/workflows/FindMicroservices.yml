@@ -10,7 +10,7 @@ on:
     outputs:
       microservices:
         description: "An array of subdirectories representing microservices."
-        value: ${{ jobs.find_services.outputs.microservices }}
+        value: ${{ jobs.discover_services.outputs.microservices }}
 
 jobs:
   discover_services:
