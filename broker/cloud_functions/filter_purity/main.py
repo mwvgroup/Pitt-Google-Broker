@@ -4,17 +4,19 @@
 """Filter alerts for purity."""
 
 import base64
-from google.cloud import logging
 import os
+from google.cloud import logging
 
 # Add these to requirements.txt but check to make sure that the format of adding is correct
-from broker_utils import data_utils, gcp_utils, schema_maps 
+from broker_utils import data_utils, gcp_utils, schema_maps
 
 
 
 PROJECT_ID = os.getenv("GCP_PROJECT")
-TESTID = os.getenv("TESTID") # I am guessing this returns True?
-SURVEY = os.getenv("SURVEY") # I am guessing this return ztf
+TESTID = os.getenv("TESTID") # This returns a string which is configured when the broker
+                             # instance is initially set up. 
+                             # (i.e. This is an input variable to the setup script)
+SURVEY = os.getenv("SURVEY") # This will return ztf (in future will be our LSST)
 
 # connect to the logger
 logging_client = logging.Client()
@@ -25,7 +27,10 @@ logger = logging_client.logger(log_name)
 bq_dataset = f"{SURVEY}_alerts"
 
 # Changed the name stub of ps_topic from exgalac_trans_cs to alerts_pure
-ps_topic = f"{SURVEY}-alerts_pure" ## I think that this is for BigQuery Database Storage name stub
+ps_topic = f"{SURVEY}-alerts_pure" # This is the name of the Pub/Sub topic that this
+                                   # module publishes to. (Publishes original alert
+                                   # plus its own results. The next module downstream
+                                   # in the pipeline will listen to this topic)
 if TESTID != "False":  # attach the testid to the names
     bq_dataset = f"{bq_dataset}_{TESTID}"
     ps_topic = f"{ps_topic}-{TESTID}"
@@ -63,7 +68,23 @@ def is_pure(alert, schema_map):
         magdiff = (abs(source['magdiff']) <= 0.1)  # aperture - psf [mag]
         is_pure = (rb and nbad and fwhm and elong and magdiff)
 
-    return is_pure
+    # Update this function so that it returns a dictionary with 6 key / value pairs: 
+    #   1 for the final result (is_pure) and one for each of the 5 cuts (rb, nbad, etc.)
+    # We want to save all of these results so that later we can look back and know 
+    #  exactly why an alert did / didn't pass this filter.
+
+    # Make sure you update the run() function to accommodate the new output.
+
+    purity_reason_dict = {
+        'is_pure': is_pure,
+        'rb': rb,
+        'nbad': nbad,
+        'fwhm': fwhm,
+        'elong': elong
+        'magdiff': magdiff,
+    }
+
+    return purity_reason_dict
 
 
 
@@ -97,23 +118,27 @@ def run(msg: dict, context) -> None:
     } # this gets the custom attr for filtering
 
     # # run the alert through the filter.
-    # alert_is_pure = <set to boolean. True if alert passes purity filter, else False>
+    # alert_is_pure = <set to boolean. True if alert passes purity filter, else False> (gotten from dict)
     #
-    alert_is_pure = is_pure(alert_dict, schema_map) ## Should I use attrs instead of schema map?
+    alert_is_pure = purity_reason_dict['is_pure']
 
-    # # if it passes the filter, publish to Pub/Sub:
+    # # Publish to Pub/Sub:
     # gcp_utils.publish_pubsub(ps_topic, alert_dict, attrs=attrs)
     #
-    if alert_is_pure:
-        gcp_utils.publish_pubsub(ps_topic, alert_dict, attrs=attrs)
-
+    gcp_utils.publish_pubsub(
+            ps_topic, {"alert": alert_dict, "is_pure": purity_reason_dict}, attrs=attrs
+        )
+    # So here I have "is_pure" key with the purity_reason_dict as the value, this is the
+    # whole dictionary with the corresponding data as to why the alert passed or did not.
+    # Was not sure if you just wanted the true or false, but figured that was also in
+    # the dictionary.
 
     # # store results to BigQuery, regardless of whether it passes the filter
     purity_dict = {
         **attrs,  # objectId and sourceId
         'classifier': 'is_pure',
-        'predicted_class': int(alert_is_pure), ## Why do we turn the bool alert_is_pure to an int?
-    } # Need some clarification on what this is doing
+        'predicted_class': int(alert_is_pure), 
+    }
     
     errors = gcp_utils.insert_rows_bigquery(bq_table, [purity_dict])
     if len(errors) > 0:

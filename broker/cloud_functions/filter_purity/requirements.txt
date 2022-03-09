@@ -1,7 +1,4 @@
 google-cloud-logging
 pgb-broker-utils
-pgb-broker-utils-data-utils
-pgb-broker-utils-gcp-utils
-pgb-broker-utils-schema-maps
 base64
 os
