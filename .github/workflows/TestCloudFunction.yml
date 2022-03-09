@@ -1,4 +1,4 @@
-name: Run Tests
+name: Test Cloud Functions
 
 on:
   workflow_dispatch:
@@ -17,9 +17,7 @@ jobs:
 
       - id: create-output-matrix
         name: Create list of microservices
-        run: |
-          array=($(ls -d broker/cloud_functions/*))
-          echo "::set-output name=service_list::$array"
+        run: echo "::set-output name=service_list::['a', 'b']"
 
     outputs:
       microservices: ${{ steps.create-output-matrix.outputs.service_list }}
@@ -31,10 +29,35 @@ jobs:
 
     strategy:
       matrix:
-        service: ${{ fromJson(needs.find_services.outputs.microservices) }}
+        service_directory: ${{ fromJson(needs.find_services.outputs.microservices) }}
+
+    defaults:
+      run:
+        working-directory: ${{ matrix.service_directory }}
 
     steps:
       - uses: actions/checkout@v2
-        name: Checkout repositotory
-      - run: ls -dm broker/cloud_functions/*
-      - run: echo ${{ matrix.service }}
+        name: Checkout repository
+
+      - name: Install requirements
+        run: pip install -r requirements.txt
+
+      - name: Install coverage tool
+        run: pip install coverage
+
+      - name: Run tests with coverage
+        run: |
+          coverage run -m unittest
+          coverage xml -o report_${{ matrix.python }}.xml
+          coverage report
+
+      - name: Archive coverage results
+        uses: actions/upload-artifact@v3
+        with:
+          path: report_${{ matrix.python }}.xml
+
+      # Report test coverage to codacy for the current set of tests
+      - name: Report partial coverage results
+        run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report --partial -l Python -r report_${{ matrix.python-version }}.xml
+        env:
+          CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
