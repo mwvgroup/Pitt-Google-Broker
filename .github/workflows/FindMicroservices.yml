@@ -27,4 +27,4 @@ jobs:
         name: Create list of microservices
         run: |
           testvar="['a','b']"
-          "echo "::set-output name=service_list::$testvar"
+          echo "::set-output name=service_list::$testvar"
