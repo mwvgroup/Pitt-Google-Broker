@@ -3,7 +3,7 @@ name: Reusable workflow example
 on:
   workflow_call:
     inputs:
-      username:
+      parent_directory:
         required: true
         type: string
 

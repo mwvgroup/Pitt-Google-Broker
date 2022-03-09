@@ -10,6 +10,8 @@ on:
 jobs:
   find_services:
     uses: ./.github/workflows/FindMicroservices.yml
+    with:
+      parent_directory: "broker/cloud_functions"
 
   run_tests: # Run the tests for each service
     name: Execute Test Suite
