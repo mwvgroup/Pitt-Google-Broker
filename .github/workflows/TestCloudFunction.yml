@@ -9,6 +9,7 @@ on:
 
 jobs:
   find_services:
+    name: Discover Microservices
     uses: ./.github/workflows/FindMicroservices.yml
     with:
       parent_directory: "broker/cloud_functions"

@@ -7,6 +7,11 @@ on:
         required: true
         type: string
 
+    outputs:
+      microservices:
+        description: "An array of subdirectories representing microservices."
+        value: ${{ jobs.find_services.outputs.microservices }}
+
 jobs:
   find_services: # Identify any microservices that have an associated test suite
     name: Discover Microservices
