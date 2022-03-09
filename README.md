@@ -2,6 +2,12 @@
 [![Build Status](https://travis-ci.com/mwvgroup/Pitt-Google-Broker.svg?branch=master)](https://travis-ci.com/mwvgroup/Pitt-Google-Broker)
 [![Documentation Status](https://readthedocs.org/projects/pitt-broker/badge/?version=latest)](https://pitt-broker.readthedocs.io/en/latest/?badge=latest)
 
+---
+
+:warning: The current, production broker is in the [`develop`](https://github.com/mwvgroup/Pitt-Google-Broker/tree/develop) branch. (See also: `develop` branch [docs](https://pitt-broker.readthedocs.io/en/develop/).)
+
+---
+
 # Pitt-Google Alert Broker
 
 The Pitt-Google broker is an astronomical alert broker that is being developed for large scale surveys of the night sky, particularly the upcoming [Vera Rubin Observatory's Legacy Survey of Space and Time](https://www.lsst.org/) (LSST).
