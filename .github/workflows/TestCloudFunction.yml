@@ -28,4 +28,4 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - run: echo ${{ fromJson(needs.find_services.outputs.service_list) }}
+      - run: echo ${{ needs.find_services.outputs.service_list }}
