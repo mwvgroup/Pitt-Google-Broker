@@ -26,23 +26,12 @@ jobs:
       - id: create-output-matrix
         name: Create list of microservices
         run: |
+          DIRS=$(
+            echo -n '['
+            for DIR in $(ls -d ./* | sed -e 's/"/\\"/g'); do
+              echo -n \"${DIR}\",
+            done
+            echo -en \\b']'
+          )
           
-          testvar="['a','b']"
-          echo $testvar
-          echo "::set-output name=service_list::$subdirectories"
-
-
-      - name: This Step is Under Development
-        run: |
-          
-          subdirectories=$(
-              echo -n '['
-              for DIR in $(ls ./* -d | sed -e 's/"/\\"/g'); do
-                echo -n \"${DIR}\",
-              done
-              echo -en \\b']'
-          
-            )
-          
-
-          echo $subdirectories
+          echo "::set-output name=service_list::DIRS"
