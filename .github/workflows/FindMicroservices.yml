@@ -1,0 +1,23 @@
+name: Reusable workflow example
+
+on:
+  workflow_call:
+    inputs:
+      username:
+        required: true
+        type: string
+
+jobs:
+  find_services: # Identify any microservices that have an associated test suite
+    name: Discover Microservices
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        name: Checkout repositotory
+
+      - id: create-output-matrix
+        name: Create list of microservices
+        run: echo "::set-output name=service_list::['a', 'b']"
+
+    outputs:
+      microservices: ${{ steps.create-output-matrix.outputs.service_list }}
