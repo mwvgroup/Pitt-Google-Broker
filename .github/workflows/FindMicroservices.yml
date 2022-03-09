@@ -35,4 +35,4 @@ jobs:
             done
             echo -en \\b']'
           )
-          echo "::set-output name=service_list::\"$DIRS\""
+          echo "::set-output name=service_list::$(ls|jq -cnR '[inputs | select(length>0)]')"\
