@@ -2,22 +2,22 @@ name: Run Tests
 
 on: 
   workflow_dispatch:
+  push:
+  pull_request:
+    branches: 
+      - '**:**'  # Only run for pull requests submitted from forks
 
 jobs:
-  find_services:  # Identify any microservices that have an associated test suite
-    name: Find Testable Services 
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        name: Checkout repositotory 
-        
-      - id: set-matrix
-        name: Create list of microservices
-        run: echo "::set-output name=service_list::['a', 'b']"
+  discover_services: # Identify any microservices that have an associated test suite
+    uses: ./.github/workflows/FindMicroservices.yml
+    with:
+      parent_directory: "broker/cloud_functions"
 
-    outputs:
-        service_list: ${{ steps.set-matrix.outputs.service_list }}
-    
+  build_images: # Build docker images
+    name: Build Images
+    needs: discover_services
+    runs-on: ubuntu-latest
+
   run_tests:  # Run the tests for each service
     name: Execute Test Suite
     needs: find_services
@@ -25,13 +25,13 @@ jobs:
 
     strategy:
       matrix:
-        container: ${{ fromJson(needs.find_services.outputs.service_list) }}
+        service_directory: ${{ fromJson(needs.find_services.outputs.microservices) }}
 
     container:
       image: ${{ matrix.container }}
 
     steps:
-      - name: Install test dependencies
+      - name: Install coverage tool
         run: |
           pip install coverage
 
