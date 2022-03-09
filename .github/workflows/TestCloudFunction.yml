@@ -17,7 +17,7 @@ jobs:
 
       - id: create-output-matrix
         name: Create list of microservices
-        run: echo "::set-output name=service_list::$(ls -dm broker/cloud_functions/*)"
+        run: echo "::set-output name=service_list::[$(ls -dm broker/cloud_functions/*)]"
 
     outputs:
       microservices: ${{ steps.create-output-matrix.outputs.service_list }}
