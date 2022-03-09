@@ -35,7 +35,7 @@ jobs:
       - name: This Step is Under Development
         run: |
           
-          subdirectoriesx=$(
+          subdirectories=$(
               echo -n '['
               for DIR in $(ls ./* -d | sed -e 's/"/\\"/g'); do
                 echo -n \"${DIR}\",
