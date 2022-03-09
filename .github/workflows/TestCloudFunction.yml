@@ -17,10 +17,13 @@ jobs:
 
       - id: create-output-matrix
         name: Create list of microservices
-        run: echo "::set-output name=service_list::$(ls -dm broker/cloud_functions/*)"
+        run: |
+          directories=$(ls -d broker/cloud_functions/*)
+          dir_with_quotes=$(for file in $files; do echo "\"$file\","; done)
+          echo "::set-output name=service_list::"[$dir_with_quotes]"
 
     outputs:
-      microservices: [${{ steps.create-output-matrix.outputs.service_list }}]
+      microservices: ${{ steps.create-output-matrix.outputs.service_list }}
 
   run_tests: # Run the tests for each service
     name: Execute Test Suite
