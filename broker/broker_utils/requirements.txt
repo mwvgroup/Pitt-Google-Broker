@@ -1,10 +1,15 @@
-apache-beam[gcp]==2.25.0
 astropy
 fastavro
-google-cloud-bigquery
+google-cloud-bigquery<2.10
+# apache-beam 2.25.0 requires pyarrow<0.18.0,>=0.15.1
+# but google-cloud-bigquery>=2.10.0 requires pyarrow>=3
+google-cloud-logging
 google-cloud-storage>=1.38
 google-cloud-pubsub<2  # beam requires <2
-numpy
+# older pyarrow versions require numpy<1.20 to successfully convert datatypes
+# gcp_utils needs this to load a pandas dataframe to bigquery
+# this is a numpy bug: https://github.com/numpy/numpy/issues/17913
+numpy==1.19.5
 pandas
 PyYAML>=5.3
 six>=1.15  # bigquery requires

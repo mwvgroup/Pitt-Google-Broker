@@ -1,0 +1,2306 @@
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/grpc_helpers.py", line 67, in error_remapped_callable
+    return callable_(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/grpc/_channel.py", line 946, in __call__
+    return _end_unary_response_blocking(state, call, False, None)
+  File "/usr/local/lib/python3.7/dist-packages/grpc/_channel.py", line 849, in _end_unary_response_blocking
+    raise _InactiveRpcError(state)
+grpc._channel._InactiveRpcError: <_InactiveRpcError of RPC that terminated with:
+	status = StatusCode.INVALID_ARGUMENT
+	details = "You have not specified an ack ID in the request."
+	debug_error_string = "{"created":"@1628421861.932001530","description":"Error received from peer ipv4:173.194.194.95:443","file":"src/core/lib/surface/call.cc","file_line":1070,"grpc_message":"You have not specified an ack ID in the request.","grpc_status":3}"
+>
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/consumer_sim/run-looper-indefinitely.py", line 18, in <module>
+    bcs.publish_stream(alert_rate, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/broker_utils/consumer_sim.py", line 75, in publish_stream
+    _do_publish_stream(instance, alerts_per_batch, Nbatches, publish_batch_every, sub_id, topic_id, nack, auto_confirm)
+  File "/usr/local/lib/python3.7/dist-packages/broker_utils/consumer_sim.py", line 105, in _do_publish_stream
+    _handle_acks(subscriber, sub_path, ack_ids, nack)
+  File "/usr/local/lib/python3.7/dist-packages/broker_utils/consumer_sim.py", line 174, in _handle_acks
+    subscriber.acknowledge(**request)
+  File "/usr/local/lib/python3.7/dist-packages/google/cloud/pubsub_v1/_gapic.py", line 40, in <lambda>
+    fx = lambda self, *a, **kw: wrapped_fx(self.api, *a, **kw)  # noqa
+  File "/usr/local/lib/python3.7/dist-packages/google/cloud/pubsub_v1/gapic/subscriber_client.py", line 1022, in acknowledge
+    request, retry=retry, timeout=timeout, metadata=metadata
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/gapic_v1/method.py", line 145, in __call__
+    return wrapped_func(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/retry.py", line 291, in retry_wrapped_func
+    on_error=on_error,
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/retry.py", line 189, in retry_target
+    return target()
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/timeout.py", line 214, in func_with_timeout
+    return func(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/grpc_helpers.py", line 69, in error_remapped_callable
+    six.raise_from(exceptions.from_grpc_error(exc), exc)
+  File "<string>", line 3, in raise_from
+google.api_core.exceptions.InvalidArgument: 400 You have not specified an ack ID in the request.
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/grpc_helpers.py", line 67, in error_remapped_callable
+    return callable_(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/grpc/_channel.py", line 946, in __call__
+    return _end_unary_response_blocking(state, call, False, None)
+  File "/usr/local/lib/python3.7/dist-packages/grpc/_channel.py", line 849, in _end_unary_response_blocking
+    raise _InactiveRpcError(state)
+grpc._channel._InactiveRpcError: <_InactiveRpcError of RPC that terminated with:
+	status = StatusCode.INVALID_ARGUMENT
+	details = "You have not specified an ack ID in the request."
+	debug_error_string = "{"created":"@1628684507.320084642","description":"Error received from peer ipv4:209.85.147.95:443","file":"src/core/lib/surface/call.cc","file_line":1070,"grpc_message":"You have not specified an ack ID in the request.","grpc_status":3}"
+>
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/consumer_sim/run-looper-indefinitely.py", line 18, in <module>
+    bcs.publish_stream(alert_rate, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/broker_utils/consumer_sim.py", line 75, in publish_stream
+    _do_publish_stream(instance, alerts_per_batch, Nbatches, publish_batch_every, sub_id, topic_id, nack, auto_confirm)
+  File "/usr/local/lib/python3.7/dist-packages/broker_utils/consumer_sim.py", line 105, in _do_publish_stream
+    _handle_acks(subscriber, sub_path, ack_ids, nack)
+  File "/usr/local/lib/python3.7/dist-packages/broker_utils/consumer_sim.py", line 174, in _handle_acks
+    subscriber.acknowledge(**request)
+  File "/usr/local/lib/python3.7/dist-packages/google/cloud/pubsub_v1/_gapic.py", line 40, in <lambda>
+    fx = lambda self, *a, **kw: wrapped_fx(self.api, *a, **kw)  # noqa
+  File "/usr/local/lib/python3.7/dist-packages/google/cloud/pubsub_v1/gapic/subscriber_client.py", line 1022, in acknowledge
+    request, retry=retry, timeout=timeout, metadata=metadata
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/gapic_v1/method.py", line 145, in __call__
+    return wrapped_func(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/retry.py", line 291, in retry_wrapped_func
+    on_error=on_error,
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/retry.py", line 189, in retry_target
+    return target()
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/timeout.py", line 214, in func_with_timeout
+    return func(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/grpc_helpers.py", line 69, in error_remapped_callable
+    six.raise_from(exceptions.from_grpc_error(exc), exc)
+  File "<string>", line 3, in raise_from
+google.api_core.exceptions.InvalidArgument: 400 You have not specified an ack ID in the request.
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/grpc_helpers.py", line 67, in error_remapped_callable
+    return callable_(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/grpc/_channel.py", line 946, in __call__
+    return _end_unary_response_blocking(state, call, False, None)
+  File "/usr/local/lib/python3.7/dist-packages/grpc/_channel.py", line 849, in _end_unary_response_blocking
+    raise _InactiveRpcError(state)
+grpc._channel._InactiveRpcError: <_InactiveRpcError of RPC that terminated with:
+	status = StatusCode.INVALID_ARGUMENT
+	details = "You have not specified an ack ID in the request."
+	debug_error_string = "{"created":"@1628693534.470716095","description":"Error received from peer ipv4:172.253.114.95:443","file":"src/core/lib/surface/call.cc","file_line":1070,"grpc_message":"You have not specified an ack ID in the request.","grpc_status":3}"
+>
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/consumer_sim/run-looper-indefinitely.py", line 18, in <module>
+    bcs.publish_stream(alert_rate, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/broker_utils/consumer_sim.py", line 75, in publish_stream
+    _do_publish_stream(instance, alerts_per_batch, Nbatches, publish_batch_every, sub_id, topic_id, nack, auto_confirm)
+  File "/usr/local/lib/python3.7/dist-packages/broker_utils/consumer_sim.py", line 105, in _do_publish_stream
+    _handle_acks(subscriber, sub_path, ack_ids, nack)
+  File "/usr/local/lib/python3.7/dist-packages/broker_utils/consumer_sim.py", line 174, in _handle_acks
+    subscriber.acknowledge(**request)
+  File "/usr/local/lib/python3.7/dist-packages/google/cloud/pubsub_v1/_gapic.py", line 40, in <lambda>
+    fx = lambda self, *a, **kw: wrapped_fx(self.api, *a, **kw)  # noqa
+  File "/usr/local/lib/python3.7/dist-packages/google/cloud/pubsub_v1/gapic/subscriber_client.py", line 1022, in acknowledge
+    request, retry=retry, timeout=timeout, metadata=metadata
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/gapic_v1/method.py", line 145, in __call__
+    return wrapped_func(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/retry.py", line 291, in retry_wrapped_func
+    on_error=on_error,
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/retry.py", line 189, in retry_target
+    return target()
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/timeout.py", line 214, in func_with_timeout
+    return func(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/grpc_helpers.py", line 69, in error_remapped_callable
+    six.raise_from(exceptions.from_grpc_error(exc), exc)
+  File "<string>", line 3, in raise_from
+google.api_core.exceptions.InvalidArgument: 400 You have not specified an ack ID in the request.
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/grpc_helpers.py", line 67, in error_remapped_callable
+    return callable_(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/grpc/_channel.py", line 946, in __call__
+    return _end_unary_response_blocking(state, call, False, None)
+  File "/usr/local/lib/python3.7/dist-packages/grpc/_channel.py", line 849, in _end_unary_response_blocking
+    raise _InactiveRpcError(state)
+grpc._channel._InactiveRpcError: <_InactiveRpcError of RPC that terminated with:
+	status = StatusCode.INVALID_ARGUMENT
+	details = "You have not specified an ack ID in the request."
+	debug_error_string = "{"created":"@1628712189.050580133","description":"Error received from peer ipv4:142.250.148.95:443","file":"src/core/lib/surface/call.cc","file_line":1070,"grpc_message":"You have not specified an ack ID in the request.","grpc_status":3}"
+>
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/consumer_sim/run-looper-indefinitely.py", line 18, in <module>
+    bcs.publish_stream(alert_rate, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/broker_utils/consumer_sim.py", line 75, in publish_stream
+    _do_publish_stream(instance, alerts_per_batch, Nbatches, publish_batch_every, sub_id, topic_id, nack, auto_confirm)
+  File "/usr/local/lib/python3.7/dist-packages/broker_utils/consumer_sim.py", line 105, in _do_publish_stream
+    _handle_acks(subscriber, sub_path, ack_ids, nack)
+  File "/usr/local/lib/python3.7/dist-packages/broker_utils/consumer_sim.py", line 174, in _handle_acks
+    subscriber.acknowledge(**request)
+  File "/usr/local/lib/python3.7/dist-packages/google/cloud/pubsub_v1/_gapic.py", line 40, in <lambda>
+    fx = lambda self, *a, **kw: wrapped_fx(self.api, *a, **kw)  # noqa
+  File "/usr/local/lib/python3.7/dist-packages/google/cloud/pubsub_v1/gapic/subscriber_client.py", line 1022, in acknowledge
+    request, retry=retry, timeout=timeout, metadata=metadata
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/gapic_v1/method.py", line 145, in __call__
+    return wrapped_func(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/retry.py", line 291, in retry_wrapped_func
+    on_error=on_error,
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/retry.py", line 189, in retry_target
+    return target()
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/timeout.py", line 214, in func_with_timeout
+    return func(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/grpc_helpers.py", line 69, in error_remapped_callable
+    six.raise_from(exceptions.from_grpc_error(exc), exc)
+  File "<string>", line 3, in raise_from
+google.api_core.exceptions.InvalidArgument: 400 You have not specified an ack ID in the request.
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/grpc_helpers.py", line 67, in error_remapped_callable
+    return callable_(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/grpc/_channel.py", line 946, in __call__
+    return _end_unary_response_blocking(state, call, False, None)
+  File "/usr/local/lib/python3.7/dist-packages/grpc/_channel.py", line 849, in _end_unary_response_blocking
+    raise _InactiveRpcError(state)
+grpc._channel._InactiveRpcError: <_InactiveRpcError of RPC that terminated with:
+	status = StatusCode.INVALID_ARGUMENT
+	details = "You have not specified an ack ID in the request."
+	debug_error_string = "{"created":"@1629139825.270254787","description":"Error received from peer ipv4:142.250.125.95:443","file":"src/core/lib/surface/call.cc","file_line":1070,"grpc_message":"You have not specified an ack ID in the request.","grpc_status":3}"
+>
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/consumer_sim/run-looper-indefinitely.py", line 18, in <module>
+    bcs.publish_stream(alert_rate, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/broker_utils/consumer_sim.py", line 75, in publish_stream
+    _do_publish_stream(instance, alerts_per_batch, Nbatches, publish_batch_every, sub_id, topic_id, nack, auto_confirm)
+  File "/usr/local/lib/python3.7/dist-packages/broker_utils/consumer_sim.py", line 105, in _do_publish_stream
+    _handle_acks(subscriber, sub_path, ack_ids, nack)
+  File "/usr/local/lib/python3.7/dist-packages/broker_utils/consumer_sim.py", line 174, in _handle_acks
+    subscriber.acknowledge(**request)
+  File "/usr/local/lib/python3.7/dist-packages/google/cloud/pubsub_v1/_gapic.py", line 40, in <lambda>
+    fx = lambda self, *a, **kw: wrapped_fx(self.api, *a, **kw)  # noqa
+  File "/usr/local/lib/python3.7/dist-packages/google/cloud/pubsub_v1/gapic/subscriber_client.py", line 1022, in acknowledge
+    request, retry=retry, timeout=timeout, metadata=metadata
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/gapic_v1/method.py", line 145, in __call__
+    return wrapped_func(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/retry.py", line 291, in retry_wrapped_func
+    on_error=on_error,
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/retry.py", line 189, in retry_target
+    return target()
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/timeout.py", line 214, in func_with_timeout
+    return func(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/grpc_helpers.py", line 69, in error_remapped_callable
+    six.raise_from(exceptions.from_grpc_error(exc), exc)
+  File "<string>", line 3, in raise_from
+google.api_core.exceptions.InvalidArgument: 400 You have not specified an ack ID in the request.
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/grpc_helpers.py", line 67, in error_remapped_callable
+    return callable_(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/grpc/_channel.py", line 946, in __call__
+    return _end_unary_response_blocking(state, call, False, None)
+  File "/usr/local/lib/python3.7/dist-packages/grpc/_channel.py", line 849, in _end_unary_response_blocking
+    raise _InactiveRpcError(state)
+grpc._channel._InactiveRpcError: <_InactiveRpcError of RPC that terminated with:
+	status = StatusCode.DEADLINE_EXCEEDED
+	details = "Deadline Exceeded"
+	debug_error_string = "{"created":"@1632473911.852520161","description":"Error received from peer ipv4:209.85.145.95:443","file":"src/core/lib/surface/call.cc","file_line":1070,"grpc_message":"Deadline Exceeded","grpc_status":4}"
+>
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/consumer_sim/run-looper-indefinitely.py", line 18, in <module>
+    bcs.publish_stream(alert_rate, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/broker_utils/consumer_sim.py", line 75, in publish_stream
+    _do_publish_stream(instance, alerts_per_batch, Nbatches, publish_batch_every, sub_id, topic_id, nack, auto_confirm)
+  File "/usr/local/lib/python3.7/dist-packages/broker_utils/consumer_sim.py", line 98, in _do_publish_stream
+    response = subscriber.pull(**request)
+  File "/usr/local/lib/python3.7/dist-packages/google/cloud/pubsub_v1/_gapic.py", line 40, in <lambda>
+    fx = lambda self, *a, **kw: wrapped_fx(self.api, *a, **kw)  # noqa
+  File "/usr/local/lib/python3.7/dist-packages/google/cloud/pubsub_v1/gapic/subscriber_client.py", line 1111, in pull
+    request, retry=retry, timeout=timeout, metadata=metadata
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/gapic_v1/method.py", line 145, in __call__
+    return wrapped_func(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/retry.py", line 291, in retry_wrapped_func
+    on_error=on_error,
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/retry.py", line 189, in retry_target
+    return target()
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/timeout.py", line 214, in func_with_timeout
+    return func(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/grpc_helpers.py", line 69, in error_remapped_callable
+    six.raise_from(exceptions.from_grpc_error(exc), exc)
+  File "<string>", line 3, in raise_from
+google.api_core.exceptions.DeadlineExceeded: 504 Deadline Exceeded
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/grpc_helpers.py", line 67, in error_remapped_callable
+    return callable_(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/grpc/_channel.py", line 946, in __call__
+    return _end_unary_response_blocking(state, call, False, None)
+  File "/usr/local/lib/python3.7/dist-packages/grpc/_channel.py", line 849, in _end_unary_response_blocking
+    raise _InactiveRpcError(state)
+grpc._channel._InactiveRpcError: <_InactiveRpcError of RPC that terminated with:
+	status = StatusCode.DEADLINE_EXCEEDED
+	details = "Deadline Exceeded"
+	debug_error_string = "{"created":"@1632522338.685611102","description":"Error received from peer ipv4:74.125.70.95:443","file":"src/core/lib/surface/call.cc","file_line":1070,"grpc_message":"Deadline Exceeded","grpc_status":4}"
+>
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/consumer_sim/run-looper-indefinitely.py", line 18, in <module>
+    bcs.publish_stream(alert_rate, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/broker_utils/consumer_sim.py", line 75, in publish_stream
+    _do_publish_stream(instance, alerts_per_batch, Nbatches, publish_batch_every, sub_id, topic_id, nack, auto_confirm)
+  File "/usr/local/lib/python3.7/dist-packages/broker_utils/consumer_sim.py", line 98, in _do_publish_stream
+    response = subscriber.pull(**request)
+  File "/usr/local/lib/python3.7/dist-packages/google/cloud/pubsub_v1/_gapic.py", line 40, in <lambda>
+    fx = lambda self, *a, **kw: wrapped_fx(self.api, *a, **kw)  # noqa
+  File "/usr/local/lib/python3.7/dist-packages/google/cloud/pubsub_v1/gapic/subscriber_client.py", line 1111, in pull
+    request, retry=retry, timeout=timeout, metadata=metadata
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/gapic_v1/method.py", line 145, in __call__
+    return wrapped_func(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/retry.py", line 291, in retry_wrapped_func
+    on_error=on_error,
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/retry.py", line 189, in retry_target
+    return target()
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/timeout.py", line 214, in func_with_timeout
+    return func(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/grpc_helpers.py", line 69, in error_remapped_callable
+    six.raise_from(exceptions.from_grpc_error(exc), exc)
+  File "<string>", line 3, in raise_from
+google.api_core.exceptions.DeadlineExceeded: 504 Deadline Exceeded
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/grpc_helpers.py", line 67, in error_remapped_callable
+    return callable_(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/grpc/_channel.py", line 946, in __call__
+    return _end_unary_response_blocking(state, call, False, None)
+  File "/usr/local/lib/python3.7/dist-packages/grpc/_channel.py", line 849, in _end_unary_response_blocking
+    raise _InactiveRpcError(state)
+grpc._channel._InactiveRpcError: <_InactiveRpcError of RPC that terminated with:
+	status = StatusCode.DEADLINE_EXCEEDED
+	details = "Deadline Exceeded"
+	debug_error_string = "{"created":"@1632649368.240781988","description":"Error received from peer ipv4:108.177.121.95:443","file":"src/core/lib/surface/call.cc","file_line":1070,"grpc_message":"Deadline Exceeded","grpc_status":4}"
+>
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/consumer_sim/run-looper-indefinitely.py", line 18, in <module>
+    bcs.publish_stream(alert_rate, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/broker_utils/consumer_sim.py", line 75, in publish_stream
+    _do_publish_stream(instance, alerts_per_batch, Nbatches, publish_batch_every, sub_id, topic_id, nack, auto_confirm)
+  File "/usr/local/lib/python3.7/dist-packages/broker_utils/consumer_sim.py", line 105, in _do_publish_stream
+    _handle_acks(subscriber, sub_path, ack_ids, nack)
+  File "/usr/local/lib/python3.7/dist-packages/broker_utils/consumer_sim.py", line 174, in _handle_acks
+    subscriber.acknowledge(**request)
+  File "/usr/local/lib/python3.7/dist-packages/google/cloud/pubsub_v1/_gapic.py", line 40, in <lambda>
+    fx = lambda self, *a, **kw: wrapped_fx(self.api, *a, **kw)  # noqa
+  File "/usr/local/lib/python3.7/dist-packages/google/cloud/pubsub_v1/gapic/subscriber_client.py", line 1022, in acknowledge
+    request, retry=retry, timeout=timeout, metadata=metadata
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/gapic_v1/method.py", line 145, in __call__
+    return wrapped_func(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/retry.py", line 291, in retry_wrapped_func
+    on_error=on_error,
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/retry.py", line 189, in retry_target
+    return target()
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/timeout.py", line 214, in func_with_timeout
+    return func(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/grpc_helpers.py", line 69, in error_remapped_callable
+    six.raise_from(exceptions.from_grpc_error(exc), exc)
+  File "<string>", line 3, in raise_from
+google.api_core.exceptions.DeadlineExceeded: 504 Deadline Exceeded
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/grpc_helpers.py", line 67, in error_remapped_callable
+    return callable_(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/grpc/_channel.py", line 946, in __call__
+    return _end_unary_response_blocking(state, call, False, None)
+  File "/usr/local/lib/python3.7/dist-packages/grpc/_channel.py", line 849, in _end_unary_response_blocking
+    raise _InactiveRpcError(state)
+grpc._channel._InactiveRpcError: <_InactiveRpcError of RPC that terminated with:
+	status = StatusCode.DEADLINE_EXCEEDED
+	details = "Deadline Exceeded"
+	debug_error_string = "{"created":"@1632801753.935798913","description":"Error received from peer ipv4:74.125.69.95:443","file":"src/core/lib/surface/call.cc","file_line":1070,"grpc_message":"Deadline Exceeded","grpc_status":4}"
+>
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/consumer_sim/run-looper-indefinitely.py", line 18, in <module>
+    bcs.publish_stream(alert_rate, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/broker_utils/consumer_sim.py", line 75, in publish_stream
+    _do_publish_stream(instance, alerts_per_batch, Nbatches, publish_batch_every, sub_id, topic_id, nack, auto_confirm)
+  File "/usr/local/lib/python3.7/dist-packages/broker_utils/consumer_sim.py", line 105, in _do_publish_stream
+    _handle_acks(subscriber, sub_path, ack_ids, nack)
+  File "/usr/local/lib/python3.7/dist-packages/broker_utils/consumer_sim.py", line 174, in _handle_acks
+    subscriber.acknowledge(**request)
+  File "/usr/local/lib/python3.7/dist-packages/google/cloud/pubsub_v1/_gapic.py", line 40, in <lambda>
+    fx = lambda self, *a, **kw: wrapped_fx(self.api, *a, **kw)  # noqa
+  File "/usr/local/lib/python3.7/dist-packages/google/cloud/pubsub_v1/gapic/subscriber_client.py", line 1022, in acknowledge
+    request, retry=retry, timeout=timeout, metadata=metadata
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/gapic_v1/method.py", line 145, in __call__
+    return wrapped_func(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/retry.py", line 291, in retry_wrapped_func
+    on_error=on_error,
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/retry.py", line 189, in retry_target
+    return target()
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/timeout.py", line 214, in func_with_timeout
+    return func(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/grpc_helpers.py", line 69, in error_remapped_callable
+    six.raise_from(exceptions.from_grpc_error(exc), exc)
+  File "<string>", line 3, in raise_from
+google.api_core.exceptions.DeadlineExceeded: 504 Deadline Exceeded
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/grpc_helpers.py", line 67, in error_remapped_callable
+    return callable_(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/grpc/_channel.py", line 946, in __call__
+    return _end_unary_response_blocking(state, call, False, None)
+  File "/usr/local/lib/python3.7/dist-packages/grpc/_channel.py", line 849, in _end_unary_response_blocking
+    raise _InactiveRpcError(state)
+grpc._channel._InactiveRpcError: <_InactiveRpcError of RPC that terminated with:
+	status = StatusCode.DEADLINE_EXCEEDED
+	details = "Deadline Exceeded"
+	debug_error_string = "{"created":"@1632864649.087472629","description":"Error received from peer ipv4:74.125.124.95:443","file":"src/core/lib/surface/call.cc","file_line":1070,"grpc_message":"Deadline Exceeded","grpc_status":4}"
+>
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/consumer_sim/run-looper-indefinitely.py", line 18, in <module>
+    bcs.publish_stream(alert_rate, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/broker_utils/consumer_sim.py", line 75, in publish_stream
+    _do_publish_stream(instance, alerts_per_batch, Nbatches, publish_batch_every, sub_id, topic_id, nack, auto_confirm)
+  File "/usr/local/lib/python3.7/dist-packages/broker_utils/consumer_sim.py", line 98, in _do_publish_stream
+    response = subscriber.pull(**request)
+  File "/usr/local/lib/python3.7/dist-packages/google/cloud/pubsub_v1/_gapic.py", line 40, in <lambda>
+    fx = lambda self, *a, **kw: wrapped_fx(self.api, *a, **kw)  # noqa
+  File "/usr/local/lib/python3.7/dist-packages/google/cloud/pubsub_v1/gapic/subscriber_client.py", line 1111, in pull
+    request, retry=retry, timeout=timeout, metadata=metadata
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/gapic_v1/method.py", line 145, in __call__
+    return wrapped_func(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/retry.py", line 291, in retry_wrapped_func
+    on_error=on_error,
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/retry.py", line 189, in retry_target
+    return target()
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/timeout.py", line 214, in func_with_timeout
+    return func(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/grpc_helpers.py", line 69, in error_remapped_callable
+    six.raise_from(exceptions.from_grpc_error(exc), exc)
+  File "<string>", line 3, in raise_from
+google.api_core.exceptions.DeadlineExceeded: 504 Deadline Exceeded
+
+Received desired alert_rate=(60, 'perMin'), runtime=(1, 'night').
+
+Publishing:
+	36000 batches
+	each with 1 alerts
+	at a rate of 1 batch per 1 sec (plus processing time)
+	for a total of 36000 alerts
+
+This will
+	Pull from subscription: projects/ardent-cycling-243415/subscriptions/ztf-alerts-reservoir
+and
+	Publish to topic: projects/ardent-cycling-243415/topics/ztf-loop
+
+
+Publishing...
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/grpc_helpers.py", line 67, in error_remapped_callable
+    return callable_(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/grpc/_channel.py", line 946, in __call__
+    return _end_unary_response_blocking(state, call, False, None)
+  File "/usr/local/lib/python3.7/dist-packages/grpc/_channel.py", line 849, in _end_unary_response_blocking
+    raise _InactiveRpcError(state)
+grpc._channel._InactiveRpcError: <_InactiveRpcError of RPC that terminated with:
+	status = StatusCode.DEADLINE_EXCEEDED
+	details = "Deadline Exceeded"
+	debug_error_string = "{"created":"@1632884057.589231451","description":"Error received from peer ipv4:209.85.147.95:443","file":"src/core/lib/surface/call.cc","file_line":1070,"grpc_message":"Deadline Exceeded","grpc_status":4}"
+>
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/consumer_sim/run-looper-indefinitely.py", line 18, in <module>
+    bcs.publish_stream(alert_rate, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/broker_utils/consumer_sim.py", line 75, in publish_stream
+    _do_publish_stream(instance, alerts_per_batch, Nbatches, publish_batch_every, sub_id, topic_id, nack, auto_confirm)
+  File "/usr/local/lib/python3.7/dist-packages/broker_utils/consumer_sim.py", line 105, in _do_publish_stream
+    _handle_acks(subscriber, sub_path, ack_ids, nack)
+  File "/usr/local/lib/python3.7/dist-packages/broker_utils/consumer_sim.py", line 174, in _handle_acks
+    subscriber.acknowledge(**request)
+  File "/usr/local/lib/python3.7/dist-packages/google/cloud/pubsub_v1/_gapic.py", line 40, in <lambda>
+    fx = lambda self, *a, **kw: wrapped_fx(self.api, *a, **kw)  # noqa
+  File "/usr/local/lib/python3.7/dist-packages/google/cloud/pubsub_v1/gapic/subscriber_client.py", line 1022, in acknowledge
+    request, retry=retry, timeout=timeout, metadata=metadata
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/gapic_v1/method.py", line 145, in __call__
+    return wrapped_func(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/retry.py", line 291, in retry_wrapped_func
+    on_error=on_error,
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/retry.py", line 189, in retry_target
+    return target()
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/timeout.py", line 214, in func_with_timeout
+    return func(*args, **kwargs)
+  File "/usr/local/lib/python3.7/dist-packages/google/api_core/grpc_helpers.py", line 69, in error_remapped_callable
+    six.raise_from(exceptions.from_grpc_error(exc), exc)
+  File "<string>", line 3, in raise_from
+google.api_core.exceptions.DeadlineExceeded: 504 Deadline Exceeded

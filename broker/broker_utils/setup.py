@@ -18,9 +18,9 @@ Public License for more details.
 You should have received a copy of the GNU General Public License
 along with pgb_broker_utils.  If not, see <http://www.gnu.org/licenses/>."""
 
-from setuptools import setup, find_packages
 import pathlib
 
+from setuptools import find_packages, setup
 
 here = pathlib.Path(__file__).parent.resolve()
 # Get the long description from the README file
@@ -30,8 +30,8 @@ with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
 setup(
-    name='pgb_broker_utils',  # Required
-    version='0.2.10',  # Required
+    name='pgb_broker_utils',
+    version='0.2.25',
     description='Tools used by the Pitt-Google astronomical alert broker.',
     long_description=long_description,
     long_description_content_type='text/markdown',
