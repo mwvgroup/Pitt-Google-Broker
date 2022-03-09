@@ -25,4 +25,6 @@ jobs:
 
       - id: create-output-matrix
         name: Create list of microservices
-        run: echo "::set-output name=service_list::['a', 'b']"
+        run: |
+          testvar="['a','b']"
+          "echo "::set-output name=service_list::$testvar"

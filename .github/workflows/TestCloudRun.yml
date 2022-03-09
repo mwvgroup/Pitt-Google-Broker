@@ -11,7 +11,7 @@ jobs:
   discover_services: # Identify any microservices that have an associated test suite
     uses: ./.github/workflows/FindMicroservices.yml
     with:
-      parent_directory: "broker/cloud_functions"
+      parent_directory: "broker/cloud_run"
 
   build_images: # Build docker images
     name: Build Images
