@@ -23,7 +23,7 @@ jobs:
 
   run_tests:  # Run the tests for each service
     name: Execute Test Suite
-    needs: find_services
+    needs: discover_services
     runs-on: ubuntu-latest
 
     strategy:
