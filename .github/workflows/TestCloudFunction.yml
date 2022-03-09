@@ -32,7 +32,13 @@ jobs:
         name: Checkout repository
 
       - name: Install requirements
-        run: pip install -r requirements.txt
+        run: |
+          if [ -f "requirements.txt" ]; 
+          then
+            pip install -r requirements.txt
+          else:
+            echo "File is not exist"
+          fi
 
       - name: Install coverage tool
         run: pip install coverage
