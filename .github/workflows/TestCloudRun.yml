@@ -28,7 +28,7 @@ jobs:
 
     strategy:
       matrix:
-        service_directory: ${{ fromJson(needs.find_services.outputs.microservices) }}
+        service_directory: ${{ fromJson(needs.discover_services.outputs.microservices) }}
 
     container:
       image: ${{ matrix.container }}
