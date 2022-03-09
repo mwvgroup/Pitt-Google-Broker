@@ -28,6 +28,11 @@ jobs:
         run: |
           
           testvar="['a','b']"
+          
+          for DIR in $(ls -d ./*); do
+              echo -n \"${DIR}\",
+            done
+          
           DIRS=$(
             echo -n '['
             for DIR in $(ls -d ./*); do
@@ -36,4 +41,4 @@ jobs:
             echo -en \\b']'
           )
           
-          echo "::set-output name=microservices::\"$DIRS\""
+          echo "::set-output name=microservices::$testvar"
