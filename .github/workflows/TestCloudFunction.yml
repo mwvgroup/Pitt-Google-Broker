@@ -17,7 +17,7 @@ jobs:
 
       - id: create-output-matrix
         name: Create list of microservices
-        run: echo "::set-output name=service_list::$(echo broker/cloud_functions/*)"
+        run: echo "::set-output name=service_list::$(ls -dm broker/cloud_functions/*)"
 
     outputs:
       microservices: ${{ steps.create-output-matrix.outputs.service_list }}
@@ -28,4 +28,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@v2
+        name: Checkout repositotory
+      - run: ls -dm broker/cloud_functions/*
       - run: echo ${{ needs.find_services.outputs.service_list }}
