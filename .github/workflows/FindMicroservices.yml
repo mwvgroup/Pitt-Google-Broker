@@ -27,13 +27,16 @@ jobs:
         name: Create list of microservices
         run: |
           
+          testvar="['a','b']"
           subdirectoriesx=$(
               echo -n '['
               for FILE in $(ls ${{ inputs.parent_directory }}/* -d | sed -e 's/"/\\"/g'); do
                 echo -n \"${FILE}\",
               done
               echo -en \\b']'
+          
             )
           
+          echo $testvar
           echo $subdirectories
-          echo "::set-output name=service_list:$subdirectories"
+          echo "::set-output name=service_list::$testvar"
