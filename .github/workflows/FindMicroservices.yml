@@ -26,7 +26,8 @@ jobs:
       - id: create-output-matrix
         name: Create list of microservices
         run: |
-          test_var = ["a", "b"]
+          
+          testvar="['a','b']"
           DIRS=$(
             echo -n '['
             for DIR in $(ls -d ./*); do
@@ -35,4 +36,4 @@ jobs:
             echo -en \\b']'
           )
           
-          echo "::set-output name=microservices::$test_var"
+          echo "::set-output name=microservices::\"DIRS\""
