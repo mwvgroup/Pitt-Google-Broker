@@ -17,7 +17,7 @@ jobs:
     name: Discover Microservices
     runs-on: ubuntu-latest
     outputs:
-      microservices: ${{ steps.create-output-matrix.outputs.service_list }}
+      microservices: ${{ steps.create-output-matrix.outputs.microservices }}
 
     steps:
       - uses: actions/checkout@v2
@@ -26,10 +26,12 @@ jobs:
       - id: create-output-matrix
         name: Create list of microservices
         run: |
-          echo "::set-output name=service_list::$(
+          DIRS=$(
             echo -n '['
             for DIR in $(ls -d ./* | sed -e 's/"/\\"/g'); do
               echo -n \"${DIR}\",
             done
             echo -en \\b']'
-          )"
+          )
+          
+          echo "::set-output name=microservices::$DIRS"
