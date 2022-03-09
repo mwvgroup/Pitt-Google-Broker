@@ -26,5 +26,9 @@ jobs:
       - id: create-output-matrix
         name: Create list of microservices
         run: |
+          
+          subdirectories=$(ls -dm ${{ inputs.parent_directory }}/*)
+          echo $subdirectories
+          
           testvar="['a','b']"
           echo "::set-output name=service_list::$testvar"
