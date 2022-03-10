@@ -41,8 +41,11 @@ jobs:
         with:
           python-version: 3.7
 
-      - name: Update Python environment
+      - name: Install package requirements
         run: pip install -r ../requirements.txt
+
+      - name: Install testing requirements
+        run: pip install coverage
 
       - name: Run tests with coverage
         run: |
