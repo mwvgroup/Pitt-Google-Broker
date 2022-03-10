@@ -11,11 +11,11 @@ on:
     outputs:
       microservices:
         description: "An array of subdirectories representing microservices."
-        value: ${{ jobs.discover_services.outputs.microservices }}
+        value: ${{ jobs.discover_tests.outputs.microservices }}
 
 jobs:
-  discover_services: # Identify any microservices that have an associated test suite
-    name: Discover Microservices
+  discover_tests: # Identify any microservices that have an associated test suite
+    name: Discover Tests
     runs-on: ubuntu-latest
 
     outputs:

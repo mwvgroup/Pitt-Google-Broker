@@ -8,18 +8,17 @@ on:
       - '**:**'  # Only run for pull requests submitted from forks
 
 jobs:
-  discover_services: # Identify any microservices that have an associated test suite
-    name: Discover Microservices
-    uses: ./.github/workflows/FindMicroservices.yml
+  discover_tests: # Identify any microservices that have an associated test suite
+    uses: ./.github/workflows/DiscoverTests.yml
 
   run_tests: # Run the tests for each service
     name: Test Service
-    needs: discover_services
+    needs: discover_tests
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        service_directory: ${{ fromJson(needs.discover_services.outputs.microservices) }}
+        service_directory: ${{ fromJson(needs.discover_tests.outputs.microservices) }}
 
     defaults:
       run:
