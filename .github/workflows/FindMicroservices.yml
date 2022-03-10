@@ -3,7 +3,7 @@ name: Reusable workflow example
 on:
   workflow_call:
     inputs:
-      parent_directory:
+      discovery_pattern:
         required: false
         default: broker/*/*/tests/
         type: string
