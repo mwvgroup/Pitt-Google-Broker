@@ -14,7 +14,7 @@
   {
     "description": "Classifier name",
     "mode": "NULLABLE",
-    "name": "classifer",
+    "name": "classifier",
     "type": "STRING"
   },
   {
