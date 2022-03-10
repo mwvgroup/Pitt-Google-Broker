@@ -51,7 +51,7 @@ jobs:
         run: |
           coverage run -m unittest
           
-          service_name=$(basename -- $(dirname(${{ matrix.test_dir }})))
+          service_name=$(basename -- $(dirname ${{ matrix.test_dir }}))
           coverage xml -o report_${{ matrix.python-version }}.xml
           coverage report
 
