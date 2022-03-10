@@ -68,19 +68,14 @@ def is_pure(alert, schema_map):
         magdiff = (abs(source['magdiff']) <= 0.1)  # aperture - psf [mag]
         is_pure = (rb and nbad and fwhm and elong and magdiff)
 
-    # Update this function so that it returns a dictionary with 6 key / value pairs: 
-    #   1 for the final result (is_pure) and one for each of the 5 cuts (rb, nbad, etc.)
-    # We want to save all of these results so that later we can look back and know 
-    #  exactly why an alert did / didn't pass this filter.
 
-    # Make sure you update the run() function to accommodate the new output.
 
     purity_reason_dict = {
         'is_pure': is_pure,
         'rb': rb,
         'nbad': nbad,
         'fwhm': fwhm,
-        'elong': elong
+        'elong': elong,
         'magdiff': magdiff,
     }
 
@@ -128,10 +123,7 @@ def run(msg: dict, context) -> None:
     gcp_utils.publish_pubsub(
             ps_topic, {"alert": alert_dict, "is_pure": purity_reason_dict}, attrs=attrs
         )
-    # So here I have "is_pure" key with the purity_reason_dict as the value, this is the
-    # whole dictionary with the corresponding data as to why the alert passed or did not.
-    # Was not sure if you just wanted the true or false, but figured that was also in
-    # the dictionary.
+ 
 
     # # store results to BigQuery, regardless of whether it passes the filter
     purity_dict = {
