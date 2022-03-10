@@ -1,0 +1,72 @@
+name: Reusable workflow example
+
+on:
+  push:
+
+jobs:
+  discover_tests: # Identify any microservices that have an associated test suite
+    name: Discover Tests
+    runs-on: ubuntu-latest
+
+    outputs:
+      microservices: ${{ steps.create-output-matrix.outputs.service_list }}
+
+    steps:
+      - uses: actions/checkout@v2
+        name: Checkout repositotory
+
+      - id: create-output-matrix
+        name: Create list of microservices
+        run: echo "::set-output name=service_list::$(ls -d broker/*/*/tests/ | jq -cnR '[inputs | select(length>0)]')"
+
+  run_tests: # Run the tests for each service
+    name: Evaluate Tests
+    needs: [discover_tests, discover_dockerfiles]
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        test_dir: ${{ fromJson(needs.discover_tests.outputs.microservices) }}
+
+    defaults:
+      run:
+        working-directory: ${{ matrix.test_dir }}
+
+    steps:
+      - uses: actions/checkout@v2
+        name: Checkout repository
+
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+
+      - name: Update Python environment
+        run: pip install -r requirements.txt
+
+      - name: Run tests with coverage
+        run: |
+          coverage run -m unittest
+          
+          service_name=$(basename -- $(dirname(${{ matrix.test_dir }})))
+          coverage xml -o report_${{ matrix.python-version }}.xml
+          coverage report
+
+      # Report test coverage to codacy for the python version being tested
+      - name: Report partial coverage results
+        run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report --partial -l Python -r report_${{ matrix.python-version }}.xml
+        env:
+          CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+
+      codacy-coverage-reporter:
+        name: Report code coverage
+        runs-on: [ self-hosted ]
+        needs: python_tests
+        steps:
+
+          # Tell codacy we are done reporting test coverage
+          - name: Finish reporting coverage
+            run: bash <(curl -Ls https://coverage.codacy.com/get.sh) final
+            env:
+              CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+
