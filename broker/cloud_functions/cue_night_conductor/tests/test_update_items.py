@@ -1,6 +1,8 @@
+import sys
 from unittest import TestCase
 
-from ..main import get_update_items
+sys.path.append('..')
+from main import get_update_items
 
 
 class Test(Testcase):
