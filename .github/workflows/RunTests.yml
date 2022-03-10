@@ -25,6 +25,7 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
+      fail-fast: false
       matrix:
         test_dir: ${{ fromJson(needs.discover_tests.outputs.microservices) }}
 
