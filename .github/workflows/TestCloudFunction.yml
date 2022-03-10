@@ -22,7 +22,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: dirname(${{ matrix.service_directory }})
+        working-directory: ${{ matrix.service_directory }}
 
     steps:
       - uses: actions/checkout@v2
