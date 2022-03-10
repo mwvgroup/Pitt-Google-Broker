@@ -57,7 +57,7 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          path: report_*.xml
+          path: ./*.xml
 
       # Report test coverage for the current set of tests
       - name: Report partial coverage results
@@ -65,12 +65,12 @@ jobs:
         env:
           CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
 
+  # Tell codacy we are done reporting test coverage
   codacy-coverage-reporter:
     name: Report code coverage
     runs-on: [ self-hosted ]
     needs: run_tests
     steps:
-      # Tell codacy we are done reporting test coverage
       - name: Finish reporting coverage
         run: bash <(curl -Ls https://coverage.codacy.com/get.sh) final
         env:
