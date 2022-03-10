@@ -34,7 +34,7 @@ jobs:
           then
             pip install -r requirements.txt
           else:
-            echo "File is not exist"
+            echo "No requirements file found."
           fi
 
       - name: Install coverage tool
