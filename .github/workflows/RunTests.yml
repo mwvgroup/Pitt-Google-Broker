@@ -21,7 +21,7 @@ jobs:
 
   run_tests: # Run the tests for each service
     name: Evaluate Tests
-    needs: [discover_tests, discover_dockerfiles]
+    needs: discover_tests
     runs-on: ubuntu-latest
 
     strategy:
@@ -58,15 +58,14 @@ jobs:
         env:
           CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
 
-      codacy-coverage-reporter:
-        name: Report code coverage
-        runs-on: [ self-hosted ]
-        needs: python_tests
-        steps:
-
-          # Tell codacy we are done reporting test coverage
-          - name: Finish reporting coverage
-            run: bash <(curl -Ls https://coverage.codacy.com/get.sh) final
-            env:
-              CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+  codacy-coverage-reporter:
+    name: Report code coverage
+    runs-on: [ self-hosted ]
+    needs: run_tests
+    steps:
+      # Tell codacy we are done reporting test coverage
+      - name: Finish reporting coverage
+        run: bash <(curl -Ls https://coverage.codacy.com/get.sh) final
+        env:
+          CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
 
