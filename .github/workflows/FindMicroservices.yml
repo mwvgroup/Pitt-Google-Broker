@@ -27,9 +27,4 @@ jobs:
 
       - id: create-output-matrix
         name: Create list of microservices
-        run: |
-          pwd
-          echo "${{ inputs.discovery_pattern }}"
-          ls -d ${{ inputs.discovery_pattern }}
-          ls -d ${{ inputs.discovery_pattern }} | jq -cnR '[inputs | select(length>0)]'
-          echo "::set-output name=service_list::$(ls -d ${{ inputs.discovery_pattern }} | jq -cnR '[inputs | select(length>0)]')"
+        run: echo "::set-output name=service_list::$(ls -d ${{ inputs.discovery_pattern }} | jq -cnR '[inputs | select(length>0)]')"
