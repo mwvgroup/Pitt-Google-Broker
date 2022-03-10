@@ -1,4 +1,4 @@
-from unittest import Testcase
+from unittest import TestCase
 
 from ..main import get_update_items
 
