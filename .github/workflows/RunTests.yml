@@ -58,6 +58,7 @@ jobs:
           service_name=$(basename -- ${{ matrix.service_dir }})
           cache_key=${{ runner.os }}-$service_name-pip-${{ hashFiles('requirements.txt') }}
           
+          echo "::set-output name=dir::$cache_dir"
           echo "::set-output name=key::$cache_key"
 
       - name: Cache Python packages
