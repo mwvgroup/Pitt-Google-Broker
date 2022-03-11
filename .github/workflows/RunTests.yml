@@ -42,11 +42,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test_dir: ${{ fromJson(needs.discover_tests.outputs.microservices) }}
+        service_dir: ${{ fromJson(needs.discover_tests.outputs.microservices) }}
 
     defaults:
       run:
-        working-directory: ${{ matrix.test_dir }}
+        working-directory: ${{ matrix.service_dir }}
 
     steps:
       - uses: actions/checkout@v2
@@ -67,7 +67,7 @@ jobs:
         run: |
           coverage run -m unittest
           
-          service_name=$(basename -- $(dirname ${{ matrix.test_dir }}))
+          service_name=$(basename -- ${{ matrix.service_dir }})
           coverage xml -o report_${{ matrix.python-version }}.xml
           coverage report
 
