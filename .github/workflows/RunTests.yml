@@ -66,15 +66,6 @@ jobs:
         with:
           python-version: 3.7
 
-      - name: Cache Python packages
-        uses: 'actions/cache@v2'
-        with:
-          path: ${{ env.pythonLocation }}/lib/python3.7/site-packages/*
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-            ${{ runner.os }}-
-
       - name: Install package requirements
         run: pip install -r requirements.txt
 
