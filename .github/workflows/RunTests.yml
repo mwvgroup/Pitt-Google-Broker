@@ -37,10 +37,10 @@ jobs:
           
           # Convert function output into a JSON array parsable by GitHub Actions
           generic_services=$(find_testable_services false | jq -cnR '[inputs | select(length>0)]')
-          echo "::set-output name=generic_services::generic_services"
+          echo "::set-output name=generic_services::$generic_services"
           
           docker_services=$(find_testable_services true | jq -cnR '[inputs | select(length>0)]')
-          echo "::set-output name=docker_services::docker_services"
+          echo "::set-output name=docker_services::$docker_services"
 
   run_generic_tests:
     name: Test Generic Services
