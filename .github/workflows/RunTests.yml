@@ -14,11 +14,11 @@ jobs:
       docker_services: ${{ steps.find_services.outputs.docker_services }}
 
     steps:
-      - uses: actions/checkout@v2
-        name: Checkout repositotory
+      - name: Checkout repositotory
+        uses: actions/checkout@v2
 
-      - id: find_services
-        name: Find testable microservices
+      - name: Find testable microservices
+        id: find_services
         run: |
           # Find any microservices with a 'tests' directory
           # Pass (false)true to return (un)dockerized microservices
@@ -58,8 +58,8 @@ jobs:
         working-directory: ${{ matrix.service_dir }}
 
     steps:
-      - uses: actions/checkout@v2
-        name: Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
       - name: Set up Python 3.7
         uses: actions/setup-python@v1
@@ -80,7 +80,8 @@ jobs:
           coverage xml -o report_${{ matrix.python-version }}.xml
           coverage report
 
-      - uses: actions/upload-artifact@v3
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
         with:
           path: ./*.xml
 
