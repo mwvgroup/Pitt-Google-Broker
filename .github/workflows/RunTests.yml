@@ -111,7 +111,7 @@ jobs:
   codacy-coverage-reporter:
     name: Report code coverage
     runs-on: [ self-hosted ]
-    needs: run_tests
+    needs: run_generic_tests
     steps:
       - name: Finish reporting coverage
         run: bash <(curl -Ls https://coverage.codacy.com/get.sh) final
