@@ -9,15 +9,30 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-      microservices: ${{ steps.create-output-matrix.outputs.service_list }}
+      microservices: ${{ steps.find_services.outputs.service_list }}
 
     steps:
       - uses: actions/checkout@v2
         name: Checkout repositotory
 
-      - id: create-output-matrix
-        name: Create list of microservices
-        run: echo "::set-output name=service_list::$(ls -d broker/*/*/tests/ | jq -cnR '[inputs | select(length>0)]')"
+      - id: find_services
+        name: Find testable microservices
+        run: |
+          # Find any microservices with a 'tests' directory
+          function find_testable_services() {
+            for dir in broker/*/*/; do
+              if [ -d "$dir/tests" ]; then
+                echo $dir
+              fi
+            done
+          }
+          
+          # Convert function output into a JSON array parsable by GitHub Actions
+          service_list=$(find_testable_services | jq -cnR '[inputs | select(length>0)]')
+          echo "::set-output name=service_list::$service_list"
+
+      - id: find_docerized_tests
+        name: Find testable microservices
 
   run_tests: # Run the tests for each service
     name: Evaluate Tests
@@ -43,7 +58,7 @@ jobs:
           python-version: 3.7
 
       - name: Install package requirements
-        run: pip install -r ../requirements.txt
+        run: pip install -r requirements.txt
 
       - name: Install testing requirements
         run: pip install coverage
