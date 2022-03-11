@@ -10,7 +10,8 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-      microservices: ${{ steps.find_services.outputs.service_list }}
+      generic_services: ${{ steps.find_services.outputs.generic_services }}
+      docker_services: ${{ steps.find_services.outputs.docker_services }}
 
     steps:
       - uses: actions/checkout@v2
@@ -22,25 +23,34 @@ jobs:
           # Find any microservices with a 'tests' directory
           function find_testable_services() {
             for dir in broker/*/*/; do
-              if [ -d "$dir/tests" ]; then
+              if [ -f "$dir/Dockerfile" ]; then
+                is_dockerized=true
+              else
+                is_dockerized=false
+              fi
+          
+              if [ -d "$dir/tests" ] && [ $1 = $is_dockerized ]; then
                 echo $dir
               fi
             done
           }
           
           # Convert function output into a JSON array parsable by GitHub Actions
-          service_list=$(find_testable_services | jq -cnR '[inputs | select(length>0)]')
-          echo "::set-output name=service_list::$service_list"
+          generic_services=$(find_testable_services false | jq -cnR '[inputs | select(length>0)]')
+          echo "::set-output name=generic_services::generic_services"
+          
+          docker_services=$(find_testable_services true | jq -cnR '[inputs | select(length>0)]')
+          echo "::set-output name=docker_services::docker_services"
 
-  run_tests: # Run the tests for each service
-    name: Evaluate Tests
+  run_generic_tests:
+    name: Test Generic Services
     needs: discover_tests
     runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
       matrix:
-        service_dir: ${{ fromJson(needs.discover_tests.outputs.microservices) }}
+        service_dir: ${{ fromJson(needs.discover_tests.outputs.generic_services) }}
 
     defaults:
       run:
