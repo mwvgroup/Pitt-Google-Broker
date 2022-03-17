@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-from app import AutoSchema, AutoRestParser, AutoResource
+from main import AutoSchema, AutoRestParser, AutoResource
 
 SqlalchemyBase = declarative_base()
 engine = create_engine('sqlite:///test.db')
