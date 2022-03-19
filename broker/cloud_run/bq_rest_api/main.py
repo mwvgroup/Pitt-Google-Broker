@@ -1,13 +1,41 @@
-"""
-GCP REST API
-============
+"""A Flask based REST interface for querying data from Big Query.
 
-A REST interface for querying data from Big Query.
+This application exposes a RESTful endpoint for querying BigQuery data from a
+GCP project. The application will automatically map the schema of all tables
+in the project on launch.
 
-Big Query already provides its own
-`REST API <https://cloud.google.com/bigquery/docs/reference/rest/>`_,
-but the interface isn't flexible enough for our needs.
-This API provides a simpler, read-only interface for table data.
+.. note::
+   Big Query already provides its own
+   `REST API <https://cloud.google.com/bigquery/docs/reference/rest/>`_,
+   but the interface isn't flexible enough for our needs.
+   This API provides a simpler, read-only interface for table data.
+
+Environmental Variables
+-----------------------
+
+This application requires the following variables to be set in the working environment:
+
+.. warning::
+   Never set GOOGLE_APPLICATION_CREDENTIALS as an environment variable
+   on a Cloud Run service. Always configure a user-managed service account instead.
+
+.. list-table::
+   :widths: 25 20 55
+   :header-rows: 1
+
+   * - Env. Variable
+     - Default
+     - Description
+   * - MAX_ROWS
+     - 1,000,000
+     - The maximum number of rows to return in a given query
+   * - GOOGLE_CLOUD_PROJECT
+     -
+     - The name of the GCP project to query BigQuery data from
+   * - GOOGLE_APPLICATION_CREDENTIALS
+     -
+     - Path to credentials for accessing GCP data
+
 
 Source Documentation
 --------------------
