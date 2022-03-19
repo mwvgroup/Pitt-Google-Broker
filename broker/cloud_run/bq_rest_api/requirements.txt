@@ -3,6 +3,5 @@ flask-marshmallow
 Flask-RESTful
 gunicorn
 pyarrow
-python-dotenv
 SQLAlchemy
 sqlalchemy-bigquery
