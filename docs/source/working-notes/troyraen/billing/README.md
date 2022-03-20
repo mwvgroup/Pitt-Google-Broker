@@ -3,8 +3,8 @@
 - [x] [Export Cloud Billing data to BigQuery](https://cloud.google.com/billing/docs/how-to/export-data-bigquery)
 - [x] Pull some data and create figures
     - [ ] annotate figures with the date range the data comes from
-    - [ ] increase decimal precision for cost annotations showing zero. actual zeros have already been dropped
-    - [ ] specificy that "per million alerts" is the number of ZTF alerts entering our system
+    - [x] ~increase decimal precision for cost annotations showing zero. actual zeros have already been dropped~ drop costs below some threshhold
+    - [x] specificy that "per million alerts" is the number of ZTF alerts entering our system
     - [ ] rewrite `transforms._shorten_sku()` to use regex instead of trying to manually map every sku. there's too many.
     - [ ] move the compute engine PD storage to the mean cost per day figure
     - [ ] calculate storage cost per number of alerts in storage
@@ -84,6 +84,11 @@ import transforms
 
 billing_project_id = os.getenv('GOOGLE_CLOUD_PROJECT', 'light-cycle-328823')
 prod_project_id = os.getenv('GOOGLE_CLOUD_PROJECT2', 'ardent-cycling-243415')
+
+plt.rcParams.update({
+    "text.usetex": True,  # if True, use math mode ($$) and escape special chars
+    "font.size": 18,
+})
 ```
 
 ## Query tables or load dataframes from files
@@ -159,20 +164,22 @@ mylitebilldf = mylitebilldf.loc[indexes_to_keep]
 costdf_bydate = transforms.cost_by_sku(mylitebilldf.reset_index(), how='sum', bydate=True)
 
 # calculate cost per million
+cost_per_mil = 'cost_per_million_alerts_ingested'
 costdf_bydate.set_index('usage_date', inplace=True)
-costdf_bydate['cost_per_million_alerts'] = costdf_bydate.cost / countdf.loc[indexes_to_keep].num_alerts *1e6
+costdf_bydate[cost_per_mil] = costdf_bydate.cost / countdf.loc[indexes_to_keep].num_alerts *1e6
 
 # get average cost/million alerts
-costdf = transforms.cost_by_sku(costdf_bydate, cost='cost_per_million_alerts', how='mean')
+costdf = transforms.cost_by_sku(costdf_bydate, cost=cost_per_mil, how='mean')
 # keep only significant costs
-costdf = costdf.loc[costdf.cost_per_million_alerts>0]
+min_cost_per_mil = 0.10
+costdf = costdf.loc[costdf[cost_per_mil] > min_cost_per_mil]
 
-save = 'billing_per_sku_per_million_alerts.png'
-title = "Mean cost per million alerts"
-figures.plot_cost_by_sku(costdf, save=save, cost='cost_per_million_alerts', title=title)
+save = 'billing_per_sku_per_million_alerts_ingested.png'
+title = f"Mean cost per million alerts ingested under normal conditions (pipeline SKUs, >${min_cost_per_mil:.2f})"
+figures.plot_cost_by_sku(costdf, save=save, cost=cost_per_mil, title=title)
 ```
 
-<img src="billing_per_sku_per_million_alerts.png" alt="billing_per_sku_per_million_alerts.png"/>
+<img src="billing_per_sku_per_million_alerts_ingested.png" alt="billing_per_sku_per_million_alerts_ingested.png"/>
 
 ## Not live pipeline: Bar chart of average cost per sku per day, colored by service
 
@@ -183,10 +190,16 @@ mylitebilldf = litebilldf.loc[~litebill_ispipelinesku]
 # sum by sku and date, then take the mean
 costdf_bydate = transforms.cost_by_sku(mylitebilldf.reset_index(), how='sum', bydate=True)
 costdf = transforms.cost_by_sku(costdf_bydate, how='mean')
+cost_per_day = "cost_per_day"
+costdf[cost_per_day] = costdf["cost"]
+
+# keep only significant costs
+min_cost = 0.01
+costdf = costdf.loc[costdf[cost_per_day] > min_cost]
 
 save = 'billing_per_sku_per_day.png'
-title = "Mean cost per day"
-figures.plot_cost_by_sku(costdf, save=save, title=title)
+title = f"Mean cost per day (non-pipeline SKUs, >${min_cost:.2f})"
+figures.plot_cost_by_sku(costdf, cost=cost_per_day, save=save, title=title)
 ```
 
 <img src="billing_per_sku_per_day.png" alt="billing_per_sku_per_day.png"/>

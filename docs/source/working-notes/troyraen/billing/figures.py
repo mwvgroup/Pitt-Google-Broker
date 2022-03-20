@@ -4,6 +4,7 @@
 from matplotlib import cm
 from matplotlib import pyplot as plt
 from matplotlib.patches import Patch
+from matplotlib.ticker import FormatStrFormatter
 
 ALL_SERVICES = (
     'App Engine',
@@ -14,8 +15,8 @@ ALL_SERVICES = (
     'Cloud Logging',
     'Cloud Pub/Sub',
     'Cloud Run',
-    'Cloud SQL',
     'Cloud Scheduler',
+    'Cloud SQL',
     'Cloud Storage',
     'Compute Engine',
     'Invoice',
@@ -70,10 +71,12 @@ def plot_cost_by_sku(costdf, cost='cost', save=None, title=None):
     labels = round(costdf[cost], 2)  # height of each bar
     y_offset = 0.25  # put space between bar and text
     for i, label in enumerate(labels):
-        ax.text(i, label + y_offset, label, ha='center', rotation='horizontal')
+        ax.text(i, label + y_offset, f'${label:.2f}', ha='center', rotation='horizontal')
 
     plt.legend(handles=legend_elements)
-    plt.ylabel(f"{cost} (USD)")
+    plt.xlabel(" ")
+    plt.ylabel(f"{cost.replace('_', ' ')} (USD)")
+    ax.yaxis.set_major_formatter(FormatStrFormatter('$%.2f'))
     plt.title(title)
     plt.tight_layout()
 
