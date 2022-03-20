@@ -6,6 +6,19 @@ from matplotlib import pyplot as plt
 from matplotlib.patches import Patch
 from matplotlib.ticker import FormatStrFormatter
 
+
+def usetex(usetex):
+    """Set pyplot rcParams text.usetex. Controls whether plots are formatted using Tex.
+
+    If usetex is true, we must use math mode ($$) and escape special characters.
+    """
+    fontsize = 18 if usetex else 13
+    plt.rcParams.update({
+        "text.usetex": usetex,
+        "font.size": fontsize,
+    })
+
+
 ALL_SERVICES = (
     'App Engine',
     'BigQuery',
@@ -46,7 +59,7 @@ def _service_color(service):
     return ALL_SERVICE_COLORS[service]
 
 
-def plot_cost_by_sku(costdf, cost='cost', save=None, title=None):
+def plot_cost_by_sku(costdf, cost='cost', save=None, title=None, usetex=False):
     """Plot bar chart of cost vs short_sku, colored by service.
 
     Args:
@@ -56,6 +69,7 @@ def plot_cost_by_sku(costdf, cost='cost', save=None, title=None):
         cost (str):
             Name of the cost column to plot
     """
+    usetex = plt.rcParams["text.usetex"]
     # colors and legend
     colorby = 'service'
     colors = tuple(_service_color(service) for service in costdf[colorby])
@@ -71,12 +85,14 @@ def plot_cost_by_sku(costdf, cost='cost', save=None, title=None):
     labels = round(costdf[cost], 2)  # height of each bar
     y_offset = 0.25  # put space between bar and text
     for i, label in enumerate(labels):
-        ax.text(i, label + y_offset, f'${label:.2f}', ha='center', rotation='horizontal')
+        lbl = fr'\${label:.2f}' if usetex else f'${label:.2f}'
+        ax.text(i, label + y_offset, lbl, ha='center', rotation='horizontal')
 
     plt.legend(handles=legend_elements)
     plt.xlabel(" ")
     plt.ylabel(f"{cost.replace('_', ' ')} (USD)")
-    ax.yaxis.set_major_formatter(FormatStrFormatter('$%.2f'))
+    fmt = r'\$%.2f' if usetex else '$%.2f'
+    ax.yaxis.set_major_formatter(FormatStrFormatter(fmt))
     plt.title(title)
     plt.tight_layout()
 
@@ -84,3 +100,6 @@ def plot_cost_by_sku(costdf, cost='cost', save=None, title=None):
         plt.savefig(save)
     else:
         plt.show(block=False)
+
+
+def _format_daterange():

@@ -78,6 +78,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from broker_utils import gcp_utils
 
+from custom_classes import loaded_data
 import figures
 import queries
 import transforms
@@ -89,11 +90,15 @@ prod_project_id = os.getenv('GOOGLE_CLOUD_PROJECT2', 'ardent-cycling-243415')
 ## Query tables or load dataframes from files
 
 ```python
-# load billdf
+# load data from file
 f = 'billing_20211203.csv'  # all data in table as of 12/3/2021. big, so not pushing to git.
-billdf = pd.read_csv(f)
-billdf['usage_date'] = pd.to_datetime(billdf.usage_date, format='%Y-%m-%d').dt.date
-# ALTERNATELY, run a new query to load billdf
+ldata = queries.load_countdf_litebilldf_from_file(f)        # load data
+countdf, litebilldf, litebill_ispipelinesku = ldata         # unpack dataframes for convenience
+
+
+# ALTERNATELY, run new queries to load data:
+
+# query billing table
 lookback = 180
 query, job_config = queries.billing(lookback=lookback)
 billdf = gcp_utils.query_bigquery(
@@ -106,18 +111,14 @@ litebilldf = billdf.loc[:, lite_df_cols]
 # get indexes where the sku is a live pipeline sku
 litebill_ispipelinesku = (litebilldf.apply(transforms.is_pipeline_sku, axis=1))
 
-# load alert counts per day
-f = "alert_counts_20211203.csv"
-countdf1 = pd.read_csv(f)
-f = "alert_counts_fill_missing_20211203.csv"
-countdf2 = pd.read_csv(f, comment="#")
-countdf = pd.concat([countdf1, countdf2])
-countdf['publish_date'] = pd.to_datetime(countdf.publish_date, format='%Y-%m-%d').dt.date
-# ALTERNATELY, run a new query on the ztf metadata table
+# query the ztf metadata table for alert counts
 query, job_config = queries.count_metadata_by_date(lookback=lookback)
 countdf = gcp_utils.query_bigquery(
     query, job_config=job_config, project_id=billing_project_id
 ).to_dataframe()
+
+# created loaded_data object for convenience
+ldata = loaded_data(countdf, litebilldf, litebill_ispipelinesku)
 ```
 
 ## Look at countdf
