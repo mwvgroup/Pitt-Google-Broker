@@ -2,8 +2,28 @@
 # -*- coding: UTF-8 -*-
 """Transform billing data."""
 from collections import namedtuple
+import datetime
+import pandas as pd
 import re
 
+from custom_classes import loaded_data
+
+
+PROD_PROJECT_ID = "ardent-cycling-243415"
+
+SPECIAL_DATES = {
+    "testing": [
+        # Remove testing costs that significantly impact the mean
+        # AllWISE crossmatch queried BigQuery for every alert
+        datetime.date(2021, 9, 26),
+        datetime.date(2021, 9, 27),
+        datetime.date(2021, 9, 28),
+    ],
+    "lsst-like-rates": [
+        # On Sept 23, 2021 ZTF dumped alerts at LSST rates
+        datetime.date(2021, 9, 23),
+    ]
+}
 
 ServiceSkus = namedtuple('ServiceSkus', 'service skus')
 
@@ -116,3 +136,73 @@ def _shorten_sku(sku):
             'Egress to Jakarta',
     }
     return skumap.get(sku, sku)
+
+
+def calc_cost_per_million(
+    ldata: loaded_data,
+    cost_col='cost_per_million_alerts_ingested',
+    min_cost_per_mil=0.10,
+    clean=None,  # [str,] names of special dates to exclude from plot
+    show_dates=None,  # [datetime,] dates to plot. if Nonem, plot all
+) -> pd.DataFrame:
+    """calaculate mean cost per million alerts ingested."""
+    countdf, litebilldf, litebill_ispipelinesku = ldata
+
+    # keep rows where project and sku => live pipeline
+    mylite_df_indexes = (litebill_ispipelinesku) & (litebilldf["project_id"] == PROD_PROJECT_ID)
+    mylitebilldf = litebilldf.loc[mylite_df_indexes]
+
+    # restrict to specific dates, if given
+    if show_dates:
+        mylitebilldf = mylitebilldf.loc[mylitebilldf.usage_date.isin(show_dates)]
+
+    # remove dates where abnormal things happened affecting costs
+    if clean:
+        remove_dates = []
+        if "testing" in clean:
+            remove_dates += SPECIAL_DATES["testing"]
+        if "lsst-like-rates" in clean:
+            remove_dates += SPECIAL_DATES["lsst-like-rates"]
+        mylitebilldf = mylitebilldf.loc[~mylitebilldf.usage_date.isin(remove_dates)]
+
+    # keep only dates with num_alerts > 0
+    mylitebilldf = mylitebilldf.set_index('usage_date').sort_index()
+    commondates = set(mylitebilldf.index).intersection(set(countdf.index))
+    indexes_to_keep = countdf.loc[(countdf.num_alerts>0) & (countdf.index.isin(commondates))].index
+    mylitebilldf = mylitebilldf.loc[indexes_to_keep]
+
+    # sum by sku and date
+    costdf_bydate = cost_by_sku(mylitebilldf.reset_index(), how='sum', bydate=True)
+
+    # calculate cost per million
+    costdf_bydate.set_index('usage_date', inplace=True)
+    costdf_bydate[cost_col] = costdf_bydate.cost / countdf.loc[indexes_to_keep].num_alerts * 1e6
+
+    # get average cost/million alerts
+    costdf = cost_by_sku(costdf_bydate, cost=cost_col, how='mean')
+    # keep only significant costs
+    # min_cost_per_mil = 0.10  # passed as an argument
+    costdf = costdf.loc[costdf[cost_col] > min_cost_per_mil]
+
+    return costdf
+
+
+def calc_cost_per_day(
+    ldata: loaded_data,
+    cost_col='cost_per_day',
+    min_cost_per_day=0.01
+) -> pd.DataFrame:
+    """Calaculate mean cost per day."""
+    countdf, litebilldf, litebill_ispipelinesku = ldata
+    # keep rows where sku => ~(live pipeline)
+    mylitebilldf = litebilldf.loc[~litebill_ispipelinesku]
+
+    # sum by sku and date, then take the mean
+    costdf_bydate = cost_by_sku(mylitebilldf.reset_index(), how='sum', bydate=True)
+    costdf = cost_by_sku(costdf_bydate, how='mean')
+    costdf[cost_col] = costdf["cost"]
+
+    # keep only significant costs
+    costdf = costdf.loc[costdf[cost_col] > min_cost_per_day]
+
+    return costdf
