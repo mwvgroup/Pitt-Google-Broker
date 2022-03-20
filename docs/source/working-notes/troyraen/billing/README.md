@@ -14,7 +14,7 @@
 - Billing project:
     - Name: pitt-google-broker-billing
     - ID: light-cycle-328823
-- Billing account: 0102E2-E3A6BA-C2AFD5
+- Billing account ID: <obtain this from https://console.cloud.google.com/billing/projects>
 
 ## Setup: Set environment variables
 
@@ -84,11 +84,6 @@ import transforms
 
 billing_project_id = os.getenv('GOOGLE_CLOUD_PROJECT', 'light-cycle-328823')
 prod_project_id = os.getenv('GOOGLE_CLOUD_PROJECT2', 'ardent-cycling-243415')
-
-plt.rcParams.update({
-    "text.usetex": True,  # if True, use math mode ($$) and escape special chars
-    "font.size": 18,
-})
 ```
 
 ## Query tables or load dataframes from files
