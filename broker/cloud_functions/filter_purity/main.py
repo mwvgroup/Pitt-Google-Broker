@@ -31,17 +31,21 @@ ps_topic = f"{SURVEY}-alerts_pure" # This is the name of the Pub/Sub topic that 
                                    # module publishes to. (Publishes original alert
                                    # plus its own results. The next module downstream
                                    # in the pipeline will listen to this topic)
+
 if TESTID != "False":  # attach the testid to the names
     bq_dataset = f"{bq_dataset}_{TESTID}"
     ps_topic = f"{ps_topic}-{TESTID}"
 
+
 # Changed the name stub of the BigQuery table from SuperNNova to classifications
-bq_table = f"{bq_dataset}.classifications"
+class_table = f"{bq_dataset}.classifications" 
+
+purity_table = f"{bq_dataset}.purity"
 
 schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
 
 
-def is_pure(alert, schema_map):
+def is_pure(alert_dict, schema_map):
     """Adapted from: https://zwickytransientfacility.github.io/ztf-avro-alert/filtering.html
 
     Quoted from the source:
@@ -54,7 +58,7 @@ def is_pure(alert, schema_map):
     Based on tests done at IPAC (F. Masci, priv. comm), the following filter
     delivers a relatively pure sample.
     """
-    source = alert[schema_map['source']]
+    source = alert_dict[schema_map['source']]
 
     rb = (source['rb'] >= 0.65)  # RealBogus score
 
@@ -71,12 +75,12 @@ def is_pure(alert, schema_map):
 
 
     purity_reason_dict = {
-        'is_pure': is_pure,
-        'rb': rb,
-        'nbad': nbad,
-        'fwhm': fwhm,
-        'elong': elong,
-        'magdiff': magdiff,
+        'is_pure': int(is_pure),
+        'rb': int(rb),
+        'nbad': int(nbad),
+        'fwhm': int(fwhm),
+        'elong': int(elong),
+        'magdiff': int(magdiff),
     }
 
     return purity_reason_dict
@@ -112,30 +116,52 @@ def run(msg: dict, context) -> None:
         schema_map["sourceId"]: str(alert_dict[schema_map["sourceId"]]),
     } # this gets the custom attr for filtering
 
+
+    purity_reason_dict = is_pure(alert_dict, schema_map)
+
     # # run the alert through the filter.
     # alert_is_pure = <set to boolean. True if alert passes purity filter, else False> (gotten from dict)
     #
-    alert_is_pure = purity_reason_dict['is_pure']
+    alert_is_pure = purity_reason_dict['class']
 
     # # Publish to Pub/Sub:
     # gcp_utils.publish_pubsub(ps_topic, alert_dict, attrs=attrs)
     #
     gcp_utils.publish_pubsub(
-            ps_topic, {"alert": alert_dict, "is_pure": purity_reason_dict}, attrs=attrs
+            ps_topic, {"alert": alert_dict, "is_pure": purity_reason_dict}, attrs={**attrs, 'is_pure': alert_is_pure} # check to make sure 'is_pure' can be integer
         )
  
 
     # # store results to BigQuery, regardless of whether it passes the filter
-    purity_dict = {
-        **attrs,  # objectId and sourceId
-        'classifier': 'is_pure',
-        'predicted_class': int(alert_is_pure), 
+    class_dict = {
+        **attrs,  # objectId and sourceId (same thing as candId, but we call it a sourceId in our
+                  #  internal broker) [** is a splat, it takes the elements from attrs dict and unpacks
+                  #   it and passes it to the new dict constr, and passes it as individual elements]
+        'classifier': 'purity',
+        'classifier_version': 0.1,
+        'class': alert_is_pure,
     }
-    
-    errors = gcp_utils.insert_rows_bigquery(bq_table, [purity_dict])
+
+    errors = gcp_utils.insert_rows_bigquery(class_table, [class_dict])
     if len(errors) > 0:
         logger.log_text(f"BigQuery insert error: {errors}", severity="DEBUG")
 
+    # Creating a copy of purity_reason_dict
+    prd_copy = dict(purity_reason_dict) 
+
+    # Changing the name of first key from 'is_pure' to 'class'
+    prd_copy['class'] = prd_copy.pop('is_pure')
+    
+    # # store results to BigQuery, regardless of whether it passes the filter
+    purity_dict = {
+        **attrs,
+        'classifier_version': 0.1,
+        **prd_copy,     
+    }
+
+    errors = gcp_utils.insert_rows_bigquery(purity_table, [purity_dict])
+    if len(errors) > 0:
+        logger.log_text(f"BigQuery insert error: {errors}", severity="DEBUG")
 
 
     return
