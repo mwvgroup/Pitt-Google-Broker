@@ -19,10 +19,7 @@ Create a GCP Project
 
 .. note::
 
-	You do not need to complete this section if you are a new developer for Pitt-Google
-    broker. You will use our GCP projects; you do not need to create your own.
-	You will need to complete this in conjunction with a Pitt-Google manager so they
-	can give you appropriate permissions.
+	You do not need to complete this section if you are a new developer for Pitt-Google broker. You will use our GCP projects; you do not need to create your own. Skip to the Setup Local Environment section.
 
 1. Create a new Google Cloud Platform (GCP) project.
 
@@ -51,8 +48,13 @@ Setup Local Environment
 
 Broker instances *run* 100% in the Google Cloud, as determined by the
 code in the ``broker`` package. You can *develop* the code and/or
-*deploy* an instance to the Cloud from your local machine. Setup your
-environment as follows:
+*deploy* an instance to the Cloud from your local machine.
+
+.. note::
+
+	If you are a new developer for Pitt-Google, You will need to complete this in conjunction with a Pitt-Google manager so they can give you appropriate permissions.
+
+Setup your environment as follows:
 
 1. **Install Google Cloud SDK command-line tools** using one of the
    following options. Included tools: gcloud, gsutil, and

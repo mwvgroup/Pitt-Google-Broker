@@ -1,4 +1,4 @@
-Run a Broker Instance
+Initial Setup
 ========================
 
 .. toctree::
