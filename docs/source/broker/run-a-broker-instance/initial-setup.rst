@@ -17,6 +17,11 @@ project.
 Create a GCP Project
 --------------------
 
+.. note::
+
+	You do not need to complete this section if you are a new developer for Pitt-Google
+    broker. You will use our GCP projects; you do not need to create your own.
+
 1. Create a new Google Cloud Platform (GCP) project.
 
 -  A. Go to the `Cloud Resource
@@ -61,10 +66,11 @@ may be asked to re-authenticate occasionally in the future.
 
 .. code:: bash
 
-    PROJECT_ID=my-pgb-project  # replace with your GCP Project ID
+    # fill in the ID of the GCP project you created above (or Pitt-Google's project ID)
+    PROJECT_ID=<project_id>
 
-    gcloud auth login  # follow the instructions to login to GCP
-    gcloud config set project $PROJECT_ID  # set your project ID
+    gcloud auth login  # follow the instructions to login to GCP with a Google account
+    gcloud config set project $PROJECT_ID  # set gcloud to use this project by default
 
 2. **Install Python libraries** for `GCP
    services <https://cloud.google.com/python/docs/reference>`__ and
@@ -80,8 +86,8 @@ may be asked to re-authenticate occasionally in the future.
     conda create -n pgb python=3.7
     conda activate pgb
 
-    # install the requirements. assumes txt file is in current directory
-    pip3 install -r requirements.txt
+    # install the pgb-broker-utils library, which also installs several google.cloud libraries
+    pip3 install pgb-broker-utils
 
 **Note**: On an M1 Mac, first use Conda to install Astropy
 (``conda install astropy=3.2.1``), then comment the related line out of
@@ -94,35 +100,39 @@ the requirements file before doing ``pip install``.
 
 .. code:: bash
 
-    PROJECT_ID=my-pgb-project  # replace with your GCP Project ID
-    NAME=my-service-account  # replace with desired account name
-    KEY_PATH=local/path/GCP_auth_key.json  # replace with desired path (ending in .json)
+    # choose a service account name (e.g., your name) and fill it in
+    SA_NAME=<service-account-name>
+    # choose a local path to store your authentication file and fill it in (file name must end with .json)
+    KEY_PATH=<local/path/GCP_auth_key.json>
 
-    gcloud iam service-accounts create $NAME
-    gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:$NAME@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/owner"
-    gcloud iam service-accounts keys create $KEY_PATH --iam-account=$NAME@$PROJECT_ID.iam.gserviceaccount.com
+    # create the service account
+    gcloud iam service-accounts create $SA_NAME
+
+    # If this is a Pitt-Google project, send your service account name (SA_NAME)
+    # to a project manager to and as them to grant you a "developer" role on the project
+    # Otherwise, assign a role to your service account.
+    # This example below assigns a predifined role called "editor"
+    # gcloud projects add-iam-policy-binding "$GOOGLE_CLOUD_PROJECT" \
+    #     --member="serviceAccount:${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com" \
+    #     --role="role/editor"
+
+    # download the authentication file
+    gcloud iam service-accounts keys create $KEY_PATH --iam-account="${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 
 4. **Set environment variables**
 
 .. code:: bash
 
-    PROJECT_ID=my-pgb-project  # replace with your GCP Project ID
-    KEY_PATH=local/path/GCP_auth_key.json  # same path as in step 3
-
-
     export GOOGLE_CLOUD_PROJECT="$PROJECT_ID"
     export GOOGLE_APPLICATION_CREDENTIALS="$KEY_PATH"
     # export CLOUDSDK_COMPUTE_ZONE=
 
-If you are using a Conda environment, you can configure the environment
-variables as follows:
+If you are using a Conda environment, you can configure it to automatically set these environment
+variables when you activate the environment as follows:
 
 .. code:: bash
 
-    PROJECT_ID=my-pgb-project  # replace with your GCP Project ID
-    KEY_PATH=local/path/for/key/file.json  # same path as in step 3
-
-    # log into the environment and create de/activate files
+    # log into the environment and create activate and deactivate files
     conda activate pgb
     cd $CONDA_PREFIX
     mkdir -p ./etc/conda/activate.d
@@ -130,14 +140,18 @@ variables as follows:
     touch ./etc/conda/activate.d/env_vars.sh
     touch ./etc/conda/deactivate.d/env_vars.sh
 
-    # add environment variables
+    # add commands to automatically set these variables when the environment is activated
     echo "export GOOGLE_CLOUD_PROJECT='$PROJECT_ID'" >> ./etc/conda/activate.d/env_vars.sh
     echo "export GOOGLE_APPLICATION_CREDENTIALS='$KEY_PATH'" >> ./etc/conda/activate.d/env_vars.sh
+
+    # add commands to automatically unset these variables when the environment is deactivated
     echo 'unset GOOGLE_CLOUD_PROJECT' >> ./etc/conda/deactivate.d/env_vars.sh
     echo 'unset GOOGLE_APPLICATION_CREDENTIALS' >> ./etc/conda/deactivate.d/env_vars.sh
 
 5. **Check that your authentication works** by making an API request.
-   Here we request a list of Cloud Storage buckets (in Python):
+   The example below requests a list of Cloud Storage buckets (in Python):
+
+(This will not work until your service account is assigned to a role, per instructions in step 3)
 
 .. code:: python
 
