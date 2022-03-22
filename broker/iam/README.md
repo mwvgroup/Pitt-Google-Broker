@@ -25,7 +25,7 @@ We need to connect three things: resource(s), permission(s), and user(s).
 1. Create a Policy - this is a local file that defines a collection of bindings (bindings attach roles to members)
 1. Attach the Policy to the Project, or to a specific Resource - access will be restricted this restricts access to the resource according to the policy. Policies can be attached to projects, and therefore apply to all resources in the project.
 
-See:
+Helpful links:
 
 - [IAM overview](https://cloud.google.com/iam/docs/overview)
 - [IAM predefined roles reference](https://cloud.google.com/iam/docs/understanding-roles#predefined)
