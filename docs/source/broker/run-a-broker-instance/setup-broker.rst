@@ -13,7 +13,7 @@ Setup the Broker
 Prerequisites
 -------------
 
-First, complete the :doc:`initial-setup` to setup your
+First, complete the :ref:`docs/source/broker/initial-setup/initial-setup` to setup your
 Google Cloud project and install the SDKs. Make sure your environment
 variables are set:
 

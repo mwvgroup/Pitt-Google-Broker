@@ -144,7 +144,7 @@ client.close()
 ### Developer instructions<a name="developer-instructions"></a>
 
 Complete the instructions in the initial setup tutorial
-(docs/source/broker/run-a-broker-instance/initial-setup.rst).
+(docs/source/broker/initial-setup/initial-setup.rst).
 
 You will need to do this in conjunction with a Pitt-Google project manager so that they can grant you the necessary permissions.
 

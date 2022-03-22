@@ -21,6 +21,8 @@ Create a GCP Project
 
 	You do not need to complete this section if you are a new developer for Pitt-Google
     broker. You will use our GCP projects; you do not need to create your own.
+	You will need to complete this in conjunction with a Pitt-Google manager so they
+	can give you appropriate permissions.
 
 1. Create a new Google Cloud Platform (GCP) project.
 
