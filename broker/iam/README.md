@@ -154,6 +154,9 @@ You will need to provide the manager with both your Google account email address
 
 Make sure you've authenticated with the GCP project that the developer needs access to (see [Setup](#setup)).
 
+Note this needs to be done in conjunction with the developer's setup.
+The developer needs permissions (a role) bound to their Google account in order to create a service account, and the service account must exist before we can bind a role to it.
+
 Setup:
 
 ```bash
@@ -174,8 +177,6 @@ role="projects/${GOOGLE_CLOUD_PROJECT}/roles/${role_id}"
 ```
 
 Add two policy bindings; one for the user's Google account (e.g., Gmail address, used for console access, etc.) and one for the user's service account (used to make API calls).
-Note this needs to be done in conjunction with the developer's setup.
-The developer needs permissions (a role) bound to their Google account in order to create a service account, and the service account must exist before we can bind a role to it.
 
 ```bash
 gcloud projects add-iam-policy-binding "$GOOGLE_CLOUD_PROJECT" \
