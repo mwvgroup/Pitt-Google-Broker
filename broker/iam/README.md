@@ -91,6 +91,9 @@ def edit_role(name, project, title, description, permissions, stage):
 
 ## Policies<a name="policies"></a>
 
+We should set the project policy when the project is created.
+Afterwards, add or remove bindings to the policy individually (see onboarding section below for an example) rather than using the instructions in this section (which set the policy as a whole).
+
 ### Set the policy on the project<a name="set-the-policy-on-the-project"></a>
 
 This binds member-role pairs to every resource in the project. (See below to bind to a specific resource.)
@@ -99,9 +102,9 @@ We must download the current policy, update the file and use it to set a new pol
 Setting a policy overrides the current policy.
 
 ```bash
-# To Do:
-# for policy_yaml in policies:
-policy_yaml="policies/studev.yaml"
+policy_file="current_policy.yaml"
+gcloud projects get-iam-policy $GOOGLE_CLOUD_PROJECT >> $policy_yaml
+# update the bindings in the policy_file as needed, then set a new policy
 gcloud projects set-iam-policy $GOOGLE_CLOUD_PROJECT $policy_yaml
 ```
 
