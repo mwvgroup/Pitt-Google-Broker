@@ -1,4 +1,21 @@
-# IAM Resources
+# IAM Resources<a name="iam-resources"></a>
+
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
+
+- [IAM Resources](#iam-resources)
+  - [Setup](#setup)
+  - [Roles](#roles)
+    - [Create the roles](#create-the-roles)
+    - [Update a role](#update-a-role)
+  - [Policies](#policies)
+    - [Set the policy on the project](#set-the-policy-on-the-project)
+    - [Set a policy on a specific resource](#set-a-policy-on-a-specific-resource)
+  - [Onboard a new developer](#onboard-a-new-developer)
+    - [Developer instructions](#developer-instructions)
+    - [Project manager instructions](#project-manager-instructions)
+    - [Offboard a developer](#offboard-a-developer)
+
+<!-- mdformat-toc end -->
 
 Basic idea:
 
@@ -9,11 +26,12 @@ We need to connect three things: resource(s), permission(s), and user(s).
 1. Attach the Policy to the Project, or to a specific Resource - access will be restricted this restricts access to the resource according to the policy. Policies can be attached to projects, and therefore apply to all resources in the project.
 
 See:
+
 - [IAM overview](https://cloud.google.com/iam/docs/overview)
 - [IAM predefined roles reference](https://cloud.google.com/iam/docs/understanding-roles#predefined)
 - [IAM permissions reference](https://cloud.google.com/iam/docs/permissions-reference)
 
-## Setup
+## Setup<a name="setup"></a>
 
 Set GCP environment variables and authenticate yourself
 For reference, our current projects are:
@@ -33,9 +51,9 @@ gcloud auth activate-service-account \
     --key-file="${GOOGLE_APPLICATION_CREDENTIALS}"
 ```
 
-## Roles
+## Roles<a name="roles"></a>
 
-### Create the roles
+### Create the roles<a name="create-the-roles"></a>
 
 ```bash
 # To Do:
@@ -47,7 +65,7 @@ role_yaml=roles/developer_student.yaml
 gcloud iam roles create $role_id --project=$GOOGLE_CLOUD_PROJECT --file=$role_yaml
 ```
 
-### Update a role
+### Update a role<a name="update-a-role"></a>
 
 (simpler in python so you don't have to mess with the etag fingerprint)
 
@@ -71,9 +89,9 @@ def edit_role(name, project, title, description, permissions, stage):
     return role
 ```
 
-## Policies
+## Policies<a name="policies"></a>
 
-### Set the policy on the project
+### Set the policy on the project<a name="set-the-policy-on-the-project"></a>
 
 This binds member-role pairs to every resource in the project. (See below to bind to a specific resource.)
 
@@ -87,7 +105,7 @@ policy_yaml="policies/studev.yaml"
 gcloud projects set-iam-policy $GOOGLE_CLOUD_PROJECT $policy_yaml
 ```
 
-### Set a policy on a specific resource
+### Set a policy on a specific resource<a name="set-a-policy-on-a-specific-resource"></a>
 
 (simpler in python so you don't have to mess with the etag fingerprint)
 
@@ -121,9 +139,9 @@ print("IAM policy for subscription {} set: {}".format(subscription_id, policy))
 client.close()
 ```
 
-## Onboard a new developer
+## Onboard a new developer<a name="onboard-a-new-developer"></a>
 
-### Developer instructions
+### Developer instructions<a name="developer-instructions"></a>
 
 Complete the instructions in the initial setup tutorial
 (docs/source/broker/run-a-broker-instance/initial-setup.rst).
@@ -132,7 +150,7 @@ You will need to do this in conjunction with a Pitt-Google project manager so th
 
 You will need to provide the manager with both your Google account email address (e.g., Gmail address) and your service account name (which you will choose during setup).
 
-### Project manager instructions
+### Project manager instructions<a name="project-manager-instructions"></a>
 
 Make sure you've authenticated with the GCP project that the developer needs access to (see [Setup](#setup)).
 
@@ -171,7 +189,7 @@ gcloud projects add-iam-policy-binding "$GOOGLE_CLOUD_PROJECT" \
     --role="${role}"
 ```
 
-### Offboard a developer
+### Offboard a developer<a name="offboard-a-developer"></a>
 
 Follow the setup in [Project manager instructions](#project-manager-instructions), then remove both policy bindings:
 
