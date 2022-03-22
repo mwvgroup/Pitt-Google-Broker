@@ -1,0 +1,7 @@
+title: "Student Developer"
+# role-id: "developerStudent"
+description: "Role granting permissions for student developers"
+stage: "ALPHA"
+includedPermissions:
+- storage.buckets.get
+- storage.buckets.list

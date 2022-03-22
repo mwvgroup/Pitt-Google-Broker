@@ -1,0 +1,8 @@
+# etag must be obtained from the current policy and filled in below
+etag:
+bindings:
+- role: "projects/ardent-cycling-243415/roles/userPublic"
+  members:
+  # allUsers is anyone on the internet, no authentication required.
+  # Note that access to some GCP services does require authentication.
+    - user:allUsers
