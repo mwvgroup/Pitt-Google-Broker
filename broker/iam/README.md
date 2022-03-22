@@ -141,6 +141,8 @@ client.close()
 
 ## Onboard a new developer<a name="onboard-a-new-developer"></a>
 
+The following instructions are left for reference, but these are in the docs (directory: docs/source/broker/initial-setup/) and should be kept up-to-date there.
+
 ### Developer instructions<a name="developer-instructions"></a>
 
 Complete the instructions in the initial setup tutorial
