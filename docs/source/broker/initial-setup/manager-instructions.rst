@@ -20,7 +20,7 @@ The developer needs permissions (a role) bound to their Google account in order 
 Setup
 ^^^^^
 
-Set GCP environment variables and authenticate yourself to the GCP project that the developer needs access to.
+Set GCP environment variables and authenticate yourself to the GCP project that the developer needs access to (probably the testing project).
 For reference, our current projects are:
 
 
