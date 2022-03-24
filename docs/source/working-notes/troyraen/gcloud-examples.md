@@ -18,7 +18,7 @@ CF_name="my-cloud-function"     # choose a name for your Cloud Function
 entry_point="run"               # fill in name of module's entry-point function
 trigger_topic="my-topic"        # fill in name of Pub/Sub topic that will trigger your function
 
-# deploy
+# deploy. run this command from within the directory containing your Cloud Function
 gcloud functions deploy "${CF_name}" \
     --entry-point "${entry_point}" \
     --runtime python37 \
@@ -146,7 +146,7 @@ gcloud pubsub subscriptions create "$SUBSCRIPTION" \
 
 ## Service account
 
-See also [service-account.md](service-account.md). 
+See also [service-account.md](service-account.md).
 
 ```bash
 NAME="tjraen-owner"
