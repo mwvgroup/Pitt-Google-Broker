@@ -5,7 +5,7 @@ Run, develop, and test a broker instance.
 
 **Prerequisites:**
 
-1. Complete the :doc:`initial-setup` for GCP and your local environment.
+1. Complete the :ref:`docs/source/broker/initial-setup/initial-setup` for GCP and your local environment.
 2. Create a broker instance by following :doc:`setup-broker`.
 
 --------------

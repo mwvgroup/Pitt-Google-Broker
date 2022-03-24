@@ -1,0 +1,8 @@
+# etag must be obtained from the current policy and filled in below
+etag:
+bindings:
+- role: "projects/avid-heading-329016/roles/developerStudent"
+  members:
+  # add users or service accounts.
+  # syntax for service accounts:
+  # - serviceAccount:<sa_name>@<project_id>.iam.gserviceaccount.com
