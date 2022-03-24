@@ -11,6 +11,24 @@ SURVEY="ztf"        # ztf is the only survey we're currently running
 TESTID="mytest"     # choose a testid
 ```
 
+## Cloud Functions
+
+```bash
+CF_name="my-cloud-function"     # choose a name for your Cloud Function
+entry_point="run"               # fill in name of module's entry-point function
+trigger_topic="my-topic"        # fill in name of Pub/Sub topic that will trigger your function
+
+# deploy
+gcloud functions deploy "${CF_name}" \
+    --entry-point "${entry_point}" \
+    --runtime python37 \
+    --trigger-topic "$trigger_topic" \
+    --set-env-vars TESTID="${TESTID}",SURVEY="${SURVEY}"
+
+# delete
+gcloud functions delete "${CF_name}"
+```
+
 ## Cloud Run
 
 - [Instructions to create resources with pubsub trigger](https://cloud.google.com/run/docs/triggering/pubsub-push#command-line)
@@ -108,24 +126,6 @@ gcloud pubsub subscriptions create "$SUBSCRIPTION" \
     --ack-deadline="$ACK_DEADLINE"
 ```
 
-## Cloud Functions
-
-```bash
-CF_name="my-cloud-function"     # choose a name for your Cloud Function
-entry_point="run"               # fill in name of module's entry-point function
-trigger_topic="my-topic"        # fill in name of Pub/Sub topic that will trigger your function
-
-# deploy
-gcloud functions deploy "${CF_name}" \
-    --entry-point "${entry_point}" \
-    --runtime python37 \
-    --trigger-topic "$trigger_topic" \
-    --set-env-vars TESTID="${TESTID}",SURVEY="${SURVEY}"
-
-# delete
-gcloud functions delete "${CF_name}"
-```
-
 ## Pub/Sub
 
 - [https://cloud.google.com/sdk/gcloud/reference/pubsub](https://cloud.google.com/sdk/gcloud/reference/pubsub)
@@ -145,6 +145,8 @@ gcloud pubsub subscriptions create "$SUBSCRIPTION" \
 ```
 
 ## Service account
+
+See also [service-account.md](service-account.md). 
 
 ```bash
 NAME="tjraen-owner"
