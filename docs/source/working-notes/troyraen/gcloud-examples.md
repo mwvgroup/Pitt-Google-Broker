@@ -3,6 +3,32 @@
 - [`gcloud` reference](https://cloud.google.com/sdk/gcloud/reference)
 
 
+## Setup
+
+```bash
+# broker instance keywords
+SURVEY="ztf"        # ztf is the only survey we're currently running
+TESTID="mytest"     # choose a testid
+```
+
+## Cloud Functions
+
+```bash
+CF_name="my-cloud-function"     # choose a name for your Cloud Function
+entry_point="run"               # fill in name of module's entry-point function
+trigger_topic="my-topic"        # fill in name of Pub/Sub topic that will trigger your function
+
+# deploy. run this command from within the directory containing your Cloud Function
+gcloud functions deploy "${CF_name}" \
+    --entry-point "${entry_point}" \
+    --runtime python37 \
+    --trigger-topic "$trigger_topic" \
+    --set-env-vars TESTID="${TESTID}",SURVEY="${SURVEY}"
+
+# delete
+gcloud functions delete "${CF_name}"
+```
+
 ## Cloud Run
 
 - [Instructions to create resources with pubsub trigger](https://cloud.google.com/run/docs/triggering/pubsub-push#command-line)
@@ -15,10 +41,6 @@ PROJECT_NUMBER=$(gcloud projects list \
     --filter="$(gcloud config get-value project)" \
     --format="value(PROJECT_NUMBER)" \
 )
-
-# broker instance keywords
-SURVEY="ztf"
-TESTID="False"
 
 # name for the Run service you're deploying, and related resources
 NAME_STUB="xmatch_AbrilCVs"
@@ -104,7 +126,6 @@ gcloud pubsub subscriptions create "$SUBSCRIPTION" \
     --ack-deadline="$ACK_DEADLINE"
 ```
 
-
 ## Pub/Sub
 
 - [https://cloud.google.com/sdk/gcloud/reference/pubsub](https://cloud.google.com/sdk/gcloud/reference/pubsub)
@@ -124,6 +145,8 @@ gcloud pubsub subscriptions create "$SUBSCRIPTION" \
 ```
 
 ## Service account
+
+See also [service-account.md](service-account.md).
 
 ```bash
 NAME="tjraen-owner"
