@@ -1,15 +1,18 @@
 Onboard a new developer
 =======================
 
-.. Developer instructions
-.. ----------------------
-..
-.. Complete the instructions in the initial setup tutorial
-.. (ref:`docs/source/broker/initial-setup/initial-setup`).
-..
-.. You will need to do this in conjunction with a Pitt-Google project manager so that they can grant you the necessary permissions.
-..
-.. You will need to provide the manager with both your Google account email address (e.g., Gmail address) and your service account name (which you will choose during setup).
+..contents:: title
+    :depth: 2
+
+Developer instructions
+----------------------
+
+Complete the instructions in the initial setup tutorial
+(ref:`docs/source/broker/initial-setup/initial-setup`).
+
+You will need to do this in conjunction with a Pitt-Google project manager so that they can grant you the necessary permissions.
+
+You will need to provide the manager with both your Google account email address (e.g., Gmail address) and your service account name (which you will choose during setup).
 
 Project manager instructions
 ----------------------------
