@@ -1,0 +1,38 @@
+[
+  {
+    "description": "Classifier name",
+    "mode": "REQUIRED",
+    "name": "classifer",
+    "type": "STRING"
+  },
+  {
+    "description": "Classifier version",
+    "mode": "REQUIRED",
+    "name": "classifier_version",
+    "type": "FLOAT"
+  },
+  {
+    "description": "Integer identifying a class known to this classifier",
+    "mode": "NULLABLE",
+    "name": "class",
+    "type": "INTEGER"
+  },
+  {
+    "description": "Name of the class identified by ``class``",
+    "mode": "NULLABLE",
+    "name": "class_name",
+    "type": "STRING"
+  },
+  {
+    "description": "Description of the class identified by ``class``",
+    "mode": "NULLABLE",
+    "name": "class_description",
+    "type": "STRING"
+  },
+  {
+    "description": "Cut or condition that defines members of this class",
+    "mode": "NULLABLE",
+    "name": "class_cut",
+    "type": "STRING"
+  }
+]

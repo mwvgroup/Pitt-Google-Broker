@@ -1,26 +1,38 @@
 [
   {
-    "description": "object identifier or name",
+    "description": "DIA object identifier or name",
     "mode": "REQUIRED",
     "name": "objectId",
     "type": "STRING"
   },
   {
-    "description": "Candidate ID from operations DB",
+    "description": "DIA source (candidate) identifier",
     "mode": "REQUIRED",
     "name": "candid",
     "type": "INTEGER"
   },
   {
-    "description": "name of classifier or filter",
-    "mode": "REQUIRED",
+    "description": "Classifier name",
+    "mode": "NULLABLE",
     "name": "classifier",
     "type": "STRING"
   },
   {
-    "description": "predicted class",
+    "description": "Classifier version",
     "mode": "NULLABLE",
-    "name": "predicted_class",
+    "name": "classifier_version",
+    "type": "FLOAT"
+  },
+  {
+    "description": "Predicted class (see the class_descriptions table for more info)",
+    "mode": "NULLABLE",
+    "name": "class",
     "type": "INTEGER"
+  },
+  {
+    "description": "Probability or confidence in the prediction",
+    "mode": "NULLABLE",
+    "name": "probability",
+    "type": "FLOAT"
   }
 ]
