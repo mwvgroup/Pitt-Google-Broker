@@ -26,4 +26,5 @@ repos:
     - black==22.1.0
     - mdformat-config
     - mdformat-gfm
+    - mdformat-toc
     - mdformat-web
