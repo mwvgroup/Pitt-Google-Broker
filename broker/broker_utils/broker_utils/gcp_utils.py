@@ -233,7 +233,11 @@ def streamingPull_pubsub(
 
 
 # --- BigQuery --- #
-def insert_rows_bigquery(table_id: str, rows: List[dict]):
+def insert_rows_bigquery(
+    table_id: str,
+    rows: List[dict],
+    project_id: Optional[str] = None,
+):
     """Insert rows into a table using the streaming API.
 
     Args:
@@ -242,8 +246,13 @@ def insert_rows_bigquery(table_id: str, rows: List[dict]):
         rows:       Data to load in to the table. Keys must include all required
                     fields in the schema. Keys which do not correspond to a
                     field in the schema are ignored.
+        project_id: GCP project ID for the project containing the topic.
+                    If None, the module's `project_id_default` will be used.
     """
-    bq_client = bigquery.Client(project=pgb_project_id)
+    if project_id is None:
+        project_id = project_id_default
+
+    bq_client = bigquery.Client(project=project_id)
     table = bq_client.get_table(table_id)
     errors = bq_client.insert_rows(table, rows)
     return errors
@@ -252,6 +261,7 @@ def insert_rows_bigquery(table_id: str, rows: List[dict]):
 def load_dataframe_bigquery(
     table_id: str,
     df: pd.DataFrame,
+    project_id: Optional[str] = None,
     use_table_schema: bool = True,
     logger: Optional[Logger] = None,
 ):
@@ -262,12 +272,16 @@ def load_dataframe_bigquery(
             {dataset}.{table}. For example, 'ztf_alerts.alerts'.
         df: Data to load in to the table. If the  dataframe schema does not match the
             BigQuery table schema, must pass a valid `schema`.
+        project_id: GCP project ID for the project containing the topic.
+                    If None, the module's `project_id_default` will be used.
         use_table_schema: Conform the dataframe to the table schema by converting
                           dtypes and dropping extra columns.
         logger: If not None, messages will be sent to the logger. Else, print them.
     """
     # setup
-    bq_client = bigquery.Client(project=pgb_project_id)
+    if project_id is None:
+        project_id = project_id_default
+    bq_client = bigquery.Client(project=project_id)
     table = bq_client.get_table(table_id)
 
     if use_table_schema:
