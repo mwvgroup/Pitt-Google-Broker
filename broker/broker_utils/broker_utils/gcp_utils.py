@@ -4,6 +4,8 @@
 GCP resources.
 """
 
+import os
+
 from concurrent.futures import TimeoutError
 from google.cloud import bigquery, pubsub_v1, storage
 from google.cloud.logging_v2.logger import Logger
@@ -13,7 +15,13 @@ import json
 import pandas as pd
 from typing import Callable, List, Optional, Union
 
-pgb_project_id = 'ardent-cycling-243415'
+
+# get project id from environment variable, else default to production project
+# cloud functions use GCP_PROJECT
+if "GCP_PROJECT" in os.environ:
+    project_id_default = os.getenv("GCP_PROJECT")
+else:
+    project_id_default = os.getenv("GOOGLE_CLOUD_PROJECT", "ardent-cycling-243415")
 
 
 # --- Pub/Sub --- #
@@ -35,7 +43,7 @@ def publish_pubsub(
         message: The message to be published.
 
         project_id: GCP project ID for the project containing the topic.
-                    If None, the environment variable GOOGLE_CLOUD_PROJECT will be used.
+                    If None, the module's `project_id_default` will be used.
 
         attrs: Message attributes to be published.
 
@@ -51,7 +59,7 @@ def publish_pubsub(
         published message ID
     """
     if project_id is None:
-        project_id = pgb_project_id
+        project_id = project_id_default
     if publisher is None:
         publisher = pubsub_v1.PublisherClient()
     if attrs is None:
@@ -90,7 +98,7 @@ def pull_pubsub(
         max_messages: The maximum number of messages to pull.
 
         project_id: GCP project ID for the project containing the subscription.
-                    If None, the module's `pgb_project_id` will be used.
+                    If None, the module's `project_id_default` will be used.
 
         msg_only: Whether to work with and return the message contents only
                   or the full packet.
@@ -108,7 +116,7 @@ def pull_pubsub(
         A list of messages
     """
     if project_id is None:
-        project_id = pgb_project_id
+        project_id = project_id_default
 
     # setup for pull
     subscriber = pubsub_v1.SubscriberClient()
@@ -182,7 +190,7 @@ def streamingPull_pubsub(
                   acknowledgement logic.
 
         project_id: GCP project ID for the project containing the subscription.
-                    If None, the environment variable GOOGLE_CLOUD_PROJECT will be used.
+                    If None, the module's `project_id_default` will be used.
 
         timeout: The number of seconds before the `subscribe` call times out and
                  closes the connection.
@@ -198,7 +206,7 @@ def streamingPull_pubsub(
         or timeout.
     """
     if project_id is None:
-        project_id = pgb_project_id
+        project_id = project_id_default
 
     if flow_control is None:
         flow_control = {}
@@ -342,7 +350,7 @@ def query_bigquery(
         ``
     """
     if project_id is None:
-        project_id = pgb_project_id
+        project_id = project_id_default
 
     bq_client = bigquery.Client(project=project_id)
     query_job = bq_client.query(query, job_config=job_config)
@@ -361,8 +369,8 @@ def cs_download_file(localdir: str, bucket_id: str, filename: Optional[str] = No
         filename:   Name or prefix of the file(s) in the bucket to download.
     """
     # connect to the bucket and get an iterator that finds blobs in the bucket
-    storage_client = storage.Client(pgb_project_id)
-    bucket_name = f'{pgb_project_id}-{bucket_id}'
+    storage_client = storage.Client(project_id_default)
+    bucket_name = f'{project_id_default}-{bucket_id}'
     print(f'Connecting to bucket {bucket_name}')
     bucket = storage_client.get_bucket(bucket_name)
     blobs = storage_client.list_blobs(bucket, prefix=filename)  # iterator
@@ -388,8 +396,8 @@ def cs_upload_file(local_file: str, bucket_id: str, bucket_filename: Optional[st
         bucket_filename = local_file.split('/')[-1]
 
     # connect to the bucket
-    storage_client = storage.Client(pgb_project_id)
-    bucket_name = f'{pgb_project_id}-{bucket_id}'
+    storage_client = storage.Client(project_id_default)
+    bucket_name = f'{project_id_default}-{bucket_id}'
     print(f'Connecting to bucket {bucket_name}')
     bucket = storage_client.get_bucket(bucket_name)
 

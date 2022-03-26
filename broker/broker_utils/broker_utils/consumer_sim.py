@@ -3,13 +3,20 @@
 """ Simulate the consumer by publishing alerts to a Pub/Sub topic.
 """
 
+import os
 import sys
 import time
 from typing import Optional, Tuple, Union
 
 from google.cloud import pubsub_v1
 
-PROJECT_ID = 'ardent-cycling-243415'
+
+# get project id from environment variable, else default to production project
+# cloud functions use GCP_PROJECT
+if "GCP_PROJECT" in os.environ:
+    PROJECT_ID = os.getenv("GCP_PROJECT")
+else:
+    PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT", "ardent-cycling-243415")
 
 
 def publish_stream(

@@ -4,12 +4,20 @@
 Cloud Storage.
 """
 
+import os
+
 # from typing import List, Tuple, Optional, Union, Generator
 from typing import Optional
 import yaml
 from google.cloud import storage
 
-pgb_project_id = 'ardent-cycling-243415'
+
+# get project id from environment variable, else default to production project
+# cloud functions use GCP_PROJECT
+if "GCP_PROJECT" in os.environ:
+    PROJECT_ID = os.getenv("GCP_PROJECT")
+else:
+    PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT", "ardent-cycling-243415")
 
 
 def load_schema_map(survey: str, testid: str, schema: Optional[str] = None) -> dict:
