@@ -1,5 +1,5 @@
 {
-  "name": "projects/591409139500/dashboards/broker-instance-surveyname-testid",
+  "name": "projects/PROJECT_ID/dashboards/broker-instance-surveyname-testid",
   "displayName": "Broker Instance  |  survey: surveyname  |  test ID: testid",
   "mosaicLayout": {
     "columns": 12,
