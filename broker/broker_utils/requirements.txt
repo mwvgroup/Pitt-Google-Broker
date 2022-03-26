@@ -1,8 +1,6 @@
 astropy
 fastavro
-google-cloud-bigquery<2.10
-# apache-beam 2.25.0 requires pyarrow<0.18.0,>=0.15.1
-# but google-cloud-bigquery>=2.10.0 requires pyarrow>=3
+google-cloud-bigquery
 google-cloud-logging
 google-cloud-storage>=1.38
 google-cloud-pubsub<2  # beam requires <2
