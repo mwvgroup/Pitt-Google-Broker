@@ -135,7 +135,7 @@ def load_features(
     # consolidate types ending with ":" and convert types to ints
     df = consol_types(df)
 
-    ## get a df specifically for clustering
+    # get a df specifically for clustering
     dfhiprob = get_hiprob(df, cprob=cprob)
     # get types with low and hi number of members
     dfclust = get_hilow(dfhiprob, numHi=10000, numLow=50)

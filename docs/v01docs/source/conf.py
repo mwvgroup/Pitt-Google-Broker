@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # -- Path setup --------------------------------------------------------------
+# autopep8: off
 
 import os
 import sys
