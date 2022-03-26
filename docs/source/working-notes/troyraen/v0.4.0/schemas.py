@@ -99,7 +99,10 @@ def get_diasource_fields(column):
         cols = [c for c in column["fields"]]
         # rename columns with same names as an object-level attribute
         dup_cols = ["ra", "dec"]
-        sourcename = lambda x: x if x not in dup_cols else f"source_{x}"
+
+        def sourcename(x):
+            return x if x not in dup_cols else f"source_{x}"
+
         for c in cols:
             c["name"] = sourcename(c["name"])
         return cols

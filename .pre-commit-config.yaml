@@ -1,4 +1,21 @@
 repos:
+# make bash scripts more readable
+- repo: https://github.com/lovesegfault/beautysh
+  rev: v6.2.1
+  hooks:
+  - id: beautysh
+# blackify python files
+- repo: https://github.com/psf/black
+  rev: 22.1.0
+  hooks:
+  - id: black
+# run pep8 on python files
+-   repo: https://github.com/pre-commit/mirrors-autopep8
+    rev: 'v1.6.0'
+    hooks:
+    -   id: autopep8
+        args: [-i, --max-line-length=120]
+# lint markdown files
 - repo: https://github.com/executablebooks/mdformat
   rev: 0.7.13
   hooks:
@@ -10,11 +27,3 @@ repos:
     - mdformat-config
     - mdformat-gfm
     - mdformat-web
-- repo: https://github.com/lovesegfault/beautysh
-  rev: v6.2.1
-  hooks:
-  - id: beautysh
-- repo: https://github.com/psf/black
-  rev: 22.1.0
-  hooks:
-  - id: black
