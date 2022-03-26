@@ -1,0 +1,27 @@
+# make bash scripts more readable
+- repo: https://github.com/lovesegfault/beautysh
+  rev: v6.2.1
+  hooks:
+  - id: beautysh
+# blackify python scripts
+- repo: https://github.com/psf/black
+  rev: 22.1.0
+  hooks:
+  - id: black
+# lint rst files
+- repo: https://github.com/Lucas-C/pre-commit-hooks-markup
+  rev: v1.0.1
+  hooks:
+  - id: rst-linterrepos:
+# lint markdown files
+- repo: https://github.com/executablebooks/mdformat
+  rev: 0.7.13
+  hooks:
+  - id: mdformat
+    additional_dependencies:
+    - mdformat-beautysh
+    - mdformat-black
+    - black==22.1.0
+    - mdformat-config
+    - mdformat-gfm
+    - mdformat-web
