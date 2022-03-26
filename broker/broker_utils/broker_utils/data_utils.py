@@ -40,8 +40,8 @@ def load_alert(
 def decode_alert(
     alert_avro: Union[str, Path, bytes],
     return_as: str = 'dict',
-    schema_map: Optional[dict] = None,
     drop_cutouts: bool = False,
+    **kwargs
 ) -> Union[dict, pd.DataFrame]:
     """Load an alert Avro and return in requested format.
 
@@ -50,11 +50,11 @@ def decode_alert(
     Args:
         alert_avro:   Either the path of Avro file to load, or
             the bytes encoding the Avro-formated alert.
-        return_as: Format the alert will be returned in.
-        schema_map: Mapping between survey schema and broker's generic schema.
-            Required if `return_as='df'` or `drop_cutouts=True`.
+        return_as: Format the alert will be returned in. One of 'dict' or 'df'.
         drop_cutouts: Whether to drop or return the cutouts (stamps).
                       If `return_as='df'` the cutouts are always dropped.
+        kwargs: Keyword arguments passed to ``_drop_cutouts`` and
+                ``alert_dict_to_dataframe``.
 
     Returns:
         alert packet in requested format
@@ -63,18 +63,13 @@ def decode_alert(
 
     if return_as == "dict":
         if drop_cutouts:
-            if schema_map is not None:
-                return _drop_cutouts(alert_dict, schema_map)
-            else:
-                raise ValueError("`schema_map` required to drop cutouts.")
+            return _drop_cutouts(alert_dict, **kwargs)
         else:
             return alert_dict
 
     elif return_as == "df":
-        if schema_map is not None:
-            return alert_dict_to_dataframe(alert_dict, schema_map)
-        else:
-            raise ValueError("`schema_map` required if `return_as='df'`.")
+        return alert_dict_to_dataframe(alert_dict, **kwargs)
+
     else:
         raise ValueError("`return_as` must be one of 'dict' or 'df'.")
 
