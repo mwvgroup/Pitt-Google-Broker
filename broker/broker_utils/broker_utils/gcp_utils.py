@@ -130,7 +130,7 @@ def pull_pubsub(
     with subscriber:
 
         # pull
-        response = subscriber.pull(**request)
+        response = subscriber.pull(request)
 
         # unpack the messages
         message_list, ack_ids = [], []
@@ -161,7 +161,7 @@ def pull_pubsub(
                 "subscription": subscription_path,
                 "ack_ids": ack_ids,
             }
-            subscriber.acknowledge(**ack_request)
+            subscriber.acknowledge(ack_request)
 
     if not return_count:
         return message_list

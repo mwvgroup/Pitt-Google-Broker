@@ -109,7 +109,7 @@ def _do_publish_stream(
     while b < Nbatches:
         # get alerts from reservoir
         # response = subscriber.pull(request=request)  # for pubsub2+
-        response = subscriber.pull(**request)
+        response = subscriber.pull(request)
 
         # publish alerts to topic, raise exception on failure
         _publish_received_messages(publisher, topic_path, response)
@@ -190,14 +190,14 @@ def _handle_acks(subscriber, sub_path, ack_ids=[], nack=False):
             "subscription": sub_path,
             "ack_ids": ack_ids,
         }
-        subscriber.acknowledge(**request)
+        subscriber.acknowledge(request)
     else:
         request = {
             "subscription": sub_path,
             "ack_ids": ack_ids,
             "ack_deadline_seconds": 0,
         }
-        subscriber.modify_ack_deadline(**request)
+        subscriber.modify_ack_deadline(request)
 
 
 def _callback(future):
