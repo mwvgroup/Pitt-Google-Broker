@@ -4,7 +4,7 @@
 survey and broker data.
 """
 
-from typing import Tuple
+from typing import Tuple, Union
 
 from astropy.time import Time
 import fastavro
@@ -12,7 +12,29 @@ from io import BytesIO
 import json
 import numpy as np
 import pandas as pd
-from typing import Optional, Tuple, Union
+from pathlib import Path
+import yaml
+
+
+def load_alert(
+    fin: Union[str, Path],
+    return_as: str = "dict",
+    **kwargs
+) -> Union[bytes, dict, pd.DataFrame]:
+    """Load alert from file at ``fin`` and return in format ``return_as``.
+
+    Args:
+        fin:        Path to an alert avro file.
+        return_as:  Format the alert will be returned in. One of 'bytes' or argument
+                    accepted by ``decode_alert``.
+        kwargs:     Keyword arguments for ``decode_alert``.
+    """
+    if return_as == "bytes":
+        with open(fin, "rb") as f:
+            alert = f.read()
+    else:
+        alert = decode_alert(fin, return_as=return_as, **kwargs)
+    return alert
 
 
 def decode_alert(
