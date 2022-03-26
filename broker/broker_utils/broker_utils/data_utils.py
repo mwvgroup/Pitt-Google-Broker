@@ -109,8 +109,7 @@ def alert_dict_to_dataframe(alert_dict: dict, schema_map: dict) -> pd.DataFrame:
     """ Packages an alert into a dataframe.
     Adapted from: https://github.com/ZwickyTransientFacility/ztf-avro-alert/blob/master/notebooks/Filtering_alerts.ipynb
     """
-    if not isinstance(schema_map, dict):
-        raise TypeError("`schema_map` is not a dictionary.")
+    schema_map = _get_schema_map(schema_map)
 
     src_df = pd.DataFrame(alert_dict[schema_map['source']], index=[0])
     prvs_df = pd.DataFrame(alert_dict[schema_map['prvSources']])
@@ -126,8 +125,10 @@ def alert_dict_to_dataframe(alert_dict: dict, schema_map: dict) -> pd.DataFrame:
 
     return df
 
+
 def _drop_cutouts(alert_dict: dict, schema_map: dict) -> dict:
     """Drop the cutouts from the alert dictionary."""
+    schema_map = _get_schema_map(schema_map)
     cutouts = [
         schema_map['cutoutScience'],
         schema_map['cutoutTemplate'],
@@ -159,3 +160,17 @@ def jd_to_mjd(jd: float) -> float:
     """ Converts Julian Date to modified Julian Date.
     """
     return Time(jd, format='jd').mjd
+
+
+def _get_schema_map(schema_map: Union[str, Path, dict]) -> dict:
+    """Load the schema from file if needed, check that it is a dict."""
+    if isinstance(schema_map, str) or isinstance(schema_map, Path):
+        with open(schema_map, "rb") as f:
+            my_schema_map = yaml.safe_load(f)  # dict
+    else:
+        my_schema_map = schema_map
+
+    if not isinstance(my_schema_map, dict):
+        raise ValueError("schema_map must be either a dict or a path to a yaml file.")
+
+    return my_schema_map
