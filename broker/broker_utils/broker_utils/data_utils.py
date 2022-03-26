@@ -38,7 +38,7 @@ def load_alert(
 
 
 def decode_alert(
-    alert_avro: Union[str, bytes],
+    alert_avro: Union[str, Path, bytes],
     return_as: str = 'dict',
     schema_map: Optional[dict] = None,
     drop_cutouts: bool = False,
@@ -79,7 +79,7 @@ def decode_alert(
         raise ValueError("`return_as` must be one of 'dict' or 'df'.")
 
 
-def alert_avro_to_dict(alert_avro: Union[str, bytes]) -> dict:
+def alert_avro_to_dict(alert_avro: Union[str, Path, bytes]) -> dict:
     """Load an alert Avro to a dictionary.
 
     Args:
@@ -89,7 +89,7 @@ def alert_avro_to_dict(alert_avro: Union[str, bytes]) -> dict:
     Returns:
         alert as a dict
     """
-    if isinstance(alert_avro, str):
+    if isinstance(alert_avro, str) or isinstance(alert_avro, Path):
         with open(alert_avro, 'rb') as fin:
             alert_list = [r for r in fastavro.reader(fin)]  # list of dicts
     elif isinstance(alert_avro, bytes):
