@@ -55,13 +55,11 @@ gcloud auth activate-service-account \
 
 ### Create the roles<a name="create-the-roles"></a>
 
+Here is an example for creating the developer role.
+
 ```bash
-# To Do:
-# get the organization id (not project id)
-# for role_yaml in roles:
-# read role_id from file, then:
-role_id=developerStudent
-role_yaml=roles/developer_student.yaml
+role_id=developer
+role_yaml=roles/developer.yaml
 gcloud iam roles create $role_id --project=$GOOGLE_CLOUD_PROJECT --file=$role_yaml
 ```
 
@@ -144,7 +142,7 @@ client.close()
 
 ## Onboard a new developer<a name="onboard-a-new-developer"></a>
 
-The following instructions are left for reference, but these are in the docs (directory: docs/source/broker/initial-setup/) and should be kept up-to-date there.
+NOTE: The following instructions are left for reference, but these are in the docs (currently at: docs/source/broker/initial-setup/manager-instructions.rst) and should be kept up-to-date there.
 
 ### Developer instructions<a name="developer-instructions"></a>
 
@@ -169,12 +167,12 @@ Setup:
 user_email=
 
 # fill in the user's service account name and set the email address
-service_account_name=
+# service_account_name=
 service_account_email="${service_account_name}@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com"
 
-# choose a role_id (one eample is commented out below), and set the role
+# choose a role_id (one example is commented out below), and set the role
 role_id=
-# role_id="developerStudent"
+# role_id="developer"
 role="projects/${GOOGLE_CLOUD_PROJECT}/roles/${role_id}"
 # the above syntax is for a custom role that we've defined in the project
 # you can also use a predefined role. see the reference link given above for all options
@@ -193,6 +191,9 @@ gcloud projects add-iam-policy-binding "$GOOGLE_CLOUD_PROJECT" \
 gcloud projects add-iam-policy-binding "$GOOGLE_CLOUD_PROJECT" \
     --member="serviceAccount:${service_account_email}" \
     --role="${role}"
+
+# required to deploy Cloud Functions. only needs to be granted to the user account.
+gcloud iam service-accounts add-iam-policy-binding avid-heading-329016@appspot.gserviceaccount.com --member=user:amp322@pitt.edu --role=roles/iam.serviceAccountUser
 ```
 
 ### Offboard a developer<a name="offboard-a-developer"></a>

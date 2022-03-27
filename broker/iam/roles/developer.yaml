@@ -1,0 +1,9 @@
+title: "Pitt-Google Developer"
+# role-id: "developer"
+description: "Role granting permissions for Pitt-Google developers that are not already bundled in a suitable, predefined role."
+stage: "ALPHA"
+includedPermissions:
+- storage.buckets.get
+- storage.buckets.list
+- storage.objects.list
+- storage.objects.get
