@@ -87,7 +87,7 @@ def _is_extragalactic_transient(alert_dict: dict) -> bool:
             no_pointsource_counterpart = True
             # closest candidate == star < 1.5 arcsec away -> candidate probably star
         else:
-            no_pointsource_counterpart = candidate["sgsscore1"] < 0.5
+            no_pointsource_counterpart = candidate["sgscore1"] < 0.5
 
         where_detected = dflc["isdiffpos"] == "t"
         if np.sum(where_detected) >= 2:
