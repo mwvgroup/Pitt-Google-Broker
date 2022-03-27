@@ -126,8 +126,6 @@ def alert_dict_to_dataframe(alert_dict: dict, schema_map: dict) -> pd.DataFrame:
     """ Packages an alert into a dataframe.
     Adapted from: https://github.com/ZwickyTransientFacility/ztf-avro-alert/blob/master/notebooks/Filtering_alerts.ipynb
     """
-    schema_map = _get_schema_map(schema_map)
-
     src_df = pd.DataFrame(alert_dict[schema_map['source']], index=[0])
     prvs_df = pd.DataFrame(alert_dict[schema_map['prvSources']])
     df = pd.concat([src_df, prvs_df], ignore_index=True)
@@ -145,7 +143,6 @@ def alert_dict_to_dataframe(alert_dict: dict, schema_map: dict) -> pd.DataFrame:
 
 def _drop_cutouts(alert_dict: dict, schema_map: dict) -> dict:
     """Drop the cutouts from the alert dictionary."""
-    schema_map = _get_schema_map(schema_map)
     cutouts = [
         schema_map['cutoutScience'],
         schema_map['cutoutTemplate'],
@@ -165,19 +162,18 @@ def _drop_cutouts(alert_dict: dict, schema_map: dict) -> dict:
     return alert_lite
 
 
+def load_yaml(fin: Union[Path, str, Blob]) -> dict:
+    """Load a yaml file and return as a dict.
 
+    Args:
+        fin: Path-like or `google.cloud.storage.blob.Blob` object. Assumes yaml format.
 
+    Returns:
+        Dictionary mapping the survey's field names to an internal broker standard.
     """
+    if isinstance(fin, Blob):
+        with fin.open("rt") as f:
+            return yaml.safe_load(f)  # dict
 
-def _get_schema_map(schema_map: Union[str, Path, dict]) -> dict:
-    """Load the schema from file if needed, check that it is a dict."""
-    if isinstance(schema_map, str) or isinstance(schema_map, Path):
-        with open(schema_map, "rb") as f:
-            my_schema_map = yaml.safe_load(f)  # dict
-    else:
-        my_schema_map = schema_map
-
-    if not isinstance(my_schema_map, dict):
-        raise ValueError("schema_map must be either a dict or a path to a yaml file.")
-
-    return my_schema_map
+    with open(fin, "rb") as f:
+        return yaml.safe_load(f)  # dict
