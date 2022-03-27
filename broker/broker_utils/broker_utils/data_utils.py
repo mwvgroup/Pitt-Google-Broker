@@ -165,19 +165,9 @@ def _drop_cutouts(alert_dict: dict, schema_map: dict) -> dict:
     return alert_lite
 
 
-def mag_to_flux(mag: float, zeropoint: float, magerr: float) -> Tuple[float, float]:
-    """ Converts an AB magnitude and its error to fluxes.
+
+
     """
-    flux = 10 ** ((zeropoint - mag) / 2.5)
-    fluxerr = flux * magerr * np.log(10 / 2.5)
-    return flux, fluxerr
-
-
-def jd_to_mjd(jd: float) -> float:
-    """ Converts Julian Date to modified Julian Date.
-    """
-    return Time(jd, format='jd').mjd
-
 
 def _get_schema_map(schema_map: Union[str, Path, dict]) -> dict:
     """Load the schema from file if needed, check that it is a dict."""
