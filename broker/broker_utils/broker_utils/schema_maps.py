@@ -5,12 +5,12 @@ Cloud Storage.
 """
 
 import os
+from pathlib import Path
+from typing import Optional, Union
 
-# from typing import List, Tuple, Optional, Union, Generator
-from typing import Optional
-import yaml
 from google.cloud import storage
 
+from .data_utils import load_yaml
 
 # get project id from environment variable, else default to production project
 # cloud functions use GCP_PROJECT
@@ -20,30 +20,78 @@ else:
     PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT", "ardent-cycling-243415")
 
 
-def load_schema_map(survey: str, testid: str, schema: Optional[str] = None) -> dict:
-    """
+def load_schema_map(
+    survey: str,
+    testid: str,
+    schema: Optional[Union[Path, str]] = None,
+) -> dict:
+    """Return a dict mapping the survey's field names to an internal broker standard.
+
     Args:
         survey: Name of the survey associated with the broker instance.
-                Along with the `testid`, this determines which GCS bucket the
-                schema map will be loaded from. If `schema` is not provided,
-                this will also determine which schema map is returned.
-        testid: Name of the testid associated with the broker instance.
-                Along with the `survey`, this determines which GCS bucket the
-                schema map will be loaded from.
-                If this is a bool, it must be False (indicates a production instance).
-        schema: Survey name of the schema to be returned. If not provided, the
-                map corresponding to `survey` will be returned.
+                If `schema` is a `pathlib.Path`, `survey` is ignored
+                (left as an arg for backward compatibility).
+                Otherwise, it determines (in conjunction with `testid`) which GCS bucket
+                the schema map will be loaded from. If `schema` is `None`,
+                this will also determine which survey's schema map is returned.
+        testid: If `schema` is a `pathlib.Path`, `testid` is ignored
+                (left as an arg for backward compatibility).
+                Otherwise, it determines (in conjunction with `survey`) which GCS bucket
+                the schema map will be loaded from.
+                If this is a bool, it must be False (indicating a production instance).
+        schema: If this is a `pathlib.Path`: path to a local yaml file to be loaded.
+                In this case, `survey` and `testid` are ignored.
+                If this is a `str`: name of the survey who's schema map
+                is to be loaded. It will be retrieved from a Cloud Storage bucket.
+                If this is `None`, the schema map corresponding to `survey` will be
+                will be retrieved from a Cloud Storage bucket.
+
+    Returns:
+        Dictionary mapping the survey's field names to an internal broker standard.
     """
-    if schema is None: schema = survey
+    if not schema:
+        # set schema to the survey name, map will be retrieved from a bucket
+        schema = survey  # str
 
-    # load the map from the yaml in cloud storage
-    broker_bucket_name = _broker_bucket_name(survey, testid)
-    schema_file_name = _schema_file_name(schema)
-    blob = storage.Client().bucket(broker_bucket_name).get_blob(schema_file_name)
-    with blob.open("rt") as f:
-        schema_map = yaml.safe_load(f)  # dict
+    if isinstance(schema, str):
+        # download from storage bucket
+        return _download_schema_map(survey, testid, schema)
 
-    return schema_map
+    # else load from local file
+    return load_yaml(schema)
+
+
+def _download_schema_map(survey: str, testid: str, schema: str) -> dict:
+    """Download the schema map from Cloud Storage and return as a dict.
+
+    Args:
+        survey: Name of the survey associated with the broker instance.
+                Determines (in conjunction with `testid`) which GCS bucket
+                the schema map will be loaded from. If `schema` is `None`,
+                this will also determine which survey's schema map is returned.
+        testid: Determines (in conjunction with `survey`) which GCS bucket
+                the schema map will be loaded from.
+                If this is a bool, it must be False (indicating a production instance).
+        schema: Name of the survey who's schema map
+                is to be loaded. It will be retrieved from a Cloud Storage bucket.
+
+    Returns:
+        Dictionary mapping the survey's field names to an internal broker standard.
+    """
+    # some setup
+    bucket = _broker_bucket_name(survey, testid)
+    schema = _schema_object_name(schema)
+    client = storage.Client()
+
+    # try to get the object from storage. blob = `None` if unsuccessful
+    blob = client.bucket(bucket).get_blob(schema)  # 403 error (Forbidden) if not auth'd
+
+    if not blob:
+        # raise an error
+        _ = client.get_bucket(bucket)  # 404 error (NotFound) if bucket doesn't exist
+        raise ValueError(f"Bucket {bucket} exists but the object {schema} does not.")
+
+    return load_yaml(blob)
 
 
 def _broker_bucket_name(survey, testid):
@@ -53,5 +101,5 @@ def _broker_bucket_name(survey, testid):
         return f'{PROJECT_ID}-{survey}-broker_files-{testid}'
 
 
-def _schema_file_name(survey):
+def _schema_object_name(survey):
     return f'schema_maps/{survey}.yaml'
