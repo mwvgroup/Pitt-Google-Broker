@@ -1,5 +1,6 @@
 title: "Pitt-Google Developer"
-# role-id: "developer"
+# intended role-id is (set this at deployment):
+# "developer"
 description: "Role granting permissions for Pitt-Google developers that are not already bundled in a suitable, predefined role."
 stage: "ALPHA"
 includedPermissions:
