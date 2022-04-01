@@ -12,10 +12,15 @@ from broker_utils import data_utils, gcp_utils, schema_maps
 
 
 
-PROJECT_ID = os.getenv("GCP_PROJECT")
+PROJECT_ID = os.getenv("GCP_PROJECT") # For local test set this to GOOGLE_CLOUD_PROJECT
 TESTID = os.getenv("TESTID") # This returns a string which is configured when the broker
-                             # instance is initially set up. 
+                             # instance is initially set up. When we create resources 
+                             # in the cloud, we need unique test names. 
                              # (i.e. This is an input variable to the setup script)
+                             # We cannot have separate pub/sub streams with the same
+                             # name, (i.e. is_pure), so the testID is appended
+                             # to all the resource names for the instance you set up
+                             # (When we deploy to the cloud we set up a broker instance).
 SURVEY = os.getenv("SURVEY") # This will return ztf (in future will be our LSST)
 
 # connect to the logger
@@ -42,7 +47,7 @@ class_table = f"{bq_dataset}.classifications"
 
 purity_table = f"{bq_dataset}.purity"
 
-schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
+
 
 
 def is_pure(alert_dict, schema_map):
@@ -105,6 +110,9 @@ def run(msg: dict, context) -> None:
                 `event_type`: for example: "google.pubsub.topic.publish".
                 `resource`: the resource that emitted the event.
     """
+
+    schema_map = schema_maps.load_schema_map(SURVEY, TESTID) # This is pulling from a bucket in the cloud
+
     # logger.log_text(f"{type(msg['data'])}', severity='DEBUG")
     # logger.log_text(f"{msg['data']}', severity='DEBUG")
 
@@ -122,13 +130,13 @@ def run(msg: dict, context) -> None:
     # # run the alert through the filter.
     # alert_is_pure = <set to boolean. True if alert passes purity filter, else False> (gotten from dict)
     #
-    alert_is_pure = purity_reason_dict['class']
+    alert_is_pure = purity_reason_dict['is_pure']
 
     # # Publish to Pub/Sub:
     # gcp_utils.publish_pubsub(ps_topic, alert_dict, attrs=attrs)
     #
     gcp_utils.publish_pubsub(
-            ps_topic, {"alert": alert_dict, "is_pure": purity_reason_dict}, attrs={**attrs, 'is_pure': alert_is_pure} # check to make sure 'is_pure' can be integer
+            ps_topic, {"alert": alert_dict, "is_pure": purity_reason_dict}, attrs={**attrs, 'is_pure': str(alert_is_pure)} # check to make sure 'is_pure' can be integer
         )
  
 
@@ -151,7 +159,7 @@ def run(msg: dict, context) -> None:
 
     # Changing the name of first key from 'is_pure' to 'class'
     prd_copy['class'] = prd_copy.pop('is_pure')
-    
+
     # # store results to BigQuery, regardless of whether it passes the filter
     purity_dict = {
         **attrs,
