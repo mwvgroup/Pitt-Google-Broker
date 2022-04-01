@@ -76,7 +76,7 @@ else
         --tags=ztfport # for the firewall rule to open the port
 
 #--- Disable the schedules for testing instances
-    if [ "$testid" = "False" ]; then
+    if [ "$testid" != "False" ]; then
         gcloud compute instances remove-resource-policies "${nconductVM}" \
             --resource-policies="${nconductVMsched}"
         gcloud compute instances remove-resource-policies "${consumerVM}" \
