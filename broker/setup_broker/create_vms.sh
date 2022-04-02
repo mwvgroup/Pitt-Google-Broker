@@ -61,26 +61,17 @@ else
     --vm-stop-schedule="${stop_schedule}" \
     --timezone="UTC"
     # create VM
-    installscript="gs://${broker_bucket}/consumer/vm_install.sh"
     machinetype=e2-standard-2
     # metadata
     googlelogging="google-logging-enabled=true"
-    startupscript="startup-script-url=${installscript}"
-    topics="KAFKA_TOPIC_FORCE=,PS_TOPIC=,PS_TOPIC_FORCE=,PS_TOPIC="
-    # shutdown script
-    binbash="#! /bin/bash"
-    baseurl="http://metadata.google.internal/computeMetadata/v1"
-    H="Metadata-Flavor: Google"
-    vm_name="\$(curl ${baseurl}/instance/name -H ${H})"
-    topics="KAFKA_TOPIC_FORCE=,PS_TOPIC=,PS_TOPIC_FORCE=,PS_TOPIC="
-    addmeta="gcloud compute instances add-metadata ${vm_name} --metadata=${topics}"
-    shutdown="shutdown-script=${binbash}\n${vm_name}\n${addmeta}"
+    startupscript="startup-script-url=gs://${broker_bucket}/consumer/vm_install.sh"
+    shutdownscript="shutdown-script-url=gs://${broker_bucket}/consumer/vm_shutdown.sh"
     gcloud compute instances create "$consumerVM" \
         --resource-policies="${consumerVMsched}" \
         --zone="$zone" \
         --machine-type="$machinetype" \
         --scopes=cloud-platform \
-        --metadata="${googlelogging},${startupscript},${topics},${shutdown}" \
+        --metadata="${googlelogging},${startupscript},${shutdownscript}" \
         --tags=ztfport # for the firewall rule to open the port
 
 #--- Disable the schedules for testing instances
