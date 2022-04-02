@@ -2,13 +2,27 @@
 
 - [`gcloud` reference](https://cloud.google.com/sdk/gcloud/reference)
 
-
 ## Setup
 
 ```bash
 # broker instance keywords
 SURVEY="ztf"        # ztf is the only survey we're currently running
 TESTID="mytest"     # choose a testid
+
+REGION="us-central1"
+```
+
+## BigQuery
+
+Create a dataset
+
+```bash
+dataset_name="my-dataset"   # choose a name for your dataset
+
+# Create the dataset
+# bq library comes with gcloud
+bq mk --dataset "${GOOGLE_CLOUD_PROJECT}:dataset_name" \
+    --location="${REGION}"
 ```
 
 ## Cloud Functions
@@ -38,9 +52,9 @@ Initialize variables
 ```bash
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT
 PROJECT_NUMBER=$(gcloud projects list \
-    --filter="$(gcloud config get-value project)" \
-    --format="value(PROJECT_NUMBER)" \
-)
+        --filter="$(gcloud config get-value project)" \
+        --format="value(PROJECT_NUMBER)" \
+    )
 
 # name for the Run service you're deploying, and related resources
 NAME_STUB="xmatch_AbrilCVs"
@@ -98,9 +112,9 @@ gcloud run deploy "$NAME_LOWER_DASH" --image "$IMAGE_URL"  \
 Allow Pub/Sub to create authentication tokens in the project:
 
 ```bash
-gcloud projects add-iam-policy-binding ${PROJECT_ID} \
-     --member=serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com \
-     --role=roles/iam.serviceAccountTokenCreator
+gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+    --member="serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com" \
+    --role="roles/iam.serviceAccountTokenCreator"
 ```
 
 Create a service account and give it permission to invoke cloud run.
@@ -124,6 +138,41 @@ gcloud pubsub subscriptions create "$SUBSCRIPTION" \
     --push-endpoint="$ENDPOINT" \
     --push-auth-service-account="$SERVICE_ACCOUNT_ADDRESS" \
     --ack-deadline="$ACK_DEADLINE"
+```
+
+## Compute Engine
+
+### Compute Engine Schedule
+
+Create a schedule (only needs to be done once)
+[unix-cron format](https://cloud.google.com/scheduler/docs/configuring/cron-job-schedules)
+
+```bash
+schedule_name="my-schedule"     # choose schedule name
+start_schedule="* * * * *"      # choose start time. (UTC, unix-cron format, link above)
+stop_schedule="* * * * *"       # choose stop time. (UTC, unix-cron format, link above)
+description="schedule"          # fill in a description
+
+gcloud compute resource-policies create instance-schedule "${schedule_name}" \
+    --description="${description}" \
+    --vm-start-schedule="${start_schedule}" \
+    --vm-stop-schedule="${stop_schedule}" \
+    --timezone="UTC"
+```
+
+Attach/unattach a schedule to a VM
+
+```bash
+vm_name="my-vm"                 # set this to the VM name
+schedule_name="my-schedule"     # set this to the schedule name
+
+# Attach schedule
+gcloud compute instances add-resource-policies "${nconductVM}" \
+    --resource-policies="${nconductVMsched}"
+
+# Unattach schedule
+gcloud compute instances remove-resource-policies "${nconductVM}" \
+    --resource-policies="${nconductVMsched}"
 ```
 
 ## Pub/Sub
