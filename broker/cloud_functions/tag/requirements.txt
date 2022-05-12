@@ -1,0 +1,2 @@
+google-cloud-logging
+pgb-broker-utils==0.2.28
