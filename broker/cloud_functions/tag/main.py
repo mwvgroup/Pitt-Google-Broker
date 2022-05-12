@@ -4,8 +4,10 @@
 """Filter alerts for purity."""
 
 import base64
+import numpy as np
 import os
 from google.cloud import logging
+from astropy import units as u
 
 # Add these to requirements.txt but check to make sure that the format of adding is correct
 from broker_utils import data_utils, gcp_utils, schema_maps
@@ -92,7 +94,7 @@ def is_pure(alert_dict, schema_map):
 
 
 
-def _is_extragalactic_transient(alert_dict: dict) -> dict:
+def _is_extragalactic_transient(alert_dict: dict, schema_map) -> dict:
     """Check whether alert is likely to be an extragalactic transient.
     Adapted from:
     https://github.com/ZwickyTransientFacility/ztf-avro-alert/blob/master/notebooks/Filtering_alerts.ipynb
@@ -116,7 +118,7 @@ def _is_extragalactic_transient(alert_dict: dict) -> dict:
             no_pointsource_counterpart = True
             # closest candidate == star < 1.5 arcsec away -> candidate probably star
         else:
-            no_pointsource_counterpart = candidate["sgsscore1"] < 0.5
+            no_pointsource_counterpart = candidate["sgscore1"] < 0.5
 
         where_detected = dflc["isdiffpos"] == "t"
         if np.sum(where_detected) >= 2:
@@ -144,12 +146,11 @@ def _is_extragalactic_transient(alert_dict: dict) -> dict:
         'is_extragalactic_transient': int(is_extragalactic_transient), # # DO we want these to be the words true or false or ints
         'is_positive_sub': int(is_positive_sub),
         'no_pointsource_counterpart': int(no_pointsource_counterpart),
-        'where_detected': int(where_detected),
         'not_moving': int(not_moving),
         'no_ssobject': int(no_ssobject),
     }
 
-    return is_extragalactic_transient
+    return exgalac_dict
 
 
 
