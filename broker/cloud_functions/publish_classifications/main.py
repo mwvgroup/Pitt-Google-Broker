@@ -8,15 +8,13 @@ https://github.com/LSSTDESC/plasticc_alerts/blob/main/Examples/plasticc_schema
 
 import base64
 import os
-from typing import Tuple
 
 import fastavro
-from flask import Flask, request
 from google.cloud import logging
+import json
 
-from broker_utils import data_utils, gcp_utils, schema_maps
+from broker_utils import gcp_utils, schema_maps
 
-app = Flask(__name__)
 
 PROJECT_ID = os.getenv("GCP_PROJECT")
 TESTID = os.getenv("TESTID")
@@ -36,44 +34,34 @@ schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
 schema_out = fastavro.schema.load_schema("elasticc.v0_9.brokerClassfication.avsc")
 
 
-@app.route("/", methods=["POST"])
-def index() -> Tuple[str, int]:
-    """Entry point for Cloud Run trigger."""
-    msg = _unpack_envelope(request.get_json())
-    # if there was an error, msg is a tuple. return immediately.
-    if isinstance(msg, Tuple):
-        return msg
-    # else, unpack
-    alert_dict, attrs = _unpack_message(msg)
+def run(msg: dict, context) -> None:
+    """Publish Pitt-Google's classifications.
+
+    For args descriptions, see:
+    https://cloud.google.com/functions/docs/writing/background#function_parameters
+
+    This function is intended to be triggered by Pub/Sub messages, via Cloud Functions.
+
+    Args:
+        msg: Pub/Sub message data and attributes.
+            `data` field contains the message data in a base64-encoded string.
+            `attributes` field contains the message's custom attributes in a dict.
+
+        context: The Cloud Function's event metadata.
+            It has the following attributes:
+                `event_id`: the Pub/Sub message ID.
+                `timestamp`: the Pub/Sub message publish time.
+                `event_type`: for example: "google.pubsub.topic.publish".
+                `resource`: the resource that emitted the event.
+            This argument is not currently used in this function, but the argument is
+            required by Cloud Functions, which will call it.
+    """
+    alert_dict = json.loads(base64.b64decode(msg["data"]).decode("utf-8"))
+    attrs = msg["attributes"]
 
     # create the message for elasticc and publish the stream
     avro = _create_elasticc_msg(alert_dict, attrs)
     gcp_utils.publish_pubsub(ps_topic, avro)
-
-    return ("", 204)
-
-def _unpack_envelope(envelope: dict) -> dict:
-    """Check that the incoming envelope is valid and return the enclosed message."""
-    if not envelope:
-        msg = ("Bad Request: no Pub/Sub message received", 400)
-        logger.log_text(err_msg, severity="DEBUG")
-
-    elif isinstance(envelope, dict) or "message" not in envelope:
-        msg = ("Bad Request: invalid Pub/Sub message format", 400)
-        logger.log_text(err_msg, severity="DEBUG")
-
-    else:
-        msg = envelope["message"]
-
-    return msg
-
-
-def _unpack_message(msg: dict) -> Tuple[dict, dict]:
-    """Unpack the alert."""
-    alert_dict = data_utils.decode_alert(
-        base64.b64decode(msg["data"]), drop_cutouts=True, schema_map=schema_map
-    )
-    return alert_dict, msg["attributes"]
 
 
 def _create_elasticc_msg(alert_dict, attrs):
@@ -104,7 +92,7 @@ def _create_elasticc_msg(alert_dict, attrs):
             #        https://docs.google.com/presentation/d/1FwOdELG-XgdNtySeIjF62bDRVU5EsCToi2Svo_kXA50/edit#slide=id.ge52201f94a_0_12
             "classifierParams": "",  # leave this blank for now
             "classId": 111120,
-            "probability": supernnova_results["prob_class0"], 
+            "probability": supernnova_results["prob_class0"],
         },
     ]
 
@@ -114,7 +102,7 @@ def _create_elasticc_msg(alert_dict, attrs):
     msg = {
         "alertId": elasticc_alert["alertId"],
         "diaSourceId": elasticc_alert[schema_map["source"]][schema_map["sourceId"]],
-        "elasticcPublishTimestamp": elasticcPublishTimestamp, 
+        "elasticcPublishTimestamp": elasticcPublishTimestamp,
         "brokerIngestTimestamp": brokerIngestTimestamp,
         "brokerName": "Pitt-Google Broker",
         "brokerVersion": brokerVersion,
@@ -133,11 +121,3 @@ def _dict_to_avro(msg: dict, schema: dict):
     fout.seek(0)
     avro = fout.getvalue()
     return avro
-
-
-if __name__ == "__main__":
-    PORT = int(os.getenv("PORT")) if os.getenv("PORT") else 8080
-
-    # This is used when running locally. Gunicorn is used to run the
-    # application on Cloud Run. See entrypoint in Dockerfile.
-    app.run(host="127.0.0.1", port=PORT, debug=True)
