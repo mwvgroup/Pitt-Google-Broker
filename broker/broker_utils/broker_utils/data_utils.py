@@ -4,15 +4,44 @@
 survey and broker data.
 """
 
+from collections import namedtuple
+import datetime
 from io import BytesIO
+import os
 from pathlib import Path
 from typing import Union
 
 import fastavro
 import json
+import numpy as np
 import pandas as pd
 
-from .schema_maps import get_value
+from .gcp_utils import pull_pubsub
+from .schema_maps import get_key, get_value
+
+
+AlertIds = namedtuple("AlertIds", "objectId sourceId")
+
+
+def get_alert_ids(schema_map, alert_dict=None, attrs=None):
+    if not attrs:
+        return AlertIds(
+            get_value("objectId", alert_dict, schema_map),
+            get_value("sourceId", alert_dict, schema_map),
+        )
+    else:
+        id_keys = get_id_keys(schema_map)
+        return AlertIds(
+            attrs.get(id_keys.objectId),
+            attrs.get(id_keys.sourceId),
+        )
+
+
+def get_id_keys(schema_map):
+    return AlertIds(
+        get_key("objectId", schema_map),
+        get_key("sourceId", schema_map),
+    )
 
 
 def load_alert(
@@ -155,7 +184,120 @@ def _drop_cutouts(alert_dict: dict, schema_map: dict) -> dict:
             for psource in alert_lite[schema_map['prvSources']]:
                 psource.pop(co, None)
 
-    elif schema_map['SURVEY'] == 'ztf':
+    elif schema_map['SURVEY'] in ['ztf',  'elasticc']:
         alert_lite = {k: v for k, v in alert_dict.items() if k not in cutouts}
 
     return alert_lite
+
+
+def test_alert_avro_paths(adir=None, survey=None):
+    """Return a generator of paths to Avro files in the directory `adir`."""
+    if not adir:
+        adir = Path(os.getenv(f"ALERT_DIR_{survey.upper()}"))
+    return (p for p in adir.glob('**/*.avro'))
+
+
+class TestAlert:
+    """Functions to work with alerts for testing."""
+
+    def __init__(self, path, schema_map):
+        """."""
+        self.path = path
+        self.schema_map = schema_map
+        self.data = dict(
+            dict=load_alert(path, 'dict', schema_map=schema_map, drop_cutouts=True),
+            bytes=load_alert(path, 'bytes'),
+        )
+
+        self.objectId_key = get_key("objectId", schema_map)
+        self.sourceId_key = get_key("sourceId", schema_map)
+        self.ids = get_alert_ids(schema_map, alert_dict=self.data["dict"])
+        # self.objectId = get_value("objectId", self.data["dict"], schema_map)
+        # self.sourceId = get_value("sourceId", self.data["dict"], schema_map)
+
+    def create_msg_payload(self, publish_as='json', dummy=None):
+        """Create a Pub/Sub message payload."""
+        atype = {"json": "dict", "avro": "bytes"}  # alert format
+
+        dummy_results = self.create_dummy_results(dummy)
+
+        payload = dict(alert=self.data[atype[publish_as]], **dummy_results)
+
+        return payload
+
+    def create_dummy_results(self, modules=None):
+        """Create dummy results for a pipeline module."""
+        dummy_results = dict()
+
+        if modules and "SuperNNova" in modules:
+            prob_class1 = np.random.uniform()
+            dummy_results["SuperNNova"] = {
+                self.objectId_key: self.ids.objectId,
+                self.sourceId_key: self.ids.sourceId,
+                "prob_class0": 1-prob_class1,
+                "prob_class1": prob_class1,
+                "predicted_class": round(prob_class1),
+            }
+
+        return dummy_results
+
+    def create_msg_attrs(self):
+        # create int POSIX timestamps in microseconds
+        now = datetime.datetime.now(datetime.timezone.utc)
+        tkafka = int(now.timestamp() * 1e6)
+        # to convert back: datetime.datetime.fromtimestamp(tkafka / 1e6)
+        tingest = int((now + datetime.timedelta(seconds=0.345678)).timestamp() * 1e6)
+        attrs = {
+            self.objectId_key: str(self.ids.objectId),
+            self.sourceId_key: str(self.ids.sourceId),
+            "kafka.timestamp": str(tkafka),
+            "ingest.timestamp": str(tingest),
+        }
+        return attrs
+
+    @staticmethod
+    def guess_publish_format(topic):
+        try:
+            topic_name_stub = topic.split('-')[1]
+        except IndexError:
+            topic_name_stub = topic
+        publish_as = "avro" if topic_name_stub == "alerts" else "json"
+        return publish_as
+
+    @staticmethod
+    def pull_and_compare_ids(subscrip, published_alert_ids, schema_map, max_pulls=5):
+        # pull the messages
+        pulled_msg_ids, i = [], 0
+        while len(pulled_msg_ids) < len(published_alert_ids):
+            max_messages = len(published_alert_ids) - len(pulled_msg_ids)
+            pulled_msg_ids += TestAlert._pull_and_extract_ids(
+                subscrip, max_messages, schema_map
+            )
+            i += 1
+            if i > max_pulls:
+                break
+
+        # compare with the input list
+        # otype = type(published_alert_ids[0].objectId)
+        # stype = type(published_alert_ids[0].sourceId)
+        # pmsg_ids = [()]
+        diff = set(published_alert_ids).difference(set(pulled_msg_ids))
+        success = len(diff) == 0
+        if success:
+            print(f"Success! The message ids pulled from subscription {subscrip} match the input.")
+        else:
+            print(f"Something went wrong. The message ids pulled from subscription {subscrip} do not match the input.")
+
+        return pulled_msg_ids
+
+    @staticmethod
+    def _pull_and_extract_ids(subscrip, max_messages, schema_map):
+        msgs = pull_pubsub(
+            subscrip, max_messages=max_messages, msg_only=False
+        )
+        pulled_msg_ids = [
+            get_alert_ids(
+                schema_map, attrs=msg.message.attributes
+            ) for msg in msgs
+        ]
+        return pulled_msg_ids
