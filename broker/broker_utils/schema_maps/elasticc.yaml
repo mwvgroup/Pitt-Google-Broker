@@ -3,10 +3,10 @@ SURVEY_SCHEMA: https://github.com/LSSTDESC/plasticc_alerts/tree/main/Examples/pl
 SCHEMA_VERSION: v0_9
 TOPIC_SYNTAX:
 FILTER_MAP:
-objectId: diaObjectId
+objectId: [diaObject, diaObjectId]
 prvSources: prvDiaSources
 source: diaSource
-sourceId: diaSourceId
+sourceId: [diaSource, diaSourceId]
 cutoutDifference: cutoutDifference
 cutoutScience: none
 cutoutTemplate: cutoutTemplate

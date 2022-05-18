@@ -12,7 +12,8 @@ import pandas as pd
 from pathlib import Path
 from supernnova.validation.validate_onthefly import classify_lcs
 
-from broker_utils import data_utils, gcp_utils, schema_maps
+from broker_utils import data_utils, gcp_utils
+from broker_utils.schema_maps import load_schema_map, get_key, get_value
 
 
 PROJECT_ID = os.getenv("GCP_PROJECT")
@@ -32,7 +33,8 @@ if TESTID != "False":  # attach the testid to the names
     ps_topic = f"{ps_topic}-{TESTID}"
 bq_table = f"{bq_dataset}.SuperNNova"
 
-schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
+schema_map = load_schema_map(SURVEY, TESTID)
+id_keys = data_utils.get_id_keys(schema_map)
 
 model_dir_name = "ZTF_DMAM_V19_NoC_SNIa_vs_CC_forFink"
 model_file_name = "vanilla_S_0_CLF_2_R_none_photometry_DF_1.0_N_global_lstm_32x2_0.05_128_True_mean.pt"
@@ -74,13 +76,8 @@ def run(msg: dict, context) -> None:
 
     else:
         # announce to pubsub
-        attrs = {
-            schema_map["objectId"]: str(alert_dict[schema_map["objectId"]]),
-            schema_map["sourceId"]: str(alert_dict[schema_map["sourceId"]]),
-        }
         gcp_utils.publish_pubsub(
-            ps_topic, {"alert": alert_dict, "SuperNNova": snn_dict}, attrs=attrs
-        )
+            ps_topic, dict(alert=alert_dict, SuperNNova=snn_dict), attrs=msg.attributes)
 
         # store in bigquery
         errors = gcp_utils.insert_rows_bigquery(bq_table, [snn_dict])
@@ -101,8 +98,8 @@ def _classify_with_snn(alert_dict: dict) -> dict:
     # use `.item()` to convert numpy -> python types for later json serialization
     pred_probs = pred_probs.flatten()
     snn_dict = {
-        schema_map["objectId"]: snn_df.objectId,
-        schema_map["sourceId"]: snn_df.sourceId,
+        id_keys.objectId: snn_df.objectId,
+        id_keys.sourceId: snn_df.sourceId,
         "prob_class0": pred_probs[0].item(),
         "prob_class1": pred_probs[1].item(),
         "predicted_class": np.argmax(pred_probs).item(),

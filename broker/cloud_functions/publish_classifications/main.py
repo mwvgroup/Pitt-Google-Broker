@@ -7,16 +7,17 @@ https://github.com/LSSTDESC/plasticc_alerts/blob/main/Examples/plasticc_schema
 """
 
 import base64
+import io
 import os
 
 import fastavro
 from google.cloud import logging
 import json
 
-from broker_utils import gcp_utils, schema_maps
+from broker_utils import gcp_utils
+from broker_utils.schema_maps import load_schema_map, get_value
 
 
-PROJECT_ID = os.getenv("GCP_PROJECT")
 TESTID = os.getenv("TESTID")
 SURVEY = os.getenv("SURVEY")  # elasticc
 
@@ -30,7 +31,7 @@ ps_topic = f"{SURVEY}-classifications"
 if TESTID != "False":  # attach the testid to the names
     ps_topic = f"{ps_topic}-{TESTID}"
 
-schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
+schema_map = load_schema_map(SURVEY, TESTID)
 schema_out = fastavro.schema.load_schema("elasticc.v0_9.brokerClassfication.avsc")
 
 
@@ -61,7 +62,7 @@ def run(msg: dict, context) -> None:
 
     # create the message for elasticc and publish the stream
     avro = _create_elasticc_msg(alert_dict, attrs)
-    gcp_utils.publish_pubsub(ps_topic, avro)
+    gcp_utils.publish_pubsub(ps_topic, avro, attrs=attrs)
 
 
 def _create_elasticc_msg(alert_dict, attrs):
@@ -81,8 +82,8 @@ def _create_elasticc_msg(alert_dict, attrs):
     supernnova_results = alert_dict["SuperNNova"]
 
     # here are a few things you'll need
-    elasticcPublishTimestamp = attrs["kafka.timestamp"]
-    brokerIngestTimestamp = attrs["ingest_time"]  # Troy: attach this in first module
+    elasticcPublishTimestamp = int(attrs["kafka.timestamp"])
+    brokerIngestTimestamp = int(attrs["ingest.timestamp"])  # Troy: attach this in first module
     brokerVersion = "v0.6"
 
     classifications = [
@@ -101,7 +102,7 @@ def _create_elasticc_msg(alert_dict, attrs):
     #        https://github.com/LSSTDESC/plasticc_alerts/blob/main/Examples/plasticc_schema/elasticc.v0_9.brokerClassification.avsc
     msg = {
         "alertId": elasticc_alert["alertId"],
-        "diaSourceId": elasticc_alert[schema_map["source"]][schema_map["sourceId"]],
+        "diaSourceId": get_value("sourceId", elasticc_alert, schema_map),
         "elasticcPublishTimestamp": elasticcPublishTimestamp,
         "brokerIngestTimestamp": brokerIngestTimestamp,
         "brokerName": "Pitt-Google Broker",
