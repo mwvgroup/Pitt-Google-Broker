@@ -36,6 +36,7 @@ The Pitt-Google Broker runs on the `Google Cloud Platform <https://cloud.google.
    broker/components
    broker/setup-ref
    broker/run-a-broker-instance
+   broker/alerts-for-testing
    broker/primers-for-developers
 
 .. toctree::
