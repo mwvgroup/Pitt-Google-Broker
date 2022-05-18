@@ -9,8 +9,9 @@ from pathlib import Path
 from typing import Optional, Union
 
 from google.cloud import storage
+from google.cloud.storage.blob import Blob
+import yaml
 
-from .data_utils import load_yaml
 
 # get project id from environment variable, else default to production project
 # cloud functions use GCP_PROJECT
@@ -103,3 +104,49 @@ def _broker_bucket_name(survey, testid):
 
 def _schema_object_name(survey):
     return f'schema_maps/{survey}.yaml'
+
+
+def load_yaml(fin: Union[Path, str, Blob]) -> dict:
+    """Load a yaml file and return as a dict.
+
+    Args:
+        fin: Path-like or `google.cloud.storage.blob.Blob` object. Assumes yaml format.
+
+    Returns:
+        Dictionary mapping the survey's field names to an internal broker standard.
+    """
+    if isinstance(fin, Blob):
+        with fin.open("rt") as f:
+            return yaml.safe_load(f)  # dict
+
+    with open(fin, "rb") as f:
+        return yaml.safe_load(f)  # dict
+
+
+def get_value(key: str, alert_dict: dict, schema_map: dict) -> Union[int, str]:
+    """Return the alert_dict value corresponding to schema_map and key."""
+    fullkey = schema_map.get(key)
+
+    if isinstance(fullkey, str):
+        return alert_dict.get(fullkey)
+
+    elif isinstance(fullkey, list):
+        if len(fullkey) == 1:
+            return alert_dict.get(fullkey[0])
+
+        elif len(fullkey) == 2:
+            return alert_dict.get(fullkey[0]).get(fullkey[1])
+
+        elif len(fullkey) == 3:
+            return alert_dict.get(fullkey[0]).get(fullkey[1]).get(fullkey[2])
+
+
+def get_key(key: str, schema_map: dict) -> Union[int, str]:
+    """Return the key or final element in list corresponding to schema_map and key."""
+    fullkey = schema_map.get(key)
+
+    if isinstance(fullkey, str):
+        return fullkey
+
+    elif isinstance(fullkey, list):
+        return fullkey[-1]

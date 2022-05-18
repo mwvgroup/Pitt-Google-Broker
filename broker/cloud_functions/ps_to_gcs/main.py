@@ -16,14 +16,15 @@ import fastavro
 from google.cloud import logging
 from google.cloud import storage
 
-from broker_utils import schema_maps
+from broker_utils.schema_maps import load_schema_map, get_value
 from exceptions import SchemaParsingError
+
 
 PROJECT_ID = os.getenv('GCP_PROJECT')
 TESTID = os.getenv('TESTID')
 SURVEY = os.getenv('SURVEY')
 
-schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
+schema_map = load_schema_map(SURVEY, TESTID)
 storage_client = storage.Client()
 
 # connect to the cloud logger
@@ -129,9 +130,9 @@ def attach_file_metadata(blob, alert, context):
 
 def create_filename(alert, attributes):
     # alert is a single alert dict wrapped in a list
-    oid = alert[0][schema_map['objectId']]
-    sid = alert[0][schema_map['source']][schema_map['sourceId']]
-    topic = attributes['kafka.topic']
+    oid = get_value("objectId", alert[0], schema_map)
+    sid = get_value("sourceId", alert[0], schema_map)
+    topic = attributes.get("kafka.topic", "no_topic")
     filename = f'{oid}.{sid}.{topic}.avro'
     return filename
 

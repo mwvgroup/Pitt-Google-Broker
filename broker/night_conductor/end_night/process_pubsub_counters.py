@@ -11,7 +11,8 @@ import pandas as pd
 import time
 from typing import List, Optional, Tuple, Union
 
-from broker_utils import gcp_utils, schema_maps
+from broker_utils import gcp_utils
+from broker_utils.schema_maps import load_schema_map, get_key
 
 
 project_id = "ardent-cycling-243415"
@@ -124,8 +125,8 @@ class MetadataCollector:
         self.metadata_dfs_dict = {}  # Dict[str, pd.DataFrame] as {topic stub: df}
         self.metadata_df = None  # pd.DataFrame, all subscriptions joined
         # index that will be used to join subscription dfs
-        schema_map = schema_maps.load_schema_map(survey, testid)
-        self.index = [schema_map["objectId"], schema_map["sourceId"]]
+        schema_map = load_schema_map(survey, testid)
+        self.index = [get_key("objectId", schema_map), get_key("sourceId", schema_map)]
 
     def collect_and_store_all_metadata(self):
         """Entry point for the MetadataCollector."""

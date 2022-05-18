@@ -6,15 +6,13 @@ survey and broker data.
 
 from io import BytesIO
 from pathlib import Path
-from typing import Tuple, Union
+from typing import Union
 
-from astropy.time import Time
 import fastavro
-from google.cloud.storage.blob import Blob
 import json
-import numpy as np
 import pandas as pd
-import yaml
+
+from .schema_maps import get_value
 
 
 def load_alert(
@@ -135,9 +133,9 @@ def alert_dict_to_dataframe(alert_dict: dict, schema_map: dict) -> pd.DataFrame:
     # https://stackoverflow.com/questions/14688306/adding-meta-information-metadata-to-pandas-dataframe
     # make sure this does not overwrite existing columns
     if "objectId" not in df.keys():
-        df.objectId = alert_dict[schema_map['objectId']]
+        df.objectId = get_value("objectId", alert_dict, schema_map)
     if "sourceId" not in df.keys():
-        df.sourceId = alert_dict[schema_map['sourceId']]
+        df.sourceId = get_value("sourceId", alert_dict, schema_map)
 
     return df
 
@@ -161,20 +159,3 @@ def _drop_cutouts(alert_dict: dict, schema_map: dict) -> dict:
         alert_lite = {k: v for k, v in alert_dict.items() if k not in cutouts}
 
     return alert_lite
-
-
-def load_yaml(fin: Union[Path, str, Blob]) -> dict:
-    """Load a yaml file and return as a dict.
-
-    Args:
-        fin: Path-like or `google.cloud.storage.blob.Blob` object. Assumes yaml format.
-
-    Returns:
-        Dictionary mapping the survey's field names to an internal broker standard.
-    """
-    if isinstance(fin, Blob):
-        with fin.open("rt") as f:
-            return yaml.safe_load(f)  # dict
-
-    with open(fin, "rb") as f:
-        return yaml.safe_load(f)  # dict

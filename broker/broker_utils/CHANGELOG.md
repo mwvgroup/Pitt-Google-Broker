@@ -10,6 +10,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## \[Unreleased\]<a name="unreleased"></a>
 
+## \[0.2.29\] - 2022-05-17
+
+### Added
+
+- `schema_maps.get_key()` return the key name or the final element in the list corresponding to a schema map and key.
+- `schema_maps.get_value()` return the alert value corresponding to a schema map and key.
+
+### Changed
+
+- Modules updated to use the added functions.
+- `data_utils.load_yaml()` moved to `schema_maps.load_yaml()` to avoid circular imports.
+
 ## \[0.2.28\] - 2022-03-27
 
 ### Added
