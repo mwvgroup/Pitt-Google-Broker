@@ -10,6 +10,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## \[Unreleased\]<a name="unreleased"></a>
 
+## \[0.2.30\] - 2022-05-18
+
+### Added
+
+- `data_utils.AlertIds` and `data_utils.TestAlert`
+- `gcp_utils.purge_subscription()`
+
 ## \[0.2.29\] - 2022-05-17
 
 ### Added
