@@ -4,6 +4,7 @@
 GCP resources.
 """
 
+import datetime
 import os
 
 from concurrent.futures import TimeoutError
@@ -230,6 +231,13 @@ def streamingPull_pubsub(
 
     else:
         return streaming_pull_future
+
+
+def purge_subscription(subscription):
+    """Purge all messages from the subscription."""
+    client = pubsub_v1.SubscriberClient()
+    sub = f"projects/{os.getenv('GOOGLE_CLOUD_PROJECT')}/subscriptions/{subscription}"
+    _ = client.seek(request=dict(subscription=sub, time=datetime.datetime.now()))
 
 
 # --- BigQuery --- #
