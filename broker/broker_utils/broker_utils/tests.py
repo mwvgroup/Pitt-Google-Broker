@@ -43,10 +43,13 @@ class TestAlert:
     def create_msg_payload(self, publish_as='json', mock=None):
         """Create a Pub/Sub message payload."""
         atype = {"json": "dict", "avro": "bytes"}  # alert format
-
+        alert = self.data[atype[publish_as]]
         mock_results = self.create_mock_results(mock)
 
-        payload = dict(alert=self.data[atype[publish_as]], **mock_results)
+        if publish_as == "avro":
+            payload = alert
+        else:
+            payload = dict(alert=alert, **mock_results)
 
         return payload
 
