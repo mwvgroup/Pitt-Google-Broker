@@ -10,6 +10,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## \[Unreleased\]<a name="unreleased"></a>
 
+## \[0.2.31\] - 2022-05-19
+
+### Added
+
+- `tests` module and `tests.TestValidator` class
+- `data_utils.idUtils` class
+
+### Changed
+
+- moved `data_utils.TestAlert` to `tests.TestAlert`
+
 ## \[0.2.30\] - 2022-05-18
 
 ### Added

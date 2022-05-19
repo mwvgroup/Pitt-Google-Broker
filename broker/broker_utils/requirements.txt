@@ -1,5 +1,5 @@
 # If you have trouble with astropy, jinja2, MarkupSafe, and/or soft_unicode
-# Try using a Conda environment with Python 3.7 e.g., 
+# Try using a Conda environment with Python 3.7 e.g.,
 # $ conda create -n pgb python=3.7
 astropy
 fastavro
