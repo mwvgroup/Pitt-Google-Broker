@@ -99,6 +99,9 @@ Load alerts and test
 Setup
 ~~~~~~~~~~~~~~~~
 
+Activate your conda environment.
+If you recently finished following the instructions above, you will need to deactivate and then activate your conda environment again in order for the environment variables to load.
+
 Import some modules:
 
 .. code:: python
