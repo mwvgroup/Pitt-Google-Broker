@@ -15,6 +15,7 @@ from broker_utils import data_utils, gcp_utils, schema_maps
 
 
 PROJECT_ID = os.getenv("GCP_PROJECT") # For local test set this to GOOGLE_CLOUD_PROJECT
+
 TESTID = os.getenv("TESTID") # This returns a string which is configured when the broker
                              # instance is initially set up. When we create resources 
                              # in the cloud, we need unique test names. 
@@ -190,7 +191,7 @@ def run(msg: dict, context) -> None:
     purity_reason_dict = is_pure(alert_dict, schema_map)
 
 
-    extragalactic_dict = _is_extragalactic_transient(alert_dict) ## ADDED
+    extragalactic_dict = _is_extragalactic_transient(alert_dict, schema_map) ## ADDED
 
     # # run the alert through the filter.
 
