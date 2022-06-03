@@ -19,6 +19,7 @@ tag_CF_name="${survey}-tag"
 broker_bucket="${PROJECT_ID}-${survey}-broker_files"
 topic_alerts="${survey}-alerts"
 topic_tagged="${survey}-tagged"
+bq_dataset="${PROJECT_ID}:${survey}_alerts"
 # use test resources, if requested
 if [ "$testid" != "False" ]; then
     tag_trigger_topic="${tag_trigger_topic}-${testid}"
@@ -26,7 +27,10 @@ if [ "$testid" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
     topic_alerts="${topic_alerts}-${testid}"
     topic_tagged="${topic_tagged}-${testid}"
+    bq_dataset="${bq_dataset}_${testid}"
 fi
+class_table="classifications"
+tags_table="tags"
 
 # make the user confirm the options
 action='create resources'
@@ -67,6 +71,11 @@ else # Deploy the Cloud Functions and create other Cloud resources
     gcloud pubsub topics create "${topic_tagged}"
     gcloud pubsub subscriptions create "${topic_tagged}" \
         --topic "${topic_tagged}"
+
+#--- create the bigquery dataset and tables
+    bq mk --dataset "${bq_dataset}"
+    bq mk --table "${bq_dataset}.${class_table}" "templates/bq_${survey}_${class_table}_schema.json"
+    bq mk --table "${bq_dataset}.${tags_table}" "templates/bq_${survey}_${tags_table}_schema.json"
 
 #--- tag cloud function
     echo "Deploying Cloud Function: $tag_CF_name"
