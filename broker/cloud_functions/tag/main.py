@@ -35,7 +35,7 @@ logger = logging_client.logger(log_name)
 bq_dataset = f"{SURVEY}_alerts"
 
 # Changed the name stub of ps_topic from exgalac_trans_cs to alerts_pure
-ps_topic = f"{SURVEY}-alerts_pure" # This is the name of the Pub/Sub topic that this
+ps_topic = f"{SURVEY}-tagged" # This is the name of the Pub/Sub topic that this
                                    # module publishes to. (Publishes original alert
                                    # plus its own results. The next module downstream
                                    # in the pipeline will listen to this topic)
@@ -48,7 +48,7 @@ if TESTID != "False":  # attach the testid to the names
 # Changed the name stub of the BigQuery table from SuperNNova to classifications
 class_table = f"{bq_dataset}.classifications" 
 
-tags_table = f"{bq_dataset}.tags" # THIS SHOULD BE CHANGED TO 'tags'
+tags_table = f"{bq_dataset}.tags" 
 
 
 
@@ -144,7 +144,7 @@ def _is_extragalactic_transient(alert_dict: dict, schema_map) -> dict:
         )
 
     exgalac_dict = {
-        'is_extragalactic_transient': int(is_extragalactic_transient), # # DO we want these to be the words true or false or ints
+        'is_extragalactic_transient': int(is_extragalactic_transient), 
         'is_positive_sub': int(is_positive_sub),
         'no_pointsource_counterpart': int(no_pointsource_counterpart),
         'not_moving': int(not_moving),
@@ -156,7 +156,7 @@ def _is_extragalactic_transient(alert_dict: dict, schema_map) -> dict:
 
 
 def run(msg: dict, context) -> None:
-    """Filter alerts for purity, publish results.
+    """Filter alerts for purity and extragalctic transient, publish results.
 
     For args descriptions, see:
     https://cloud.google.com/functions/docs/writing/background#function_parameters
@@ -201,15 +201,9 @@ def run(msg: dict, context) -> None:
     gcp_utils.publish_pubsub(
             ps_topic, 
             alert_dict, 
-            attrs={**attrs, **{k: str(v) for k, v in purity_reason_dict}, **{k: str(v) for k, v in extragalactic_dict}, 'fid': str(alert_dict[schema_map["source"]]["fid"]),}
+            attrs={**attrs, **{k: str(v) for k, v in purity_reason_dict.items()}, **{k: str(v) for k, v in extragalactic_dict.items()}, 'fid': str(alert_dict[schema_map["source"]]["fid"]),}
     )                                                                      
 
- 
-
-
-    ### GOT TO HERE RELATIVELY    
-        # (Do I need a copy of extragalactic_trans_dict?)
-        # ()
 
     # # store results to BigQuery, regardless of whether it passes the filter
     tags_dict = {
@@ -235,9 +229,7 @@ def run(msg: dict, context) -> None:
             'class': purity_reason_dict['is_pure'],
         },
         {
-            **attrs,  # objectId and sourceId (same thing as candId, but we call it a sourceId in our
-                    #  internal broker) [** is a splat, it takes the elements from attrs dict and unpacks
-                    #   it and passes it to the new dict constr, and passes it as individual elements]
+            **attrs,
             'classifier': 'extragalactic_transient',
             'classifier_version': 0.1,
             'class': extragalactic_dict['is_extragalactic_transient'],
