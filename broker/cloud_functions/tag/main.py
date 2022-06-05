@@ -4,8 +4,8 @@
 """Filter alerts for purity."""
 
 import base64
-import numpy as np
 import os
+import numpy as np
 from google.cloud import logging
 from astropy import units as u
 
@@ -16,14 +16,17 @@ from broker_utils import data_utils, gcp_utils, schema_maps
 
 PROJECT_ID = os.getenv("GCP_PROJECT") # For local test set this to GOOGLE_CLOUD_PROJECT
 
-TESTID = os.getenv("TESTID") # This returns a string which is configured when the broker
-                             # instance is initially set up. When we create resources 
-                             # in the cloud, we need unique test names. 
-                             # (i.e. This is an input variable to the setup script)
-                             # We cannot have separate pub/sub streams with the same
-                             # name, (i.e. is_pure), so the testID is appended
-                             # to all the resource names for the instance you set up
-                             # (When we deploy to the cloud we set up a broker instance).
+
+# This returns a string which is configured when the broker
+# instance is initially set up. When we create resources
+# in the cloud, we need unique test names.
+# (i.e. This is an input variable to the setup script)
+# We cannot have separate pub/sub streams with the same
+# name, (i.e. is_pure), so the testID is appended
+# to all the resource names for the instance you set up
+# (When we deploy to the cloud we set up a broker instance).
+TESTID = os.getenv("TESTID")
+
 SURVEY = os.getenv("SURVEY") # This will return ztf (in future will be our LSST)
 
 # connect to the logger
@@ -34,11 +37,13 @@ logger = logging_client.logger(log_name)
 # GCP resources used in this module
 bq_dataset = f"{SURVEY}_alerts"
 
-# Changed the name stub of ps_topic from exgalac_trans_cs to alerts_pure
-ps_topic = f"{SURVEY}-tagged" # This is the name of the Pub/Sub topic that this
-                                   # module publishes to. (Publishes original alert
-                                   # plus its own results. The next module downstream
-                                   # in the pipeline will listen to this topic)
+
+
+# This is the name of the Pub/Sub topic that this
+# module publishes to. (Publishes original alert
+# plus its own results. The next module downstream
+# in the pipeline will listen to this topic)
+ps_topic = f"{SURVEY}-tagged"
 
 if TESTID != "False":  # attach the testid to the names
     bq_dataset = f"{bq_dataset}_{TESTID}"
@@ -46,9 +51,9 @@ if TESTID != "False":  # attach the testid to the names
 
 
 # Changed the name stub of the BigQuery table from SuperNNova to classifications
-class_table = f"{bq_dataset}.classifications" 
+class_table = f"{bq_dataset}.classifications"
 
-tags_table = f"{bq_dataset}.tags" 
+tags_table = f"{bq_dataset}.tags"
 
 
 
@@ -71,19 +76,19 @@ def is_pure(alert_dict, schema_map):
     rb = (source['rb'] >= 0.65)  # RealBogus score
 
     if schema_map['SURVEY'] == 'decat':
-        is_pure = rb
+        pure = rb
 
     elif schema_map['SURVEY'] == 'ztf':
         nbad = (source['nbad'] == 0)  # num bad pixels
         fwhm = (source['fwhm'] <= 5)  # Full Width Half Max, SExtractor [pixels]
         elong = (source['elong'] <= 1.2)  # major / minor axis, SExtractor
         magdiff = (abs(source['magdiff']) <= 0.1)  # aperture - psf [mag]
-        is_pure = (rb and nbad and fwhm and elong and magdiff)
+        pure = (rb and nbad and fwhm and elong and magdiff)
 
 
 
     purity_reason_dict = {
-        'is_pure': int(is_pure),
+        'is_pure': int(pure),
         'rb': int(rb),
         'nbad': int(nbad),
         'fwhm': int(fwhm),
@@ -144,7 +149,7 @@ def _is_extragalactic_transient(alert_dict: dict, schema_map) -> dict:
         )
 
     exgalac_dict = {
-        'is_extragalactic_transient': int(is_extragalactic_transient), 
+        'is_extragalactic_transient': int(is_extragalactic_transient),
         'is_positive_sub': int(is_positive_sub),
         'no_pointsource_counterpart': int(no_pointsource_counterpart),
         'not_moving': int(not_moving),
@@ -155,7 +160,7 @@ def _is_extragalactic_transient(alert_dict: dict, schema_map) -> dict:
 
 
 
-def run(msg: dict, context) -> None:
+def run(msg: dict, context):
     """Filter alerts for purity and extragalctic transient, publish results.
 
     For args descriptions, see:
@@ -173,8 +178,10 @@ def run(msg: dict, context) -> None:
                 `event_type`: for example: "google.pubsub.topic.publish".
                 `resource`: the resource that emitted the event.
     """
+    unused = context # CONTEXT IS NOT USED IN THIS RUN FUNCTION
 
-    schema_map = schema_maps.load_schema_map(SURVEY, TESTID) # This is pulling from a bucket in the cloud
+    # This is pulling from a bucket in the cloud
+    schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
 
     # logger.log_text(f"{type(msg['data'])}', severity='DEBUG")
     # logger.log_text(f"{msg['data']}', severity='DEBUG")
@@ -199,10 +206,12 @@ def run(msg: dict, context) -> None:
     # gcp_utils.publish_pubsub(ps_topic, alert_dict, attrs=attrs)
     #
     gcp_utils.publish_pubsub(
-            ps_topic, 
-            alert_dict, 
-            attrs={**attrs, **{k: str(v) for k, v in purity_reason_dict.items()}, **{k: str(v) for k, v in extragalactic_dict.items()}, 'fid': str(alert_dict[schema_map["source"]]["fid"]),}
-    )                                                                      
+            ps_topic,
+            alert_dict,
+            attrs= {**attrs, **{k: str(v) for k, v in purity_reason_dict.items()},
+                    **{k: str(v) for k, v in extragalactic_dict.items()},
+                    'fid': str(alert_dict[schema_map["source"]]["fid"]),}
+    )
 
 
     # # store results to BigQuery, regardless of whether it passes the filter
@@ -210,7 +219,7 @@ def run(msg: dict, context) -> None:
         **attrs,
         'classifier_version': 0.1,
         **purity_reason_dict,
-        **extragalactic_dict,     
+        **extragalactic_dict,
     }
 
     errors = gcp_utils.insert_rows_bigquery(tags_table, [tags_dict])
@@ -219,11 +228,15 @@ def run(msg: dict, context) -> None:
 
 
     # # store results to BigQuery, regardless of whether it passes the filter
-    classifications= [ 
+    classifications= [
         {
-            **attrs,  # objectId and sourceId (same thing as candId, but we call it a sourceId in our
-                    #  internal broker) [** is a splat, it takes the elements from attrs dict and unpacks
-                    #   it and passes it to the new dict constr, and passes it as individual elements]
+            # **attrs: objectId and sourceId
+            # (same thing as candId, but we call it a sourceId in our internal
+            # broker) [** is a splat, it takes the elements from attrs dict
+            # and unpacks it and passes it to the new dict constr, and passes
+            # it as individual elements]
+            
+            **attrs,
             'classifier': 'purity',
             'classifier_version': 0.1,
             'class': purity_reason_dict['is_pure'],
