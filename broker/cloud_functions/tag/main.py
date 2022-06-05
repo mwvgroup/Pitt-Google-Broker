@@ -178,7 +178,6 @@ def run(msg: dict, context):
                 `event_type`: for example: "google.pubsub.topic.publish".
                 `resource`: the resource that emitted the event.
     """
-    unused = context # CONTEXT IS NOT USED IN THIS RUN FUNCTION
 
     # This is pulling from a bucket in the cloud
     schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
@@ -235,7 +234,7 @@ def run(msg: dict, context):
             # broker) [** is a splat, it takes the elements from attrs dict
             # and unpacks it and passes it to the new dict constr, and passes
             # it as individual elements]
-            
+
             **attrs,
             'classifier': 'purity',
             'classifier_version': 0.1,
@@ -252,7 +251,3 @@ def run(msg: dict, context):
     errors = gcp_utils.insert_rows_bigquery(class_table, classifications)
     if len(errors) > 0:
         logger.log_text(f"BigQuery insert error: {errors}", severity="DEBUG")
-
-
-
-    return
