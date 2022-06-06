@@ -34,7 +34,7 @@ if TESTID != "False":  # attach the testid to the names
 bq_table = f"{bq_dataset}.SuperNNova"
 
 schema_map = load_schema_map(SURVEY, TESTID)
-id_keys = data_utils.get_id_keys(schema_map)
+id_keys = data_utils.idUtils(schema_map).get_id_keys()
 
 model_dir_name = "ZTF_DMAM_V19_NoC_SNIa_vs_CC_forFink"
 model_file_name = "vanilla_S_0_CLF_2_R_none_photometry_DF_1.0_N_global_lstm_32x2_0.05_128_True_mean.pt"
@@ -118,10 +118,8 @@ def _format_for_snn(alert_dict: dict) -> pd.DataFrame:
     snn_df.objectId = alert_df.objectId
     snn_df.sourceId = alert_df.sourceId
 
-    # create the columns expected by SNN
-    snn_df["FLT"] = alert_df["fid"].map(schema_map["FILTER_MAP"])
-
     if SURVEY == "ztf":
+        snn_df["FLT"] = alert_df["fid"].map(schema_map["FILTER_MAP"])
         snn_df["MJD"] = data_utils.jd_to_mjd(alert_df["jd"])
         snn_df["FLUXCAL"], snn_df["FLUXCALERR"] = data_utils.mag_to_flux(
             alert_df[schema_map["mag"]],
@@ -130,8 +128,15 @@ def _format_for_snn(alert_dict: dict) -> pd.DataFrame:
         )
 
     elif SURVEY == "decat":
+        snn_df["FLT"] = alert_df["fid"].map(schema_map["FILTER_MAP"])
         col_map = {"mjd": "MJD", "flux": "FLUXCAL", "fluxerr": "FLUXCALERR"}
         for acol, scol in col_map.items():
             snn_df[scol] = alert_df[acol]
+
+    elif SURVEY == "elasticc":
+        snn_df["FLT"] = alert_df["filterName"]
+        snn_df["FLUXCAL"] = alert_df["psFlux"]
+        snn_df["FLUXCALERR"] = alert_df["psFluxErr"]
+        snn_df["MJD"] = alert_df["midPointTai"]
 
     return snn_df
