@@ -31,8 +31,8 @@ SURVEY = os.getenv("SURVEY") # This will return ztf (in future will be our LSST)
 
 # connect to the logger
 logging_client = logging.Client()
-log_name = "filter-purity"  # same log for all broker instances
-logger = logging_client.logger(log_name)
+LOG_NAME = "filter-purity"  # same log for all broker instances
+logger = logging_client.logger(LOG_NAME)
 
 # GCP resources used in this module
 bq_dataset = f"{SURVEY}_alerts"
