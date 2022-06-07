@@ -2,7 +2,7 @@
 
 ```python
 from matplotlib import pyplot as plt
-import figures as figs
+import figures as figsk
 
 query = {
     'survey': 'ztf',
@@ -89,7 +89,7 @@ for c in cols:
 <img src="figures/SuperNNova-ztf-20210914.png" alt=""/>
 
 
-### figures_OG
+## figures_OG
 
 ```python
 import figures_OG as figs
