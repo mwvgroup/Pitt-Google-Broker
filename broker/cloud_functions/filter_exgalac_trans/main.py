@@ -29,6 +29,10 @@ if TESTID != "False":  # attach the testid to the names
 schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
 
 
+# Do I need to change the name stub of BigQuery table? Don't think I do as we are not inserting
+# to BQ at all
+
+
 def run(msg: dict, context) -> None:
     """Filter for likely extragalactic transients, publish results.
 
