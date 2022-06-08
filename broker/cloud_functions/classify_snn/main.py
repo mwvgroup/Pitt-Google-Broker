@@ -77,7 +77,7 @@ def run(msg: dict, context) -> None:
     else:
         # announce to pubsub
         gcp_utils.publish_pubsub(
-            ps_topic, dict(alert=alert_dict, SuperNNova=snn_dict), attrs=msg.attributes)
+            ps_topic, dict(alert=alert_dict, SuperNNova=snn_dict), attrs=msg["attributes"])
 
         # store in bigquery
         errors = gcp_utils.insert_rows_bigquery(bq_table, [snn_dict])
