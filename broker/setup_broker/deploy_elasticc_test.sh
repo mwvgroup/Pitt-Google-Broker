@@ -102,35 +102,35 @@ else # Deploy the Cloud Functions and create other Cloud resources
     cd $OGdir
 
 #--- classify with SNN cloud function
-    # echo "Deploying Cloud Function: $classify_snn_CF_name"
-    # classify_snn_entry_point="run"
-    # memory=512MB  # standard 256MB is too small here
+    echo "Deploying Cloud Function: $classify_snn_CF_name"
+    classify_snn_entry_point="run"
+    memory=512MB  # standard 256MB is too small here
 
-    # cd .. && cd cloud_functions
-    # cd classify_snn
+    cd .. && cd cloud_functions
+    cd classify_snn
 
-    # gcloud functions deploy "$classify_snn_CF_name" \
-    #     --entry-point "$classify_snn_entry_point" \
-    #     --memory "$memory" \
-    #     --runtime python37 \
-    #     --trigger-topic "$classify_snn_trigger_topic" \
-    #     --set-env-vars TESTID="$testid",SURVEY="$survey"
+    gcloud functions deploy "$classify_snn_CF_name" \
+        --entry-point "$classify_snn_entry_point" \
+        --memory "$memory" \
+        --runtime python37 \
+        --trigger-topic "$classify_snn_trigger_topic" \
+        --set-env-vars TESTID="$testid",SURVEY="$survey"
 
-    # cd $OGdir
+    cd $OGdir
 
 #--- filter for extragalactic transients cloud function
-    # echo "Deploying Cloud Function: $filter_exgal_CF_name"
-    # filter_exgal_entry_point="run"
+    echo "Deploying Cloud Function: $filter_exgal_CF_name"
+    filter_exgal_entry_point="run"
 
-    # cd .. && cd cloud_functions
-    # cd filter_exgalac_trans
+    cd .. && cd cloud_functions
+    cd filter_exgalac_trans
 
-    # gcloud functions deploy "$filter_exgal_CF_name" \
-    #     --entry-point "$filter_exgal_entry_point" \
-    #     --runtime python37 \
-    #     --trigger-topic "$filter_exgal_trigger_topic" \
-    #     --set-env-vars TESTID="$testid",SURVEY="$survey"
+    gcloud functions deploy "$filter_exgal_CF_name" \
+        --entry-point "$filter_exgal_entry_point" \
+        --runtime python37 \
+        --trigger-topic "$filter_exgal_trigger_topic" \
+        --set-env-vars TESTID="$testid",SURVEY="$survey"
 
-    # cd $OGdir
+    cd $OGdir
 
 fi
