@@ -25,6 +25,7 @@ topic_alerts="${survey}-alerts"
 topic_exgalac="${survey}-exgalac_trans_cf"
 topic_snn="${survey}-SuperNNova"
 topic_classifications="${survey}-classifications"
+bq_dataset="${PROJECT_ID}:${survey}_alerts"
 # use test resources, if requested
 if [ "$testid" != "False" ]; then
     filter_exgal_trigger_topic="${filter_exgal_trigger_topic}-${testid}"
@@ -38,7 +39,9 @@ if [ "$testid" != "False" ]; then
     topic_exgalac="${topic_exgalac}-${testid}"
     topic_snn="${topic_snn}-${testid}"
     topic_classifications="${topic_classifications}-${testid}"
+    bq_dataset="${bq_dataset}_${testid}"
 fi
+snn_table="SuperNNova"
 
 # make the user confirm the options
 action='create resources'
@@ -85,6 +88,10 @@ else # Deploy the Cloud Functions and create other Cloud resources
     gcloud pubsub topics create "${topic_classifications}"
     gcloud pubsub subscriptions create "${topic_classifications}" \
         --topic "${topic_classifications}"
+
+#--- create the bigquery dataset and tables
+    bq mk --dataset "${bq_dataset}"
+    bq mk --table "${bq_dataset}.${snn_table}" "templates/bq_${survey}_${snn_table}_schema.json"
 
 #--- publish classifications cloud function
     echo "Deploying Cloud Function: $publish_classifications_CF_name"
