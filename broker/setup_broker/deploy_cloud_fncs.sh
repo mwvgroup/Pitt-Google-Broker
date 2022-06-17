@@ -20,9 +20,9 @@ cue_nc_trigger_topic="${survey}-cue_night_conductor"
 cue_nc_CF_name="${survey}-cue_night_conductor"
 check_cue_trigger_topic="${cue_nc_trigger_topic}"
 check_cue_CF_name="${survey}-check_cue_response"
-filter_exgal_trigger_topic="${survey}-alerts"
-filter_exgal_CF_name="${survey}-filter_exgalac_trans"
-classify_snn_trigger_topic="${survey}-exgalac_trans_cf"
+# filter_exgal_trigger_topic="${survey}-alerts"
+# filter_exgal_CF_name="${survey}-filter_exgalac_trans"
+classify_snn_trigger_topic="${survey}-alerts"
 classify_snn_CF_name="${survey}-classify_with_SuperNNova"
 # use test resources, if requested
 if [ "$testid" != "False" ]; then
@@ -34,8 +34,8 @@ if [ "$testid" != "False" ]; then
     cue_nc_CF_name="${cue_nc_CF_name}-${testid}"
     check_cue_trigger_topic="${check_cue_trigger_topic}-${testid}"
     check_cue_CF_name="${check_cue_CF_name}-${testid}"
-    filter_exgal_trigger_topic="${filter_exgal_trigger_topic}-${testid}"
-    filter_exgal_CF_name="${filter_exgal_CF_name}-${testid}"
+    # filter_exgal_trigger_topic="${filter_exgal_trigger_topic}-${testid}"
+    # filter_exgal_CF_name="${filter_exgal_CF_name}-${testid}"
     classify_snn_trigger_topic="${classify_snn_trigger_topic}-${testid}"
     classify_snn_CF_name="${classify_snn_CF_name}-${testid}"
 fi
@@ -47,7 +47,7 @@ if [ "$teardown" = "True" ]; then
         gcloud functions delete "$ps_to_gcs_CF_name"
         gcloud functions delete "$cue_nc_CF_name"
         gcloud functions delete "$check_cue_CF_name"
-        gcloud functions delete "$filter_exgal_CF_name"
+        # gcloud functions delete "$filter_exgal_CF_name"
         gcloud functions delete "$classify_snn_CF_name"
     fi
 
@@ -133,18 +133,18 @@ else # Deploy the Cloud Functions
     cd $OGdir
 
 #--- filter for extragalactic transients cloud function
-    echo "Deploying Cloud Function: $filter_exgal_CF_name"
-    filter_exgal_entry_point="run"
+    # echo "Deploying Cloud Function: $filter_exgal_CF_name"
+    # filter_exgal_entry_point="run"
 
-    cd .. && cd cloud_functions
-    cd filter_exgalac_trans
+    # cd .. && cd cloud_functions
+    # cd filter_exgalac_trans
 
-    gcloud functions deploy "$filter_exgal_CF_name" \
-        --entry-point "$filter_exgal_entry_point" \
-        --runtime python37 \
-        --trigger-topic "$filter_exgal_trigger_topic" \
-        --set-env-vars TESTID="$testid",SURVEY="$survey"
+    # gcloud functions deploy "$filter_exgal_CF_name" \
+    #     --entry-point "$filter_exgal_entry_point" \
+    #     --runtime python37 \
+    #     --trigger-topic "$filter_exgal_trigger_topic" \
+    #     --set-env-vars TESTID="$testid",SURVEY="$survey"
 
-    cd $OGdir
+    # cd $OGdir
 
 fi

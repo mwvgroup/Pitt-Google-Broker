@@ -63,7 +63,16 @@ def run(msg: dict, context) -> None:
             This argument is not currently used in this function, but the argument is
             required by Cloud Functions, which will call it.
     """
-    alert_dict = json.loads(base64.b64decode(msg["data"]).decode("utf-8"))
+    #alert_dict = json.loads(base64.b64decode(msg["data"]).decode("utf-8"))
+    alert_dict = data_utils.decode_alert(
+        base64.b64decode(msg["data"]), drop_cutouts=True, schema_map=schema_map
+    )
+
+    attrs = {
+        "ingest.timestamp": context.timestamp,
+        id_keys.objectId: str(get_value("objectId", alert_dict, schema_map)),
+        id_keys.sourceId: str(get_value("sourceId", alert_dict, schema_map)),
+    }
 
     # classify
     try:
@@ -77,7 +86,7 @@ def run(msg: dict, context) -> None:
     else:
         # announce to pubsub
         gcp_utils.publish_pubsub(
-            ps_topic, dict(alert=alert_dict, SuperNNova=snn_dict), attrs=msg["attributes"])
+            ps_topic, dict(alert=alert_dict, SuperNNova=snn_dict), attrs=attrs)
 
         # store in bigquery
         errors = gcp_utils.insert_rows_bigquery(bq_table, [snn_dict])

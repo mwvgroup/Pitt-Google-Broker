@@ -1,0 +1,563 @@
+[
+  {
+    "name": "alertId",
+    "type": "INTEGER",
+    "mode": "REQUIRED",
+    "description": "unique alert identifer"
+  },
+  {
+    "name": "diaSource",
+    "type": "RECORD",
+    "mode": "REQUIRED",
+    "fields": [
+      {
+        "name": "diaSourceId",
+        "type": "INTEGER",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "ccdVisitId",
+        "type": "INTEGER",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "diaObjectId",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "parentDiaSourceId",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "midPointTai",
+        "type": "FLOAT",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "filterName",
+        "type": "STRING",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "ra",
+        "type": "FLOAT",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "decl",
+        "type": "FLOAT",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "psFlux",
+        "type": "FLOAT",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "psFluxErr",
+        "type": "FLOAT",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "snr",
+        "type": "FLOAT",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "nobs",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      }
+    ]
+  },
+  {
+    "name": "prvDiaSources",
+    "type": "RECORD",
+    "mode": "REPEATED",
+    "fields": [
+      {
+        "name": "diaSourceId",
+        "type": "INTEGER",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "ccdVisitId",
+        "type": "INTEGER",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "diaObjectId",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "parentDiaSourceId",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "midPointTai",
+        "type": "FLOAT",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "filterName",
+        "type": "STRING",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "ra",
+        "type": "FLOAT",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "decl",
+        "type": "FLOAT",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "psFlux",
+        "type": "FLOAT",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "psFluxErr",
+        "type": "FLOAT",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "snr",
+        "type": "FLOAT",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "nobs",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      }
+    ]
+  },
+  {
+    "name": "prvDiaForcedSources",
+    "type": "RECORD",
+    "mode": "REPEATED",
+    "fields": [
+      {
+        "name": "diaForcedSourceId",
+        "type": "INTEGER",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "ccdVisitId",
+        "type": "INTEGER",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "diaObjectId",
+        "type": "INTEGER",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "midPointTai",
+        "type": "FLOAT",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "filterName",
+        "type": "STRING",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "psFlux",
+        "type": "FLOAT",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "psFluxErr",
+        "type": "FLOAT",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "totFlux",
+        "type": "FLOAT",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "totFluxErr",
+        "type": "FLOAT",
+        "mode": "REQUIRED"
+      }
+    ]
+  },
+  {
+    "name": "prvDiaNondetectionLimits",
+    "type": "RECORD",
+    "mode": "REPEATED",
+    "fields": [
+      {
+        "name": "ccdVisitId",
+        "type": "INTEGER",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "midPointTai",
+        "type": "FLOAT",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "filterName",
+        "type": "STRING",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "diaNoise",
+        "type": "FLOAT",
+        "mode": "REQUIRED"
+      }
+    ]
+  },
+  {
+    "name": "diaObject",
+    "type": "RECORD",
+    "mode": "NULLABLE",
+    "fields": [
+      {
+        "name": "diaObjectId",
+        "type": "INTEGER",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "ra",
+        "type": "FLOAT",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "decl",
+        "type": "FLOAT",
+        "mode": "REQUIRED"
+      },
+      {
+        "name": "mwebv",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "mwebv_err",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "z_final",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "z_final_err",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal_ellipticity",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal_sqradius",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal_z",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal_z_err",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal_zphot_q10",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal_zphot_q20",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal_zphot_q30",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal_zphot_q40",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal_zphot_q50",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal_zphot_q60",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal_zphot_q70",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal_zphot_q80",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal_zphot_q90",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal_zphot_q99",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal_mag_u",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal_mag_g",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal_mag_r",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal_mag_i",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal_mag_z",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal_mag_Y",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal_ra",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal_dec",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal_snsep",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal_magerr_u",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal_magerr_g",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal_magerr_r",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal_magerr_i",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal_magerr_z",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal_magerr_Y",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal2_ellipticity",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal2_sqradius",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal2_z",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal2_z_err",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal2_zphot_q10",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal2_zphot_q20",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal2_zphot_q30",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal2_zphot_q40",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal2_zphot_q50",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal2_zphot_q60",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal2_zphot_q70",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal2_zphot_q80",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal2_zphot_q90",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal2_zphot_q99",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal2_mag_u",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal2_mag_g",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal2_mag_r",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal2_mag_i",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal2_mag_z",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal2_mag_Y",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal2_ra",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal2_dec",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal2_snsep",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal2_magerr_u",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal2_magerr_g",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal2_magerr_r",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal2_magerr_i",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal2_magerr_z",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal2_magerr_Y",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      }
+    ]
+  },
+  {
+    "name": "cutoutDifference",
+    "type": "BYTES",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "cutoutTemplate",
+    "type": "BYTES",
+    "mode": "NULLABLE"
+  }
+]

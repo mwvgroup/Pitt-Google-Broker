@@ -123,8 +123,8 @@ def attach_file_metadata(blob, alert, context):
     metadata = {'file_origin_message_id': context.event_id}
     metadata['objectId'] = alert[0]['objectId']
     metadata['candid'] = alert[0]['candid']
-    metadata['ra'] = alert[0][schema_map['source']]['ra']
-    metadata['dec'] = alert[0][schema_map['source']]['dec']
+    metadata['ra'] = alert[0][schema_map['source']][schema_map['ra']]
+    metadata['dec'] = alert[0][schema_map['source']][schema_map['dec']]
     blob.metadata = metadata
     blob.patch()
 
