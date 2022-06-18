@@ -26,19 +26,21 @@ class idUtils:
         """Initialize class instance."""
         self.schema_map = schema_map
 
-    def get_ids(self, alert_dict=None, attrs=None):
+    def get_ids(self, alert_dict=None, attrs=None, filename=None):
         """Extract the ids and return an AlertIds object."""
-        if not attrs:
+        if alert_dict is not None:
             return AlertIds(
                 get_value("objectId", alert_dict, self.schema_map),
                 get_value("sourceId", alert_dict, self.schema_map),
             )
-        else:
+
+        elif attrs is not None:
             id_keys = self.get_id_keys()
-            return AlertIds(
-                attrs.get(id_keys.objectId),
-                attrs.get(id_keys.sourceId),
-            )
+            return AlertIds(attrs.get(id_keys.objectId), attrs.get(id_keys.sourceId))
+
+        elif filename is not None:
+            parsed = AlertFilename(filename).parsed
+            return AlertIds(parsed.objectId, parsed.sourceId)
 
     def get_id_keys(self):
         """Return an AlertIds object where the values are the survey's id key names."""
@@ -50,6 +52,27 @@ class idUtils:
     def ids_to_strings(self, alert_ids):
         """Convert values in ``alert_ids`` to strings."""
         return AlertIds(str(alert_ids.objectId), str(alert_ids.sourceId))
+
+
+class AlertFilename:
+    """Functions to create and parse an alert's filename."""
+
+    def __init__(self, name):
+        ParsedName = namedtuple(
+            "ParsedName",
+            "objectId sourceId topic format",
+            defaults=["no_topic", "avro"]
+        )
+
+        if isinstance(name, str):
+            self.name = name
+            self.parsed = ParsedName._make(name.split("."))
+
+        elif isinstance(name, dict):
+            self.parsed = ParsedName(
+                **dict((k, str(v)) for k, v in name.items() if k in ParsedName._fields)
+            )
+            self.name = ".".join(list(self.parsed))
 
 
 def load_alert(
