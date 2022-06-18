@@ -10,6 +10,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## \[Unreleased\]<a name="unreleased"></a>
 
+## \[0.2.33\] - 2022-06-17
+
+### Added
+
+- add "kafka.topic" to mocked msg attributes in `tests.TestAlert`
+
 ## \[0.2.32\] - 2022-05-19
 
 ### Changed

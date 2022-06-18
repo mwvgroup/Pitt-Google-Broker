@@ -79,6 +79,7 @@ class TestAlert:
         attrs = {
             self.id_keys.objectId: str(self.ids.objectId),
             self.id_keys.sourceId: str(self.ids.sourceId),
+            "kafka.topic": "mock_topic_from_pittgoogle_tests_TestAlert",
             "kafka.timestamp": str(tkafka),
             "ingest.timestamp": str(tingest),
         }
