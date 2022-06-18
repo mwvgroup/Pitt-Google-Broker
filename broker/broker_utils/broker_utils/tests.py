@@ -100,18 +100,23 @@ class TestAlert:
 class TestValidator:
     """Functions to validate an integration test."""
 
-    def __init__(self, subscrip, published_alert_ids, schema_map, max_pulls=3):
+    def __init__(
+        self, subscrip, published_alert_ids, schema_map, max_pulls=3, ids_in="attrs"
+    ):
         """Initialize variables."""
         self.subscrip = subscrip
         self.published_alert_ids = published_alert_ids
         self.id_utils = idUtils(schema_map)
         self.max_pulls = max_pulls
+        # attrs or filename. use filename if pulling from a stream produced by a gcs bucket
+        self.ids_in = ids_in
 
     def pull_and_compare_ids(self):
         """Pull the subscription and validate that ids match the published alerts."""
         pulled_msg_ids = self._pull()
 
-        # _pull() gets the ids from the message attributes which are always strings.
+        # _pull() gets the ids from the message attributes or filenames
+        # which are always strings.
         # convert the published_alert_ids to the same type.
         published_alert_ids = [
             self.id_utils.ids_to_strings(ids) for ids in self.published_alert_ids
@@ -144,7 +149,14 @@ class TestValidator:
         return pulled_msg_ids
 
     def _extract_ids(self, msgs):
-        pulled_msg_ids = [
-            self.id_utils.get_ids(attrs=msg.message.attributes) for msg in msgs
-        ]
+        if self.ids_in == "attrs":
+            pulled_msg_ids = [
+                self.id_utils.get_ids(attrs=msg.message.attributes) for msg in msgs
+            ]
+
+        elif self.ids_in == "filename":
+            pulled_msg_ids = [
+                self.id_utils.get_ids(filename=msg.message.attributes["objectId"]) for msg in msgs
+            ]
+
         return pulled_msg_ids
