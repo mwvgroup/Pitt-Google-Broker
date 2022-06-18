@@ -10,6 +10,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## \[Unreleased\]<a name="unreleased"></a>
 
+## \[0.2.34\] - 2022-06-17
+
+### Added
+
+- add `AlertFilename` class in `data_utils`
+
+### Changed
+
+- updated `tests.TestValidator` to accept keyword argument `ids_in` that determines whether alert IDs are extracted from message attributes or the Avro filename.
+
 ## \[0.2.33\] - 2022-06-17
 
 ### Added
