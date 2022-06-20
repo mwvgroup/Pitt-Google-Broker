@@ -7,13 +7,15 @@ survey and broker data.
 from collections import namedtuple
 from io import BytesIO
 from pathlib import Path
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
 import fastavro
 import json
-import pandas as pd
 
 from .schema_maps import get_key, get_value
+# load pandas only when necessary. it hogs memory on Cloud Functions.
+if TYPE_CHECKING:
+    import pandas as pd
 
 
 AlertIds = namedtuple("AlertIds", "objectId sourceId")
@@ -79,7 +81,7 @@ def load_alert(
     fin: Union[str, Path],
     return_as: str = "dict",
     **kwargs
-) -> Union[bytes, dict, pd.DataFrame]:
+) -> Union[bytes, dict, "pd.DataFrame"]:
     """Load alert from file at ``fin`` and return in format ``return_as``.
 
     Args:
@@ -101,7 +103,7 @@ def decode_alert(
     return_as: str = 'dict',
     drop_cutouts: bool = False,
     **kwargs
-) -> Union[dict, pd.DataFrame]:
+) -> Union[dict, "pd.DataFrame"]:
     """Load an alert Avro and return in requested format.
 
     Wraps `alert_avro_to_dict()` and `alert_dict_to_dataframe()`.
@@ -181,10 +183,11 @@ def alert_avro_to_dict(alert_avro: Union[str, Path, bytes]) -> dict:
     return alert_dict
 
 
-def alert_dict_to_dataframe(alert_dict: dict, schema_map: dict) -> pd.DataFrame:
+def alert_dict_to_dataframe(alert_dict: dict, schema_map: dict) -> "pd.DataFrame":
     """ Packages an alert into a dataframe.
     Adapted from: https://github.com/ZwickyTransientFacility/ztf-avro-alert/blob/master/notebooks/Filtering_alerts.ipynb
     """
+    import pandas as pd
     src_df = pd.DataFrame(alert_dict[schema_map['source']], index=[0])
     prvs_df = pd.DataFrame(alert_dict[schema_map['prvSources']])
     df = pd.concat([src_df, prvs_df], ignore_index=True)

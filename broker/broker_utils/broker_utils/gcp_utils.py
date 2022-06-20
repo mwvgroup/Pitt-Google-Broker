@@ -13,8 +13,11 @@ from google.cloud.logging_v2.logger import Logger
 from google.cloud.pubsub_v1.subscriber.futures import StreamingPullFuture
 from google.cloud.pubsub_v1.types import PubsubMessage, ReceivedMessage
 import json
-import pandas as pd
-from typing import Callable, List, Optional, Union
+from typing import Callable, List, TYPE_CHECKING, Optional, Union
+
+# load pandas only when necessary. it hogs memory on Cloud Functions.
+if TYPE_CHECKING:
+    import pandas as pd
 
 
 # get project id from environment variable, else default to production project
@@ -268,7 +271,7 @@ def insert_rows_bigquery(
 
 def load_dataframe_bigquery(
     table_id: str,
-    df: pd.DataFrame,
+    df: "pd.DataFrame",
     project_id: Optional[str] = None,
     use_table_schema: bool = True,
     logger: Optional[Logger] = None,
