@@ -75,11 +75,17 @@ class Mock:
     """Mock data and objects useful for testing the broker."""
 
     def __init__(self, **kwargs):
-        """.
+        """Initialize attributes.
 
         kwargs may contain keys:
-            modules: list of module names to mock
-            test_alert: an instance of TestAlert
+            modules:
+                List of module names to mock.
+            test_alert:
+                An instance of TestAlert. This will be used to generate appropriate
+                mock data (e.g., Pub/Sub message attributes containing the TestAlert's
+                alert IDs).
+            args and kwargs for TestAlert:
+                These will be used to create a new instance of TestAlert.
         """
         self.kwargs = kwargs
         self._modules = kwargs.get("modules")
@@ -244,10 +250,21 @@ class TestAlert:
     """An alert packet and related functions useful for testing the broker."""
 
     def __init__(self, path, schema_map, **kwargs):
-        """.
+        """Load the alert from `path` and initialize message attributes.
 
         kwargs may contain keys:
-            drop_cutouts, publish_as, mock_modules
+            drop_cutouts (bool):
+                Wether to drop the image cutouts from the alert.
+            publish_as (str):
+                Format that will be used to publish the alert packet.
+                Either "avro" or "json".
+            mock (Mock):
+                An instance of Mock containing mocked data which should be attached to
+                the message.
+            mock_modules (List[str]):
+                List of modules for which data should be mocked. This will be passed to
+                Mock() as keyword argument "modules". This is ignored if an instance of
+                Mock is passed using the "mock" keyword argument.
         """
         self.path = path
 
