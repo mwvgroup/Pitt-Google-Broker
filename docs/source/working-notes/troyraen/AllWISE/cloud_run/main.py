@@ -13,9 +13,7 @@ import os
 from typing import Optional
 
 from . import allwise
-from broker_utils import data_utils, gcp_utils
-from broker_utils.schema_maps import load_schema_map, get_key, get_value
-
+from broker_utils import data_utils, gcp_utils, schema_maps
 
 app = Flask(__name__)
 
@@ -36,8 +34,7 @@ if TESTID != "False":  # attach the testid to the names
     ps_topic = f"{ps_topic}-{TESTID}"
 bq_table = f"{bq_dataset}.xmatch"
 
-schema_map = load_schema_map(SURVEY, TESTID)
-sobjectId, ssourceId = get_key("objectId", schema_map), get_key("sourceId", schema_map)
+schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
 
 
 @app.route("/", methods=["POST"])
@@ -62,8 +59,8 @@ def index():
         base64.b64decode(msg["data"]), drop_cutouts=True, schema_map=schema_map
     )
     attrs = {
-        sobjectId: get_value("objectId", alert_dict, schema_map),
-        ssourceId: get_value("sourceId", alert_dict, schema_map),
+        schema_map["objectId"]: str(alert_dict[schema_map["objectId"]]),
+        schema_map["sourceId"]: str(alert_dict[schema_map["sourceId"]]),
     }
 
     # do the cross match
