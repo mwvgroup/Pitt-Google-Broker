@@ -10,6 +10,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## \[Unreleased\]<a name="unreleased"></a>
 
+## \[0.2.37\] - 2022-06-21
+
+### Changed
+
+- Minor internal improvements and bug fixes to `testing`.
+- Rename attributes `testing.Mock.results` to `testing.Mock.module_results` and `testing.TestAlert.publish_as` to `testing.TestAlert.serialize`.
+
+## \[0.2.36\] - 2022-06-20
+
+### Added
+
+- Adds `mock` as a keyword argument in `testing.TestAlert`.
+
+## \[0.2.35\] - 2022-06-20
+
+### Added
+
+- `types` module containing `_AlertIds`, `AlertIds`, and `AlertFilename`. These were rewritten and moved out of `data_utils`.
+
+### Changed
+
+- Lazy load `pandas`. It hogs memory on Cloud Functions.
+- Remove `data_utils.AlertIds`, `data_utils.idUtils`, and `data_utils.AlertFilename`. They moved to the new `types` module.
+- Rename `tests` module to `testing` and rewrite the included classes to give them more functionality and make them easier to use.
+
 ## \[0.2.34\] - 2022-06-17
 
 ### Added
