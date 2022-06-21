@@ -4,7 +4,6 @@
 survey and broker data.
 """
 
-from collections import namedtuple
 from io import BytesIO
 from pathlib import Path
 from typing import TYPE_CHECKING, Union
@@ -12,69 +11,11 @@ from typing import TYPE_CHECKING, Union
 import fastavro
 import json
 
-from .schema_maps import get_key, get_value
 # load pandas only when necessary. it hogs memory on Cloud Functions.
 if TYPE_CHECKING:
     import pandas as pd
 
-
-AlertIds = namedtuple("AlertIds", "objectId sourceId")
-
-
-class idUtils:
-    """Functions to work with AlertIds."""
-
-    def __init__(self, schema_map):
-        """Initialize class instance."""
-        self.schema_map = schema_map
-
-    def get_ids(self, alert_dict=None, attrs=None, filename=None):
-        """Extract the ids and return an AlertIds object."""
-        if alert_dict is not None:
-            return AlertIds(
-                get_value("objectId", alert_dict, self.schema_map),
-                get_value("sourceId", alert_dict, self.schema_map),
-            )
-
-        elif attrs is not None:
-            id_keys = self.get_id_keys()
-            return AlertIds(attrs.get(id_keys.objectId), attrs.get(id_keys.sourceId))
-
-        elif filename is not None:
-            parsed = AlertFilename(filename).parsed
-            return AlertIds(parsed.objectId, parsed.sourceId)
-
-    def get_id_keys(self):
-        """Return an AlertIds object where the values are the survey's id key names."""
-        return AlertIds(
-            get_key("objectId", self.schema_map),
-            get_key("sourceId", self.schema_map),
-        )
-
-    def ids_to_strings(self, alert_ids):
-        """Convert values in ``alert_ids`` to strings."""
-        return AlertIds(str(alert_ids.objectId), str(alert_ids.sourceId))
-
-
-class AlertFilename:
-    """Functions to create and parse an alert's filename."""
-
-    def __init__(self, name):
-        ParsedName = namedtuple(
-            "ParsedName",
-            "objectId sourceId topic format",
-            defaults=["no_topic", "avro"]
-        )
-
-        if isinstance(name, str):
-            self.name = name
-            self.parsed = ParsedName._make(name.split("."))
-
-        elif isinstance(name, dict):
-            self.parsed = ParsedName(
-                **dict((k, str(v)) for k, v in name.items() if k in ParsedName._fields)
-            )
-            self.name = ".".join(list(self.parsed))
+from .types import AlertIds
 
 
 def load_alert(
@@ -195,10 +136,11 @@ def alert_dict_to_dataframe(alert_dict: dict, schema_map: dict) -> "pd.DataFrame
     # attach some metadata. note this may not be preserved after all operations
     # https://stackoverflow.com/questions/14688306/adding-meta-information-metadata-to-pandas-dataframe
     # make sure this does not overwrite existing columns
+    ids = AlertIds(schema_map, alert_dict=alert_dict)
     if "objectId" not in df.keys():
-        df.objectId = get_value("objectId", alert_dict, schema_map)
+        df.objectId = ids.objectId
     if "sourceId" not in df.keys():
-        df.sourceId = get_value("sourceId", alert_dict, schema_map)
+        df.sourceId = ids.sourceId
 
     return df
 
