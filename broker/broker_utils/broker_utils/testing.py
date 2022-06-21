@@ -43,7 +43,6 @@ class AlertPaths:
 
         self.__mygen = None
 
-    @property
     def gen(self):
         """Return a new generator of paths to Avro files in self.alert_dir."""
         return (p for p in self.alert_dir.glob("**/*.avro"))
@@ -67,7 +66,7 @@ class AlertPaths:
     def _mygen(self):
         """Path generator used by self."""
         if self.__mygen is None:
-            self.__mygen = self.gen
+            self.__mygen = self.gen()
         return self.__mygen
 
 
@@ -88,11 +87,15 @@ class Mock:
                 These will be used to create a new instance of TestAlert.
         """
         self.kwargs = kwargs
+
         self._modules = kwargs.get("modules")
-        self._results = None
+        self._module_results = None
+
         self._my_test_alert = kwargs.get("test_alert")
         self._id_tuples = None
+
         self._attrs = None
+
         self._cfinput = None
 
     # modules to mock
@@ -100,7 +103,7 @@ class Mock:
     def modules(self):
         """List of modules for which mock results should be created.
 
-        If this is set manually, self._results will be recreated to accommodate.
+        If this is set manually, self._module_results will be recreated to accommodate.
         """
         return self._modules
 
@@ -108,26 +111,40 @@ class Mock:
     def modules(self, value):
         self._modules = value
         # force recreation of other properties
-        self._results = None
+        self._module_results = None
 
-    # mocked results
+    @modules.deleter
+    def modules(self):
+        self._modules = None
+        # force recreation of other properties
+        self._module_results = None
+
+    # mocked module results
     @property
-    def results(self):
+    def module_results(self):
         """Mock results for the pipeline module(s) given by self.modules."""
-        if self._results is None:
+        if self._module_results is None:
             if self.modules is not None:
-                self._results = self._generate_results()
+                self._module_results = self._generate_module_results()
 
-        return self._results
+        return self._module_results
 
-    def _generate_results(self):
+    @module_results.setter
+    def module_results(self, value):
+        self._module_results = value
+
+    @module_results.deleter
+    def module_results(self):
+        self._module_results = None
+
+    def _generate_module_results(self):
         results = dict()
 
         if "SuperNNova" in self.modules:
             results["SuperNNova"] = self._supernnova_results
 
-        self._results = results
-        return self._results
+        self._module_results = results
+        return self._module_results
 
     @property
     def _supernnova_results(self):
@@ -153,10 +170,24 @@ class Mock:
             self._my_test_alert = TestAlert(path, schema_map, **kwargs)
         return self._my_test_alert
 
+    @my_test_alert.setter
+    def my_test_alert(self, value):
+        self._my_test_alert = value
+        # force recreation of other properties
+        self._id_tuples = None
+        self._cfinput = None
+
+    @my_test_alert.deleter
+    def my_test_alert(self):
+        self._my_test_alert = None
+        # force recreation of other properties
+        self._id_tuples = None
+        self._cfinput = None
+
     # tuples of mocked alert ID keys and IDs
     @property
     def id_tuples(self):
-        """Tuples of mock alert ID keys and IDs."""
+        """Tuples of alert ID keys and IDs."""
         if self._id_tuples is None:
 
             if self._my_test_alert is None:
@@ -177,10 +208,18 @@ class Mock:
 
         return self._id_tuples
 
+    @id_tuples.setter
+    def id_tuples(self, value):
+        self._id_tuples = value
+
+    @id_tuples.deleter
+    def id_tuples(self):
+        self._id_tuples = None
+
     # mocked attributes
     @property
     def attrs(self):
-        """Return a dictionary of mock attributes to be attached to the message."""
+        """Mock attributes (dict) for a Pub/Sub message."""
         if self._attrs is None:
             sid, oid = self.id_tuples
             # create int POSIX timestamps in microseconds
@@ -203,6 +242,10 @@ class Mock:
     @attrs.setter
     def attrs(self, value):
         self._attrs = value
+
+    @attrs.deleter
+    def attrs(self):
+        self._attrs = None
 
     # mocked Cloud Functions input
     class _CFInput(NamedTuple):
@@ -245,19 +288,26 @@ class Mock:
 
         return self._cfinput
 
+    @cfinput.setter
+    def cfinput(self, value):
+        self._cfinput = value
+
+    @cfinput.deleter
+    def cfinput(self):
+        self._cfinput = None
+
 
 class TestAlert:
     """An alert packet and related functions useful for testing the broker."""
 
     def __init__(self, path, schema_map, **kwargs):
-        """Load the alert from `path` and initialize message attributes.
+        """Load the alert from `path` and initialize attributes.
 
         kwargs may contain keys:
             drop_cutouts (bool):
                 Wether to drop the image cutouts from the alert.
-            publish_as (str):
-                Format that will be used to publish the alert packet.
-                Either "avro" or "json".
+            serialize (str):
+                "avro" or "json". Serialization format of the Pub/Sub message.
             mock (Mock):
                 An instance of Mock containing mocked data which should be attached to
                 the message.
@@ -278,10 +328,10 @@ class TestAlert:
         self.id_keys = aids.id_keys
         self.ids = aids.ids
 
-        self._publish_as = kwargs.get("publish_as", "json")
+        self._serialize = kwargs.get("serialize", "json")
         self._msg_payload = None
 
-        self.mock_modules = kwargs.get("mock_modules", None)
+        self._mock_modules = kwargs.get("mock_modules", None)
         self._mock = kwargs.get("mock", None)
 
     # message payload
@@ -290,15 +340,15 @@ class TestAlert:
         """Pub/Sub message payload containing the alert and any mocked results."""
         if self._msg_payload is None:
             # create the message payload
-            # alert data type appropriate for the format given by self.publish_as
+            # alert data type appropriate for the format given by self.serialize
             dtype = {"json": "dict", "avro": "bytes"}
-            alert = self.data[dtype[self.publish_as]]
+            alert = self.data[dtype[self.serialize]]
 
-            if self.publish_as == "avro":
+            if self.serialize == "avro":
                 self._msg_payload = alert
 
                 # currently can't publish an Avro serialized message with mock results
-                if (self.mock is not None) or (self.mock_modules is not None):
+                if self.mock_modules is not None:
                     logger.warning(
                         (
                             "The published message will be an Avro serialized alert. "
@@ -307,30 +357,39 @@ class TestAlert:
                     )
 
             else:
-                if (self.mock is None) and (self.mock_modules is None):
+                if self.mock_modules is None:
                     self._msg_payload = alert
 
                 else:
-                    self._msg_payload = dict(alert=alert, **self.mock.results)
+                    self._msg_payload = dict(alert=alert, **self.mock.module_results)
 
         return self._msg_payload
 
-    # message publish format
+    # message serialization format
     @property
-    def publish_as(self):
+    def serialize(self):
         """One of "json" or "avro". Determines the format of the published message.
 
         If this is set manually, self._msg_payload will be recreated to accommodate.
+        If this is manually deleted, it will be set to the default ("json") and
+        self._msg_payload will be recreated to accommodate.
         """
-        return self._publish_as
+        return self._serialize
 
-    @publish_as.setter
-    def publish_as(self, value):
-        self._publish_as = value
+    @serialize.setter
+    def serialize(self, value):
+        self._serialize = value
         # force recreation of other properties
         self._msg_payload = None
 
-    def guess_publish_format(self, topic):
+    @serialize.deleter
+    def serialize(self):
+        self._serialize = "json"
+        # force recreation of other properties
+        self._msg_payload = None
+
+    @staticmethod
+    def guess_serializer(topic):
         """Use the topic to kguess the format that the message is expected to be in."""
         avro_topics = ["alerts"]  # all others are json
 
@@ -339,22 +398,55 @@ class TestAlert:
         except IndexError:
             topic_name_stub = topic
 
-        self._publish_as = "avro" if topic_name_stub in avro_topics else "json"
-        return self._publish_as
+        serialize = "avro" if topic_name_stub in avro_topics else "json"
+        return serialize
+
+    @property
+    def mock_modules(self):
+        """List of modules for which results should be mocked.
+
+        If this is set manually, self._mock will be recreated to accommodate.
+        """
+        return self._mock_modules
+
+    @mock_modules.setter
+    def mock_modules(self, value):
+        self._mock_modules = value
+        # force recreation of other properties
+        self._mock = None
+
+    @mock_modules.deleter
+    def mock_modules(self):
+        self._mock_modules = None
+        # force recreation of other properties
+        self._mock = None
 
     @property
     def mock(self):
-        """Mock data."""
+        """Mock data.
+
+        If this is set manually, this will also set self.mock_modules = mock.modules
+        """
         if self._mock is None:
-            self._mock = Mock(modules=self.mock_modules)
+            self._mock = Mock(modules=self.mock_modules, test_alert=self)
         return self._mock
+
+    @mock.setter
+    def mock(self, value):
+        self._mock = value
+        # set dependent attributes
+        self.mock_modules = value.modules
+
+    @mock.deleter
+    def mock(self):
+        self._mock = None
 
 
 class IntegrationTestValidator:
     """Functions to validate an integration test."""
 
     def __init__(self, subscrip, published_alert_ids, schema_map, **kwargs):
-        """Initialize variables.
+        """Initialize attributes.
 
         kwargs can include keys:
             max_pulls (int):
@@ -368,7 +460,6 @@ class IntegrationTestValidator:
         self.unmatched_ids = None
         self.alert_ids = AlertIds(schema_map)  # load once, use to extract all msg IDs
 
-    @property
     def run(self):
         """Pull the subscription and validate that ids match the published alerts."""
         self.pulled_msg_ids = self._pull()
@@ -380,7 +471,8 @@ class IntegrationTestValidator:
         while len(pulled_msg_ids) < len(self.published_alert_ids):
             max_messages = len(self.published_alert_ids) - len(pulled_msg_ids)
             msgs = pull_pubsub(self.subscrip, max_messages=max_messages, msg_only=False)
-            pulled_msg_ids += self._extract_ids(msgs)
+            if len(msgs) > 0:
+                pulled_msg_ids += self._extract_ids(msgs)
 
             i += 1
             if i >= self.max_pulls:
@@ -421,7 +513,7 @@ class IntegrationTestValidator:
         # which are always strings.
         # convert the published_alert_ids to the same type.
         idsin = set(
-            [_AlertIds(str(id) for id in ids) for ids in self.published_alert_ids]
+            [_AlertIds(*[str(id) for id in ids]) for ids in self.published_alert_ids]
         )
 
         # compare ID sets
