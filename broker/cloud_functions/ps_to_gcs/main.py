@@ -113,19 +113,18 @@ def upload_bytes_to_bucket(msg, context) -> None:
         temp_file.seek(0)
 
         blob = bucket.blob(filename)
+        blob.metadata = create_file_metadata(alert, context, alert_ids)
         blob.upload_from_file(temp_file)
-        attach_file_metadata(blob, alert, context)  # must be after file upload
 
     logger.log_text(f'Uploaded {filename} to {bucket.name}')
 
-def attach_file_metadata(blob, alert, context):
+def create_file_metadata(alert, context, alert_ids):
+    """Return key/value pairs to be attached to the file as metadata."""
     metadata = {'file_origin_message_id': context.event_id}
-    metadata['objectId'] = alert[0]['objectId']
-    metadata['candid'] = alert[0]['candid']
+    metadata[alert_ids.id_keys.objectId] = alert_ids.objectId
+    metadata[alert_ids.id_keys.sourceId] = alert_ids.sourceId
     metadata['ra'] = alert[0][schema_map['source']]['ra']
     metadata['dec'] = alert[0][schema_map['source']]['dec']
-    blob.metadata = metadata
-    blob.patch()
 
 def create_filename(alert, attributes):
     # alert is a single alert dict wrapped in a list
@@ -134,6 +133,7 @@ def create_filename(alert, attributes):
     topic = attributes['kafka.topic']
     filename = f'{oid}.{sid}.{topic}.avro'
     return filename
+    return metadata
 
 
 def extract_alert_dict(temp_file):
