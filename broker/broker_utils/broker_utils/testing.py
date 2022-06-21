@@ -282,7 +282,7 @@ class TestAlert:
         self._msg_payload = None
 
         self.mock_modules = kwargs.get("mock_modules", None)
-        self._mock = None
+        self._mock = kwargs.get("mock", None)
 
     # message payload
     @property
@@ -298,7 +298,7 @@ class TestAlert:
                 self._msg_payload = alert
 
                 # currently can't publish an Avro serialized message with mock results
-                if self.mock_modules is not None:
+                if (self.mock is not None) or (self.mock_modules is not None):
                     logger.warning(
                         (
                             "The published message will be an Avro serialized alert. "
@@ -307,7 +307,7 @@ class TestAlert:
                     )
 
             else:
-                if self.mock_modules is None:
+                if (self.mock is None) and (self.mock_modules is None):
                     self._msg_payload = alert
 
                 else:
