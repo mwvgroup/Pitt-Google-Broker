@@ -101,7 +101,7 @@ Load alerts and test
 Setup
 ~~~~~~~~~~~~~~~~
 
-Activate your conda environment.
+Activate your conda environment and open a python prompt.
 
 Import tools from broker_utils:
 
@@ -187,7 +187,7 @@ Then, pull a message from the subscription to the output topic.
     msgs = pull_pubsub(subscrip, max_messages=1)  # list
     alert_dict_out = decode_alert(msgs[0])
 
-   alert_dict_out  # look at the message to see if it is as-expected
+    alert_dict_out  # look at the message to see if it is as-expected
 
 Integration test using a batch of alerts
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
