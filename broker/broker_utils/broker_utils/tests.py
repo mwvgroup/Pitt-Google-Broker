@@ -333,15 +333,16 @@ class TestAlert:
         return self._mock
 
 
-class TestValidator:
+class IntegrationTestValidator:
     """Functions to validate an integration test."""
 
     def __init__(self, subscrip, published_alert_ids, schema_map, **kwargs):
         """Initialize variables.
 
         kwargs can include keys:
-            purge_subscrip
-            max_pulls
+            max_pulls (int):
+                maximum number of times to pull the Pub/Sub subscription
+                before quitting.
         """
         self.subscrip = subscrip
         self.max_pulls = kwargs.get("max_pulls", 4)
@@ -371,7 +372,7 @@ class TestValidator:
         return pulled_msg_ids
 
     def _extract_ids(self, msgs):
-        """Use this instance's AlertIds instance to extract the alert IDs from msgs.
+        """Extract the alert IDs from msgs.
 
         This method first guesses whether the IDs should be extracted from message
         attributes or alert filenames by checking the objectId attribute of the first
@@ -398,16 +399,16 @@ class TestValidator:
         return pulled_msg_ids
 
     def _compare_ids(self):
-        pulids = set(self.pulled_msg_ids)
-        # _pull() gets the ids from the message attributes or filenames
+        idsout = set(self.pulled_msg_ids)
+        # self._pull() gets the ids from the message attributes or filenames,
         # which are always strings.
         # convert the published_alert_ids to the same type.
-        pubids = set(
+        idsin = set(
             [_AlertIds(str(id) for id in ids) for ids in self.published_alert_ids]
         )
 
         # compare ID sets
-        unmatched_ids = pulids.symmetric_difference(pubids)
+        unmatched_ids = idsout.symmetric_difference(idsin)
         success = len(unmatched_ids) == 0
 
         # log results
@@ -417,8 +418,8 @@ class TestValidator:
         else:
             logger.debug(f"Something went wrong. {tmp} do not match the input.")
 
-        # warn if pulids contains IDs that were not published
-        if len(pulids.difference(pubids)) > 0:
+        # warn if idsout contains IDs that were not published
+        if len(idsout.difference(idsin)) > 0:
             logger.warning(
                 (
                     "Some IDs were pulled that were not reported as published. "
