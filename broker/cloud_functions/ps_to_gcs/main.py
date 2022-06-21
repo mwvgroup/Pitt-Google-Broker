@@ -16,7 +16,7 @@ import fastavro
 from google.cloud import logging
 from google.cloud import storage
 
-from broker_utils.schema_maps import load_schema_map, get_value
+from broker_utils.schema_maps import load_schema_map, get_value, get_key
 from exceptions import SchemaParsingError
 
 
@@ -25,6 +25,7 @@ TESTID = os.getenv('TESTID')
 SURVEY = os.getenv('SURVEY')
 
 schema_map = load_schema_map(SURVEY, TESTID)
+sobjectId, ssourceId = get_key("objectId", schema_map), get_key("sourceId", schema_map)
 storage_client = storage.Client()
 
 # connect to the cloud logger
@@ -119,14 +120,16 @@ def upload_bytes_to_bucket(msg, context) -> None:
 
     logger.log_text(f'Uploaded {filename} to {bucket.name}')
 
+
 def attach_file_metadata(blob, alert, context):
     metadata = {'file_origin_message_id': context.event_id}
-    metadata['objectId'] = alert[0]['objectId']
-    metadata['candid'] = alert[0]['candid']
+    metadata[sobjectId] = get_value("objectId", alert[0], schema_map)
+    metadata[ssourceId] = get_value("sourceId", alert[0], schema_map)
     metadata['ra'] = alert[0][schema_map['source']][schema_map['ra']]
     metadata['dec'] = alert[0][schema_map['source']][schema_map['dec']]
     blob.metadata = metadata
     blob.patch()
+
 
 def create_filename(alert, attributes):
     # alert is a single alert dict wrapped in a list

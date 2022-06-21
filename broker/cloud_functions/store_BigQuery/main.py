@@ -30,7 +30,8 @@ if TESTID != "False":
     ps_topic = f"{ps_topic}-{TESTID}"
 
 schema_map = load_schema_map(SURVEY, TESTID)
-id_keys = data_utils.get_id_keys(schema_map)
+#id_keys = data_utils.get_id_keys(schema_map)
+sobjectId, ssourceId = get_key("objectId", schema_map), get_key("sourceId", schema_map)
 
 
 def run(msg: dict, context: functions_v1.context.Context) -> None:
