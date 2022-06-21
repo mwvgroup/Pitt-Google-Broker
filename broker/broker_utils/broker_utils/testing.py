@@ -215,7 +215,7 @@ class Mock:
             .replace("+00:00", "Z")
         )
         # event_type = "google.pubsub.topic.publish"
-        event_type = "broker_utils.tests.Mock"
+        event_type = "broker_utils.testing.Mock"
         resource = "mock_resource"
 
     @property
