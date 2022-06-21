@@ -36,8 +36,7 @@ logger = logging_client.logger(log_name)
 bucket_name = f'{PROJECT_ID}-{SURVEY}-alert_avros'  # store the Avro files
 if TESTID != "False":
     bucket_name = f'{bucket_name}-{TESTID}'
-# connect to the avro bucket
-bucket = storage_client.get_bucket(bucket_name)
+bucket = storage.Client().get_bucket(bucket_name)
 
 # By default, spool data in memory to avoid IO unless data is too big
 # LSST alerts are anticipated at 80 kB, so 150 kB should be plenty
@@ -127,7 +126,19 @@ def upload_bytes_to_bucket(msg, context) -> None:
         blob.metadata = create_file_metadata(alert, context, alert_ids)
         blob.upload_from_file(temp_file)
 
-    logger.log_text(f'Uploaded {filename} to {bucket.name}')
+    logger.log_text(f'Uploaded {filename} to {bucket_name}')
+
+    del_vars = [
+        data,
+        attributes,
+        temp_file,
+        alert,
+        filename,
+        blob,
+    ]
+    for var in del_vars:
+        del var
+
 
 def create_file_metadata(alert, context, alert_ids):
     """Return key/value pairs to be attached to the file as metadata."""
