@@ -16,15 +16,16 @@ import fastavro
 from google.cloud import logging
 from google.cloud import storage
 
-from broker_utils import schema_maps
+from broker_utils.schema_maps import load_schema_map
+from broker_utils.types import AlertFilename, AlertIds
 from exceptions import SchemaParsingError
+
 
 PROJECT_ID = os.getenv('GCP_PROJECT')
 TESTID = os.getenv('TESTID')
 SURVEY = os.getenv('SURVEY')
 
-schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
-storage_client = storage.Client()
+schema_map = load_schema_map(SURVEY, TESTID)
 
 # connect to the cloud logger
 logging_client = logging.Client()
@@ -107,7 +108,17 @@ def upload_bytes_to_bucket(msg, context) -> None:
 
         alert = extract_alert_dict(temp_file)
         temp_file.seek(0)
-        filename = create_filename(alert, attributes)
+        alert_ids = AlertIds(schema_map, alert_dict=alert[0])
+
+        filename = AlertFilename(
+            {
+                "objectId": alert_ids.objectId,
+                "sourceId": alert_ids.sourceId,
+                "topic": attributes.get("kafka.topic", "no_topic"),
+                "format": "avro",
+            }
+        ).name
+
         if SURVEY == 'ztf':
             fix_schema(temp_file, alert, data, filename)
         temp_file.seek(0)
@@ -125,14 +136,6 @@ def create_file_metadata(alert, context, alert_ids):
     metadata[alert_ids.id_keys.sourceId] = alert_ids.sourceId
     metadata['ra'] = alert[0][schema_map['source']]['ra']
     metadata['dec'] = alert[0][schema_map['source']]['dec']
-
-def create_filename(alert, attributes):
-    # alert is a single alert dict wrapped in a list
-    oid = alert[0][schema_map['objectId']]
-    sid = alert[0][schema_map['source']][schema_map['sourceId']]
-    topic = attributes['kafka.topic']
-    filename = f'{oid}.{sid}.{topic}.avro'
-    return filename
     return metadata
 
 
