@@ -51,7 +51,10 @@ The Pitt-Google Broker runs on the `Google Cloud Platform <https://cloud.google.
    api/broker-utils/consumer-sim
    api/broker-utils/data-utils
    api/broker-utils/gcp-utils
+   api/broker-utils/math
    api/broker-utils/schema-maps
+   api/broker-utils/testing
+   api/broker-utils/types
 
 .. toctree::
    :hidden:
