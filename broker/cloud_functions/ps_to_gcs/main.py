@@ -207,3 +207,13 @@ def guess_schema_version(alert_bytes: bytes) -> str:
         raise SchemaParsingError(err_msg)
 
     return version_match.group(2).decode()
+
+
+# mock data and run the module
+if __name__ == "__main__":
+    from broker_utils.testing import Mock
+    mock = Mock(schema_map=schema_map, drop_cutouts=False, serialize="avro")
+    args = mock.cfinput
+    run(args.msg, args.context)
+
+    print(mock.my_test_alert.ids)
