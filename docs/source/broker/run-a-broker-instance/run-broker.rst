@@ -56,7 +56,8 @@ Start the consumer VM.
 
 .. note::
 
-    Note that the consumer will automatically try to connect to the survey and begin ingesting alerts. If you want to avoid this, set the startup script url to an empty string in the VM's metadata.
+    Upon startup, the consumer will automatically try to connect to the survey and begin ingesting alerts.
+    If you want to avoid this, set the startup script url to an empty string in the VM's metadata.
     See :ref:`View and Access Resources: Compute Engine VMs <broker/run-a-broker-instance/view-resources:Compute Engine VMs>`.
 
 .. code-block:: bash
