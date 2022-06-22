@@ -23,59 +23,57 @@ See also:
 Start the Broker
 ----------------
 
-The two VMs (consumer and night-conductor) can be started manually using the code below.
-Start-up scripts are configured during broker setup. They are stored in the
-``broker_files`` Cloud Storage bucket, and the address is added to the instance's
-metadata using the key ``startup-script-url``.
-To start a VM without triggering the start-up script, unset the startup script url.
-See :ref:`View and Access Resources: Compute Engine VMs <broker/run-a-broker-instance/view-resources:Compute Engine VMs>`.
+.. note::
 
-Components running on Cloud Functions or Cloud Run are always on, listening for alerts.
+    This section contains instructions to manually start the consumer VM.
+    Cloud Functions and Cloud Run are always on; they do not need to be started or stopped.
+    If you are running a test and do not need the consumer VM, you can skip this section.
+
+Fill in the broker instance keywords below with the same ones used to deploy the broker instance.
 
 .. code-block:: bash
 
-    # Example VM name (used below):
-    survey=ztf
-    testid=mytestid
-    vm_name="${survey}-consumer-${testid}"
-    # vm_name="${survey}-night-conductor-${testid}"
+    survey=
+    testid=
 
-    # Optional: set the consumer to use non-default Kafka and/or Pub/Sub topics
-    # Example topic names (used below):
+If you want the consumer to use non-default Kafka and/or Pub/Sub topics, set the appropriate ``TOPIC_FORCE`` variable in the VM's metadata.
+The code below gives examples.
+These will be automatically unset when the VM shuts down.
+
+.. code-block:: bash
+
     KAFKA_TOPIC_FORCE=""                                # default, today's topic (UTC)
     # KAFKA_TOPIC_FORCE="ztf_20220302_programid1"       # Kafka topic from Mar 2, 2022
+
     PS_TOPIC_FORCE=""                                   # default alerts Pub/Sub topic
     # PS_TOPIC_FORCE="my-alerts"                        # Pub/Sub topic named my-alerts
+
     # Set the topics as metadata:
     metadata="KAFKA_TOPIC_FORCE=${KAFKA_TOPIC_FORCE},PS_TOPIC_FORCE=${PS_TOPIC_FORCE}"
-    gcloud compute instances add-metadata "$vm_name" \
-          --metadata="${metadata}"
+    gcloud compute instances add-metadata "$vm_name" --metadata="${metadata}"
 
-    # Start the VM:
+Start the consumer VM.
+
+.. note::
+
+    Note that the consumer will automatically try to connect to the survey and begin ingesting alerts. If you want to avoid this, set the startup script url to an empty string in the VM's metadata.
+    See :ref:`View and Access Resources: Compute Engine VMs <broker/run-a-broker-instance/view-resources:Compute Engine VMs>`.
+
+.. code-block:: bash
+
+    vm_name="${survey}-consumer-${testid}"
     gcloud compute instances start "${vm_name}"
 
 Stop the Broker
 ---------------
 
-The two VMs (consumer and night-conductor) can be stopped manually using the code below.
-Components running on Cloud Functions or Cloud Run are always on.
+.. note::
+
+    This section contains instructions to manually stop the consumer VM.
+    Cloud Functions and Cloud Run are always on; they do not need to be started or stopped.
 
 .. code-block:: bash
 
-    # Example VM name (used below):
-    vm_name="ztf-consumer-testid"
-    # vm_name="ztf-night-conductor-testid"
-
-    # Optional: reset the consumer VM's Kafka and/or Pub/Sub topics to defaults
-    # Example topic names (used below):
-    KAFKA_TOPIC_FORCE=""                                # default, today's topic (UTC)
-    PS_TOPIC_FORCE=""                                   # default alerts Pub/Sub topic
-    # Set the topics as metadata:
-    metadata="KAFKA_TOPIC_FORCE=${KAFKA_TOPIC_FORCE},PS_TOPIC_FORCE=${PS_TOPIC_FORCE}"
-    gcloud compute instances add-metadata "$vm_name" \
-          --metadata="${metadata}"
-
-    # Stop the VM:
     gcloud compute instances stop "${vm_name}"
 
 --------------
