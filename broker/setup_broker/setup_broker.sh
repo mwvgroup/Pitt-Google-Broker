@@ -72,37 +72,37 @@ echo "Configuring VMs..."
 ./create_vms.sh "$broker_bucket" "$testid" "$teardown" "$survey"
 
 
-#--- Create the cron jobs that schedule night-conductor
-# echo
-# echo "Setting up Cloud Scheduler cron jobs"
-# ./create_cron_jobs.sh "$testid" "$teardown" "$survey"
+# #--- Create the cron jobs that schedule night-conductor
+# # echo
+# # echo "Setting up Cloud Scheduler cron jobs"
+# # ./create_cron_jobs.sh "$testid" "$teardown" "$survey"
 
 
-if [ "$teardown" != "True" ]; then
+# if [ "$teardown" != "True" ]; then
 
-#--- Setup the Pub/Sub notifications on ZTF Avro storage bucket
-    echo
-    echo "Configuring Pub/Sub notifications on GCS bucket..."
-    # metadata attached after file upload, so triggering on OBJECT_FINALIZE is too soon
-    trigger_event=OBJECT_METADATA_UPDATE
-    format=json  # json or none; if json, file metadata sent in message body
-    gsutil notification create \
-                -t "$avro_topic" \
-                -e "$trigger_event" \
-                -f "$format" \
-                "gs://${avro_bucket}"
+# #--- Setup the Pub/Sub notifications on ZTF Avro storage bucket
+#     echo
+#     echo "Configuring Pub/Sub notifications on GCS bucket..."
+#     # metadata attached after file upload, so triggering on OBJECT_FINALIZE is too soon
+#     trigger_event=OBJECT_METADATA_UPDATE
+#     format=json  # json or none; if json, file metadata sent in message body
+#     gsutil notification create \
+#                 -t "$avro_topic" \
+#                 -e "$trigger_event" \
+#                 -f "$format" \
+#                 "gs://${avro_bucket}"
 
-#--- Create a firewall rule to open the port used by Kafka/ZTF
-# on any instance with the flag --tags=ztfport
-    echo
-    echo "Configuring ZTF/Kafka firewall rule..."
-    gcloud compute firewall-rules create 'ztfport' \
-        --allow=tcp:9094 \
-        --description="Allow incoming traffic on TCP port 9094" \
-        --direction=INGRESS \
-        --enable-logging
+# #--- Create a firewall rule to open the port used by Kafka/ZTF
+# # on any instance with the flag --tags=ztfport
+#     echo
+#     echo "Configuring ZTF/Kafka firewall rule..."
+#     gcloud compute firewall-rules create 'ztfport' \
+#         --allow=tcp:9094 \
+#         --description="Allow incoming traffic on TCP port 9094" \
+#         --direction=INGRESS \
+#         --enable-logging
 
-fi
+# fi
 
 #--- Deploy Cloud Functions
 echo

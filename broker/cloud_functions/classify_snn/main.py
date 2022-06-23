@@ -12,8 +12,9 @@ import pandas as pd
 from pathlib import Path
 from supernnova.validation.validate_onthefly import classify_lcs
 
-from broker_utils import data_utils, gcp_utils
-from broker_utils.schema_maps import load_schema_map, get_key, get_value
+from broker_utils import data_utils, gcp_utils, math
+from broker_utils.types import AlertIds
+from broker_utils.schema_maps import load_schema_map
 
 
 PROJECT_ID = os.getenv("GCP_PROJECT")
@@ -34,7 +35,8 @@ if TESTID != "False":  # attach the testid to the names
 bq_table = f"{bq_dataset}.SuperNNova"
 
 schema_map = load_schema_map(SURVEY, TESTID)
-id_keys = data_utils.idUtils(schema_map).get_id_keys()
+alert_ids = AlertIds(schema_map)
+id_keys = alert_ids.id_keys
 
 model_dir_name = "ZTF_DMAM_V19_NoC_SNIa_vs_CC_forFink"
 model_file_name = "vanilla_S_0_CLF_2_R_none_photometry_DF_1.0_N_global_lstm_32x2_0.05_128_True_mean.pt"
@@ -67,11 +69,13 @@ def run(msg: dict, context) -> None:
     alert_dict = data_utils.decode_alert(
         base64.b64decode(msg["data"]), drop_cutouts=True, schema_map=schema_map
     )
+    
+    alert_ids.extract_ids(alert_dict=alert_dict)
 
     attrs = {
         "ingest.timestamp": context.timestamp,
-        id_keys.objectId: str(get_value("objectId", alert_dict, schema_map)),
-        id_keys.sourceId: str(get_value("sourceId", alert_dict, schema_map)),
+        id_keys.objectId: str(alert_ids.objectId),
+        id_keys.sourceId: str(alert_ids.sourceId),
     }
 
     # classify
@@ -129,8 +133,8 @@ def _format_for_snn(alert_dict: dict) -> pd.DataFrame:
 
     if SURVEY == "ztf":
         snn_df["FLT"] = alert_df["fid"].map(schema_map["FILTER_MAP"])
-        snn_df["MJD"] = data_utils.jd_to_mjd(alert_df["jd"])
-        snn_df["FLUXCAL"], snn_df["FLUXCALERR"] = data_utils.mag_to_flux(
+        snn_df["MJD"] = math.jd_to_mjd(alert_df["jd"])
+        snn_df["FLUXCAL"], snn_df["FLUXCALERR"] = math.mag_to_flux(
             alert_df[schema_map["mag"]],
             alert_df[schema_map["magzp"]],
             alert_df[schema_map["magerr"]],
