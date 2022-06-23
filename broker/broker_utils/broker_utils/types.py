@@ -96,7 +96,7 @@ class AlertIds:
             )
 
         elif attrs is not None:
-            id_keys = self.id_keys()
+            id_keys = self.id_keys
             self._ids = _AlertIds(
                 attrs.get(id_keys.sourceId), attrs.get(id_keys.objectId)
             )

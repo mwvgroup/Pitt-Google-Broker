@@ -10,6 +10,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## \[Unreleased\]<a name="unreleased"></a>
 
+## \[0.2.38\] - 2022-06-23
+
+### Fixed
+
+- Bug fix in `types.AlertIds.extract_ids()`: access `self.id_keys` as a property, not a function call.
+
 ## \[0.2.37\] - 2022-06-21
 
 ### Changed
