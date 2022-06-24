@@ -84,28 +84,28 @@ class AlertIds:
         return self._ids
 
     def extract_ids(self, alert_dict=None, attrs=None, filename=None, **kwargs):
-        """Extract IDs to self._ids (overwrites existing) and return them.
+        """Extract IDs to an `_AlertIds` object and return it.
 
-        IDs are extracted from alert_dict, attrs, or filename, in order of preference.
+        Attempts to extract IDs from alert_dict, attrs, and filename, in that order.
         kwargs are ignored and only provided for the caller's convenience.
         """
         if alert_dict is not None:
-            self._ids = _AlertIds(
+            ids = _AlertIds(
                 get_value("sourceId", alert_dict, self.schema_map),
                 get_value("objectId", alert_dict, self.schema_map),
             )
 
         elif attrs is not None:
             id_keys = self.id_keys
-            self._ids = _AlertIds(
+            ids = _AlertIds(
                 attrs.get(id_keys.sourceId), attrs.get(id_keys.objectId)
             )
 
         elif filename is not None:
             parsed = AlertFilename(filename).parsed
-            self._ids = _AlertIds(parsed.sourceId, parsed.objectId)
+            ids = _AlertIds(parsed.sourceId, parsed.objectId)
 
-        return self._ids
+        return ids
 
     @property
     def id_keys(self):
