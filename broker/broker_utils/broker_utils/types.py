@@ -2,6 +2,7 @@
 # -*- coding: UTF-8 -*-
 """Pitt-Google types."""
 
+from dataclasses import dataclass
 import logging
 from typing import NamedTuple, Union
 
@@ -18,6 +19,7 @@ class _AlertIds(NamedTuple):
     objectId: Union[str, int, float, None] = None
 
 
+@dataclass
 class AlertFilename:
     """Filename of an alert stored to a Cloud Storage bucket."""
 
@@ -52,13 +54,15 @@ class AlertFilename:
             self.name = ".".join(str(i) for i in self.parsed)
 
 
+@dataclass
 class AlertIds:
     """IDs associated with an alert."""
 
     def __init__(self, schema_map, **kwargs):
         """Initialize class instance.
 
-        kwargs may contain keys: alert_dict, attrs, filename
+        kwargs will be sent to `self.extract_ids()` and may contain keys:
+            alert_dict, attrs, filename
         """
         self.schema_map = schema_map
 

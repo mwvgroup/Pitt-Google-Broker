@@ -3,6 +3,7 @@
 """Classes and functions used for Pitt-Google broker testing."""
 
 import base64
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 import logging
 import os
@@ -19,6 +20,7 @@ from .types import _AlertIds, AlertIds
 logger = logging.getLogger(__name__)
 
 
+@dataclass
 class AlertPaths:
     """Paths to alerts stored locally."""
 
@@ -57,7 +59,7 @@ class AlertPaths:
         The returned path is the next one in self._mygen (a path generator maintained
         internally).
         If you want more control (e.g., to ensure that you iterate over all files in
-        the directory and/or do not recieve a duplicate path), use ``AlertPaths().gen``
+        the directory and/or do not recieve duplicate paths), use ``AlertPaths().gen()``
         instead.
         """
         return next(self._mygen)
@@ -70,6 +72,7 @@ class AlertPaths:
         return self.__mygen
 
 
+@dataclass
 class Mock:
     """Mock data and objects useful for testing the broker."""
 
@@ -297,6 +300,7 @@ class Mock:
         self._cfinput = None
 
 
+@dataclass
 class TestAlert:
     """An alert packet and related functions useful for testing the broker."""
 
@@ -442,6 +446,7 @@ class TestAlert:
         self._mock = None
 
 
+@dataclass
 class IntegrationTestValidator:
     """Functions to validate an integration test."""
 
