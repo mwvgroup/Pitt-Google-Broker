@@ -10,7 +10,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## \[Unreleased\]<a name="unreleased"></a>
 
+## \[0.2.39\] - 2022-06-23
+
+### Fixed
+
+- Bug fix: don't use `dataclasses.dataclass` decorator on `collections.namedtuple` modules.
+
 ## \[0.2.38\] - 2022-06-23
+
+### Added
+
+- Use `dataclasses.dataclass` decorator on `types` and `testing` modules
 
 ### Fixed
 
