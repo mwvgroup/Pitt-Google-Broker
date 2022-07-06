@@ -83,6 +83,8 @@ def insert_rows_DIASource(alert_dict: dict):
         source_dict = _extract_ztf_source(alert_dict)
     elif SURVEY == "decat":
         source_dict = _extract_decat_source(alert_dict)
+    elif SURVEY == "elasticc":
+        source_dict = _extract_elasticc_source(alert_dict)
 
     # send to bigquery
     errors = gcp_utils.insert_rows_bigquery(table_id, [source_dict])
@@ -121,6 +123,14 @@ def _extract_ztf_source(alert_dict: dict):
     source_dict = {**metadict, **cand, "prv_candidates_candids": prv_candids}
     return source_dict
 
+def _extract_elasticc_source(alert_dict: dict):
+    #get info to create source_dict
+    alertId = alert_dict["alertId"]
+    diaSourceId = alert_dict["diaSource"]
+
+    #package it up and return
+    source_dict = {"alertId": alertId, **diaSourceId}
+    return source_dict
 
 def _extract_decat_source(alert_dict: dict):
     # get source

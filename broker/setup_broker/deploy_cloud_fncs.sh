@@ -42,7 +42,8 @@ if [ "$testid" != "False" ]; then
     classify_snn_trigger_topic="${classify_snn_trigger_topic}-${testid}"
     classify_snn_CF_name="${classify_snn_CF_name}-${testid}"
     publish_classifications_CF_name="${publish_classifications_CF_name}-${testid}"
-    publish_classifications_trigger_topic="${publish_classifications}-${testid}"
+    publish_classifications_trigger_topic="${publish_classifications_trigger_topic}-${testid}"
+    
 fi
 
 if [ "$teardown" = "True" ]; then
