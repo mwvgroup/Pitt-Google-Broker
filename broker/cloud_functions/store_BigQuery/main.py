@@ -161,8 +161,11 @@ def publish_pubsub(alert_dict: dict, table_dicts: Dict[str, Optional[dict]]):
     """Announce the table storage operation to Pub/Sub."""
     # collect attributes
     attrs = {
-        id_keys.objectId: str(get_value("objectId", alert_dict, schema_map)),
-        id_keys.sourceId: str(get_value("sourceId", alert_dict, schema_map)),
+        #id_keys.objectId: str(get_value("objectId", alert_dict, schema_map)),
+        #id_keys.sourceId: str(get_value("sourceId", alert_dict, schema_map)),
+        sobjectId: str(get_value("objectId", alert_dict, schema_map)),
+        ssourceId: str(get_value("sourceId", alert_dict, schema_map)),
+
     }
     for d in table_dicts:
         attrs.update(d)
