@@ -8,6 +8,21 @@ H="Metadata-Flavor: Google"
 consumerVM=$(curl "${baseurl}/instance/name" -H "${H}")
 zone=$(curl "${baseurl}/instance/zone" -H "${H}")
 
+# parse the survey name and testid from the VM name
+survey=$(echo "$consumerVM" | awk -F "-" '{print $1}')
+if [ "$consumerVM" = "${survey}-consumer" ]; then
+    testid="False"
+else
+    testid=$(echo "$consumerVM" | awk -F "-" '{print $NF}')
+fi
+
+#--- GCP resources used in this script
+broker_bucket="${PROJECT_ID}-${survey}-broker_files"
+# use test resources, if requested
+if [ "$testid" != "False" ]; then
+    broker_bucket="${broker_bucket}-${testid}"
+fi
+
 #--- Install general utils
 apt-get update
 apt-get install -y wget screen software-properties-common snapd
