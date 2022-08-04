@@ -60,7 +60,7 @@ def run(msg: dict, context) -> None:
             This argument is not currently used in this function, but the argument is
             required by Cloud Functions, which will call it.
     """
-    alert_lite = data_utils.decode_alert(msg["data"]) # Use this in ach module to load alert_lite
+    alert_lite = data_utils.decode_alert(base64.b64decode(msg["data"])) # Use this in ach module to load alert_lite
 
 
     # classify

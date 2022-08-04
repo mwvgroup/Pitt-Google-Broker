@@ -109,6 +109,15 @@ def semantic_compression(alert_dict, schema_map) -> dict:
             'prv_magzpsciunc' : prv_s['magzpsciunc'],
             'prv_diffmaglim' : prv_s['diffmaglim'],
             'prv_isdiffpos' : prv_s['isdiffpos'],
+
+
+            # HAD TO ADD THESE FOR PURITY REASON DICT
+
+            'prv_nbad' : source['nbad'],
+            'prv_fwhm' : source['fwhm'],
+            'prv_elong' : source['elong'],
+            'prv_magdiff' : source['magdiff'],
+            'prv_fid' : source['fid'],
         }
 
         prev_sources.append(prev_source_dict)
