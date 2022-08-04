@@ -4,13 +4,14 @@
 """Filter alerts for purity."""
 
 import base64
+import json
 import os
 import numpy as np
 from google.cloud import logging
 from astropy import units as u
 
 # Add these to requirements.txt but check to make sure that the format of adding is correct
-from broker_utils import data_utils, gcp_utils, schema_maps
+from broker_utils import data_utils, gcp_utils
 
 
 
@@ -58,7 +59,7 @@ tags_table = f"{bq_dataset}.tags"
 
 
 
-def is_pure(alert_dict, schema_map):
+def is_pure(alert_dict):
     """Adapted from: https://zwickytransientfacility.github.io/ztf-avro-alert/filtering.html
 
     Quoted from the source:
@@ -71,14 +72,14 @@ def is_pure(alert_dict, schema_map):
     Based on tests done at IPAC (F. Masci, priv. comm), the following filter
     delivers a relatively pure sample.
     """
-    source = alert_dict[schema_map['source']]
+    source = alert_dict['source']
 
     rb = (source['rb'] >= 0.65)  # RealBogus score
 
-    if schema_map['SURVEY'] == 'decat':
+    if SURVEY == 'decat': ## How to get find survey type without schema_map
         pure = rb
 
-    elif schema_map['SURVEY'] == 'ztf':
+    elif SURVEY == 'ztf': ## How to get find survey type without schema_map
         nbad = (source['nbad'] == 0)  # num bad pixels
         fwhm = (source['fwhm'] <= 5)  # Full Width Half Max, SExtractor [pixels]
         elong = (source['elong'] <= 1.2)  # major / minor axis, SExtractor
@@ -100,12 +101,12 @@ def is_pure(alert_dict, schema_map):
 
 
 
-def _is_extragalactic_transient(alert_dict: dict, schema_map) -> dict:
+def _is_extragalactic_transient(alert_dict: dict) -> dict:
     """Check whether alert is likely to be an extragalactic transient.
     Adapted from:
     https://github.com/ZwickyTransientFacility/ztf-avro-alert/blob/master/notebooks/Filtering_alerts.ipynb
     """
-    if schema_map["SURVEY"] == "decat":
+    if SURVEY == "decat": ## How to get find survey type without schema_map
         # No straightforward way to translate this ZTF filter for DECAT.
         # DECAT alert does not include whether the subtraction (sci-ref) is
         # positive, nor SExtractor results,
@@ -114,8 +115,10 @@ def _is_extragalactic_transient(alert_dict: dict, schema_map) -> dict:
         # Assume the alert should pass the filter:
         is_extragalactic_transient = True
 
-    elif schema_map["SURVEY"] == "ztf":
-        dflc = data_utils.alert_dict_to_dataframe(alert_dict, schema_map)
+    elif SURVEY == "ztf": ## How to get find survey type without schema_map
+        dflc = data_utils.alert_lite_to_dataframe(alert_dict) # Is schema_map necessary for this function?
+        # NEED TO GO TO data_utils.py and determine whether to take out schema map
+        
         candidate = dflc.loc[0]
 
         is_positive_sub = candidate["isdiffpos"] == "t"
@@ -179,25 +182,22 @@ def run(msg: dict, context):
                 `resource`: the resource that emitted the event.
     """
 
-    # This is pulling from a bucket in the cloud
-    schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
 
-    # logger.log_text(f"{type(msg['data'])}', severity='DEBUG")
-    # logger.log_text(f"{msg['data']}', severity='DEBUG")
+    
+    alert_lite = data_utils.decode_alert(base64.b64decode(msg["data"]))
 
-    alert_dict = data_utils.decode_alert(
-        base64.b64decode(msg["data"]), drop_cutouts=True, schema_map=schema_map
-    ) # this decodes the alert
+
+    
     attrs = {
-        schema_map["objectId"]: str(alert_dict[schema_map["objectId"]]),
-        schema_map["sourceId"]: str(alert_dict[schema_map["sourceId"]]),
+        "objectId": str(alert_lite['alertIds'].objectId),
+        "sourceId": str(alert_lite['alertIds'].sourceId),
     } # this gets the custom attr for filtering
 
 
-    purity_reason_dict = is_pure(alert_dict, schema_map)
+    purity_reason_dict = is_pure(alert_lite)
 
 
-    extragalactic_dict = _is_extragalactic_transient(alert_dict, schema_map) ## ADDED
+    extragalactic_dict = _is_extragalactic_transient(alert_lite) ## ADDED
 
     # # run the alert through the filter.
 
@@ -209,7 +209,7 @@ def run(msg: dict, context):
             alert_dict,
             attrs= {**attrs, **{k: str(v) for k, v in purity_reason_dict.items()},
                     **{k: str(v) for k, v in extragalactic_dict.items()},
-                    'fid': str(alert_dict[schema_map["source"]]["fid"]),}
+                    'fid': str(alert_dict['source']["fid"]),}
     )
 
 
@@ -251,3 +251,26 @@ def run(msg: dict, context):
     errors = gcp_utils.insert_rows_bigquery(class_table, classifications)
     if len(errors) > 0:
         logger.log_text(f"BigQuery insert error: {errors}", severity="DEBUG")
+
+
+
+
+def alert_lite_to_dataframe(alert_dict: dict) -> pd.DataFrame: 
+    """ Packages an alert into a dataframe.
+    Adapted from: https://github.com/ZwickyTransientFacility/ztf-avro-alert/blob/master/notebooks/Filtering_alerts.ipynb
+    """
+    
+    src_df = pd.DataFrame(alert_dict['source'], index=[0])
+    prvs_df = pd.DataFrame(alert_dict['prvSources'])
+    xmatch_df = pd.DataFrame(alert_dict['xmatch'], index=[0])
+    df = pd.concat([src_df, prvs_df, xmatch_df], ignore_index=True)
+
+    # attach some metadata. note this may not be preserved after all operations
+    # https://stackoverflow.com/questions/14688306/adding-meta-information-metadata-to-pandas-dataframe
+    # make sure this does not overwrite existing columns
+    if "objectId" not in df.keys():
+        df.objectId = alert_dict['alertIds'].objectId
+    if "sourceId" not in df.keys():
+        df.sourceId = alert_dict['alertIds'].sourceId
+
+    return df
