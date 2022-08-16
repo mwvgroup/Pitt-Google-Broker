@@ -69,7 +69,7 @@ def run(msg: dict, context) -> None:
     alert_dict = data_utils.decode_alert(
         base64.b64decode(msg["data"]), drop_cutouts=True, schema_map=schema_map
     )
-    
+
     alert_ids.extract_ids(alert_dict=alert_dict)
 
     attrs = {
