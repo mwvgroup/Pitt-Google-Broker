@@ -39,30 +39,7 @@ The Pitt-Google Broker runs on the `Google Cloud Platform <https://cloud.google.
    broker/alerts-for-testing
    broker/primers-for-developers
 
-.. toctree::
-   :hidden:
-   :maxdepth: 1
-   :caption: API Reference
-
-   api/pgb-utils/bigquery
-   api/pgb-utils/figures
-   api/pgb-utils/pubsub
-   api/pgb-utils/utils
-   api/broker-utils/consumer-sim
-   api/broker-utils/data-utils
-   api/broker-utils/gcp-utils
-   api/broker-utils/math
-   api/broker-utils/schema-maps
-   api/broker-utils/testing
-   api/broker-utils/types
-
-.. toctree::
-   :hidden:
-   :maxdepth: 1
-   :caption: Working Notes
-
-   working-notes/early-dev/README
-   working-notes/troyraen/index
+For the current broker-utils API reference, see the `update_broker_utils branch <https://pitt-broker.readthedocs.io/en/u-tjr-update_broker_utils/api/broker-utils/avro-schemas.html>`__.
 
 ..
 .. Indices and tables
