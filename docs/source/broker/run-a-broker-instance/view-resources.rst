@@ -71,7 +71,7 @@ See also:
 Cloud Functions
 ----------------
 
-`GCP Console <https://console.cloud.google.com/functions/list?project=ardent-cycling-243415>`__
+`GCP Console <https://console.cloud.google.com/functions/list>`__
 
 Click on a function name. From here you can:
 
