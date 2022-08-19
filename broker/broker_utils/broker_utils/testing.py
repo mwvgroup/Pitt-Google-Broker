@@ -530,7 +530,7 @@ class IntegrationTestValidator:
         if success:
             logger.info(f"Success! {tmp} match the input.")
         else:
-            logger.debug(f"Something went wrong. {tmp} do not match the input.")
+            logger.warning(f"Something went wrong. {tmp} do not match the input.")
 
         # warn if idsout contains IDs that were not published
         if len(idsout.difference(idsin)) > 0:

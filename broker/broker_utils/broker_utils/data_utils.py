@@ -4,7 +4,10 @@
 survey and broker data.
 """
 
+import base64
 from io import BytesIO
+import os
+import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Union
 
@@ -15,7 +18,16 @@ import json
 if TYPE_CHECKING:
     import pandas as pd
 
+from .avro_schemas.load import all as load_all_schemas
 from .types import AlertIds
+
+
+LOGGER = logging.getLogger(__name__)
+# cloud functions use GCP_PROJECT
+if "GCP_PROJECT" in os.environ:
+    import google.cloud.logging
+    google.cloud.logging.Client().setup_logging()
+    LOGGER.setLevel(logging.DEBUG)
 
 
 def load_alert(
@@ -31,12 +43,15 @@ def load_alert(
                     accepted by ``decode_alert``.
         kwargs:     Keyword arguments for ``decode_alert``.
     """
-    if return_as == "bytes":
-        with open(fin, "rb") as f:
-            alert = f.read()
-    else:
-        alert = decode_alert(fin, return_as=return_as, **kwargs)
-    return alert
+    LOGGER.warn("Depreciated. Use open_alert() instead.")
+    return open_alert(fin, return_as=return_as, **kwargs)
+    # first, load to bytes
+    # if return_as == "bytes":
+    #     with open(fin, "rb") as f:
+    #         alert = f.read()
+    # else:
+    #     alert = decode_alert(fin, return_as=return_as, **kwargs)
+    # return alert
 
 
 def decode_alert(
@@ -45,23 +60,72 @@ def decode_alert(
     drop_cutouts: bool = False,
     **kwargs
 ) -> Union[dict, "pd.DataFrame"]:
-    """Load an alert Avro and return in requested format.
+    """Load an alert Avro and return in requested format."""
+    LOGGER.warn("Depreciated. Use open_alert() instead.")
+    return open_alert(alert_avro, return_as=return_as, drop_cutouts=drop_cutouts, **kwargs)
 
-    Wraps `alert_avro_to_dict()` and `alert_dict_to_dataframe()`.
+
+def open_alert(
+    alert: Union[str, Path, bytes],
+    return_as: str = 'dict',
+    drop_cutouts: bool = False,
+    **kwargs
+) -> Union[bytes, dict, "pd.DataFrame"]:
+    """Load ``alert``, decode it, and return it in the requested format.
+
+    Background: The broker deals with alert data that can be packaged in many different ways.
+    For example:
+    - Files in Avro format
+    - Pub/Sub messages -- the message payload is a bytes object with either Avro or json serialization
+    - Cloud Functions further encodes incoming Pub/Sub messages as base64 strings
+    - Any Avro-serialized object may or may not have its schema attached as a header
+      (but deserialization always requires it)
+
+    This function adopts a brute-force strategy.
+    It does *not* try to inspect ``alert`` and determine its format.
+    Instead, it tries repeatedly to load/decode ``alert`` and return it as requested,
+    trying at least one method for each input format listed above.
+    It catches nearlly all ``Exception``s along the way.
+    Set the logger level to DEBUG for a record of the try/excepts.
+    If it runs out of methods to try, it raises the error chain instead of returning None.
+    (Every private function it calls behaves the same way.)
 
     Args:
-        alert_avro:   Either the path of Avro file to load, or
-            the bytes encoding the Avro-formated alert.
-        return_as: Format the alert will be returned in. One of 'dict' or 'df'.
-        drop_cutouts: Whether to drop or return the cutouts (stamps).
-                      If `return_as='df'` the cutouts are always dropped.
-        kwargs: Keyword arguments passed to ``_drop_cutouts`` and
-                ``alert_dict_to_dataframe``.
+        alert:
+            Either the path of Avro file to load, or the bytes encoding the alert.
+        return_as:
+            Format the alert will be returned in. One of 'bytes', 'dict' or 'df'.
+        drop_cutouts:
+            Whether to drop or return the image cutouts.
+        kwargs:
+            Keyword arguments passed to ``_avro_to_dicts()``,
+            ``_drop_cutouts()`` and ``alert_dict_to_dataframe()``.
+            Note that if ``alert`` is Avro and schemaless you must pass the keyword argument
+            ``load_schema`` (see ``_avro_to_dicts()``) with an appropriate value.
 
     Returns:
-        alert packet in requested format
+        alert data in the requested format
     """
-    alert_dict = alert_avro_to_dict(alert_avro)
+    # load bytes. we do not need this to load a dict.
+    if return_as == "bytes":
+        return _alert_to_bytes(alert)
+
+    # load dict. we need this to load a dataframe.
+    try:
+        alert_dicts = _avro_to_dicts(alert, **kwargs)
+
+    except Exception:
+        # we only expect avro or json, so let an exception raise
+        alert_dicts = _json_to_dicts(alert)
+
+    # we expect alerts to have exactly one dict in the list, else raise exception
+    alert_dict = alert_dicts[0]
+
+    # now we have the alert loaded as a dict
+    # from here on, we're just getting it into the return_as format
+    # so, no try/excepts
+    # if we can't do it, the user needs to either
+    # choose different options or extend the function
 
     if return_as == "dict":
         if drop_cutouts:
@@ -69,59 +133,135 @@ def decode_alert(
         else:
             return alert_dict
 
+    # load dataframe
     elif return_as == "df":
         return alert_dict_to_dataframe(alert_dict, **kwargs)
 
     else:
-        raise ValueError("`return_as` must be one of 'dict' or 'df'.")
+        raise ValueError("Unknown value recieved for `return_as`.")
 
 
-def alert_avro_to_dict(alert_avro: Union[str, Path, bytes]) -> dict:
-    """Load an alert Avro to a dictionary.
+def _alert_to_bytes(alert: Union[str, Path, bytes]):
+    """Read and return the bytes in ``alert`` (assumed to point to a file)."""
+    excepts = []
+    # assume alert points to a file
+    try:
+        with open(alert, "rb") as f:
+            return f.read()
+
+    except Exception as e:
+        excepts.append(e)
+        LOGGER.debug(f"tried: open(alert, 'rb'). caught error: {e}")
+
+        # maybe alert is already a bytes object
+        if isinstance(alert, bytes):
+            return alert
+
+        else:
+            raise e
+
+
+def _avro_to_dicts(avroin: Union[str, Path, bytes], load_schema: Union[bool, str, None] = None) -> dict:
+    """Convert an Avro-serialized object to a dictionary.
 
     Args:
-        alert_avro:   Either the path of Avro file to load, or
-            the bytes encoding the Avro-formated alert.
+        avroin:
+            An Avro-serialized bytes-like object, or the path to an Avro file.
+
+        load_schema:
+            If True or str, ``avroin`` is assumed to be schemaless
+            (as in ELAsTiCC and Rubin alerts)
+            and will be deserialized using a schema from the avro_schemas directory.
+            If True, all schemas in that directory will be tried.
+            If str, it should be the filename of the specific schema to be used.
+            If None or False, the Avro schema is assumed to be attached to ``avroin``
+            (as in ZTF alerts).
 
     Returns:
-        alert as a dict
+        List[dict]:
+            ``avroin`` as a list of dictionaries.
     """
-    if isinstance(alert_avro, str) or isinstance(alert_avro, Path):
-        with open(alert_avro, 'rb') as fin:
-            alert_list = [r for r in fastavro.reader(fin)]  # list of dicts
-    elif isinstance(alert_avro, bytes):
-        try:
-            with BytesIO(alert_avro) as fin:
-                alert_list = [r for r in fastavro.reader(fin)]  # list of dicts
-        except ValueError:
+    # define two helper functions to call the fastavro reader
+    def _read(fin, load_schema):
+        # no try/except. load_schema must be properly defined.
+        if not load_schema:
+            return [r for r in fastavro.reader(fin)]
+        else:
+            return _read_schemaless(fin, load_schema)
+
+    def _read_schemaless(fin, load_schema):
+        schemas = load_all_schemas()
+        if isinstance(load_schema, str):
+            # a specific schema was requested so drop everything else
+            schemas = {load_schema: schemas.get(load_schema)}
+
+        excepts = []
+        for key, val in schemas.items():
             try:
-                # this function is mis-named because here we accept json encoding.
-                # consider re-encoding alert packets using original Avro format
-                # throughout broker to give users a consistent end-product.
-                # then this except block will be unnecessary.
-                alert_list = [json.loads(alert_avro.decode("UTF-8"))]  # list of dicts
-            except ValueError:
-                msg = (
-                    "alert_avro is a bytes object, but does not seem to be either "
-                    "json or Avro encoded. Cannot decode."
-                )
-                raise ValueError(msg)
-    else:
-        msg = (
-            "Unable to open alert_avro. "
-            "It must be either the path to a valid Avro file as a string, "
-            "or bytes encoding an Avro-formated alert."
-        )
-        raise TypeError(msg)
+                # wrap the dict in a list to match output of _avro_reader
+                return [fastavro.schemaless_reader(fin, val)]
+            except Exception as e:
+                excepts.append(e)
+                LOGGER.debug(f"tried: schemaless_reader(fin, {key}). caught error: {e}")
 
-    # we expect the list to contain exactly 1 entry
-    if len(alert_list) == 0:
-        raise ValueError('The alert Avro contains 0 valid entries.')
-    if len(alert_list) > 1:
-        raise ValueError('The alert Avro contains >1 entry.')
+        # if we get here, raise an error instead of returning None
+        raise excepts[0]
 
-    alert_dict = alert_list[0]
-    return alert_dict
+    excepts = []
+
+    # assume avroin is bytes
+    try:
+        with BytesIO(avroin) as fin:
+            list_of_dicts = _read(fin, load_schema)
+
+    except Exception as e:
+        excepts.append(e)
+        LOGGER.debug(f"tried: BytesIO(avroin). caught error: {e}")
+
+        # cloud fncs encodes the bytes as a base64 string
+        try:
+            with BytesIO(base64.b64decode(avroin)) as fin:
+                list_of_dicts = _read(fin, load_schema)
+
+        except Exception as e:
+            excepts.append(e)
+            LOGGER.debug(f"tried: BytesIO(base64.b64decode(avroin). caught error: {e}")
+
+            # maybe avroin is a local path
+            try:
+                with open(avroin, 'rb') as fin:
+                    list_of_dicts = _read(fin, load_schema)
+
+            except Exception as e:
+                # unknown format
+                excepts.append(e)
+                LOGGER.debug(f"tried: open(avroin, 'rb'). caught error: {e}")
+                raise excepts[0]
+
+    return list_of_dicts
+
+
+def _json_to_dicts(jsonin: str):
+    """Convert an json-serialized object to a dictionary.
+
+    Args:
+        jsonin:
+            A json-serialized string.
+
+    Returns:
+        List[dict]:
+            ``avroin`` as a list of dictionaries.
+    """
+    try:
+        # wrap single dict in list for consistency with _avro_to_dicts()
+        list_dict = [json.loads(jsonin).decode('UTF-8')]
+
+    except Exception as e:
+        # unknown format
+        LOGGER.debug(f"tried: json.loads(jsonin).decode('UTF-8'). caught error:{e}")
+        raise e
+
+    return list_dict
 
 
 def alert_dict_to_dataframe(alert_dict: dict, schema_map: dict) -> "pd.DataFrame":
@@ -164,3 +304,8 @@ def _drop_cutouts(alert_dict: dict, schema_map: dict) -> dict:
         alert_lite = {k: v for k, v in alert_dict.items() if k not in cutouts}
 
     return alert_lite
+
+
+def ztf_fid_names() -> dict:
+    """Return a dictionary mapping the ZTF `fid` (filter ID) to the common name."""
+    return {1: "g", 2: "r", 3: "i"}

@@ -10,6 +10,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## \[Unreleased\]<a name="unreleased"></a>
 
+## \[0.2.41\] - 2022-08-19
+
+### Fixed
+
+- Fix bug preventing data files from being included with the package.
+
+## \[0.2.40\] - 2022-08-19
+
+### Added
+
+- `avro_schemas` module to handle schemaless alerts. Includes schema data files.
+- `data_utils.open_alert()` which uses a brute-force strategy to try to open alerts of all different formats.
+
+### Changed
+
+- In `data_utils`, depreciate functions `load_alert()` and `decode_alert()` in favor of `open_alert()`
+
 ## \[0.2.39\] - 2022-06-23
 
 ### Fixed
