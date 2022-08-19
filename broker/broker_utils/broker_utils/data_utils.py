@@ -35,7 +35,9 @@ def load_alert(
     return_as: str = "dict",
     **kwargs
 ) -> Union[bytes, dict, "pd.DataFrame"]:
-    """Load alert from file at ``fin`` and return in format ``return_as``.
+    """***Depreciated. Use open_alert() instead.***
+
+    Load alert from file at ``fin`` and return in format ``return_as``.
 
     Args:
         fin:        Path to an alert avro file.
@@ -60,7 +62,9 @@ def decode_alert(
     drop_cutouts: bool = False,
     **kwargs
 ) -> Union[dict, "pd.DataFrame"]:
-    """Load an alert Avro and return in requested format."""
+    """***Depreciated. Use open_alert() instead.***
+
+    Load an alert Avro and return in requested format."""
     LOGGER.warn("Depreciated. Use open_alert() instead.")
     return open_alert(alert_avro, return_as=return_as, drop_cutouts=drop_cutouts, **kwargs)
 
