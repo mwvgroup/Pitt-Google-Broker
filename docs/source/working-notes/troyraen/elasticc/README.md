@@ -59,7 +59,7 @@ Test a Cloud Function:
 from broker_utils.gcp_utils import publish_pubsub
 
 topic = "troy-test"  # this triggers a cloud fnc called test-elasticc-type
-# you can try it yourself, or
+# you can use it, or
 # you can use your own cloud function's trigger topic
 publish_pubsub(topic, alert_bytes)
 ```
