@@ -24,14 +24,14 @@ LOGGER = gc_logging.Client().logger("stream-looper")
 class StreamLooper:
     """."""
 
-    def __init__(self, topic_name, subscription_name):
+    def __init__(self, topic_name, subscription_name, project_id):
         """Run a Consumer; publish messages to topic_name."""
         self.subclient = pubsub_v1.SubscriberClient()
         self.subscription_path = (
-            f"projects/{PITTGOOGLE_PROJECT_ID}/subscriptions/{subscription_name}"
+            f"projects/{project_id}/subscriptions/{subscription_name}"
         )
         self.pubclient = pubsub_v1.PublisherClient()
-        self.topic_path = f"projects/{PITTGOOGLE_PROJECT_ID}/topics/{topic_name}"
+        self.topic_path = f"projects/{project_id}/topics/{topic_name}"
 
         MAX_MESSAGES = 5
         self.queue = queue.Queue(maxsize=MAX_MESSAGES)
@@ -129,4 +129,4 @@ class StreamLooper:
 
 
 if __name__ == "__main__":  # noqa
-    StreamLooper(TOPIC_NAME, SUBSCRIPTION_NAME).run_looper()
+    StreamLooper(TOPIC_NAME, SUBSCRIPTION_NAME, PITTGOOGLE_PROJECT_ID).run_looper()
