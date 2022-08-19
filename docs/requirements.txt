@@ -1,21 +1,34 @@
+astropy
+fastavro
+# google-api-core
+google-cloud-bigquery
+google-cloud-logging
+google-cloud-storage>=1.38
+google-cloud-pubsub
+numpy
+pandas
+PyYAML>=5.3
+six>=1.15  # bigquery requires
+typing
+
 # pgb-utils
-apache_beam[gcp]
-aplpy
-astropy==3.2.1
-astropy-healpix==0.6
-beautifulsoup4==4.8
+# apache_beam[gcp]
+# aplpy
+# astropy==3.2.1
+# astropy-healpix==0.6
+# beautifulsoup4==4.8
 # google-auth
 # google-api-core
 # google-apitools
-google-cloud-bigquery
-google-cloud-logging
-google-cloud-pubsub
-google-cloud-storage
-matplotlib
-numpy
-pandas
-tabulate
-typing
+# google-cloud-bigquery
+# google-cloud-logging
+# google-cloud-pubsub
+# google-cloud-storage
+# matplotlib
+# numpy
+# pandas
+# tabulate
+# typing
 
 # Needed for building docs
 docutils<0.17  # render lists properly
