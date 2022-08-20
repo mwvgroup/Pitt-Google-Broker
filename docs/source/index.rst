@@ -39,6 +39,14 @@ The Pitt-Google Broker runs on the `Google Cloud Platform <https://cloud.google.
    broker/alerts-for-testing
    broker/primers-for-developers
 
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+   :caption: Working Notes
+
+   working-notes/early-dev/README
+   working-notes/troyraen/index
+
 For the current broker-utils API reference, see the `update_broker_utils branch <https://pitt-broker.readthedocs.io/en/u-tjr-update_broker_utils/api/broker-utils/avro-schemas.html>`__.
 
 ..
