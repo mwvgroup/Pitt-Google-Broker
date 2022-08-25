@@ -79,11 +79,12 @@ def open_alert(
 
     Background: The broker deals with alert data that can be packaged in many different ways.
     For example:
-    - Files in Avro format
-    - Pub/Sub messages -- the message payload is a bytes object with either Avro or json serialization
-    - Cloud Functions further encodes incoming Pub/Sub messages as base64 strings
-    - Any Avro-serialized object may or may not have its schema attached as a header
-      (but deserialization always requires it)
+
+    -   Files in Avro format
+    -   Pub/Sub messages -- the message payload is a bytes object with either Avro or json serialization
+    -   Cloud Functions further encodes incoming Pub/Sub messages as base64 strings
+    -   Any Avro-serialized object may or may not have its schema attached as a header
+        (but we must have the schema in order to deserialize it)
 
     This function adopts a brute-force strategy.
     It does *not* try to inspect ``alert`` and determine its format.
@@ -116,7 +117,7 @@ def open_alert(
 
     # load dict. we need this to load a dataframe.
     try:
-        alert_dicts = _avro_to_dicts(alert, **kwargs)
+        alert_dicts = _avro_to_dicts(alert, kwargs.get("load_schema"))
 
     except Exception:
         # we only expect avro or json, so let an exception raise
@@ -133,13 +134,13 @@ def open_alert(
 
     if return_as == "dict":
         if drop_cutouts:
-            return _drop_cutouts(alert_dict, **kwargs)
+            return _drop_cutouts(alert_dict, kwargs.get("schema_map"))
         else:
             return alert_dict
 
     # load dataframe
     elif return_as == "df":
-        return alert_dict_to_dataframe(alert_dict, **kwargs)
+        return alert_dict_to_dataframe(alert_dict, kwargs.get("schema_map"))
 
     else:
         raise ValueError("Unknown value recieved for `return_as`.")
