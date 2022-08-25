@@ -4,7 +4,7 @@
 survey and broker data.
 """
 
-import base64
+from base64 import b64decode
 from io import BytesIO
 import os
 import logging
@@ -223,9 +223,9 @@ def _avro_to_dicts(avroin: Union[str, Path, bytes], load_schema: Union[bool, str
         excepts.append(e)
         LOGGER.debug(f"tried: BytesIO(avroin). caught error: {e}")
 
-        # cloud fncs encodes the bytes as a base64 string
         try:
-            with BytesIO(base64.b64decode(avroin)) as fin:
+            # cloud fncs adds a base64 encoding. undo it
+            with BytesIO(b64decode(avroin)) as fin:
                 list_of_dicts = _read(fin, load_schema)
 
         except Exception as e:
@@ -257,14 +257,25 @@ def _json_to_dicts(jsonin: str):
         List[dict]:
             ``avroin`` as a list of dictionaries.
     """
+    excepts = []
     try:
         # wrap single dict in list for consistency with _avro_to_dicts()
-        list_dict = [json.loads(jsonin).decode('UTF-8')]
+        list_dict = [json.loads(jsonin)]
 
     except Exception as e:
-        # unknown format
-        LOGGER.debug(f"tried: json.loads(jsonin).decode('UTF-8'). caught error:{e}")
-        raise e
+        LOGGER.debug(f"tried: json.loads(jsonin). caught error:{e}")
+        excepts.append(e)
+
+        try:
+            # cloud fncs adds a base64 encoding. undo it
+            list_dict = [json.loads(b64decode(jsonin))]
+
+        except Exception as e:
+            LOGGER.debug(f"tried: json.loads(base64.b64decode(jsonin)). caught error:{e}")
+            excepts.append(e)
+
+            # unknown format
+            raise e
 
     return list_dict
 
