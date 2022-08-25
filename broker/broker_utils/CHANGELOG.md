@@ -10,6 +10,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## \[Unreleased\]<a name="unreleased"></a>
 
+## \[0.2.42\] - 2022-08-24
+
+### Fixed
+
+- Fix bug introduced by allowing `data_utils.open_alert()` to blindly send `**kwargs` to the functions it calls. `data_utils.open_alert()` now sends only the arguments that are appropriate for the function it's calling.
+
 ## \[0.2.41\] - 2022-08-19
 
 ### Fixed
