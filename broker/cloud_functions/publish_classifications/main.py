@@ -16,6 +16,7 @@ import json
 
 from broker_utils import gcp_utils
 from broker_utils.schema_maps import load_schema_map, get_value
+from broker_utils.data_utils import open_alert
 
 
 TESTID = os.getenv("TESTID")
@@ -57,7 +58,8 @@ def run(msg: dict, context) -> None:
             This argument is not currently used in this function, but the argument is
             required by Cloud Functions, which will call it.
     """
-    alert_dict = json.loads(base64.b64decode(msg["data"]).decode("utf-8"))
+    #alert_dict = json.loads(base64.b64decode(msg["data"]).decode("utf-8"))
+    alert_dict = open_alert(msg["data"])
     attrs = msg["attributes"]
 
     # create the message for elasticc and publish the stream
@@ -83,7 +85,7 @@ def _create_elasticc_msg(alert_dict, attrs):
 
     # here are a few things you'll need
     elasticcPublishTimestamp = int(attrs["kafka.timestamp"])
-    brokerIngestTimestamp = int(attrs["ingest.timestamp"])  # Troy: attach this in first module
+    brokerIngestTimestamp = int(attrs["brokerIngestTimestamp"])  # Troy: attach this in first module
     brokerVersion = "v0.6"
 
     classifications = [

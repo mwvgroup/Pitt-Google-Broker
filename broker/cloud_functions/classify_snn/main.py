@@ -15,6 +15,7 @@ from supernnova.validation.validate_onthefly import classify_lcs
 from broker_utils import data_utils, gcp_utils, math
 from broker_utils.types import AlertIds
 from broker_utils.schema_maps import load_schema_map
+from broker_utils.data_utils import open_alert
 
 
 PROJECT_ID = os.getenv("GCP_PROJECT")
@@ -65,17 +66,16 @@ def run(msg: dict, context) -> None:
             This argument is not currently used in this function, but the argument is
             required by Cloud Functions, which will call it.
     """
-    #alert_dict = json.loads(base64.b64decode(msg["data"]).decode("utf-8"))
-    alert_dict = data_utils.decode_alert(
-        base64.b64decode(msg["data"]), drop_cutouts=True, schema_map=schema_map
-    )
+    
+    alert_dict = open_alert(msg["data"], load_schema="elasticc.v0_9.alert.avsc")
 
-    alert_ids.extract_ids(alert_dict=alert_dict)
-
+    a_ids = alert_ids.extract_ids(alert_dict=alert_dict)
+    
     attrs = {
-        "ingest.timestamp": context.timestamp,
-        id_keys.objectId: str(alert_ids.objectId),
-        id_keys.sourceId: str(alert_ids.sourceId),
+        **msg["attributes"],
+        "brokerIngestTimestamp": context.timestamp,
+        id_keys.objectId: str(a_ids.objectId),
+        id_keys.sourceId: str(a_ids.sourceId),
     }
 
     # classify
