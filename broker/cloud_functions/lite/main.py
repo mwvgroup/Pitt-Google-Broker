@@ -138,7 +138,7 @@ def semantic_compression(alert_dict, schema_map) -> dict:
 
     alert_lite = {
         # This extracts alert ids. This is a named tuple it contains all of the ids
-        'alertIds' : types.AlertIds(schema_map, alert_dict=alert_dict).ids, 
+        'alertIds' : types.AlertIds(schema_map, alert_dict=alert_dict).ids._asdict(), 
         'source' : source_dict,
         'prvSources' : tuple(prev_sources), # name of prvSources style may be changed
         'xmatch' : xmatch,
@@ -174,15 +174,15 @@ def run(msg: dict, context):
     # logger.log_text(f"{type(msg['data'])}', severity='DEBUG")
     # logger.log_text(f"{msg['data']}', severity='DEBUG")
 
-    alert_dict = data_utils.decode_alert(
-        base64.b64decode(msg["data"]), drop_cutouts=True, schema_map=schema_map
+    alert_dict = data_utils.open_alert(
+        msg["data"], drop_cutouts=True, schema_map=schema_map
     ) # this decodes the alert
 
     alert_lite = semantic_compression(alert_dict, schema_map)
 
     attrs = {
-        "objectId": str(alert_lite['alertIds'].objectId),
-        "sourceId": str(alert_lite['alertIds'].sourceId),
+        "objectId": str(alert_lite['alertIds']["objectId"]),
+        "sourceId": str(alert_lite['alertIds']["sourceId"]),
     } # this gets the custom attr for filtering
 
     # # run the alert through the filter.

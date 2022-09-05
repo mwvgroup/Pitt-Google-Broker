@@ -2,7 +2,7 @@ colorama
 google-cloud-logging
 h5py
 natsort
-pgb-broker-utils
+pgb-broker-utils>=0.2.43
 scikit-learn
 seaborn
 supernnova

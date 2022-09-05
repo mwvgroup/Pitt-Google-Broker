@@ -4,7 +4,6 @@
 survey and broker data.
 """
 
-from typing import Tuple
 
 from astropy.time import Time
 import fastavro

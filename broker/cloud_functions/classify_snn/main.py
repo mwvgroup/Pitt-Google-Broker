@@ -3,6 +3,7 @@
 
 """Classify alerts using SuperNNova (M¨oller & de Boissi`ere 2019)."""
 
+from astropy.time import Time
 import base64
 from google.cloud import logging
 import json
@@ -11,8 +12,11 @@ import os
 import pandas as pd
 from pathlib import Path
 from supernnova.validation.validate_onthefly import classify_lcs
+from typing import Tuple
+
 
 from broker_utils import data_utils, gcp_utils
+from broker_utils.types import _AlertIds
 
 
 PROJECT_ID = os.getenv("GCP_PROJECT")
@@ -60,7 +64,8 @@ def run(msg: dict, context) -> None:
             This argument is not currently used in this function, but the argument is
             required by Cloud Functions, which will call it.
     """
-    alert_lite = data_utils.decode_alert(base64.b64decode(msg["data"])) # Use this in ach module to load alert_lite
+    alert_lite = data_utils.open_alert(msg["data"]) # Use this in ach module to load alert_lite
+
 
 
     # classify
@@ -74,16 +79,13 @@ def run(msg: dict, context) -> None:
 
     else:
         # announce to pubsub
-        attrs = {
-            "objectId": str(alert_lite['alertIds'].objectId),
-            "sourceId": str(alert_lite['alertIds'].sourceId),
-        }
+        attrs = msg["attributes"]
         gcp_utils.publish_pubsub(
-            ps_topic, {"alert": alert_lite, "SuperNNova": snn_dict}, attrs=attrs
+            ps_topic, {**alert_lite, "SuperNNova": snn_dict}, attrs=attrs
         )
 
         # store in bigquery
-        errors = gcp_utils.insert_rows_bigquery(bq_table, [snn_dict])
+        errors = gcp_utils.insert_rows_bigquery(bq_table, [{**snn_dict, "objectId":alert_lite["alertIds"]["objectId"], "candid":alert_lite["alertIds"]["sourceId"]}])
         if len(errors) > 0:
             logger.log_text(f"BigQuery insert error: {errors}", severity="DEBUG")
 
@@ -101,8 +103,6 @@ def _classify_with_snn(alert_dict: dict) -> dict:
     # use `.item()` to convert numpy -> python types for later json serialization
     pred_probs = pred_probs.flatten()
     snn_dict = {
-        alert_dict['alertIds'].objectId: snn_df.objectId,
-        alert_dict['alertIds'].sourceId: snn_df.sourceId,
         "prob_class0": pred_probs[0].item(),
         "prob_class1": pred_probs[1].item(),
         "predicted_class": np.argmax(pred_probs).item(),
@@ -117,19 +117,18 @@ def _format_for_snn(alert_dict: dict) -> pd.DataFrame:
 
 
     # cast alert to dataframe
-    alert_df = data_utils.alert_lite_to_dataframe(alert_dict) # again can we remove schema map from this funciton
+    alert_df = alert_lite_to_dataframe(alert_dict) # again can we remove schema map from this funciton
 
     # start a dataframe for input to SNN
-    snn_df = pd.DataFrame(data={"SNID": alert_df.objectId}, index=alert_df.index)
-    snn_df.objectId = alert_df.objectId
-    snn_df.sourceId = alert_df.sourceId
+    snn_df = pd.DataFrame(data={"SNID": alert_dict["alertIds"]["objectId"]}, index=alert_df.index)
+
 
     # create the columns expected by SNN
     snn_df["FLT"] = alert_df["fid"].map(data_utils.ztf_fid_names()) ## REMOVE SCHEMA
 
     if SURVEY == "ztf":
-        snn_df["MJD"] = data_utils.jd_to_mjd(alert_df["jd"].loc[0]) # ADDED .loc[0]
-        snn_df["FLUXCAL"], snn_df["FLUXCALERR"] = data_utils.mag_to_flux(
+        snn_df["MJD"] = jd_to_mjd(alert_df["jd"].loc[0]) # ADDED .loc[0]
+        snn_df["FLUXCAL"], snn_df["FLUXCALERR"] = mag_to_flux(
             alert_df["magpsf"],
             alert_df["magzpsci"], ## REMOVE SCHEMA
             alert_df["sigmapsf"], ## REMOVE SCHEMA
@@ -141,3 +140,33 @@ def _format_for_snn(alert_dict: dict) -> pd.DataFrame:
             snn_df[scol] = alert_df[acol]
 
     return snn_df
+
+
+
+def alert_lite_to_dataframe(alert_dict: dict) -> pd.DataFrame: 
+    """ Packages an alert into a dataframe.
+    Adapted from: https://github.com/ZwickyTransientFacility/ztf-avro-alert/blob/master/notebooks/Filtering_alerts.ipynb
+    """
+    
+    src_df = pd.DataFrame(alert_dict['source'], index=[0])
+    prvs_df = pd.DataFrame(alert_dict['prvSources'])
+    xmatch_df = pd.DataFrame(alert_dict['xmatch'], index=[0])
+    df = pd.concat([src_df, prvs_df, xmatch_df], ignore_index=True)
+    alertids = _AlertIds(alert_dict['alertIds'])
+
+
+    return df
+
+
+def mag_to_flux(mag: float, zeropoint: float, magerr: float) -> Tuple[float, float]:
+    """ Converts an AB magnitude and its error to fluxes.
+    """
+    flux = 10 ** ((zeropoint - mag) / 2.5)
+    fluxerr = flux * magerr * np.log(10 / 2.5)
+    return flux, fluxerr
+
+
+def jd_to_mjd(jd: float) -> float:
+    """ Converts Julian Date to modified Julian Date.
+    """
+    return Time(jd, format='jd').mjd

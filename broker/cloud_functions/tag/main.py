@@ -7,12 +7,13 @@ import base64
 import json
 import os
 import numpy as np
+import pandas as pd
 from google.cloud import logging
 from astropy import units as u
 
 # Add these to requirements.txt but check to make sure that the format of adding is correct
 from broker_utils import data_utils, gcp_utils
-
+from broker_utils.types import _AlertIds
 
 
 PROJECT_ID = os.getenv("GCP_PROJECT") # For local test set this to GOOGLE_CLOUD_PROJECT
@@ -72,6 +73,7 @@ def is_pure(alert_dict):
     Based on tests done at IPAC (F. Masci, priv. comm), the following filter
     delivers a relatively pure sample.
     """
+
     source = alert_dict['source']
 
     rb = (source['rb'] >= 0.65)  # RealBogus score
@@ -116,7 +118,7 @@ def _is_extragalactic_transient(alert_dict: dict) -> dict:
         is_extragalactic_transient = True
 
     elif SURVEY == "ztf": ## How to get find survey type without schema_map
-        dflc = data_utils.alert_lite_to_dataframe(alert_dict) # Is schema_map necessary for this function?
+        dflc = alert_lite_to_dataframe(alert_dict) # Is schema_map necessary for this function?
         # NEED TO GO TO data_utils.py and determine whether to take out schema map
         
         candidate = dflc.loc[0]
@@ -184,14 +186,9 @@ def run(msg: dict, context):
 
 
     
-    alert_lite = data_utils.decode_alert(base64.b64decode(msg["data"]))
-
-
+    alert_lite = data_utils.open_alert(msg["data"])
     
-    attrs = {
-        "objectId": str(alert_lite['alertIds'].objectId),
-        "sourceId": str(alert_lite['alertIds'].sourceId),
-    } # this gets the custom attr for filtering
+    attrs = msg["attributes"] # this gets the custom attr for filtering
 
 
     purity_reason_dict = is_pure(alert_lite)
@@ -206,10 +203,10 @@ def run(msg: dict, context):
     #
     gcp_utils.publish_pubsub(
             ps_topic,
-            alert_dict,
+            alert_lite,
             attrs= {**attrs, **{k: str(v) for k, v in purity_reason_dict.items()},
                     **{k: str(v) for k, v in extragalactic_dict.items()},
-                    'fid': str(alert_dict['source']["fid"]),}
+                    'fid': str(alert_lite['source']["fid"]),}
     )
 
 
@@ -265,12 +262,5 @@ def alert_lite_to_dataframe(alert_dict: dict) -> pd.DataFrame:
     xmatch_df = pd.DataFrame(alert_dict['xmatch'], index=[0])
     df = pd.concat([src_df, prvs_df, xmatch_df], ignore_index=True)
 
-    # attach some metadata. note this may not be preserved after all operations
-    # https://stackoverflow.com/questions/14688306/adding-meta-information-metadata-to-pandas-dataframe
-    # make sure this does not overwrite existing columns
-    if "objectId" not in df.keys():
-        df.objectId = alert_dict['alertIds'].objectId
-    if "sourceId" not in df.keys():
-        df.sourceId = alert_dict['alertIds'].sourceId
 
     return df
