@@ -3,10 +3,13 @@
 # Assumes a Debian 10 OS.
 
 #--- Get metadata attributes
+# for info on working with metadata, see here
+# https://cloud.google.com/compute/docs/storing-retrieving-metadata
 baseurl="http://metadata.google.internal/computeMetadata/v1"
 H="Metadata-Flavor: Google"
 consumerVM=$(curl "${baseurl}/instance/name" -H "${H}")
 zone=$(curl "${baseurl}/instance/zone" -H "${H}")
+PROJECT_ID=$(curl "${baseurl}/project/project-id" -H "${H}")
 
 # parse the survey name and testid from the VM name
 survey=$(echo "$consumerVM" | awk -F "-" '{print $1}')
@@ -30,6 +33,14 @@ apt-get install -y wget screen software-properties-common snapd
 # install yq (requires snap)
 snap install core
 snap install yq
+
+##### the following block of code is under development
+brokerdir=/home/broker
+mkdir -p ${brokerdir}
+
+# download fresh files
+gsutil -m cp -r "gs://${broker_bucket}" "${brokerdir}/."
+#####
 
 #--- Install Java and the dev kit
 # see https://www.digitalocean.com/community/tutorials/how-to-install-java-with-apt-on-debian-10
