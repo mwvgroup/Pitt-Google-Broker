@@ -31,40 +31,35 @@ if [ "$continue_with_setup" != "y" ]; then
 fi
 
 #--- GCP resources used directly in this script
-broker_bucket="${PROJECT_ID}-${survey}-broker_files"
 avro_bucket="${PROJECT_ID}-${survey}-alert_avros"
 avro_topic="projects/${PROJECT_ID}/topics/${survey}-alert_avros"
+broker_bucket="${PROJECT_ID}-${survey}-broker_files"
+bq_dataset="${PROJECT_ID}:${survey}_alerts"
+topic_alerts="${survey}-alerts"
 # use test resources, if requested
 # (there must be a better way to do this)
 if [ "$testid" != "False" ]; then
-    broker_bucket="${broker_bucket}-${testid}"
     avro_bucket="${avro_bucket}-${testid}"
     avro_topic="${avro_topic}-${testid}"
+    broker_bucket="${broker_bucket}-${testid}"
+    bq_dataset="${bq_dataset}_${testid}"
+    topic_alerts="${topic_alerts}-${topic_alerts}"
 fi
+alerts_table="alerts"
+source_table="DIASource"
 
 
-#--- Create (or delete) BigQuery, GCS, Pub/Sub resources
-echo
-echo "Configuring BigQuery, GCS, Pub/Sub resources..."
-if [ "$testid" != "False" ]; then
-    if [ "$teardown" = "True" ]; then
-        # delete testing resources
-        python3 setup_gcp.py --survey="$survey" --testid="$testid" --teardown --confirmed
-    else
-        # setup testing resources
-        python3 setup_gcp.py --survey="$survey" --testid="$testid" --confirmed
-    fi
-else
-    # setup production resources
-    python3 setup_gcp.py --survey="$survey" --production --confirmed
-fi
-
-
-#--- Upload broker files to GCS
+# broker bucket
 if [ "$teardown" != "True" ]; then
+    echo "Creating broker_bucket and uploading files..."
+    gsutil mb -b on "gs://${broker_bucket}"
     ./upload_broker_bucket.sh "$broker_bucket"
+else
+    # ensure that we do not teardown production resources
+    if [ "$testid" != "False" ]; then
+        gsutil rm -r "gs://${broker_bucket}"
+    fi
 fi
-
 
 #--- Create VM instances
 echo
@@ -72,15 +67,27 @@ echo "Configuring VMs..."
 ./create_vms.sh "$broker_bucket" "$testid" "$teardown" "$survey"
 
 
-# #--- Create the cron jobs that schedule night-conductor
-# # echo
-# # echo "Setting up Cloud Scheduler cron jobs"
-# # ./create_cron_jobs.sh "$testid" "$teardown" "$survey"
+#--- Create (or delete) BigQuery, GCS, Pub/Sub resources
+# echo
+# echo "Configuring BigQuery, GCS, Pub/Sub resources..."
+
+echo "THE REST ARE NOT IMPLEMENTED"
+# need to create:
+#   - broker_bucket
+#   - avro_bucket
+#   - bigquery dataset with alerts and source tables
+#   - alerts pubsub topic
+#   - avro topic and bigquery topic
 
 
 if [ "$teardown" != "True" ]; then
-
-#--- Setup the Pub/Sub notifications on ZTF Avro storage bucket
+    echo "Configuring BigQuery, GCS, Pub/Sub resources..."
+    bq mk --dataset "${bq_dataset}"
+    bq mk --table "${bq_dataset}.${alerts_table}" "templates/bq_${survey}_${alerts_table}_schema.json"
+    bq mk --table "${bq_dataset}.${source_table}" "templates/bq_${survey}_${source_table}_schema.json"
+    gcloud pubsub topics create "${topic_alerts}"
+    gcloud pubsub subscriptions create "${topic_alerts}-reservoir" --topic "${topic_alerts}"
+    #--- Setup the Pub/Sub notifications on ZTF Avro storage bucket
     echo
     echo "Configuring Pub/Sub notifications on GCS bucket..."
     trigger_event=OBJECT_FINALIZE
@@ -90,6 +97,18 @@ if [ "$teardown" != "True" ]; then
                 -e "$trigger_event" \
                 -f "$format" \
                 "gs://${avro_bucket}"
+else
+    # ensure that we do not teardown production resources
+    if [ "$testid" != "False" ]; then
+        bq rm --dataset true "${bq_dataset}"
+        gcloud pubsub topics delete "${topic_alerts}"
+        gcloud pubsub subscriptions delete "${topic_alerts}-reservoir"
+    fi
+fi
+
+
+
+if [ "$teardown" != "True" ]; then
 
 #--- Create a firewall rule to open the port used by Kafka/ZTF
 # on any instance with the flag --tags=ztfport
