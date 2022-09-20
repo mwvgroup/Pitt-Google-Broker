@@ -83,8 +83,7 @@ if [ "$teardown" != "True" ]; then
 #--- Setup the Pub/Sub notifications on ZTF Avro storage bucket
     echo
     echo "Configuring Pub/Sub notifications on GCS bucket..."
-    # metadata attached after file upload, so triggering on OBJECT_FINALIZE is too soon
-    trigger_event=OBJECT_METADATA_UPDATE
+    trigger_event=OBJECT_FINALIZE
     format=json  # json or none; if json, file metadata sent in message body
     gsutil notification create \
                 -t "$avro_topic" \

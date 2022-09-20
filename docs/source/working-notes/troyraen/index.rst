@@ -6,13 +6,17 @@ However, here are some that might be:
 
 .. toctree::
    :maxdepth: 1
-   :caption: Working Notes of Interest
+   :caption: Notable Notes
 
    billing/README
+   gcloud-examples
+   performance-figures/README
    service-account
    stream-looper/README
 
 ---------
+
+And here's all of them:
 
 .. toctree::
    :maxdepth: 1

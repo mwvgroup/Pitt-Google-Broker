@@ -17,6 +17,7 @@ from google.cloud import logging
 from google.cloud import storage
 
 from broker_utils.schema_maps import load_schema_map, get_value, get_key
+from broker_utils.types import AlertFilename, AlertIds
 from exceptions import SchemaParsingError
 
 
@@ -26,8 +27,6 @@ SURVEY = os.getenv('SURVEY')
 
 schema_map = load_schema_map(SURVEY, TESTID)
 sobjectId, ssourceId = get_key("objectId", schema_map), get_key("sourceId", schema_map)
-storage_client = storage.Client()
-
 # connect to the cloud logger
 logging_client = logging.Client()
 log_name = 'ps-to-gcs-cloudfnc'
@@ -37,8 +36,7 @@ logger = logging_client.logger(log_name)
 bucket_name = f'{PROJECT_ID}-{SURVEY}-alert_avros'  # store the Avro files
 if TESTID != "False":
     bucket_name = f'{bucket_name}-{TESTID}'
-# connect to the avro bucket
-bucket = storage_client.get_bucket(bucket_name)
+bucket = storage.Client().get_bucket(bucket_name)
 
 # By default, spool data in memory to avoid IO unless data is too big
 # LSST alerts are anticipated at 80 kB, so 150 kB should be plenty
@@ -109,35 +107,47 @@ def upload_bytes_to_bucket(msg, context) -> None:
 
         alert = extract_alert_dict(temp_file)
         temp_file.seek(0)
-        filename = create_filename(alert, attributes)
+        alert_ids = AlertIds(schema_map, alert_dict=alert[0])
+
+        filename = AlertFilename(
+            {
+                "objectId": alert_ids.objectId,
+                "sourceId": alert_ids.sourceId,
+                "topic": attributes.get("kafka.topic", "no_topic"),
+                "format": "avro",
+            }
+        ).name
+
         if SURVEY == 'ztf':
             fix_schema(temp_file, alert, data, filename)
         temp_file.seek(0)
 
         blob = bucket.blob(filename)
+        blob.metadata = create_file_metadata(alert, context, alert_ids)
         blob.upload_from_file(temp_file)
-        attach_file_metadata(blob, alert, context)  # must be after file upload
 
-    logger.log_text(f'Uploaded {filename} to {bucket.name}')
+    logger.log_text(f'Uploaded {filename} to {bucket_name}')
+
+    del_vars = [
+        data,
+        attributes,
+        temp_file,
+        alert,
+        filename,
+        blob,
+    ]
+    for var in del_vars:
+        del var
 
 
-def attach_file_metadata(blob, alert, context):
+def create_file_metadata(alert, context, alert_ids):
+    """Return key/value pairs to be attached to the file as metadata."""
     metadata = {'file_origin_message_id': context.event_id}
-    metadata[sobjectId] = get_value("objectId", alert[0], schema_map)
-    metadata[ssourceId] = get_value("sourceId", alert[0], schema_map)
-    metadata['ra'] = alert[0][schema_map['source']][schema_map['ra']]
-    metadata['dec'] = alert[0][schema_map['source']][schema_map['dec']]
-    blob.metadata = metadata
-    blob.patch()
-
-
-def create_filename(alert, attributes):
-    # alert is a single alert dict wrapped in a list
-    oid = get_value("objectId", alert[0], schema_map)
-    sid = get_value("sourceId", alert[0], schema_map)
-    topic = attributes.get("kafka.topic", "no_topic")
-    filename = f'{oid}.{sid}.{topic}.avro'
-    return filename
+    metadata[alert_ids.id_keys.objectId] = alert_ids.objectId
+    metadata[alert_ids.id_keys.sourceId] = alert_ids.sourceId
+    metadata['ra'] = alert[0][schema_map['source']]['ra']
+    metadata['dec'] = alert[0][schema_map['source']]['dec']
+    return metadata
 
 
 def extract_alert_dict(temp_file):
@@ -197,3 +207,13 @@ def guess_schema_version(alert_bytes: bytes) -> str:
         raise SchemaParsingError(err_msg)
 
     return version_match.group(2).decode()
+
+
+# mock data and run the module
+if __name__ == "__main__":
+    from broker_utils.testing import Mock
+    mock = Mock(schema_map=schema_map, drop_cutouts=False, serialize="avro")
+    args = mock.cfinput
+    run(args.msg, args.context)
+
+    print(mock.my_test_alert.ids)
