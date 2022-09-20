@@ -112,7 +112,7 @@ production instance ztf-consumer).
         --machine-type=${machinetype} \
         --scopes=cloud-platform \
         --metadata=google-logging-enabled=true \
-        --tags=ztfport # firewall rule, opens port used by Kafka/ZTF
+        --tags=kafkaport # firewall rule, opens port used by Kafka/ZTF
 
     # log in
     gcloud compute ssh ${instancename} --zone=${zone}

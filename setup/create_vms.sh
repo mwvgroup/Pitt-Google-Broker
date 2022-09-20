@@ -36,5 +36,5 @@ else
         --machine-type="$machinetype" \
         --scopes=cloud-platform \
         --metadata=google-logging-enabled=true,startup-script-url="$installscript" \
-        --tags=ztfport # for the firewall rule to open the port
+        --tags=kafkaport # firewall rule that opens the port
 fi

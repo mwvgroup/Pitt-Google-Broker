@@ -107,21 +107,6 @@ else
 fi
 
 
-
-if [ "$teardown" != "True" ]; then
-
-#--- Create a firewall rule to open the port used by Kafka/ZTF
-# on any instance with the flag --tags=ztfport
-    echo
-    echo "Configuring ZTF/Kafka firewall rule..."
-    gcloud compute firewall-rules create 'ztfport' \
-        --allow=tcp:9094 \
-        --description="Allow incoming traffic on TCP port 9094" \
-        --direction=INGRESS \
-        --enable-logging
-
-fi
-
 #--- Deploy Cloud Functions
 echo
 echo "Configuring Cloud Functions..."
