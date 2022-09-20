@@ -1,5 +1,0 @@
-title: "pubsub topics attachSubscription"
-description: "A role that only allows the user to attach a subscription to a Pub/Sub topic"
-stage: "ALPHA"
-includedPermissions:
-- pubsub.topics.attachSubscription
