@@ -72,10 +72,10 @@ echo "Configuring VMs..."
 ./create_vms.sh "$broker_bucket" "$testid" "$teardown" "$survey"
 
 
-#--- Create the cron jobs that schedule night-conductor
-echo
-echo "Setting up Cloud Scheduler cron jobs"
-./create_cron_jobs.sh "$testid" "$teardown" "$survey"
+# #--- Create the cron jobs that schedule night-conductor
+# # echo
+# # echo "Setting up Cloud Scheduler cron jobs"
+# # ./create_cron_jobs.sh "$testid" "$teardown" "$survey"
 
 
 if [ "$teardown" != "True" ]; then

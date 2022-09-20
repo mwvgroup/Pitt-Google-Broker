@@ -16,7 +16,7 @@ import fastavro
 from google.cloud import logging
 from google.cloud import storage
 
-from broker_utils.schema_maps import load_schema_map
+from broker_utils.schema_maps import load_schema_map, get_value, get_key
 from broker_utils.types import AlertFilename, AlertIds
 from exceptions import SchemaParsingError
 
@@ -26,7 +26,7 @@ TESTID = os.getenv('TESTID')
 SURVEY = os.getenv('SURVEY')
 
 schema_map = load_schema_map(SURVEY, TESTID)
-
+sobjectId, ssourceId = get_key("objectId", schema_map), get_key("sourceId", schema_map)
 # connect to the cloud logger
 logging_client = logging.Client()
 log_name = 'ps-to-gcs-cloudfnc'

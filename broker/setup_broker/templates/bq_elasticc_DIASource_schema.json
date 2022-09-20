@@ -1,0 +1,67 @@
+[
+  {
+    "mode": "REQUIRED",
+    "name": "alertId",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "diaSourceId",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "ccdVisitId",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "diaObjectId",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "parentDiaSourceId",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "midPointTai",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "filterName",
+    "type": "STRING"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "ra",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "decl",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "psFlux",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "psFluxErr",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "snr",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "nobs",
+    "type": "FLOAT"
+  }
+]

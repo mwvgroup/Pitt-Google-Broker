@@ -87,8 +87,8 @@ import sys
 from pathlib import Path
 from warnings import warn
 
-from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, pubsub_v1, storage
+from google.api_core.exceptions import NotFound
 
 PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
 
@@ -510,7 +510,7 @@ def auto_setup(survey='ztf', testid='test', teardown=False, confirmed=False) -> 
     setup_bigquery(survey=survey, testid=testid, teardown=teardown)
     setup_buckets(survey=survey, testid=testid, teardown=teardown)
     setup_pubsub(survey=survey, testid=testid, teardown=teardown)
-    setup_dashboard(survey=survey, testid=testid, teardown=teardown)
+    # setup_dashboard(survey=survey, testid=testid, teardown=teardown)
 
 
 if __name__ == "__main__":

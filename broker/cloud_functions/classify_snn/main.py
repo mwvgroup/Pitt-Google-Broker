@@ -12,7 +12,10 @@ import pandas as pd
 from pathlib import Path
 from supernnova.validation.validate_onthefly import classify_lcs
 
-from broker_utils import data_utils, gcp_utils, schema_maps
+from broker_utils import data_utils, gcp_utils, math
+from broker_utils.types import AlertIds
+from broker_utils.schema_maps import load_schema_map
+from broker_utils.data_utils import open_alert
 
 
 PROJECT_ID = os.getenv("GCP_PROJECT")
@@ -32,7 +35,9 @@ if TESTID != "False":  # attach the testid to the names
     ps_topic = f"{ps_topic}-{TESTID}"
 bq_table = f"{bq_dataset}.SuperNNova"
 
-schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
+schema_map = load_schema_map(SURVEY, TESTID)
+alert_ids = AlertIds(schema_map)
+id_keys = alert_ids.id_keys
 
 model_dir_name = "ZTF_DMAM_V19_NoC_SNIa_vs_CC_forFink"
 model_file_name = "vanilla_S_0_CLF_2_R_none_photometry_DF_1.0_N_global_lstm_32x2_0.05_128_True_mean.pt"
@@ -61,7 +66,17 @@ def run(msg: dict, context) -> None:
             This argument is not currently used in this function, but the argument is
             required by Cloud Functions, which will call it.
     """
-    alert_dict = json.loads(base64.b64decode(msg["data"]).decode("utf-8"))
+    
+    alert_dict = open_alert(msg["data"], load_schema="elasticc.v0_9.alert.avsc")
+
+    a_ids = alert_ids.extract_ids(alert_dict=alert_dict)
+    
+    attrs = {
+        **msg["attributes"],
+        "brokerIngestTimestamp": context.timestamp,
+        id_keys.objectId: str(a_ids.objectId),
+        id_keys.sourceId: str(a_ids.sourceId),
+    }
 
     # classify
     try:
@@ -74,13 +89,8 @@ def run(msg: dict, context) -> None:
 
     else:
         # announce to pubsub
-        attrs = {
-            schema_map["objectId"]: str(alert_dict[schema_map["objectId"]]),
-            schema_map["sourceId"]: str(alert_dict[schema_map["sourceId"]]),
-        }
         gcp_utils.publish_pubsub(
-            ps_topic, {"alert": alert_dict, "SuperNNova": snn_dict}, attrs=attrs
-        )
+            ps_topic, dict(alert=alert_dict, SuperNNova=snn_dict), attrs=attrs)
 
         # store in bigquery
         errors = gcp_utils.insert_rows_bigquery(bq_table, [snn_dict])
@@ -101,8 +111,8 @@ def _classify_with_snn(alert_dict: dict) -> dict:
     # use `.item()` to convert numpy -> python types for later json serialization
     pred_probs = pred_probs.flatten()
     snn_dict = {
-        schema_map["objectId"]: snn_df.objectId,
-        schema_map["sourceId"]: snn_df.sourceId,
+        id_keys.objectId: snn_df.objectId,
+        id_keys.sourceId: snn_df.sourceId,
         "prob_class0": pred_probs[0].item(),
         "prob_class1": pred_probs[1].item(),
         "predicted_class": np.argmax(pred_probs).item(),
@@ -121,20 +131,25 @@ def _format_for_snn(alert_dict: dict) -> pd.DataFrame:
     snn_df.objectId = alert_df.objectId
     snn_df.sourceId = alert_df.sourceId
 
-    # create the columns expected by SNN
-    snn_df["FLT"] = alert_df["fid"].map(schema_map["FILTER_MAP"])
-
     if SURVEY == "ztf":
-        snn_df["MJD"] = data_utils.jd_to_mjd(alert_df["jd"])
-        snn_df["FLUXCAL"], snn_df["FLUXCALERR"] = data_utils.mag_to_flux(
+        snn_df["FLT"] = alert_df["fid"].map(schema_map["FILTER_MAP"])
+        snn_df["MJD"] = math.jd_to_mjd(alert_df["jd"])
+        snn_df["FLUXCAL"], snn_df["FLUXCALERR"] = math.mag_to_flux(
             alert_df[schema_map["mag"]],
             alert_df[schema_map["magzp"]],
             alert_df[schema_map["magerr"]],
         )
 
     elif SURVEY == "decat":
+        snn_df["FLT"] = alert_df["fid"].map(schema_map["FILTER_MAP"])
         col_map = {"mjd": "MJD", "flux": "FLUXCAL", "fluxerr": "FLUXCALERR"}
         for acol, scol in col_map.items():
             snn_df[scol] = alert_df[acol]
+
+    elif SURVEY == "elasticc":
+        snn_df["FLT"] = alert_df["filterName"]
+        snn_df["FLUXCAL"] = alert_df["psFlux"]
+        snn_df["FLUXCALERR"] = alert_df["psFluxErr"]
+        snn_df["MJD"] = alert_df["midPointTai"]
 
     return snn_df

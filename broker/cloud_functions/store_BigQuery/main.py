@@ -9,7 +9,9 @@ from typing import Dict, Optional
 
 from google.cloud import functions_v1, logging
 
-from broker_utils import data_utils, gcp_utils, schema_maps
+from broker_utils import data_utils, gcp_utils
+from broker_utils.schema_maps import load_schema_map, get_key, get_value
+
 
 PROJECT_ID = os.getenv("GCP_PROJECT")
 TESTID = os.getenv("TESTID")
@@ -27,7 +29,9 @@ if TESTID != "False":
     bq_dataset = f"{bq_dataset}_{TESTID}"
     ps_topic = f"{ps_topic}-{TESTID}"
 
-schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
+schema_map = load_schema_map(SURVEY, TESTID)
+#id_keys = data_utils.get_id_keys(schema_map)
+sobjectId, ssourceId = get_key("objectId", schema_map), get_key("sourceId", schema_map)
 
 
 def run(msg: dict, context: functions_v1.context.Context) -> None:
@@ -79,6 +83,8 @@ def insert_rows_DIASource(alert_dict: dict):
         source_dict = _extract_ztf_source(alert_dict)
     elif SURVEY == "decat":
         source_dict = _extract_decat_source(alert_dict)
+    elif SURVEY == "elasticc":
+        source_dict = _extract_elasticc_source(alert_dict)
 
     # send to bigquery
     errors = gcp_utils.insert_rows_bigquery(table_id, [source_dict])
@@ -117,6 +123,14 @@ def _extract_ztf_source(alert_dict: dict):
     source_dict = {**metadict, **cand, "prv_candidates_candids": prv_candids}
     return source_dict
 
+def _extract_elasticc_source(alert_dict: dict):
+    #get info to create source_dict
+    alertId = alert_dict["alertId"]
+    diaSourceId = alert_dict["diaSource"]
+
+    #package it up and return
+    source_dict = {"alertId": alertId, **diaSourceId}
+    return source_dict
 
 def _extract_decat_source(alert_dict: dict):
     # get source
@@ -147,8 +161,11 @@ def publish_pubsub(alert_dict: dict, table_dicts: Dict[str, Optional[dict]]):
     """Announce the table storage operation to Pub/Sub."""
     # collect attributes
     attrs = {
-        schema_map["objectId"]: str(alert_dict[schema_map["objectId"]]),
-        schema_map["sourceId"]: str(alert_dict[schema_map["sourceId"]]),
+        #id_keys.objectId: str(get_value("objectId", alert_dict, schema_map)),
+        #id_keys.sourceId: str(get_value("sourceId", alert_dict, schema_map)),
+        sobjectId: str(get_value("objectId", alert_dict, schema_map)),
+        ssourceId: str(get_value("sourceId", alert_dict, schema_map)),
+
     }
     for d in table_dicts:
         attrs.update(d)

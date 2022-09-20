@@ -9,7 +9,8 @@ from google.cloud import logging
 import numpy as np
 import os
 
-from broker_utils import data_utils, gcp_utils, schema_maps
+from broker_utils import data_utils, gcp_utils
+from broker_utils.schema_maps import load_schema_map, get_key, get_value
 
 
 PROJECT_ID = os.getenv("GCP_PROJECT")
@@ -26,7 +27,8 @@ ps_topic = f"{SURVEY}-exgalac_trans_cf"
 if TESTID != "False":  # attach the testid to the names
     ps_topic = f"{ps_topic}-{TESTID}"
 
-schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
+schema_map = load_schema_map(SURVEY, TESTID)
+id_keys = data_utils.get_id_keys(schema_map)
 
 
 def run(msg: dict, context) -> None:
@@ -54,8 +56,9 @@ def run(msg: dict, context) -> None:
         base64.b64decode(msg["data"]), drop_cutouts=True, schema_map=schema_map
     )
     attrs = {
-        schema_map["objectId"]: str(alert_dict[schema_map["objectId"]]),
-        schema_map["sourceId"]: str(alert_dict[schema_map["sourceId"]]),
+        "ingest.timestamp": context.timestamp,
+        id_keys.objectId: str(get_value("objectId", alert_dict, schema_map)),
+        id_keys.sourceId: str(get_value("sourceId", alert_dict, schema_map)),
     }
 
     if _is_extragalactic_transient(alert_dict):
@@ -110,5 +113,9 @@ def _is_extragalactic_transient(alert_dict: dict) -> bool:
             and not_moving
             and no_ssobject
         )
+
+    elif schema_map["SURVEY"] == "elasticc":
+        # this needs to be updated for elasticc.
+        is_extragalactic_transient = True
 
     return is_extragalactic_transient

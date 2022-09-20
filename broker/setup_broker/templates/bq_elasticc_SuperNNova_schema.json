@@ -1,0 +1,32 @@
+[
+  {
+    "description": "object identifier or name",
+    "mode": "REQUIRED",
+    "name": "diaObjectId",
+    "type": "STRING"
+  },
+  {
+    "description": "Candidate ID from operations DB",
+    "mode": "REQUIRED",
+    "name": "diaSourceId",
+    "type": "INTEGER"
+  },
+  {
+    "description": "probability object is a type Ia supernova",
+    "mode": "NULLABLE",
+    "name": "prob_class0",
+    "type": "FLOAT"
+  },
+  {
+    "description": "probability object is non-Ia",
+    "mode": "NULLABLE",
+    "name": "prob_class1",
+    "type": "FLOAT"
+  },
+  {
+    "description": "predicted class; 0 = Ia, 1 = non-Ia",
+    "mode": "NULLABLE",
+    "name": "predicted_class",
+    "type": "INTEGER"
+  }
+]
