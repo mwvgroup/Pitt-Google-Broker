@@ -39,7 +39,7 @@ brokerdir=/home/broker
 mkdir -p ${brokerdir}
 
 # download fresh files
-gsutil -m cp -r "gs://${broker_bucket}" "${brokerdir}/."
+gsutil -m cp -r "gs://${broker_bucket}/*"  "${brokerdir}"
 #####
 
 #--- Install Java and the dev kit

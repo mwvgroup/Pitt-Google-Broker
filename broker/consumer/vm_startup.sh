@@ -31,6 +31,7 @@ if [ "$testid" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
     PS_TOPIC_DEFAULT="${PS_TOPIC_DEFAULT}-${testid}"
 fi
+
 # default Kafka topic
 kafka_topic_syntax=$(cat "${brokerdir}/schema_maps/${survey}.yaml" | yq ".TOPIC_SYNTAX")
 yyyymmdd=$(date -u '+%Y%m%d')
