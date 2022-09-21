@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-from google.cloud import bigquery
 import datetime
 from datetime import timedelta, timezone
+from google.cloud import bigquery
+import pandas as pd
 
+from custom_classes import loaded_data
+import transforms
 
 BILLING_PROJECT_ID = "light-cycle-328823"
 BILLING_TABLE = (
@@ -23,6 +26,30 @@ def _datetime_to_date(dtime):
 
 # def _date_to_datetime(date):
 #     return datetime.datetime(date)
+
+
+def load_countdf_litebilldf_from_file(f='billing_20211203.csv') -> loaded_data:
+    """Load pre-queried billing data that has been saved to file."""
+    # load billdf
+    billdf = pd.read_csv(f)
+    billdf['usage_date'] = pd.to_datetime(billdf.usage_date, format='%Y-%m-%d').dt.date
+
+    # create a lightened billdf containing only what we want to look at
+    lite_df_cols = ['project_id', 'service', 'sku', 'cost', 'usage_date']
+    litebilldf = billdf.loc[:, lite_df_cols]
+    # get indexes where the sku is a live pipeline sku
+    litebill_ispipelinesku = (litebilldf.apply(transforms.is_pipeline_sku, axis=1))
+
+    # load alert counts per day
+    f = "alert_counts_20211203.csv"
+    countdf1 = pd.read_csv(f)
+    f = "alert_counts_fill_missing_20211203.csv"
+    countdf2 = pd.read_csv(f, comment="#")
+    countdf = pd.concat([countdf1, countdf2])
+    countdf['publish_date'] = pd.to_datetime(countdf.publish_date, format='%Y-%m-%d').dt.date
+    countdf = countdf.set_index('publish_date').sort_index()
+
+    return loaded_data(countdf, litebilldf, litebill_ispipelinesku)
 
 
 # ALERT QUERIES
@@ -123,16 +150,17 @@ def billing(lookback=None, date="today"):
 
     select = """
         SELECT
-          service.description AS service,
-          resource.name AS resource,
-          sku.description AS sku,
-          project.id AS project_id,
-          cost,
-          usage.amount AS usage_amount,
-          usage.unit AS usage_unit,
-          DATE(usage_start_time) as usage_date,
-          usage_start_time,
-          usage_end_time
+            project.id AS project_id,
+            service.description AS service,
+            resource.name AS resource,
+            sku.description AS sku,
+            location.location AS location,
+            cost,
+            usage.amount AS usage_amount,
+            usage.unit AS usage_unit,
+            DATE(usage_start_time) as usage_date,
+            usage_start_time,
+            usage_end_time
     """
 
     frm = f"FROM `{BILLING_TABLE}`"
