@@ -1,213 +1,0 @@
-
-setup_broker.sh will run with the following configs: 
-
-GOOGLE_CLOUD_PROJECT = ardent-cycling-243415
-survey = ztf
-testid = False
-teardown = False
-
-Continue?  [y/(n)]: 
-
-Configuring BigQuery, GCS, Pub/Sub resources...
-Created [broker-instance-ztf-False].
-Skipping existing dataset: ztf_alerts
-Skipping existing table: ardent-cycling-243415.ztf_alerts.alerts.
-Skipping existing table: ardent-cycling-243415.ztf_alerts.DIASource.
-Skipping existing table: ardent-cycling-243415.ztf_alerts.salt2.
-Created bucket ardent-cycling-243415-ztf-broker_files
-Created bucket ardent-cycling-243415-ztf-dataflow
-Created bucket ardent-cycling-243415-ztf-testing_bucket
-Uploaded ../../tests/test_alerts/ztf_3.3_validschema_1154446891615015011.avro to ardent-cycling-243415-ztf-testing_bucket
-Skipped existing bucket: ardent-cycling-243415-ztf-alert_avros
-Skipped existing bucket: ardent-cycling-243415-ztf-sncosmo
-Created topic ztf-alert_avros
-Created subscription ztf-alert_avros-counter
-Created topic ztf-alerts
-Created subscription ztf-alerts-counter
-Created topic ztf-alerts_pure
-Created subscription ztf-alerts_pure-counter
-Created topic ztf-exgalac_trans
-Created subscription ztf-exgalac_trans-counter
-Created topic ztf-salt2
-Created subscription ztf-salt2-counter
-
-A monitoring dashboard has been created for you!
-View it at:
-https://console.cloud.google.com/monitoring/dashboards/builder/broker-instance-ztf-False
-
-
-Uploading broker files to GCS...
-Copying file://../beam/__init__.py [Content-Type=text/x-python]...
-/ [0/10 files][    0.0 B/ 37.6 KiB]   0% Done                                   Copying file://../beam/jobs.config [Content-Type=application/octet-stream]...
-Copying file://../beam/README.md [Content-Type=application/octet-stream]...
-/ [0/10 files][    0.0 B/ 37.6 KiB]   0% Done                                   / [0/10 files][    0.0 B/ 37.6 KiB]   0% Done                                   Copying file://../beam/bq_sink/bq_sink.py [Content-Type=text/x-python]...
-Copying file://../beam/bq_sink/setup.py [Content-Type=text/x-python]...
-/ [0/10 files][    0.0 B/ 37.6 KiB]   0% Done                                   / [0/10 files][    0.0 B/ 37.6 KiB]   0% Done                                   / [1/10 files][ 10.6 KiB/ 37.6 KiB]  28% Done                                   / [2/10 files][ 10.6 KiB/ 37.6 KiB]  28% Done                                   / [3/10 files][ 10.6 KiB/ 37.6 KiB]  28% Done                                   Copying file://../beam/value_added/value_added.py [Content-Type=text/x-python]...
-/ [3/10 files][ 10.6 KiB/ 37.6 KiB]  28% Done                                   Copying file://../beam/value_added/setup.py [Content-Type=text/x-python]...
-/ [3/10 files][ 10.6 KiB/ 37.6 KiB]  28% Done                                   Copying file://../beam/value_added/transforms/salt2.py [Content-Type=text/x-python]...
-/ [3/10 files][ 10.6 KiB/ 37.6 KiB]  28% Done                                   / [4/10 files][ 10.6 KiB/ 37.6 KiB]  28% Done                                   Copying file://../beam/value_added/transforms/__init__.py [Content-Type=text/x-python]...
-/ [4/10 files][ 10.6 KiB/ 37.6 KiB]  28% Done                                   / [5/10 files][ 20.0 KiB/ 37.6 KiB]  53% Done                                   Copying file://../beam/value_added/transforms/filters.py [Content-Type=text/x-python]...
-/ [5/10 files][ 33.7 KiB/ 37.6 KiB]  89% Done                                   -- [6/10 files][ 37.6 KiB/ 37.6 KiB]  99% Done                                   - [7/10 files][ 37.6 KiB/ 37.6 KiB]  99% Done                                   - [8/10 files][ 37.6 KiB/ 37.6 KiB]  99% Done                                   - [9/10 files][ 37.6 KiB/ 37.6 KiB]  99% Done                                   - [10/10 files][ 37.6 KiB/ 37.6 KiB] 100% Done                                  
-Operation completed over 10 objects/37.6 KiB.                                    
-Copying file://../broker_utils/schema_maps/decat.yaml [Content-Type=application/octet-stream]...
-/ [0/3 files][    0.0 B/  1.2 KiB]   0% Done                                    Copying file://../broker_utils/schema_maps/ztf.yaml [Content-Type=application/octet-stream]...
-/ [0/3 files][    0.0 B/  1.2 KiB]   0% Done                                    Copying file://../broker_utils/schema_maps/README.md [Content-Type=application/octet-stream]...
-/ [0/3 files][    0.0 B/  1.2 KiB]   0% Done                                    / [1/3 files][  1.2 KiB/  1.2 KiB]  99% Done                                    / [2/3 files][  1.2 KiB/  1.2 KiB]  99% Done                                    / [3/3 files][  1.2 KiB/  1.2 KiB] 100% Done                                    
-Operation completed over 3 objects/1.2 KiB.                                      
-Copying file://../consumer/vm_install.sh [Content-Type=application/x-sh]...
-/ [0/6 files][    0.0 B/  7.6 KiB]   0% Done                                    Copying file://../consumer/README.md [Content-Type=application/octet-stream]...
-/ [0/6 files][    0.0 B/  7.6 KiB]   0% Done                                    Copying file://../consumer/psconnect-worker.properties [Content-Type=application/octet-stream]...
-/ [0/6 files][    0.0 B/  7.6 KiB]   0% Done                                    Copying file://../consumer/vm_startup.sh [Content-Type=application/x-sh]...
-/ [0/6 files][    0.0 B/  7.6 KiB]   0% Done                                    Copying file://../consumer/ps-connector.properties [Content-Type=application/octet-stream]...
-/ [0/6 files][    0.0 B/  7.6 KiB]   0% Done                                    / [1/6 files][  7.1 KiB/  7.6 KiB]  93% Done                                    / [2/6 files][  7.1 KiB/  7.6 KiB]  93% Done                                    / [3/6 files][  7.1 KiB/  7.6 KiB]  93% Done                                    / [4/6 files][  7.1 KiB/  7.6 KiB]  93% Done                                    / [5/6 files][  7.1 KiB/  7.6 KiB]  93% Done                                    Copying file://../consumer/admin.properties [Content-Type=application/octet-stream]...
-/ [5/6 files][  7.1 KiB/  7.6 KiB]  93% Done                                    / [6/6 files][  7.6 KiB/  7.6 KiB] 100% Done                                    -
-Operation completed over 6 objects/7.6 KiB.                                      
-Copying file://../night_conductor/requirements.txt [Content-Type=text/plain]...
-/ [0/11 files][    0.0 B/ 13.0 KiB]   0% Done                                   Copying file://../night_conductor/vm_install.sh [Content-Type=application/x-sh]...
-/ [0/11 files][    0.0 B/ 13.0 KiB]   0% Done                                   Copying file://../night_conductor/README.md [Content-Type=application/octet-stream]...
-Copying file://../night_conductor/vm_startup.sh [Content-Type=application/x-sh]...
-/ [0/11 files][    0.0 B/ 13.0 KiB]   0% Done                                   / [0/11 files][    0.0 B/ 13.0 KiB]   0% Done                                   Copying file://../night_conductor/end_night/stop_consumer.sh [Content-Type=application/x-sh]...
-/ [0/11 files][    0.0 B/ 13.0 KiB]   0% Done                                   / [1/11 files][  5.2 KiB/ 13.0 KiB]  40% Done                                   / [2/11 files][  5.2 KiB/ 13.0 KiB]  40% Done                                   / [3/11 files][  5.2 KiB/ 13.0 KiB]  40% Done                                   / [4/11 files][  5.2 KiB/ 13.0 KiB]  40% Done                                   Copying file://../night_conductor/end_night/reset_ps_counters.sh [Content-Type=application/x-sh]...
-/ [4/11 files][  5.2 KiB/ 13.0 KiB]  40% Done                                   Copying file://../night_conductor/end_night/end_night.sh [Content-Type=application/x-sh]...
-/ [4/11 files][  5.2 KiB/ 13.0 KiB]  40% Done                                   Copying file://../night_conductor/end_night/drain_beam_jobs.sh [Content-Type=application/x-sh]...
-Copying file://../night_conductor/start_night/start_night.sh [Content-Type=application/x-sh]...
-/ [4/11 files][  5.2 KiB/ 13.0 KiB]  40% Done                                   / [4/11 files][  5.2 KiB/ 13.0 KiB]  40% Done                                   / [5/11 files][  6.8 KiB/ 13.0 KiB]  52% Done                                   Copying file://../night_conductor/start_night/start_consumer.sh [Content-Type=application/x-sh]...
-/ [5/11 files][  8.8 KiB/ 13.0 KiB]  68% Done                                   / [6/11 files][  9.7 KiB/ 13.0 KiB]  74% Done                                   -- [7/11 files][  9.7 KiB/ 13.0 KiB]  74% Done                                   - [8/11 files][  9.7 KiB/ 13.0 KiB]  74% Done                                   - [9/11 files][  9.7 KiB/ 13.0 KiB]  74% Done                                   - [10/11 files][  9.7 KiB/ 13.0 KiB]  74% Done                                  Copying file://../night_conductor/start_night/start_beam_jobs.sh [Content-Type=application/x-sh]...
-- [10/11 files][  9.7 KiB/ 13.0 KiB]  74% Done                                  - [11/11 files][ 13.0 KiB/ 13.0 KiB] 100% Done                                  
-Operation completed over 11 objects/13.0 KiB.                                    
-Copying file://../setup_broker/create_cron_jobs.sh [Content-Type=application/x-sh]...
-/ [0/15 files][    0.0 B/126.8 KiB]   0% Done                                   Copying file://../setup_broker/requirements.txt [Content-Type=text/plain]...
-/ [0/15 files][    0.0 B/126.8 KiB]   0% Done                                   Copying file://../setup_broker/README.md [Content-Type=application/octet-stream]...
-/ [0/15 files][    0.0 B/126.8 KiB]   0% Done                                   Copying file://../setup_broker/deploy_cloud_fncs.sh [Content-Type=application/x-sh]...
-/ [0/15 files][    0.0 B/126.8 KiB]   0% Done                                   Copying file://../setup_broker/create_vms.sh [Content-Type=application/x-sh]...
-/ [0/15 files][    0.0 B/126.8 KiB]   0% Done                                   / [1/15 files][  8.5 KiB/126.8 KiB]   6% Done                                   / [2/15 files][  8.5 KiB/126.8 KiB]   6% Done                                   / [3/15 files][  8.5 KiB/126.8 KiB]   6% Done                                   / [4/15 files][  8.5 KiB/126.8 KiB]   6% Done                                   / [5/15 files][  8.5 KiB/126.8 KiB]   6% Done                                   Copying file://../setup_broker/upload_broker_bucket.sh [Content-Type=application/x-sh]...
-/ [5/15 files][  8.5 KiB/126.8 KiB]   6% Done                                   Copying file://../setup_broker/setup_broker.sh [Content-Type=application/x-sh]...
-/ [5/15 files][  8.5 KiB/126.8 KiB]   6% Done                                   Copying file://../setup_broker/setup_gcp.py [Content-Type=text/x-python]...
-/ [5/15 files][  8.5 KiB/126.8 KiB]   6% Done                                   Copying file://../setup_broker/templates/bq_ztf_salt2_schema.json [Content-Type=application/json]...
-/ [5/15 files][  8.5 KiB/126.8 KiB]   6% Done                                   Copying file://../setup_broker/templates/bq_decat_DIASource_schema.json [Content-Type=application/json]...
-/ [5/15 files][  8.5 KiB/126.8 KiB]   6% Done                                   / [6/15 files][ 43.3 KiB/126.8 KiB]  34% Done                                   -- [7/15 files][ 43.3 KiB/126.8 KiB]  34% Done                                   Copying file://../setup_broker/templates/bq_ztf_alerts_schema.json [Content-Type=application/json]...
-- [7/15 files][ 43.3 KiB/126.8 KiB]  34% Done                                   - [8/15 files][ 43.3 KiB/126.8 KiB]  34% Done                                   - [9/15 files][ 43.3 KiB/126.8 KiB]  34% Done                                   Copying file://../setup_broker/templates/bq_decat_alerts_schema.json [Content-Type=application/json]...
-- [9/15 files][ 43.3 KiB/126.8 KiB]  34% Done                                   - [10/15 files][ 43.3 KiB/126.8 KiB]  34% Done                                  Copying file://../setup_broker/templates/dashboard.json [Content-Type=application/json]...
-- [10/15 files][ 43.3 KiB/126.8 KiB]  34% Done                                  Copying file://../setup_broker/templates/bq_ztf_DIASource_schema.json [Content-Type=application/json]...
-- [10/15 files][ 43.3 KiB/126.8 KiB]  34% Done                                  Copying file://../setup_broker/templates/bq_decat_salt2_schema.json [Content-Type=application/json]...
-- [10/15 files][ 43.3 KiB/126.8 KiB]  34% Done                                  - [11/15 files][126.8 KiB/126.8 KiB]  99% Done                                  - [12/15 files][126.8 KiB/126.8 KiB]  99% Done                                  - [13/15 files][126.8 KiB/126.8 KiB]  99% Done                                  - [14/15 files][126.8 KiB/126.8 KiB]  99% Done                                  - [15/15 files][126.8 KiB/126.8 KiB] 100% Done                                  
-Operation completed over 15 objects/126.8 KiB.                                   
-
-Setting up Cloud Scheduler cron jobs
-ERROR: (gcloud.scheduler.jobs.create.pubsub) ALREADY_EXISTS: Job projects/ardent-cycling-243415/locations/us-east1/jobs/ztf-cue_night_conductor_START already exists.
-ERROR: (gcloud.scheduler.jobs.create.pubsub) ALREADY_EXISTS: Job projects/ardent-cycling-243415/locations/us-east1/jobs/ztf-cue_night_conductor_END already exists.
-
-The 'cue night-conductor' cron jobs have been scheduled for:
-START: 0 4 * * *
-END: 55 13 * * *
-(timezone is UTC)
-To change this use
-
-gcloud scheduler jobs update pubsub ztf-cue_night_conductor_START --schedule '* * * * *'
-gcloud scheduler jobs update pubsub ztf-cue_night_conductor_END --schedule '* * * * *'
-
-where '* * * * *' is a schedule in unix-cron format.
-See https://cloud.google.com/scheduler/docs/configuring/cron-job-schedules
-
-Configuring Pub/Sub notifications on GCS bucket...
-Created notification config projects/_/buckets/ardent-cycling-243415-ztf-alert_avros/notificationConfigs/5
-
-Configuring ZTF/Kafka firewall rule...
-Creating firewall...
-failed.
-ERROR: (gcloud.compute.firewall-rules.create) Could not fetch resource:
- - The resource 'projects/ardent-cycling-243415/global/firewalls/ztfport' already exists
-
-
-Configuring Cloud Functions...
-Deploying function (may take a while - up to 2 minutes)...
-..
-For Cloud Build Logs, visit: https://console.cloud.google.com/cloud-build/builds;region=us-central1/21863a12-7436-41e7-a5c0-4c0bda6f98b9?project=591409139500
-.................................................................................................................................................failed.
-ERROR: (gcloud.functions.deploy) OperationError: code=3, message=Function failed on loading user code. This is likely due to a bug in the user code. Error message: 400 GET https://storage.googleapis.com/storage/v1/b/ardent-cycling-243415-ztf-broker_files-False/o/schema_maps%2Fztf.yaml?projection=noAcl&prettyPrint=false: Invalid bucket name: 'ardent-cycling-243415-ztf-broker_files-False'
-Detailed stack trace:
-Traceback (most recent call last):
-  File "/env/local/lib/python3.7/site-packages/google/cloud/functions/worker_v2.py", line 359, in check_or_load_user_function
-    _function_handler.load_user_function()
-  File "/env/local/lib/python3.7/site-packages/google/cloud/functions/worker_v2.py", line 236, in load_user_function
-    spec.loader.exec_module(main_module)
-  File "<frozen importlib._bootstrap_external>", line 728, in exec_module
-  File "<frozen importlib._bootstrap>", line 219, in _call_with_frames_removed
-  File "/user_code/main.py", line 26, in <module>
-    schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
-  File "/env/local/lib/python3.7/site-packages/broker_utils/schema_maps.py", line 34, in load_schema_map
-    blob = storage_client.bucket(broker_bucket_name).get_blob(schema_file_name)
-  File "/env/local/lib/python3.7/site-packages/google/cloud/storage/bucket.py", line 1214, in get_blob
-    retry=retry,
-  File "/env/local/lib/python3.7/site-packages/google/cloud/storage/_helpers.py", line 225, in reload
-    retry=retry,
-  File "/env/local/lib/python3.7/site-packages/google/cloud/storage/_http.py", line 78, in api_request
-    return call()
-  File "/env/local/lib/python3.7/site-packages/google/api_core/retry.py", line 291, in retry_wrapped_func
-    on_error=on_error,
-  File "/env/local/lib/python3.7/site-packages/google/api_core/retry.py", line 189, in retry_target
-    return target()
-  File "/env/local/lib/python3.7/site-packages/google/cloud/_http.py", line 484, in api_request
-    raise exceptions.from_http_response(response)
-google.api_core.exceptions.BadRequest: 400 GET https://storage.googleapis.com/storage/v1/b/ardent-cycling-243415-ztf-broker_files-False/o/schema_maps%2Fztf.yaml?projection=noAcl&prettyPrint=false: Invalid bucket name: 'ardent-cycling-243415-ztf-broker_files-False'
-. Please visit https://cloud.google.com/functions/docs/troubleshooting for in-depth troubleshooting documentation.
-Deploying function (may take a while - up to 2 minutes)...
-.
-For Cloud Build Logs, visit: https://console.cloud.google.com/cloud-build/builds;region=us-central1/720109f8-9499-49ae-975d-5de9aeb90275?project=591409139500
-................................................................................................................................................failed.
-ERROR: (gcloud.functions.deploy) OperationError: code=3, message=Function failed on loading user code. This is likely due to a bug in the user code. Error message: 400 GET https://storage.googleapis.com/storage/v1/b/ardent-cycling-243415-ztf-broker_files-False/o/schema_maps%2Fztf.yaml?projection=noAcl&prettyPrint=false: Invalid bucket name: 'ardent-cycling-243415-ztf-broker_files-False'
-Detailed stack trace:
-Traceback (most recent call last):
-  File "/env/local/lib/python3.7/site-packages/google/cloud/functions/worker_v2.py", line 359, in check_or_load_user_function
-    _function_handler.load_user_function()
-  File "/env/local/lib/python3.7/site-packages/google/cloud/functions/worker_v2.py", line 236, in load_user_function
-    spec.loader.exec_module(main_module)
-  File "<frozen importlib._bootstrap_external>", line 728, in exec_module
-  File "<frozen importlib._bootstrap>", line 219, in _call_with_frames_removed
-  File "/user_code/main.py", line 22, in <module>
-    schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
-  File "/env/local/lib/python3.7/site-packages/broker_utils/schema_maps.py", line 34, in load_schema_map
-    blob = storage_client.bucket(broker_bucket_name).get_blob(schema_file_name)
-  File "/env/local/lib/python3.7/site-packages/google/cloud/storage/bucket.py", line 1205, in get_blob
-    retry=retry,
-  File "/env/local/lib/python3.7/site-packages/google/cloud/storage/_helpers.py", line 233, in reload
-    _target_object=self,
-  File "/env/local/lib/python3.7/site-packages/google/cloud/storage/client.py", line 376, in _get_resource
-    _target_object=_target_object,
-  File "/env/local/lib/python3.7/site-packages/google/cloud/storage/_http.py", line 78, in api_request
-    return call()
-  File "/env/local/lib/python3.7/site-packages/google/api_core/retry.py", line 291, in retry_wrapped_func
-    on_error=on_error,
-  File "/env/local/lib/python3.7/site-packages/google/api_core/retry.py", line 189, in retry_target
-    return target()
-  File "/env/local/lib/python3.7/site-packages/google/cloud/_http.py", line 484, in api_request
-    raise exceptions.from_http_response(response)
-google.api_core.exceptions.BadRequest: 400 GET https://storage.googleapis.com/storage/v1/b/ardent-cycling-243415-ztf-broker_files-False/o/schema_maps%2Fztf.yaml?projection=noAcl&prettyPrint=false: Invalid bucket name: 'ardent-cycling-243415-ztf-broker_files-False'
-. Please visit https://cloud.google.com/functions/docs/troubleshooting for in-depth troubleshooting documentation.
-Deploying function (may take a while - up to 2 minutes)...
-.
-For Cloud Build Logs, visit: https://console.cloud.google.com/cloud-build/builds;region=us-central1/adc9d2c9-543d-494f-8576-c7bfaf9d9ffd?project=591409139500
-availableMemoryMb: 256
-buildId: f1c8f9f7-e20e-44e4-8ea5-3b1355f8e17c
-entryPoint: run
-environmentVariables:
-  SURVEY: ztf
-  TESTID: 'False'
-  ZONE: us-central1-a
-eventTrigger:
-  eventType: google.pubsub.topic.publish
-  failurePolicy: {}
-  resource: projects/ardent-cycling-243415/topics/ztf-cue_night_conductor
-  service: pubsub.googleapis.com
-ingressSettings: ALLOW_ALL
-labels:
-  deployment-tool: cli-gcloud
-name: projects/ardent-cycling-243415/locations/us-central1/functions/ztf-check_cue_response
-runtime: python37
-serviceAccountEmail: ardent-cycling-243415@appspot.gserviceaccount.com
-sourceUploadUrl: https://storage.googleapis.com/gcf-upload-us-central1-d1b4dbcd-0a7f-4431-9288-ee8e9736d91e/77f2eb9f-1fb2-4342-9749-9d631b7d7ae6.zip
-status: ACTIVE
-timeout: 540s
-updateTime: '2021-08-07T18:33:10.275Z'
-versionId: '3'
-............................................done.
