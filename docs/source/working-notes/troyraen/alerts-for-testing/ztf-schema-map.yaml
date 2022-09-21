@@ -1,0 +1,18 @@
+SURVEY: ztf
+SURVEY_SCHEMA: https://zwickytransientfacility.github.io/ztf-avro-alert/schema.html
+TOPIC_SYNTAX: ztf_yyyymmdd_programid1  # replace yyyymmdd with the date
+FILTER_MAP:
+  1: g
+  2: r
+  3: i
+objectId: objectId
+prvSources: prv_candidates
+source: candidate
+sourceId: candid
+cutoutDifference: cutoutDifference
+cutoutScience: cutoutScience
+cutoutTemplate: cutoutTemplate
+filter: fid
+mag: magpsf
+magerr: sigmapsf
+magzp: magzpsci

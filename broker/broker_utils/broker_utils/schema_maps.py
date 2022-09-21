@@ -10,7 +10,6 @@ import yaml
 from google.cloud import storage
 
 pgb_project_id = 'ardent-cycling-243415'
-storage_client = storage.Client()
 
 
 def load_schema_map(survey: str, testid: str, schema: Optional[str] = None) -> dict:
@@ -32,7 +31,7 @@ def load_schema_map(survey: str, testid: str, schema: Optional[str] = None) -> d
     # load the map from the yaml in cloud storage
     broker_bucket_name = _broker_bucket_name(survey, testid)
     schema_file_name = _schema_file_name(schema)
-    blob = storage_client.bucket(broker_bucket_name).get_blob(schema_file_name)
+    blob = storage.Client().bucket(broker_bucket_name).get_blob(schema_file_name)
     with blob.open("rt") as f:
         schema_map = yaml.safe_load(f)  # dict
 
