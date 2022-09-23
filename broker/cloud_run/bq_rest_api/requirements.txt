@@ -1,0 +1,7 @@
+Flask
+flask-marshmallow
+Flask-RESTful
+gunicorn
+pyarrow
+SQLAlchemy
+sqlalchemy-bigquery
