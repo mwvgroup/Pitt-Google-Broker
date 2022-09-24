@@ -6,7 +6,7 @@ testid="${1:-test}"
 # any other string will be appended to the names of all resources
 teardown="${2:-False}"
 # "True" tearsdown/deletes resources, else setup
-survey="${3:-ztf}"
+survey="${3:-elasticc}"
 # name of the survey this broker instance will ingest
 # 'ztf' or 'decat'
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT # get the environment variable
