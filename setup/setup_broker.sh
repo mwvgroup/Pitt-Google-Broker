@@ -68,16 +68,25 @@ echo
 echo "Configuring VMs..."
 ./create_vms.sh "$broker_bucket" "$testid" "$teardown" "$survey"
 
-
+#--- Create BQ, PS, GCS resources
 if [ "$teardown" != "True" ]; then
     echo "Configuring BigQuery, GCS, Pub/Sub resources..."
+    # create bigquery
     bq mk --dataset "${bq_dataset}"
     bq mk --table "${bq_dataset}.${alerts_table}" "templates/bq_${survey}_${alerts_table}_schema.json"
     bq mk --table "${bq_dataset}.${source_table}" "templates/bq_${survey}_${source_table}_schema.json"
+    # create pubsub
     gcloud pubsub topics create "${avro_topic}"
     gcloud pubsub topics create "${bq_topic}"
     gcloud pubsub topics create "${topic_alerts}"
     gcloud pubsub subscriptions create "${topic_alerts}-reservoir" --topic "${topic_alerts}"
+    # set iam policies for topics. this is a custom role that we created
+    role="userPublic"
+    roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/${role}"
+    user="allUsers"
+    ./set_iam_policy.sh "${avro_topic}" "${roleid}" "${user}"
+    ./set_iam_policy.sh "${bq_topic}" "${roleid}" "${user}"
+    ./set_iam_policy.sh "${topic_alerts}" "${roleid}" "${user}"
     #--- Setup the Pub/Sub notifications on ZTF Avro storage bucket
     echo
     echo "Configuring Pub/Sub notifications on GCS bucket..."
