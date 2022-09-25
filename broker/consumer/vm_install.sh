@@ -2,6 +2,9 @@
 # Installs the software required to run the Kafka Consumer.
 # Assumes a Debian 10 OS.
 
+# create directory for the keytab auth file (to be uploaded manually)
+mkdir -p "/home/broker/consumer"
+
 #--- Get metadata attributes
 baseurl="http://metadata.google.internal/computeMetadata/v1"
 H="Metadata-Flavor: Google"
