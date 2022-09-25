@@ -12,8 +12,8 @@ baseurl="http://metadata.google.internal/computeMetadata/v1"
 H="Metadata-Flavor: Google"
 PROJECT_ID=$(curl "${baseurl}/project/project-id" -H "${H}")
 zone=$(curl "${baseurl}/instance/zone" -H "${H}")
-PS_TOPIC=$(curl "${baseurl}/instance/attributes/PS_TOPIC" -H "${H}")
-KAFKA_TOPIC=$(curl "${baseurl}/instance/attributes/KAFKA_TOPIC" -H "${H}")
+PS_TOPIC_FORCE=$(curl "${baseurl}/instance/attributes/PS_TOPIC_FORCE" -H "${H}")
+KAFKA_TOPIC_FORCE=$(curl "${baseurl}/instance/attributes/KAFKA_TOPIC_FORCE" -H "${H}")
 # parse the survey name and testid from the VM name
 consumerVM=$(curl "${baseurl}/instance/name" -H "${H}")
 survey=$(echo "$consumerVM" | awk -F "-" '{print $1}')
@@ -25,10 +25,20 @@ fi
 
 #--- GCP resources used in this script
 broker_bucket="${PROJECT_ID}-${survey}-broker_files"
+PS_TOPIC_DEFAULT="${survey}-alerts"
 # use test resources, if requested
 if [ "$testid" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
+    PS_TOPIC_DEFAULT="${PS_TOPIC_DEFAULT}-${testid}"
 fi
+# default Kafka topic
+kafka_topic_syntax=$(cat "${brokerdir}/schema_maps/${survey}.yaml" | yq ".TOPIC_SYNTAX")
+yyyymmdd=$(date -u '+%Y%m%d')
+KAFKA_TOPIC_DEFAULT="${kafka_topic_syntax/yyyymmdd/${yyyymmdd}}"
+
+#--- Set the topic names to metadata attributes if exist, else defaults defined above
+KAFKA_TOPIC="${KAFKA_TOPIC_FORCE:-${KAFKA_TOPIC_DEFAULT}}"
+PS_TOPIC="${PS_TOPIC_FORCE:-${PS_TOPIC_DEFAULT}}"
 
 #--- Files this script will write
 fout_run="${workingdir}/run-connector.out"

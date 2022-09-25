@@ -19,7 +19,7 @@ apt update
 echo "Installing Java..."
 apt install -y default-jre
 apt install -y default-jdk
-echo 'JAVA_HOME="/usr/lib/jvm/java-11-openjdk-amd64/bin/java"' >> /etc/environment
+echo 'JAVA_HOME="/usr/lib/jvm/java-11-openjdk-amd64/"' >> /etc/environment
 source /etc/environment
 echo "${JAVA_HOME}"
 echo "Done installing Java."
