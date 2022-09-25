@@ -1,6 +1,11 @@
-# alerts-for-testing: Alerts for Testing Purposes
+# alerts-for-testing: ZTF Alerts for Testing Purposes
 
-There are 50 alert avro files in this directory:
+There are 50 ZTF alert avro files in this directory.
+Here we list the files and document the code originally used to find them and to upload them to a Cloud Storage bucket.
+
+For instructions on downloading and working with these alerts, see [alert-utils.md](alert-utils.md).
+
+## Overview of files in this directory
 
 ```python
 >>> fnames_pass_all  # these 37 pass all science filters, fitters, and classifiers
@@ -58,19 +63,20 @@ There are 50 alert avro files in this directory:
  'ZTF18abbwsvo.1703210606215015045.ztf_20210831_programid1.avro']
 ```
 
-## The code that retrieved the files:
+## Code used to retrieve the files
 
 ```python
 from broker_utils import data_utils, gcp_utils
 
-project_id = 'ardent-cycling-243415'
-dataset = 'ztf_alerts'
-table = 'metadata'
-bucket_id = 'ztf-alert_avros'
-kafka_topic = 'ztf_20210901_programid1'
+project_id = "ardent-cycling-243415"
+dataset = "ztf_alerts"
+table = "metadata"
+bucket_id = "ztf-alert_avros"
+kafka_topic = "ztf_20210901_programid1"
 ```
 
 Find and download alerts that pass all filters
+
 ```python
 query = (
     f"SELECT * "
@@ -84,12 +90,13 @@ df = query_job.to_dataframe()
 d = df.dropna()
 
 fnames_pass_all = d.filename__alert_avros.tolist()
-localdir = '/Users/troyraen/Documents/broker/repotroy/troy/alerts-for-testing'
+localdir = "/Users/troyraen/Documents/broker/repotroy/troy/alerts-for-testing"
 for f in fnames:
     gcp_utils.cs_download_file(localdir, bucket_id, f)
 ```
 
 Find and download alerts that pass no filters/classifiers, but do pass everything else
+
 ```python
 query = (
     f"SELECT * "
@@ -102,12 +109,12 @@ query_job = gcp_utils.query_bigquery(query)
 df = query_job.to_dataframe()
 
 # drop alerts that passed any filters
-d = df.dropna(axis=1, how='all')
+d = df.dropna(axis=1, how="all")
 null_cols = [
-    'publish_time__exgalac_trans',
-    'publish_time__salt2',
-    'publish_time__SuperNNova',
-    'publish_time__exgalac_trans_cf',
+    "publish_time__exgalac_trans",
+    "publish_time__salt2",
+    "publish_time__SuperNNova",
+    "publish_time__exgalac_trans_cf",
 ]
 d = d.loc[d[null_cols].isnull().all(1)]
 
@@ -119,4 +126,19 @@ d = d.dropna(subset=non_null_cols)
 fnames_pass_none = d.sample(13).filename__alert_avros.tolist()
 for f in fnames_pass_none:
     gcp_utils.cs_download_file(localdir, bucket_id, f)
+```
+
+## Code used to upload the files to a testing bucket
+
+```bash
+testing_bucket="${GOOGLE_CLOUD_PROJECT}-ztf-test_alerts"
+# set localdir to the directory where alerts are stored
+localdir="/Users/troyraen/Documents/broker/Pitt-Google/testing/docs/source/working-notes/troyraen/alerts-for-testing/"
+
+# create the bucket
+gsutil mb "gs://${testing_bucket}"
+
+# upload files
+o="GSUtil:parallel_process_count=1" # disable multiprocessing for Macs
+gsutil -m -o "$o" cp "${localdir}/*" "gs://${testing_bucket}"
 ```
