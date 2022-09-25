@@ -1,7 +1,7 @@
 #! /bin/bash
 # Configure and Start the Kafka -> Pub/Sub connector
 
-brokerdir=/home/broker
+brokerdir="/home/broker"
 workingdir="${brokerdir}/consumer"
 # mkdir -p ${workingdir} # keytab auth file must already exist in this dir
 
@@ -17,10 +17,10 @@ KAFKA_TOPIC=$(curl "${baseurl}/instance/attributes/KAFKA_TOPIC" -H "${H}")
 # parse the survey name and testid from the VM name
 consumerVM=$(curl "${baseurl}/instance/name" -H "${H}")
 survey=$(echo "$consumerVM" | awk -F "-" '{print $1}')
-if [ "$consumerVM" = "${survey}-consumer" ]; then
+if [ "${consumerVM}" = "${survey}-consumer" ]; then
     testid="False"
 else
-    testid=$(echo "$consumerVM" | awk -F "-" '{print $NF}')
+    testid=$(echo "${consumerVM}" | awk -F "-" '{print $NF}')
 fi
 
 #--- GCP resources used in this script
@@ -35,19 +35,22 @@ fout_run="${workingdir}/run-connector.out"
 fout_topics="${workingdir}/list.topics"
 
 #--- Download config files from GCS (just grab the whole bucket)
-cd ${brokerdir}
+cd "${brokerdir}"
 # remove all consumer files except the keytab
-find ${workingdir} -type f -not -name 'pitt-reader.user.keytab' -delete
+find "${workingdir}" -type f -not -name "pitt-reader.user.keytab" -delete
 # download fresh files
 gsutil -m cp -r "gs://${broker_bucket}/consumer" .
 
-cd ${workingdir}
+cd "${workingdir}"
 
-#--- Set project and topic configs using the instance metadata
-fconfig=ps-connector.properties
-sed -i "s/PROJECT_ID/${PROJECT_ID}/g" ${fconfig}
-sed -i "s/PS_TOPIC/${PS_TOPIC}/g" ${fconfig}
-sed -i "s/KAFKA_TOPIC/${KAFKA_TOPIC}/g" ${fconfig}
+#--- Set the connector's configs (project and topics)
+fconfig="ps-connector.properties"
+sed -i "s/PROJECT_ID/${PROJECT_ID}/g" "${fconfig}"
+sed -i "s/PS_TOPIC/${PS_TOPIC}/g" "${fconfig}"
+sed -i "s/KAFKA_TOPIC/${KAFKA_TOPIC}/g" "${fconfig}"
+# set VM metadata, just for clarity and easy viewing
+gcloud compute instances add-metadata "${consumerVM}" --zone "${zone}" \
+    --metadata="PS_TOPIC=${PS_TOPIC},KAFKA_TOPIC=${KAFKA_TOPIC}"
 
 #--- Check until alerts start streaming into the topic
 alerts_flowing=false
@@ -56,10 +59,10 @@ do
     # get list of live topics and dump to file
     {
         /bin/kafka-topics \
-            --bootstrap-server public2.alerts.ztf.uw.edu:9094 \
+            --bootstrap-server "public2.alerts.ztf.uw.edu:9094" \
             --list \
-            --command-config ${workingdir}/admin.properties \
-            > $fout_topics
+            --command-config "${workingdir}/admin.properties" \
+            > "${fout_topics}"
     } || {
         true
     }
@@ -70,7 +73,7 @@ do
     # passing the error with `|| true`
 
     # check if our topic is in the list
-    if grep -Fq "${KAFKA_TOPIC}" $fout_topics
+    if grep -Fq "${KAFKA_TOPIC}" "${fout_topics}"
     then
         alerts_flowing=true  # start consuming
     else
@@ -80,6 +83,6 @@ done
 
 #--- Start the Kafka -> Pub/Sub connector, save stdout and stderr to file
 /bin/connect-standalone \
-    ${workingdir}/psconnect-worker.properties \
-    ${workingdir}/ps-connector.properties \
-    &>> ${fout_run}
+    "${workingdir}/psconnect-worker.properties" \
+    "${workingdir}/ps-connector.properties" \
+    &>> "${fout_run}"
