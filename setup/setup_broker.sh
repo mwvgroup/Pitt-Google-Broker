@@ -61,6 +61,7 @@ else
     # ensure that we do not teardown production resources
     if [ "$testid" != "False" ]; then
         gsutil rm -r "gs://${broker_bucket}"
+        gsutil rm -r "gs://${avro_bucket}"
     fi
 fi
 
