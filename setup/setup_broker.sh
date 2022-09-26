@@ -55,6 +55,7 @@ source_table="DIASource"
 if [ "$teardown" != "True" ]; then
     echo "Creating broker_bucket and uploading files..."
     gsutil mb -b on "gs://${broker_bucket}"
+    gsutil mb -b on "gs://${avro_bucket}"
     ./upload_broker_bucket.sh "$broker_bucket"
 else
     # ensure that we do not teardown production resources
