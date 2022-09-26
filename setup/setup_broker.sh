@@ -84,9 +84,13 @@ if [ "$teardown" != "True" ]; then
     role="userPublic"
     roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/${role}"
     user="allUsers"
+
+    # the next three lines encountered the following error: ./set_iam_policy.sh: Permission denied
+    # want to avoid using the command 'sudo', any thoughts on what to do?
     ./set_iam_policy.sh "${avro_topic}" "${roleid}" "${user}"
     ./set_iam_policy.sh "${bq_topic}" "${roleid}" "${user}"
     ./set_iam_policy.sh "${topic_alerts}" "${roleid}" "${user}"
+
     #--- Setup the Pub/Sub notifications on ZTF Avro storage bucket
     echo
     echo "Configuring Pub/Sub notifications on GCS bucket..."
