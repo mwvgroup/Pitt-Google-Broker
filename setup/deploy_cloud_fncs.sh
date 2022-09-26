@@ -7,7 +7,7 @@ testid="${1:-test}"
 # any other string will be appended to the names of all resources
 teardown="${2:-False}"
 # "True" tearsdown/deletes resources, else setup
-survey="${3:-ztf}"
+survey="${3:-elasticc}"
 # name of the survey this broker instance will ingest
 zone="${CE_ZONE:-us-central1-a}" # use env variable CE_ZONE if it exists
 
