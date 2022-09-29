@@ -157,6 +157,8 @@ def _resources(service, survey='ztf', testid='test'):
                     [f'{survey}-alert_avros-counter'],
                 f'{survey}-alerts':
                     [f'{survey}-alerts-counter', f'{survey}-alerts-reservoir', ],
+                f'{survey}-alerts_raw':
+                    [f'{survey}-alerts_raw-counter', ],
                 f'{survey}-alerts_pure':
                     [f'{survey}-alerts_pure-counter', ],
                 f'{survey}-cue_night_conductor':

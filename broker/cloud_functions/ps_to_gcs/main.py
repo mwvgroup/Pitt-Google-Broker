@@ -15,7 +15,9 @@ from tempfile import SpooledTemporaryFile
 import fastavro
 from google.cloud import logging
 from google.cloud import storage
+from google.cloud.exceptions import PreconditionFailed
 
+from broker_utils import gcp_utils
 from broker_utils.schema_maps import load_schema_map
 from broker_utils.types import AlertFilename, AlertIds
 from exceptions import SchemaParsingError
@@ -34,8 +36,11 @@ logger = logging_client.logger(log_name)
 
 # GCP resources used in this module
 bucket_name = f'{PROJECT_ID}-{SURVEY}-alert_avros'  # store the Avro files
+ps_topic = f"{SURVEY}-alerts"
 if TESTID != "False":
     bucket_name = f'{bucket_name}-{TESTID}'
+    ps_topic = f'{ps_topic}-{TESTID}'
+
 bucket = storage.Client().get_bucket(bucket_name)
 
 # By default, spool data in memory to avoid IO unless data is too big
@@ -86,7 +91,12 @@ def run(msg, context) -> None:
                 `event_type`: for example: "google.pubsub.topic.publish".
                 `resource`: the resource that emitted the event.
     """
-    upload_bytes_to_bucket(msg, context)
+    try:
+        upload_bytes_to_bucket(msg, context)
+    # this is raised by blob.upload_from_file if the object already exists in the bucket
+    except PreconditionFailed:
+        logger.log_text(f"Dropping duplicate alert. message_id: {context.event_id}", severity="INFO")
+        # we simply return and it disappears. it never enters the broker's main "alerts" stream. rip.
 
 
 def upload_bytes_to_bucket(msg, context) -> None:
@@ -124,7 +134,13 @@ def upload_bytes_to_bucket(msg, context) -> None:
 
         blob = bucket.blob(filename)
         blob.metadata = create_file_metadata(alert, context, alert_ids)
-        blob.upload_from_file(temp_file)
+        # raise a PreconditionFailed exception if filename already exists in the bucket using "if_generation_match=0"
+        # let it raise. the main function will catch it and then drop the message.
+        blob.upload_from_file(temp_file, if_generation_match=0)
+        # if blob.exists(): <then raise the error>
+        # Cloud Storage says this is not a duplicate, so now we publish the broker's main "alerts" stream
+        temp_file.seek(0)
+        gcp_utils.publish_pubsub(ps_topic, temp_file.read(), attrs=attributes)
 
     logger.log_text(f'Uploaded {filename} to {bucket_name}')
 
