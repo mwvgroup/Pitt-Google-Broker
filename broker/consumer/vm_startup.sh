@@ -3,7 +3,11 @@
 
 brokerdir="/home/broker"
 workingdir="${brokerdir}/consumer"
-# mkdir -p ${workingdir} # keytab auth file must already exist in this dir
+# the keytab file required for authorization must already exist in the workingdir.
+# make it immutable, then delete everything else so we can start fresh.
+chattr +i "${workingdir}/pitt-reader.user.keytab"
+rm -rf "${brokerdir}"
+cd "${workingdir}"
 
 #--- Files this script will write
 fout_run="${workingdir}/run-connector.out"
@@ -37,9 +41,6 @@ if [ "$testid" != "False" ]; then
 fi
 
 #--- Download fresh config files from the bucket
-cd "${brokerdir}"
-# remove all consumer files except the keytab
-find "${workingdir}" -type f -not -name 'pitt-reader.user.keytab' -delete
 gsutil -m cp -r "gs://${broker_bucket}/consumer" "${brokerdir}"
 gsutil -m cp -r "gs://${broker_bucket}/schema_maps" "${brokerdir}"
 
