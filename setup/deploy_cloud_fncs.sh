@@ -7,7 +7,7 @@ testid="${1:-test}"
 # any other string will be appended to the names of all resources
 teardown="${2:-False}"
 # "True" tearsdown/deletes resources, else setup
-survey="${3:-ztf}"
+survey="${3:-elasticc}"
 # name of the survey this broker instance will ingest
 zone="${CE_ZONE:-us-central1-a}" # use env variable CE_ZONE if it exists
 
@@ -40,8 +40,10 @@ else # Deploy the Cloud Functions
     echo "Deploying Cloud Function: $store_bq_CF_name"
     store_bq_entry_point="run"
 
-    cd .. && cd cloud_functions
-    cd store_BigQuery
+    # the next two lines had the following error: No such file or directory
+    # pwd should be .../pitt-google-broker/setup
+    cd .. && cd broker
+    cd cloud_functions && cd store_BigQuery
 
     gcloud functions deploy "$store_bq_CF_name" \
         --entry-point "$store_bq_entry_point" \
@@ -55,8 +57,10 @@ else # Deploy the Cloud Functions
     echo "Deploying Cloud Function: $ps_to_gcs_CF_name"
     ps_to_gcs_entry_point="run"
 
-    cd .. && cd cloud_functions
-    cd ps_to_gcs
+    # the next two lines had the following error: No such file or directory
+    # pwd should be .../pitt-google-broker/setup
+    cd .. && cd broker
+    cd cloud_functions && cd ps_to_gcs
 
     gcloud functions deploy "$ps_to_gcs_CF_name" \
         --entry-point "$ps_to_gcs_entry_point" \

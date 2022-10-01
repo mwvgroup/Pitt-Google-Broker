@@ -6,7 +6,7 @@ testid="${1:-test}"
 # any other string will be appended to the names of all resources
 teardown="${2:-False}"
 # "True" tearsdown/deletes resources, else setup
-survey="${3:-ztf}"
+survey="${3:-elasticc}"
 # name of the survey this broker instance will ingest
 # 'ztf' or 'decat'
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT # get the environment variable
@@ -55,11 +55,13 @@ source_table="DIASource"
 if [ "$teardown" != "True" ]; then
     echo "Creating broker_bucket and uploading files..."
     gsutil mb -b on "gs://${broker_bucket}"
+    gsutil mb -b on "gs://${avro_bucket}"
     ./upload_broker_bucket.sh "$broker_bucket"
 else
     # ensure that we do not teardown production resources
     if [ "$testid" != "False" ]; then
         gsutil rm -r "gs://${broker_bucket}"
+        gsutil rm -r "gs://${avro_bucket}"
     fi
 fi
 
@@ -84,9 +86,13 @@ if [ "$teardown" != "True" ]; then
     role="userPublic"
     roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/${role}"
     user="allUsers"
+
+    # the next three lines encountered the following error: ./set_iam_policy.sh: Permission denied
+    # want to avoid using the command 'sudo', any thoughts on what to do?
     ./set_iam_policy.sh "${avro_topic}" "${roleid}" "${user}"
     ./set_iam_policy.sh "${bq_topic}" "${roleid}" "${user}"
     ./set_iam_policy.sh "${topic_alerts}" "${roleid}" "${user}"
+
     #--- Setup the Pub/Sub notifications on ZTF Avro storage bucket
     echo
     echo "Configuring Pub/Sub notifications on GCS bucket..."
