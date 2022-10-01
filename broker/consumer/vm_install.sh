@@ -69,7 +69,7 @@ echo "Done installing Confluent Platform."
 # see https://github.com/GoogleCloudPlatform/pubsub/tree/master/kafka-connector
 echo "Installing the Kafka -> Pub/Sub connector"
 plugindir="/usr/local/share/kafka/plugins"
-CONNECTOR_RELEASE="v0.5-alpha"
+CONNECTOR_RELEASE="v0.11-alpha"
 mkdir -p "${plugindir}"
 #- install the connector
 cd "${plugindir}"
