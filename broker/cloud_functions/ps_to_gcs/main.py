@@ -18,7 +18,7 @@ from google.cloud import storage
 from google.cloud.exceptions import PreconditionFailed
 
 from broker_utils.avro_schemas.load import all as load_all_schemas
-from broker_utils.schema_maps import load_schema_map, get_value, get_key
+from broker_utils.schema_maps import load_schema_map, get_key
 from broker_utils.types import AlertFilename, AlertIds
 from exceptions import SchemaParsingError
 
