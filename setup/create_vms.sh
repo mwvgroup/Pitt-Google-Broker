@@ -25,10 +25,11 @@ if [ "${teardown}" = "True" ]; then
 else
 #--- Consumer VM
     installscript="gs://${broker_bucket}/consumer/vm_install.sh"
-    machinetype="e2-standard-2"
     gcloud compute instances create "${consumerVM}" \
         --zone "${zone}" \
-        --machine-type "${machinetype}" \
+        --machine-type "e2-standard-2" \
+        --image-family "debian-11" \
+        --image-project "debian-cloud" \
         --scopes "cloud-platform" \
         --metadata "google-logging-enabled=true,startup-script-url=${installscript}" \
         --tags "kafkaport" # firewall rule that opens the port
