@@ -26,10 +26,10 @@ here = pathlib.Path(__file__).parent.resolve()
 # Get the long description from the README file
 # long_description = (here / 'README.md').read_text(encoding='utf-8')
 
-with open('VERSION', 'r') as f:
+with open('VERSION', 'tr') as f:
     VERSION = f.read().splitlines()[0]
 
-with open('docs/requirements.txt', 'r') as f:
+with open('docs/requirements.txt', 'tr') as f:
     requirements = f.read().splitlines()
 
 setup(
