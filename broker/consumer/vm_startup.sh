@@ -72,7 +72,7 @@ do
             --bootstrap-server "public2.alerts.ztf.uw.edu:9094" \
             --list \
             --command-config "${workingdir}/admin.properties" \
-            2>&1 > "${fout_topics}"
+            &>> "${fout_topics}"
     } || {
         true
     }
@@ -95,4 +95,4 @@ done
 /bin/connect-standalone \
     "${workingdir}/psconnect-worker.properties" \
     "${workingdir}/ps-connector.properties" \
-    2>&1 > "${fout_run}"
+    &>> "${fout_run}"
