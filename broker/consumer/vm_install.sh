@@ -32,6 +32,7 @@ workingdir="/home/broker/consumer"
 mkdir -p "${workingdir}"
 cd "${workingdir}"
 gsutil -m cp -r "gs://${broker_bucket}/consumer/**" .
+mv "krb5.conf" "/etc/krb5.conf"
 
 #--- Install general utils
 apt-get update
