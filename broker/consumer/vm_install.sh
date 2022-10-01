@@ -69,11 +69,11 @@ echo "Done installing Confluent Platform."
 # see https://github.com/GoogleCloudPlatform/pubsub/tree/master/kafka-connector
 echo "Installing the Kafka -> Pub/Sub connector"
 plugindir="/usr/local/share/kafka/plugins"
-CONNECTOR_RELEASE="v0.11-alpha"
+CONNECTOR_RELEASE="0.1.2"
 mkdir -p "${plugindir}"
 #- install the connector
 cd "${plugindir}"
-wget "https://github.com/GoogleCloudPlatform/pubsub/releases/download/${CONNECTOR_RELEASE}/pubsub-kafka-connector.jar"
+wget "https://search.maven.org/remotecontent?filepath=com/google/cloud/pubsub-group-kafka-connector/${CONNECTOR_RELEASE}/pubsub-group-kafka-connector-${CONNECTOR_RELEASE}.jar"
 echo "Done installing the Kafka -> Pub/Sub connector"
 
 #--- Set the startup script and shutdown
