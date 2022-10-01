@@ -4,8 +4,7 @@
 testid="${1:-test}"
 teardown="${2:-False}"
 survey="${3:-elasticc}"
-max_instances="{$4:-500}"
-zone="${CE_ZONE:-us-central1-a}"
+max_instances="${4:-500}"
 
 BROKER_VERSION=$(cat "../VERSION")
 
