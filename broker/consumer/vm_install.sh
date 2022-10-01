@@ -42,7 +42,7 @@ snap install core
 snap install yq
 
 #--- Install Java and the dev kit
-# see https://www.digitalocean.com/community/tutorials/how-to-install-java-with-apt-on-debian-10
+# see https://www.digitalocean.com/community/tutorials/how-to-install-java-with-apt-on-debian-11
 apt update
 echo "Installing Java..."
 apt install -y default-jre
