@@ -16,6 +16,7 @@ import fastavro
 from google.cloud import logging
 from google.cloud import storage
 
+from broker_utils.avro_schemas.load import all as load_all_schemas
 from broker_utils.schema_maps import load_schema_map, get_value, get_key
 from broker_utils.types import AlertFilename, AlertIds
 from exceptions import SchemaParsingError
@@ -25,6 +26,7 @@ PROJECT_ID = os.getenv('GCP_PROJECT')
 TESTID = os.getenv('TESTID')
 SURVEY = os.getenv('SURVEY')
 
+schema_in = load_all_schemas()["elasticc.v0_9.alert.avsc"]
 schema_map = load_schema_map(SURVEY, TESTID)
 sobjectId, ssourceId = get_key("objectId", schema_map), get_key("sourceId", schema_map)
 # connect to the cloud logger
@@ -128,35 +130,21 @@ def upload_bytes_to_bucket(msg, context) -> None:
 
     logger.log_text(f'Uploaded {filename} to {bucket_name}')
 
-    del_vars = [
-        data,
-        attributes,
-        temp_file,
-        alert,
-        filename,
-        blob,
-    ]
-    for var in del_vars:
-        del var
-
 
 def create_file_metadata(alert, context, alert_ids):
     """Return key/value pairs to be attached to the file as metadata."""
     metadata = {'file_origin_message_id': context.event_id}
     metadata[alert_ids.id_keys.objectId] = alert_ids.objectId
     metadata[alert_ids.id_keys.sourceId] = alert_ids.sourceId
-    metadata['ra'] = alert[0][schema_map['source']]['ra']
-    metadata['dec'] = alert[0][schema_map['source']]['dec']
+    metadata['ra'] = alert[0][schema_map['source']][schema_map['ra']]
+    metadata['dec'] = alert[0][schema_map['source']][schema_map['dec']]
     return metadata
 
 
 def extract_alert_dict(temp_file):
-    """Extracts and returns the alert data as a dict wrapped in a list.
-    """
-    # load the file and get the data with fastavro
+    """Extract and return the alert data as a dict wrapped in a list."""
     temp_file.seek(0)
-    alert = [r for r in fastavro.reader(temp_file)]
-    return alert
+    return [fastavro.schemaless_reader(temp_file, schema_in)]
 
 
 def fix_schema(temp_file, alert, data, filename):
