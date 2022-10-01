@@ -28,8 +28,8 @@ fi
 avro_bucket="${PROJECT_ID}-${survey}-alert_avros"
 avro_topic="projects/${PROJECT_ID}/topics/${survey}-alert_avros"
 broker_bucket="${PROJECT_ID}-${survey}-broker_files"
-bq_dataset="${PROJECT_ID}:${survey}_alerts"
-bq_topic="projects/${PROJECT_ID}/topics/${survey}-BigQuery"
+# bq_dataset="${PROJECT_ID}:${survey}_alerts"
+# bq_topic="projects/${PROJECT_ID}/topics/${survey}-BigQuery"
 topic_alerts="${survey}-alerts"
 # use test resources, if requested
 # (there must be a better way to do this)
@@ -37,12 +37,12 @@ if [ "$testid" != "False" ]; then
     avro_bucket="${avro_bucket}-${testid}"
     avro_topic="${avro_topic}-${testid}"
     broker_bucket="${broker_bucket}-${testid}"
-    bq_dataset="${bq_dataset}_${testid}"
-    bq_topic="${bq_topic}-${testid}"
+    # bq_dataset="${bq_dataset}_${testid}"
+    # bq_topic="${bq_topic}-${testid}"
     topic_alerts="${topic_alerts}-${testid}"
 fi
-alerts_table="alerts"
-source_table="DIASource"
+# alerts_table="alerts"
+# source_table="DIASource"
 
 
 # broker bucket
@@ -69,12 +69,12 @@ echo "Configuring VMs..."
 if [ "${teardown}" != "True" ]; then
     echo "Configuring BigQuery, GCS, Pub/Sub resources..."
     # create bigquery
-    bq mk --dataset "${bq_dataset}"
-    bq mk --table "${bq_dataset}.${alerts_table}" "templates/bq_${survey}_${alerts_table}_schema.json"
-    bq mk --table "${bq_dataset}.${source_table}" "templates/bq_${survey}_${source_table}_schema.json"
+    # bq mk --dataset "${bq_dataset}"
+    # bq mk --table "${bq_dataset}.${alerts_table}" "templates/bq_${survey}_${alerts_table}_schema.json"
+    # bq mk --table "${bq_dataset}.${source_table}" "templates/bq_${survey}_${source_table}_schema.json"
     # create pubsub
     gcloud pubsub topics create "${avro_topic}"
-    gcloud pubsub topics create "${bq_topic}"
+    # gcloud pubsub topics create "${bq_topic}"
     gcloud pubsub topics create "${topic_alerts}"
     gcloud pubsub subscriptions create "${topic_alerts}-reservoir" --topic "${topic_alerts}"
     # set iam policies for topics. this is a custom role that we created
@@ -83,7 +83,7 @@ if [ "${teardown}" != "True" ]; then
     user="allUsers"
 
     ./set_iam_policy.sh "${avro_topic}" "${roleid}" "${user}"
-    ./set_iam_policy.sh "${bq_topic}" "${roleid}" "${user}"
+    # ./set_iam_policy.sh "${bq_topic}" "${roleid}" "${user}"
     ./set_iam_policy.sh "${topic_alerts}" "${roleid}" "${user}"
 
     #--- Setup the Pub/Sub notifications on ZTF Avro storage bucket
@@ -99,9 +99,9 @@ if [ "${teardown}" != "True" ]; then
 else
     # ensure that we do not teardown production resources
     if [ "${testid}" != "False" ]; then
-        bq rm --dataset true "${bq_dataset}"
+        # bq rm --dataset true "${bq_dataset}"
         gcloud pubsub topics delete "${avro_topic}"
-        gcloud pubsub topics delete "${bq_topic}"
+        # gcloud pubsub topics delete "${bq_topic}"
         gcloud pubsub topics delete "${topic_alerts}"
         gcloud pubsub subscriptions delete "${topic_alerts}-reservoir"
     fi
