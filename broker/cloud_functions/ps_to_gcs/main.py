@@ -15,6 +15,7 @@ from tempfile import SpooledTemporaryFile
 import fastavro
 from google.cloud import logging
 from google.cloud import storage
+from google.cloud.exceptions import PreconditionFailed
 
 from broker_utils.avro_schemas.load import all as load_all_schemas
 from broker_utils.schema_maps import load_schema_map, get_value, get_key
@@ -88,7 +89,12 @@ def run(msg, context) -> None:
                 `event_type`: for example: "google.pubsub.topic.publish".
                 `resource`: the resource that emitted the event.
     """
-    upload_bytes_to_bucket(msg, context)
+    try:
+        upload_bytes_to_bucket(msg, context)
+    # PreconditionFailed is raised by blob.upload_from_file if the object already exists in the bucket
+    except PreconditionFailed:
+        logger.log_text(f"Dropping duplicate alert. message_id: {context.event_id}", severity="INFO")
+        # we're done with it. we simply return
 
 
 def upload_bytes_to_bucket(msg, context) -> None:
@@ -126,7 +132,9 @@ def upload_bytes_to_bucket(msg, context) -> None:
 
         blob = bucket.blob(filename)
         blob.metadata = create_file_metadata(alert, context, alert_ids)
-        blob.upload_from_file(temp_file)
+        # raise PreconditionFailed exception if filename already exists in the bucket using "if_generation_match=0".
+        # let it raise. the main function will handle it.
+        blob.upload_from_file(temp_file, if_generation_match=0)
 
     logger.log_text(f'Uploaded {filename} to {bucket_name}')
 
