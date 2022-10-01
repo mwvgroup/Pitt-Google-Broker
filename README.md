@@ -14,7 +14,6 @@ Main documentation is at [pitt-broker.readthedocs.io](https://pitt-broker.readth
 
 If you run into issues or need assistance, please [open an Issue](https://github.com/mwvgroup/Pitt-Google-Broker/issues).
 
-
 ## Usage
 
 To deploy a broker instance, see [setup/README.md](setup/README.md).

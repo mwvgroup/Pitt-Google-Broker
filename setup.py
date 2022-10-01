@@ -3,7 +3,7 @@
 """Pitt-Google Broker.
 Example setup.py: https://github.com/pypa/sampleproject/blob/main/setup.py
 
-This file is required for Read the Docs.
+THIS FILE IS USED EXCLUSIVELY BY READ THE DOCS.
 
 The Pitt-Google Broker package is free software: you can redistribute it and/or
 modify it under the terms of the GNU General Public License as published
@@ -26,12 +26,15 @@ here = pathlib.Path(__file__).parent.resolve()
 # Get the long description from the README file
 # long_description = (here / 'README.md').read_text(encoding='utf-8')
 
-with open('docs/requirements.txt') as f:
+with open('VERSION', 'tr') as f:
+    VERSION = f.read().splitlines()[0]
+
+with open('docs/requirements.txt', 'tr') as f:
     requirements = f.read().splitlines()
 
 setup(
     name='pitt_google_broker',  # Required
-    version='0.5.0',  # Required
+    version=VERSION,  # Required
     description='A Google Cloud-based astronomical alert broker.',
     # long_description=long_description,
     # long_description_content_type='text/markdown',

@@ -7,7 +7,7 @@ workingdir="${brokerdir}/consumer"
 # make it immutable, then delete everything else so we can start fresh.
 chattr +i "${workingdir}/pitt-reader.user.keytab"
 rm -rf "${brokerdir}"
-cd "${workingdir}"
+cd "${workingdir}" || exit
 
 #--- Files this script will write
 fout_run="${workingdir}/run-connector.out"
@@ -54,7 +54,7 @@ KAFKA_TOPIC="${KAFKA_TOPIC_FORCE:-${KAFKA_TOPIC_DEFAULT}}"
 PS_TOPIC="${PS_TOPIC_FORCE:-${PS_TOPIC_DEFAULT}}"
 # set VM metadata, just for clarity and easy viewing
 gcloud compute instances add-metadata "${consumerVM}" --zone "${zone}" \
-    --metadata "PS_TOPIC=${PS_TOPIC},KAFKA_TOPIC=${KAFKA_TOPIC}"
+    --metadata "CURRENT_PS_TOPIC=${PS_TOPIC},CURRENT_KAFKA_TOPIC=${KAFKA_TOPIC}"
 
 #--- Set the connector's configs (project and topics)
 fconfig="ps-connector.properties"
@@ -72,7 +72,7 @@ do
             --bootstrap-server "public2.alerts.ztf.uw.edu:9094" \
             --list \
             --command-config "${workingdir}/admin.properties" \
-            2>&1 > "${fout_topics}"
+            &>> "${fout_topics}"
     } || {
         true
     }
@@ -95,4 +95,4 @@ done
 /bin/connect-standalone \
     "${workingdir}/psconnect-worker.properties" \
     "${workingdir}/ps-connector.properties" \
-    2>&1 > "${fout_run}"
+    &>> "${fout_run}"

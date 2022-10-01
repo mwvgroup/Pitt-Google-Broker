@@ -3,6 +3,7 @@
 testid="${1:-test}"  # "False" => production. else will be appended to names of all resources
 teardown="${2:-False}"  # "True" tearsdown/deletes resources, else setup
 survey="${3:-elasticc}"  # name of the survey this broker instance will ingest
+max_instances="${4:-500}"  # max N of concurrent Cloud Fnc instances (per deployed module)
 PROJECT_ID="${GOOGLE_CLOUD_PROJECT}"
 
 #--- Make the user confirm the settings
@@ -111,4 +112,4 @@ fi
 #--- Deploy Cloud Functions
 echo
 echo "Configuring Cloud Functions..."
-./deploy_cloud_fncs.sh "${testid}" "${teardown}" "${survey}"
+./deploy_cloud_fncs.sh "${testid}" "${teardown}" "${survey}" "${max_instances}"

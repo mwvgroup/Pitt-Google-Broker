@@ -15,6 +15,8 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
+with open('VERSION', 'tr') as f:
+    VERSION = f.read().splitlines()[0]
 
 # -- Project information -----------------------------------------------------
 
@@ -23,7 +25,7 @@ copyright = '2021, The Pitt-Google Broker Team'
 author = 'The Pitt-Google Broker Team'
 
 # The full version, including alpha/beta/rc tags
-release = 'v0.5.0'
+release = VERSION
 
 
 # -- General configuration ---------------------------------------------------
