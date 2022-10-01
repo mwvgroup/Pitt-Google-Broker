@@ -27,7 +27,7 @@ fi
 
 #--- GCP resources used directly in this script
 avro_bucket="${PROJECT_ID}-${survey}-alert_avros"
-avro_topic="projects/${PROJECT_ID}/topics/${survey}-alert_avros"
+avro_topic="${survey}-alert_avros"
 broker_bucket="${PROJECT_ID}-${survey}-broker_files"
 # bq_dataset="${PROJECT_ID}:${survey}_alerts"
 # bq_topic="projects/${PROJECT_ID}/topics/${survey}-BigQuery"
@@ -78,6 +78,7 @@ if [ "${teardown}" != "True" ]; then
     # gcloud pubsub topics create "${bq_topic}"
     gcloud pubsub topics create "${topic_alerts}"
     gcloud pubsub subscriptions create "${topic_alerts}-reservoir" --topic "${topic_alerts}"
+    gcloud pubsub subscriptions create "${avro_topic}-reservoir" --topic "${avro_topic}"
     # set iam policies for topics. this is a custom role that we created
     role="userPublic"
     roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/${role}"
@@ -105,6 +106,7 @@ else
         # gcloud pubsub topics delete "${bq_topic}"
         gcloud pubsub topics delete "${topic_alerts}"
         gcloud pubsub subscriptions delete "${topic_alerts}-reservoir"
+        gcloud pubsub subscriptions delete "${avro_topic}-reservoir"
     fi
 fi
 
