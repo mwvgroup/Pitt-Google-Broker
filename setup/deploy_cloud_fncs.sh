@@ -7,6 +7,8 @@ survey="${3:-elasticc}"
 max_instances="{$4:-500}"
 zone="${CE_ZONE:-us-central1-a}"
 
+BROKER_VERSION=$(cat "../VERSION")
+
 #--- GCP resources used in this script
 # store_bq_trigger_topic="${survey}-alerts"
 # store_bq_CF_name="${survey}-store_in_BigQuery"
@@ -49,6 +51,6 @@ else # Deploy the Cloud Functions
         --max-instances "${max_instances}" \
         --runtime "python37" \
         --trigger-topic "${ps_to_gcs_trigger_topic}" \
-        --set-env-vars "TESTID=${testid},SURVEY=${survey}"
+        --set-env-vars "TESTID=${testid},SURVEY=${survey},BROKER_VERSION=${BROKER_VERSION}"
 
 fi
