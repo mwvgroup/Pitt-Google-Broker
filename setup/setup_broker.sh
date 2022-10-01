@@ -1,15 +1,9 @@
 #! /bin/bash
 # Create and configure GCP resources needed to run the nightly broker.
-
-testid="${1:-test}"
-# "False" uses production resources
-# any other string will be appended to the names of all resources
-teardown="${2:-False}"
-# "True" tearsdown/deletes resources, else setup
-survey="${3:-elasticc}"
-# name of the survey this broker instance will ingest
-# 'ztf' or 'decat'
-PROJECT_ID=$GOOGLE_CLOUD_PROJECT # get the environment variable
+testid="${1:-test}"  # "False" => production. else will be appended to names of all resources
+teardown="${2:-False}"  # "True" tearsdown/deletes resources, else setup
+survey="${3:-elasticc}"  # name of the survey this broker instance will ingest
+PROJECT_ID="${GOOGLE_CLOUD_PROJECT}"
 
 #--- Make the user confirm the settings
 echo
@@ -24,7 +18,7 @@ echo "Continue?  [y/(n)]: "
 
 read continue_with_setup
 continue_with_setup="${continue_with_setup:-n}"
-if [ "$continue_with_setup" != "y" ]; then
+if [ "${continue_with_setup}" != "y" ]; then
     echo "Exiting setup."
     echo
     exit
@@ -52,26 +46,27 @@ source_table="DIASource"
 
 
 # broker bucket
-if [ "$teardown" != "True" ]; then
+if [ "${teardown}" != "True" ]; then
     echo "Creating broker_bucket and uploading files..."
     gsutil mb -b on "gs://${broker_bucket}"
     gsutil mb -b on "gs://${avro_bucket}"
-    ./upload_broker_bucket.sh "$broker_bucket"
+    ./upload_broker_bucket.sh "${broker_bucket}"
 else
     # ensure that we do not teardown production resources
     if [ "$testid" != "False" ]; then
-        gsutil rm -r "gs://${broker_bucket}"
-        gsutil rm -r "gs://${avro_bucket}"
+        o="GSUtil:parallel_process_count=1" # disable multiprocessing for Macs
+        gsutil -m -o "${o}" rm -r "gs://${broker_bucket}"
+        gsutil -m -o "${o}" rm -r "gs://${avro_bucket}"
     fi
 fi
 
 #--- Create VM instances
 echo
 echo "Configuring VMs..."
-./create_vms.sh "$broker_bucket" "$testid" "$teardown" "$survey"
+./create_vms.sh "${broker_bucket}" "${testid}" "${teardown}" "${survey}"
 
 #--- Create BQ, PS, GCS resources
-if [ "$teardown" != "True" ]; then
+if [ "${teardown}" != "True" ]; then
     echo "Configuring BigQuery, GCS, Pub/Sub resources..."
     # create bigquery
     bq mk --dataset "${bq_dataset}"
@@ -87,8 +82,6 @@ if [ "$teardown" != "True" ]; then
     roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/${role}"
     user="allUsers"
 
-    # the next three lines encountered the following error: ./set_iam_policy.sh: Permission denied
-    # want to avoid using the command 'sudo', any thoughts on what to do?
     ./set_iam_policy.sh "${avro_topic}" "${roleid}" "${user}"
     ./set_iam_policy.sh "${bq_topic}" "${roleid}" "${user}"
     ./set_iam_policy.sh "${topic_alerts}" "${roleid}" "${user}"
@@ -99,13 +92,13 @@ if [ "$teardown" != "True" ]; then
     trigger_event=OBJECT_FINALIZE
     format=json  # json or none; if json, file metadata sent in message body
     gsutil notification create \
-                -t "$avro_topic" \
-                -e "$trigger_event" \
-                -f "$format" \
+                -t "${avro_topic}" \
+                -e "${trigger_event}" \
+                -f "${format}" \
                 "gs://${avro_bucket}"
 else
     # ensure that we do not teardown production resources
-    if [ "$testid" != "False" ]; then
+    if [ "${testid}" != "False" ]; then
         bq rm --dataset true "${bq_dataset}"
         gcloud pubsub topics delete "${avro_topic}"
         gcloud pubsub topics delete "${bq_topic}"
@@ -118,4 +111,4 @@ fi
 #--- Deploy Cloud Functions
 echo
 echo "Configuring Cloud Functions..."
-./deploy_cloud_fncs.sh "$testid" "$teardown" "$survey"
+./deploy_cloud_fncs.sh "${testid}" "${teardown}" "${survey}"

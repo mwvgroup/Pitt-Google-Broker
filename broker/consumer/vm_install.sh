@@ -12,17 +12,17 @@ zone=$(curl "${baseurl}/instance/zone" -H "${H}")
 PROJECT_ID=$(curl "${baseurl}/project/project-id" -H "${H}")
 
 # parse the survey name and testid from the VM name
-survey=$(echo "$consumerVM" | awk -F "-" '{print $1}')
-if [ "$consumerVM" = "${survey}-consumer" ]; then
+survey=$(echo "${consumerVM}" | awk -F "-" '{print $1}')
+if [ "${consumerVM}" = "${survey}-consumer" ]; then
     testid="False"
 else
-    testid=$(echo "$consumerVM" | awk -F "-" '{print $NF}')
+    testid=$(echo "${consumerVM}" | awk -F "-" '{print $NF}')
 fi
 
 #--- GCP resources used in this script
 broker_bucket="${PROJECT_ID}-${survey}-broker_files"
 # use test resources, if requested
-if [ "$testid" != "False" ]; then
+if [ "${testid}" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
 fi
 
@@ -30,17 +30,10 @@ fi
 apt-get update
 apt-get install -y wget screen software-properties-common snapd
 # software-properties-common installs add-apt-repository
-# install yq (requires snap)
 snap install core
 snap install yq
 
-##### the following block of code is under development
-brokerdir=/home/broker
-mkdir -p ${brokerdir}
-
-# download fresh files
-gsutil -m cp -r "gs://${broker_bucket}/*"  "${brokerdir}"
-#####
+mkdir -p "/home/broker/consumer"
 
 #--- Install Java and the dev kit
 # see https://www.digitalocean.com/community/tutorials/how-to-install-java-with-apt-on-debian-10
@@ -50,7 +43,7 @@ apt install -y default-jre
 apt install -y default-jdk
 echo 'JAVA_HOME="/usr/lib/jvm/java-11-openjdk-amd64/bin/java"' >> /etc/environment
 source /etc/environment
-echo $JAVA_HOME
+echo "${JAVA_HOME}"
 echo "Done installing Java."
 apt update
 
@@ -68,17 +61,18 @@ echo "Done installing Confluent Platform."
 #--- Install Kafka -> Pub/Sub connector
 # see https://github.com/GoogleCloudPlatform/pubsub/tree/master/kafka-connector
 echo "Installing the Kafka -> Pub/Sub connector"
-plugindir=/usr/local/share/kafka/plugins
-CONNECTOR_RELEASE=v0.5-alpha
-mkdir -p ${plugindir}
+plugindir="/usr/local/share/kafka/plugins"
+CONNECTOR_RELEASE="v0.5-alpha"
+mkdir -p "${plugindir}"
 #- install the connector
-cd ${plugindir}
-wget https://github.com/GoogleCloudPlatform/pubsub/releases/download/${CONNECTOR_RELEASE}/pubsub-kafka-connector.jar
+cd "${plugindir}"
+wget "https://github.com/GoogleCloudPlatform/pubsub/releases/download/${CONNECTOR_RELEASE}/pubsub-kafka-connector.jar"
 echo "Done installing the Kafka -> Pub/Sub connector"
 
 #--- Set the startup script and shutdown
 startupscript="gs://${broker_bucket}/consumer/vm_startup.sh"
-gcloud compute instances add-metadata "$consumerVM" --zone "$zone" \
-    --metadata startup-script-url="$startupscript"
+gcloud compute instances add-metadata "${consumerVM}" \
+    --zone "$zone" \
+    --metadata="startup-script-url=${startupscript}"
 echo "vm_install.sh is complete. Shutting down."
 shutdown -h now
