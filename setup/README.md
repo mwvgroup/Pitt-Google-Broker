@@ -15,7 +15,8 @@ teardown="False"
 ./setup_broker.sh "${testid}" "${teardown}" "${survey}"
 ```
 
-While the consumer's install script is still running*, complete the following.
+_While_ the consumer's install script is still running, complete the following.
+(If you miss it, go here*)
 
 A keytab file is required for authentication to the Kafka server.
 It must be uploaded to the consumer manually and then moved into place.
@@ -29,7 +30,7 @@ gcloud compute scp "${keytab}" "${consumerVM}:~/${keytab}"
 gcloud compute ssh "${consumerVM}" -- sudo mv "~/${keytab}" "/home/broker/consumer/${keytab}"
 ```
 
-\*If the consumer shuts down before you do this, unset its startup script and then turn it back on and upload the keyfile. Be sure to reset the startup script. This can be done at anytime after you've turned the consumer back on (the point at which it checks for one).
+\*If the consumer shuts down before you get there, unset its startup script and then turn it back on and upload the keyfile. Be sure to reset the startup script. This can be done at anytime after you've turned the consumer back on (the point at which it checks for one).
 
 After the consumer shuts down, complete the following.
 
