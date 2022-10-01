@@ -15,7 +15,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-with open('VERSION') as f:
+with open('VERSION', 'r') as f:
     VERSION = f.read().splitlines()[0]
 
 # -- Project information -----------------------------------------------------
