@@ -26,6 +26,14 @@ if [ "${testid}" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
 fi
 
+#--- Setup the working dir
+# CONNECTION REQUIREMENT: keytab authorization file must be manually uploaded here
+workingdir="/home/broker/consumer"
+mkdir -p "${workingdir}"
+cd "${workingdir}"
+gsutil -m cp -r "gs://${broker_bucket}/consumer/**" .
+mv "krb5.conf" "/etc/krb5.conf"
+
 #--- Install general utils
 apt-get update
 apt-get install -y wget screen software-properties-common snapd
@@ -33,15 +41,13 @@ apt-get install -y wget screen software-properties-common snapd
 snap install core
 snap install yq
 
-mkdir -p "/home/broker/consumer"
-
 #--- Install Java and the dev kit
 # see https://www.digitalocean.com/community/tutorials/how-to-install-java-with-apt-on-debian-10
 apt update
 echo "Installing Java..."
 apt install -y default-jre
 apt install -y default-jdk
-echo 'JAVA_HOME="/usr/lib/jvm/java-11-openjdk-amd64/bin/java"' >> /etc/environment
+echo 'JAVA_HOME="/usr/lib/jvm/java-11-openjdk-amd64"' >> /etc/environment
 source /etc/environment
 echo "${JAVA_HOME}"
 echo "Done installing Java."
@@ -71,8 +77,9 @@ echo "Done installing the Kafka -> Pub/Sub connector"
 
 #--- Set the startup script and shutdown
 startupscript="gs://${broker_bucket}/consumer/vm_startup.sh"
+shutdownscript="gs://${broker_bucket}/consumer/vm_shutdown.sh"
 gcloud compute instances add-metadata "${consumerVM}" \
     --zone "$zone" \
-    --metadata="startup-script-url=${startupscript}"
+    --metadata="startup-script-url=${startupscript},shutdown-script-url=${shutdownscript}"
 echo "vm_install.sh is complete. Shutting down."
 shutdown -h now

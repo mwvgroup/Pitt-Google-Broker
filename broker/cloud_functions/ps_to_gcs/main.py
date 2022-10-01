@@ -15,8 +15,10 @@ from tempfile import SpooledTemporaryFile
 import fastavro
 from google.cloud import logging
 from google.cloud import storage
+from google.cloud.exceptions import PreconditionFailed
 
-from broker_utils.schema_maps import load_schema_map, get_value, get_key
+from broker_utils.avro_schemas.load import all as load_all_schemas
+from broker_utils.schema_maps import load_schema_map, get_key
 from broker_utils.types import AlertFilename, AlertIds
 from exceptions import SchemaParsingError
 
@@ -25,6 +27,7 @@ PROJECT_ID = os.getenv('GCP_PROJECT')
 TESTID = os.getenv('TESTID')
 SURVEY = os.getenv('SURVEY')
 
+schema_in = load_all_schemas()["elasticc.v0_9.alert.avsc"]
 schema_map = load_schema_map(SURVEY, TESTID)
 sobjectId, ssourceId = get_key("objectId", schema_map), get_key("sourceId", schema_map)
 # connect to the cloud logger
@@ -86,7 +89,12 @@ def run(msg, context) -> None:
                 `event_type`: for example: "google.pubsub.topic.publish".
                 `resource`: the resource that emitted the event.
     """
-    upload_bytes_to_bucket(msg, context)
+    try:
+        upload_bytes_to_bucket(msg, context)
+    # PreconditionFailed is raised by blob.upload_from_file if the object already exists in the bucket
+    except PreconditionFailed:
+        logger.log_text(f"Dropping duplicate alert. message_id: {context.event_id}", severity="INFO")
+        # we're done with it. we simply return
 
 
 def upload_bytes_to_bucket(msg, context) -> None:
@@ -124,20 +132,11 @@ def upload_bytes_to_bucket(msg, context) -> None:
 
         blob = bucket.blob(filename)
         blob.metadata = create_file_metadata(alert, context, alert_ids)
-        blob.upload_from_file(temp_file)
+        # raise PreconditionFailed exception if filename already exists in the bucket using "if_generation_match=0".
+        # let it raise. the main function will handle it.
+        blob.upload_from_file(temp_file, if_generation_match=0)
 
     logger.log_text(f'Uploaded {filename} to {bucket_name}')
-
-    del_vars = [
-        data,
-        attributes,
-        temp_file,
-        alert,
-        filename,
-        blob,
-    ]
-    for var in del_vars:
-        del var
 
 
 def create_file_metadata(alert, context, alert_ids):
@@ -145,18 +144,15 @@ def create_file_metadata(alert, context, alert_ids):
     metadata = {'file_origin_message_id': context.event_id}
     metadata[alert_ids.id_keys.objectId] = alert_ids.objectId
     metadata[alert_ids.id_keys.sourceId] = alert_ids.sourceId
-    metadata['ra'] = alert[0][schema_map['source']]['ra']
-    metadata['dec'] = alert[0][schema_map['source']]['dec']
+    metadata['ra'] = alert[0][schema_map['source']][schema_map['ra']]
+    metadata['dec'] = alert[0][schema_map['source']][schema_map['dec']]
     return metadata
 
 
 def extract_alert_dict(temp_file):
-    """Extracts and returns the alert data as a dict wrapped in a list.
-    """
-    # load the file and get the data with fastavro
+    """Extract and return the alert data as a dict wrapped in a list."""
     temp_file.seek(0)
-    alert = [r for r in fastavro.reader(temp_file)]
-    return alert
+    return [fastavro.schemaless_reader(temp_file, schema_in)]
 
 
 def fix_schema(temp_file, alert, data, filename):

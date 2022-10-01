@@ -3,7 +3,6 @@ broker/ztf_archive/data/
 
 # Authentication keys
 GCPauth.json
-krb5.conf
 pitt-reader.user.keytab
 
 # OS files

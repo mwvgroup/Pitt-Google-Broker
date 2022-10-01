@@ -1,0 +1,20 @@
+SURVEY: elasticc
+SURVEY_SCHEMA: https://github.com/LSSTDESC/plasticc_alerts/tree/main/Examples/plasticc_schema
+SCHEMA_VERSION: v0_9
+TOPIC_SYNTAX:
+FILTER_MAP:
+objectId: [diaObject, diaObjectId]
+prvSources: prvDiaSources
+source: diaSource
+sourceId: [diaSource, diaSourceId]
+cutoutDifference: cutoutDifference
+cutoutScience: none
+cutoutTemplate: cutoutTemplate
+filter: filterName
+mag: magpsf
+magerr: sigmapsf
+magzp: magzpsci
+psFlux: psFlux
+psFluxErr: psFluxErr
+dec: decl
+ra: ra
