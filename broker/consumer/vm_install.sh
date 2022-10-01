@@ -30,7 +30,7 @@ fi
 # CONNECTION REQUIREMENT: keytab authorization file must be manually uploaded here
 workingdir="/home/broker/consumer"
 mkdir -p "${workingdir}"
-cd "${workingdir}"
+cd "${workingdir}" || exit
 gsutil -m cp -r "gs://${broker_bucket}/consumer/**" .
 mv "krb5.conf" "/etc/krb5.conf"
 
@@ -72,7 +72,7 @@ plugindir="/usr/local/share/kafka/plugins"
 CONNECTOR_RELEASE="0.1.2"
 mkdir -p "${plugindir}"
 #- install the connector
-cd "${plugindir}"
+cd "${plugindir}" || exit
 wget "https://search.maven.org/remotecontent?filepath=com/google/cloud/pubsub-group-kafka-connector/${CONNECTOR_RELEASE}/pubsub-group-kafka-connector-${CONNECTOR_RELEASE}.jar"
 echo "Done installing the Kafka -> Pub/Sub connector"
 

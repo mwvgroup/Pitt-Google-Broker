@@ -7,7 +7,7 @@ workingdir="${brokerdir}/consumer"
 # make it immutable, then delete everything else so we can start fresh.
 chattr +i "${workingdir}/pitt-reader.user.keytab"
 rm -rf "${brokerdir}"
-cd "${workingdir}"
+cd "${workingdir}" || exit
 
 #--- Files this script will write
 fout_run="${workingdir}/run-connector.out"

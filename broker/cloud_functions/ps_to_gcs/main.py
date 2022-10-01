@@ -26,6 +26,8 @@ from exceptions import SchemaParsingError
 PROJECT_ID = os.getenv('GCP_PROJECT')
 TESTID = os.getenv('TESTID')
 SURVEY = os.getenv('SURVEY')
+BROKER_VERSION = os.getenv("BROKER_VERSION")
+BROKER_NAME = "Pitt-Google"
 
 schema_in = load_all_schemas()["elasticc.v0_9.alert.avsc"]
 schema_map = load_schema_map(SURVEY, TESTID)
@@ -131,7 +133,7 @@ def upload_bytes_to_bucket(msg, context) -> None:
         temp_file.seek(0)
 
         blob = bucket.blob(filename)
-        blob.metadata = create_file_metadata(alert, context, alert_ids)
+        blob.metadata = create_file_metadata(alert, context, attributes, alert_ids)
         # raise PreconditionFailed exception if filename already exists in the bucket using "if_generation_match=0".
         # let it raise. the main function will handle it.
         blob.upload_from_file(temp_file, if_generation_match=0)
@@ -139,14 +141,20 @@ def upload_bytes_to_bucket(msg, context) -> None:
     logger.log_text(f'Uploaded {filename} to {bucket_name}')
 
 
-def create_file_metadata(alert, context, alert_ids):
+def create_file_metadata(alert, context, attributes, alert_ids):
     """Return key/value pairs to be attached to the file as metadata."""
-    metadata = {'file_origin_message_id': context.event_id}
-    metadata[alert_ids.id_keys.objectId] = alert_ids.objectId
-    metadata[alert_ids.id_keys.sourceId] = alert_ids.sourceId
-    metadata['ra'] = alert[0][schema_map['source']][schema_map['ra']]
-    metadata['dec'] = alert[0][schema_map['source']][schema_map['dec']]
-    return metadata
+    return {
+        "broker_name": BROKER_NAME,
+        "broker_version": BROKER_VERSION,
+        "broker_ingest_timestamp": context.event_id,
+        "kafka_topic": attributes["kafka.topic"],
+        "kafka_timestamp": attributes["kafka.timestamp"],
+        "alertId": alert[0]["alertId"],
+        alert_ids.id_keys.objectId: alert_ids.objectId,
+        alert_ids.id_keys.sourceId: alert_ids.sourceId,
+        "ra": alert[0][schema_map['source']][schema_map['ra']],
+        "dec": alert[0][schema_map['source']][schema_map['dec']],
+    }
 
 
 def extract_alert_dict(temp_file):
