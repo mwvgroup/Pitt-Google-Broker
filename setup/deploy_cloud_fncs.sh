@@ -4,6 +4,7 @@
 testid="${1:-test}"
 teardown="${2:-False}"
 survey="${3:-elasticc}"
+max_instances="{$4:-500}"
 zone="${CE_ZONE:-us-central1-a}"
 
 #--- GCP resources used in this script
@@ -45,6 +46,7 @@ else # Deploy the Cloud Functions
         --entry-point "run" \
         --source "../broker/cloud_functions/ps_to_gcs" \
         --memory "512MB" \
+        --max-instances "${max_instances}" \
         --runtime "python37" \
         --trigger-topic "${ps_to_gcs_trigger_topic}" \
         --set-env-vars "TESTID=${testid},SURVEY=${survey}"
