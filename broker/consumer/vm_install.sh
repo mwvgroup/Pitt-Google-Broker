@@ -42,7 +42,7 @@ snap install core
 snap install yq
 
 #--- Install Java and the dev kit
-# see https://www.digitalocean.com/community/tutorials/how-to-install-java-with-apt-on-debian-10
+# see https://www.digitalocean.com/community/tutorials/how-to-install-java-with-apt-on-debian-11
 apt update
 echo "Installing Java..."
 apt install -y default-jre
@@ -57,9 +57,10 @@ apt update
 # see https://docs.confluent.io/platform/current/installation/installing_cp/deb-ubuntu.html
 echo "Installing Confluent Platform..."
 # install the key used to sign packages
-wget -qO - https://packages.confluent.io/deb/6.0/archive.key | sudo apt-key add -
+confluent_version="7.2"
+wget -qO - "https://packages.confluent.io/deb/${confluent_version}/archive.key" | sudo apt-key add -
 # add the repository
-add-apt-repository "deb [arch=amd64] https://packages.confluent.io/deb/6.0 stable main"
+add-apt-repository "deb [arch=amd64] https://packages.confluent.io/deb/${confluent_version} stable main"
 # install
 apt-get update && sudo apt-get install -y confluent-platform
 echo "Done installing Confluent Platform."
@@ -68,11 +69,11 @@ echo "Done installing Confluent Platform."
 # see https://github.com/GoogleCloudPlatform/pubsub/tree/master/kafka-connector
 echo "Installing the Kafka -> Pub/Sub connector"
 plugindir="/usr/local/share/kafka/plugins"
-CONNECTOR_RELEASE="v0.5-alpha"
+CONNECTOR_RELEASE="0.1.2"
 mkdir -p "${plugindir}"
 #- install the connector
 cd "${plugindir}" || exit
-wget "https://github.com/GoogleCloudPlatform/pubsub/releases/download/${CONNECTOR_RELEASE}/pubsub-kafka-connector.jar"
+wget "https://search.maven.org/remotecontent?filepath=com/google/cloud/pubsub-group-kafka-connector/${CONNECTOR_RELEASE}/pubsub-group-kafka-connector-${CONNECTOR_RELEASE}.jar"
 echo "Done installing the Kafka -> Pub/Sub connector"
 
 #--- Set the startup script and shutdown
