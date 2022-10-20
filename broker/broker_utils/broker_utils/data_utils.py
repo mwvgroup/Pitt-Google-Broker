@@ -301,6 +301,17 @@ def alert_dict_to_dataframe(alert_dict: dict, schema_map: dict) -> "pd.DataFrame
     return df
 
 
+def alert_lite_to_dataframe(alert_dict: dict) -> pd.DataFrame:
+    """Package an alert into a dataframe.
+
+    Adapted from: https://github.com/ZwickyTransientFacility/ztf-avro-alert/blob/master/notebooks/Filtering_alerts.ipynb
+    """
+    src_df = pd.DataFrame(alert_dict['source'], index=[0])
+    prvs_df = pd.DataFrame(alert_dict['prvSources'])
+    xmatch_df = pd.DataFrame(alert_dict['xmatch'], index=[0])
+    return pd.concat([src_df, prvs_df, xmatch_df], ignore_index=True)
+
+
 def _drop_cutouts(alert_dict: dict, schema_map: dict) -> dict:
     """Drop the cutouts from the alert dictionary."""
     cutouts = [
