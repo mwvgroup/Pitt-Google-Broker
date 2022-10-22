@@ -22,6 +22,7 @@ PROJECT_ID=$(curl "${baseurl}/project/project-id" -H "${H}")
 zone=$(curl "${baseurl}/instance/zone" -H "${H}")
 PS_TOPIC_FORCE=$(curl "${baseurl}/instance/attributes/PS_TOPIC_FORCE" -H "${H}")
 KAFKA_TOPIC_FORCE=$(curl "${baseurl}/instance/attributes/KAFKA_TOPIC_FORCE" -H "${H}")
+OFFSET_RESET_FORCE=$(curl "${baseurl}/instance/attributes/OFFSET_RESET_FORCE" -H "${H}")
 # parse the survey name and testid from the VM name
 consumerVM=$(curl "${baseurl}/instance/name" -H "${H}")
 survey=$(echo "${consumerVM}" | awk -F "-" '{print $1}')
@@ -45,9 +46,7 @@ gsutil -m cp -r "gs://${broker_bucket}/consumer" "${brokerdir}"
 gsutil -m cp -r "gs://${broker_bucket}/schema_maps" "${brokerdir}"
 
 #--- Set default Kafka topic
-kafka_topic_syntax=$(cat "${brokerdir}/schema_maps/${survey}.yaml" | yq ".TOPIC_SYNTAX")
-yyyymmdd=$(date -u '+%Y%m%d')
-KAFKA_TOPIC_DEFAULT="${kafka_topic_syntax/yyyymmdd/${yyyymmdd}}"
+KAFKA_TOPIC_DEFAULT="elasticc-2022fall"
 
 #--- Set the topic names to the "FORCE" metadata attributes if exist, else defaults
 KAFKA_TOPIC="${KAFKA_TOPIC_FORCE:-${KAFKA_TOPIC_DEFAULT}}"
@@ -61,6 +60,12 @@ fconfig="ps-connector.properties"
 sed -i "s/PROJECT_ID/${PROJECT_ID}/g" "${fconfig}"
 sed -i "s/PS_TOPIC/${PS_TOPIC}/g" "${fconfig}"
 sed -i "s/KAFKA_TOPIC/${KAFKA_TOPIC}/g" "${fconfig}"
+
+#--- Set the Kafka offset
+fconfig="psconnect-worker.properties"
+OFFSET_RESET_DEFAULT="latest"
+OFFSET_RESET="${OFFSET_RESET_FORCE:-${OFFSET_RESET_DEFAULT}}"
+sed -i "s/<OFFSET_RESET>/${OFFSET_RESET}/g" "${fconfig}"
 
 #--- Check until alerts start streaming into the topic
 alerts_flowing="false"

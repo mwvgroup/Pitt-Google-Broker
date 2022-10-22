@@ -1,6 +1,9 @@
 title: "Public User of Pitt-Google Broker"
 # intended role-id, to be set at deployment: "userPublic"
-description: "Role graning permissions necessary for accessing Pitt-Google's public data resources. Intended to be bound to the `allUsers` member. allUsers is anyone on the internet, no authentication required. However, some individual GCP services will still require authentication."
+description: "Role granting permissions to access Pitt-Google's public data resources. Intended to be bound to the `allUsers` member. allUsers is anyone on the internet, no authentication required, but individual GCP services may still require authentication."
 stage: "ALPHA"
 includedPermissions:
 - pubsub.topics.attachSubscription
+- pubsub.topics.list
+- storage.objects.get
+- storage.objects.list

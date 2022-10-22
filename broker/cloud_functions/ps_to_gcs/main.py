@@ -95,8 +95,8 @@ def run(msg, context) -> None:
         upload_bytes_to_bucket(msg, context)
     # PreconditionFailed is raised by blob.upload_from_file if the object already exists in the bucket
     except PreconditionFailed:
-        logger.log_text(f"Dropping duplicate alert. message_id: {context.event_id}", severity="INFO")
         # we're done with it. we simply return
+        return
 
 
 def upload_bytes_to_bucket(msg, context) -> None:
@@ -138,7 +138,6 @@ def upload_bytes_to_bucket(msg, context) -> None:
         # let it raise. the main function will handle it.
         blob.upload_from_file(temp_file, if_generation_match=0)
 
-    logger.log_text(f'Uploaded {filename} to {bucket_name}')
 
 
 def create_file_metadata(alert, context, attributes, alert_ids):
@@ -180,8 +179,6 @@ def fix_schema(temp_file, alert, data, filename):
             valid_schema = pickle.load(infile)
 
     except FileNotFoundError:
-        msg = f'Original schema header retained for {SURVEY} v{version}; file {filename}'
-        logger.log_text(msg)
         return
 
     # write the corrected file
@@ -189,8 +186,6 @@ def fix_schema(temp_file, alert, data, filename):
     fastavro.writer(temp_file, valid_schema, alert)
     temp_file.truncate()  # removes leftover data
     temp_file.seek(0)
-
-    logger.log_text(f'Schema header reformatted for {SURVEY} v{version}; file {filename}')
 
 
 def guess_schema_version(alert_bytes: bytes) -> str:
