@@ -5,10 +5,11 @@ broker_bucket=$1
 testid="${2:-test}"
 teardown="${3:-False}"
 survey="${4:-ztf}"
-zone="${CE_ZONE:-us-central1-a}"
+zone="${CLOUDSDK_COMPUTE_ZONE:-us-central1-a}"
 
 #--- GCP resources used in this script
 consumerVM="${survey}-consumer"
+consumerVMsched="${survey}-consumer-schedule"
 # use test resources, if requested
 if [ "${testid}" != "False" ]; then
     consumerVM="${consumerVM}-${testid}"
@@ -26,6 +27,7 @@ else
 #--- Consumer VM
     installscript="gs://${broker_bucket}/consumer/vm_install.sh"
     gcloud compute instances create "${consumerVM}" \
+        --resource-policies="${consumerVMsched}" \
         --zone "${zone}" \
         --machine-type "e2-standard-2" \
         --image-family "debian-11" \
