@@ -193,7 +193,7 @@ class MetadataCollector:
 
         # remove fields in the BQ table schema that are now obsolete because alerts_raw took over responsibility
         if topic_stub == "alerts":
-            for field in ["kafka_topic", "kafka_timestamp", "message_id"]:
+            for field in ("kafka_topic", "kafka_timestamp", "message_id"):
                 try:
                     requested_fields.remove(field)
                 except ValueError:
@@ -250,7 +250,7 @@ class MetadataCollector:
         Pub/Sub message_id, which is used here to associate "alerts_raw" stream messages
         with DIA ids.
         """
-        if "alerts_raw" not in self.metadata_dfs_dict.keys():
+        if "alerts_raw" not in self.metadata_dfs_dict:
             return
 
         # column names
