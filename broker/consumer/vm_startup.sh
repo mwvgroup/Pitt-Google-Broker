@@ -46,9 +46,7 @@ gsutil -m cp -r "gs://${broker_bucket}/consumer" "${brokerdir}"
 gsutil -m cp -r "gs://${broker_bucket}/schema_maps" "${brokerdir}"
 
 #--- Set default Kafka topic
-kafka_topic_syntax=$(cat "${brokerdir}/schema_maps/${survey}.yaml" | yq ".TOPIC_SYNTAX")
-yyyymmdd=$(date -u '+%Y%m%d')
-KAFKA_TOPIC_DEFAULT="${kafka_topic_syntax/yyyymmdd/${yyyymmdd}}"
+KAFKA_TOPIC_DEFAULT="elasticc-2022fall"
 
 #--- Set the topic names to the "FORCE" metadata attributes if exist, else defaults
 KAFKA_TOPIC="${KAFKA_TOPIC_FORCE:-${KAFKA_TOPIC_DEFAULT}}"
