@@ -151,19 +151,6 @@ def upload_bytes_to_bucket(msg, context) -> None:
             }
         )
 
-    logger.log_text(f'Uploaded {filename} to {bucket_name}')
-
-    del_vars = [
-        data,
-        attributes,
-        temp_file,
-        alert,
-        filename,
-        blob,
-    ]
-    for var in del_vars:
-        del var
-
 
 def create_file_metadata(alert, context, alert_ids):
     """Return key/value pairs to be attached to the file as metadata."""
@@ -201,8 +188,6 @@ def fix_schema(temp_file, alert, data, filename):
             valid_schema = pickle.load(infile)
 
     except FileNotFoundError:
-        msg = f'Original schema header retained for {SURVEY} v{version}; file {filename}'
-        logger.log_text(msg)
         return
 
     # write the corrected file
@@ -210,8 +195,6 @@ def fix_schema(temp_file, alert, data, filename):
     fastavro.writer(temp_file, valid_schema, alert)
     temp_file.truncate()  # removes leftover data
     temp_file.seek(0)
-
-    logger.log_text(f'Schema header reformatted for {SURVEY} v{version}; file {filename}')
 
 
 def guess_schema_version(alert_bytes: bytes) -> str:
