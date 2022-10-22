@@ -95,8 +95,8 @@ def run(msg, context) -> None:
         upload_bytes_to_bucket(msg, context)
     # PreconditionFailed is raised by blob.upload_from_file if the object already exists in the bucket
     except PreconditionFailed:
-        logger.log_text(f"Dropping duplicate alert. message_id: {context.event_id}", severity="INFO")
         # we're done with it. we simply return
+        return
 
 
 def upload_bytes_to_bucket(msg, context) -> None:
