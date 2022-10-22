@@ -20,9 +20,7 @@ nconductVMsched="${nconductVM}-schedule"
 # use test resources, if requested
 if [ "$testid" != "False" ]; then
     consumerVM="${consumerVM}-${testid}"
-    consumerVMsched="${consumerVMsched}-${testid}"
     nconductVM="${nconductVM}-${testid}"
-    nconductVMsched="${nconductVMsched}-${testid}"
 fi
 
 #--- Teardown resources
