@@ -69,6 +69,8 @@ echo "Configuring VMs..."
 #--- Create BQ, PS, GCS resources
 if [ "${teardown}" != "True" ]; then
     echo "Configuring BigQuery, GCS, Pub/Sub resources..."
+    # create dashboard
+    gcloud monitoring dashboards create --config-from-file="templates/dashboard.json"
     # create bigquery
     # bq mk --dataset "${bq_dataset}"
     # bq mk --table "${bq_dataset}.${alerts_table}" "templates/bq_${survey}_${alerts_table}_schema.json"
