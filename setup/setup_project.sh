@@ -25,7 +25,6 @@ role_id="userPublic"
 role_yaml="role_user_public.yml"
 gcloud iam roles create "${role_id}" --project="${GOOGLE_CLOUD_PROJECT}" --file="${role_yaml}"
 
-
 # Create an IAM role to start/stop VMs and bind it to the compute engine service account
 role_id="computeStartStop"
 role_yaml="role_compute_startstop.yml"

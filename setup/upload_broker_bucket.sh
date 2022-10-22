@@ -1,5 +1,5 @@
 #! /bin/bash
-broker_bucket=$1 # name of GCS bucket where broker files should be staged
+broker_bucket="${1}" # name of GCS bucket where broker files should be staged
 
 echo
 echo "Uploading broker files to GCS..."
