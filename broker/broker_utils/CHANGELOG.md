@@ -10,6 +10,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## \[Unreleased\]<a name="unreleased"></a>
 
+
+## \[0.2.45\] - 2022-10-22
+
+### Fixed
+
+- Import `pandas` for `data_utils.alert_lite_to_dataframe()`.
+- Remove the `xmatch` dict from the dataframe created by `data_utils.alert_lite_to_dataframe()`.
+
+## \[0.2.44\] - 2022-10-20
+
+### Added
+
+- `data_utils.alert_lite_to_dataframe()`
+
+
 ## \[0.2.43\] - 2022-08-25
 
 ### Fixed
