@@ -48,7 +48,7 @@
     "type": "STRING"
   },
   {
-    "description": "Timestamp of the salt2 Pub/Sub message.",
+    "description": "Timestamp of the alerts Pub/Sub message.",
     "mode": "NULLABLE",
     "name": "publish_time__alerts",
     "type": "TIMESTAMP"
