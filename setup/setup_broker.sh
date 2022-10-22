@@ -81,14 +81,13 @@ if [ "${teardown}" != "True" ]; then
     gcloud pubsub topics create "${topic_alerts}"
     gcloud pubsub subscriptions create "${topic_alerts}-reservoir" --topic "${topic_alerts}"
     gcloud pubsub subscriptions create "${avro_topic}-reservoir" --topic "${avro_topic}"
-    # set iam policies for topics. this is a custom role that we created
-    role="userPublic"
-    roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/${role}"
-    user="allUsers"
 
-    ./set_iam_policy.sh "${avro_topic}" "${roleid}" "${user}"
-    # ./set_iam_policy.sh "${bq_topic}" "${roleid}" "${user}"
-    ./set_iam_policy.sh "${topic_alerts}" "${roleid}" "${user}"
+    # Set IAM policies on resources
+    user="allUsers"
+    roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/userPublic"
+    gcloud pubsub topics add-iam-policy-binding "${avro_topic}" --member="${user}" --role="${roleid}"
+    gcloud pubsub topics add-iam-policy-binding "${topic_alerts}" --member="${user}" --role="${roleid}"
+    gsutil iam ch "${user}:${roleid}" "gs://${avro_bucket}"
 
     #--- Setup the Pub/Sub notifications on ZTF Avro storage bucket
     echo
