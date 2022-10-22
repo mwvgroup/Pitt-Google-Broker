@@ -1,0 +1,7 @@
+title: "Compute Engine Start/Stop"
+# intended role-id, to be set at deployment: "computeStartStop"
+description: "Role granting permission to start and stop Compute Engine VM instances."
+stage: "ALPHA"
+includedPermissions:
+- compute.instances.start
+- compute.instances.stop
