@@ -258,12 +258,13 @@ class MetadataCollector:
         # add the ids to the alerts metadata
         df_alerts = self.metadata_dfs_dict["alerts"].reset_index()
         df_alerts = df_alerts.astype({msg_id: int}).set_index(msg_id)
-        df_alerts[oid] = df_avros[oid]
-        df_alerts[sid] = df_avros[sid]
 
         # pubsub message_id duplicated when msg is *published* once but *received* twice. drop duplicates.
         df_alerts = df_alerts[~df_alerts.index.duplicated(keep="first")]
         df_avros = df_avros[~df_avros.index.duplicated(keep="first")]
+
+        df_alerts[oid] = df_avros[oid]
+        df_alerts[sid] = df_avros[sid]
 
         # handle messages that were not matched to an oid and sid
         null_ids = df_alerts[df_alerts[[oid, sid]].isnull().any(axis=1)].index
