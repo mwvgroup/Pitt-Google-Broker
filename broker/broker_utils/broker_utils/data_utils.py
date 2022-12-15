@@ -133,16 +133,7 @@ def alert_lite_to_dataframe(alert_dict: dict) -> pd.DataFrame:
     
     src_df = pd.DataFrame(alert_dict['source'], index=[0])
     prvs_df = pd.DataFrame(alert_dict['prvSources'])
-    xmatch_df = pd.DataFrame(alert_dict['xmatch'], index=[0])
-    df = pd.concat([src_df, prvs_df, xmatch_df], ignore_index=True)
-
-    # attach some metadata. note this may not be preserved after all operations
-    # https://stackoverflow.com/questions/14688306/adding-meta-information-metadata-to-pandas-dataframe
-    # make sure this does not overwrite existing columns
-    if "objectId" not in df.keys():
-        df.objectId = alert_dict['alertIds'].objectId
-    if "sourceId" not in df.keys():
-        df.sourceId = alert_dict['alertIds'].sourceId
+    df = pd.concat([src_df, prvs_df], ignore_index=True)
 
     return df
 

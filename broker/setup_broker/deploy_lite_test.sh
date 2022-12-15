@@ -40,6 +40,7 @@ tag_trigger_topic="${topic_lite}"
 snn_trigger_topic="${topic_tagged}"
 class_table="classifications"
 tags_table="tags"
+snn_table="SuperNNova"
 
 # make the user confirm the options
 action='create resources'
@@ -95,6 +96,7 @@ else # Deploy the Cloud Functions and create other Cloud resources
     bq mk --dataset "${bq_dataset}"
     bq mk --table "${bq_dataset}.${class_table}" "templates/bq_${survey}_${class_table}_schema.json"
     bq mk --table "${bq_dataset}.${tags_table}" "templates/bq_${survey}_${tags_table}_schema.json"
+    bq mk --table "${bq_dataset}.${snn_table}" "templates/bq_${survey}_${snn_table}_schema.json"
 
 # entry_point for all cloud fncs
     entry_point="run"
@@ -115,12 +117,14 @@ else # Deploy the Cloud Functions and create other Cloud resources
 
 #--- tag cloud function
     echo "Deploying Cloud Function: $tag_CF_name"
+    memory=512MB  # standard 256MB is too small here
 
     cd .. && cd cloud_functions
     cd tag
 
     gcloud functions deploy "$tag_CF_name" \
         --entry-point "$entry_point" \
+        --memory "$memory" \
         --runtime python37 \
         --trigger-topic "$tag_trigger_topic" \
         --set-env-vars TESTID="$testid",SURVEY="$survey"

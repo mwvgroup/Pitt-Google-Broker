@@ -118,18 +118,20 @@ def _is_extragalactic_transient(alert_dict: dict) -> dict:
         is_extragalactic_transient = True
 
     elif SURVEY == "ztf": ## How to get find survey type without schema_map
-        dflc = alert_lite_to_dataframe(alert_dict) # Is schema_map necessary for this function?
+        dflc = data_utils.alert_lite_to_dataframe(alert_dict) # Is schema_map necessary for this function?
         # NEED TO GO TO data_utils.py and determine whether to take out schema map
         
         candidate = dflc.loc[0]
 
         is_positive_sub = candidate["isdiffpos"] == "t"
-
-        if (candidate["distpsnr1"] is None) or (candidate["distpsnr1"] > 1.5):  # arcsec
+        distpsnr1 = alert_dict["xmatch"]["distpsnr1"]
+        sgscore1 = alert_dict['xmatch']['sgscore1']
+        ssdistnr = alert_dict['xmatch']['ssdistnr']
+        if (distpsnr1 is None) or (distpsnr1 > 1.5):  # arcsec
             no_pointsource_counterpart = True
             # closest candidate == star < 1.5 arcsec away -> candidate probably star
         else:
-            no_pointsource_counterpart = candidate["sgscore1"] < 0.5
+            no_pointsource_counterpart = sgscore1 < 0.5
 
         where_detected = dflc["isdiffpos"] == "t"
         if np.sum(where_detected) >= 2:
@@ -140,9 +142,9 @@ def _is_extragalactic_transient(alert_dict: dict) -> dict:
             not_moving = False
 
         no_ssobject = (
-            (candidate["ssdistnr"] is None)
-            or (candidate["ssdistnr"] < 0)
-            or (candidate["ssdistnr"] > 5)
+            (ssdistnr is None)
+            or (ssdistnr < 0)
+            or (ssdistnr > 5)
         )
         # candidate['ssdistnr'] == -999 is another encoding of None
 
@@ -220,25 +222,27 @@ def run(msg: dict, context):
 
     errors = gcp_utils.insert_rows_bigquery(tags_table, [tags_dict])
     if len(errors) > 0:
-        logger.log_text(f"BigQuery insert error: {errors}", severity="DEBUG")
+        logger.log_text(f"BigQuery insert error: {errors}", severity="WARNING")
 
 
     # # store results to BigQuery, regardless of whether it passes the filter
     classifications= [
         {
-            # **attrs: objectId and sourceId
+            # **attrs: objectId and candid (sourceId, but renamed for bigquery)
             # (same thing as candId, but we call it a sourceId in our internal
             # broker) [** is a splat, it takes the elements from attrs dict
             # and unpacks it and passes it to the new dict constr, and passes
             # it as individual elements]
 
-            **attrs,
+            'objectId' : attrs['objectId'],
+            'candid' : attrs['candid'],
             'classifier': 'purity',
             'classifier_version': 0.1,
             'class': purity_reason_dict['is_pure'],
         },
         {
-            **attrs,
+            'objectId' : attrs['objectId'],
+            'candid' : attrs['candid'],
             'classifier': 'extragalactic_transient',
             'classifier_version': 0.1,
             'class': extragalactic_dict['is_extragalactic_transient'],
@@ -247,20 +251,5 @@ def run(msg: dict, context):
 
     errors = gcp_utils.insert_rows_bigquery(class_table, classifications)
     if len(errors) > 0:
-        logger.log_text(f"BigQuery insert error: {errors}", severity="DEBUG")
+        logger.log_text(f"BigQuery insert error: {errors}", severity="WARNING")
 
-
-
-
-def alert_lite_to_dataframe(alert_dict: dict) -> pd.DataFrame: 
-    """ Packages an alert into a dataframe.
-    Adapted from: https://github.com/ZwickyTransientFacility/ztf-avro-alert/blob/master/notebooks/Filtering_alerts.ipynb
-    """
-    
-    src_df = pd.DataFrame(alert_dict['source'], index=[0])
-    prvs_df = pd.DataFrame(alert_dict['prvSources'])
-    xmatch_df = pd.DataFrame(alert_dict['xmatch'], index=[0])
-    df = pd.concat([src_df, prvs_df, xmatch_df], ignore_index=True)
-
-
-    return df

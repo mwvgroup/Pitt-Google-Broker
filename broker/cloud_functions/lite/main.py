@@ -182,7 +182,7 @@ def run(msg: dict, context):
 
     attrs = {
         "objectId": str(alert_lite['alertIds']["objectId"]),
-        "sourceId": str(alert_lite['alertIds']["sourceId"]),
+        "candid": str(alert_lite['alertIds']["sourceId"]),
     } # this gets the custom attr for filtering
 
     # # run the alert through the filter.
