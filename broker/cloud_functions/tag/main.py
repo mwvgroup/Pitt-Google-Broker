@@ -3,17 +3,13 @@
 
 """Filter alerts for purity."""
 
-import base64
-import json
 import os
-import numpy as np
-import pandas as pd
-from google.cloud import logging
-from astropy import units as u
 
-# Add these to requirements.txt but check to make sure that the format of adding is correct
+import numpy as np
+from astropy import units as u
+from google.cloud import logging
+
 from broker_utils import data_utils, gcp_utils
-from broker_utils.types import _AlertIds
 
 
 PROJECT_ID = os.getenv("GCP_PROJECT")  # For local test set this to GOOGLE_CLOUD_PROJECT
