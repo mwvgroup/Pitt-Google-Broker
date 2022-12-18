@@ -4,13 +4,10 @@
 """Filter alerts for purity."""
 
 
-import base64
 import os
-import numpy as np
-from google.cloud import logging
-from astropy import units as u
 
-# Add these to requirements.txt but check to make sure that the format of adding is correct
+from google.cloud import logging
+
 from broker_utils import data_utils, gcp_utils, schema_maps, types
 
 
