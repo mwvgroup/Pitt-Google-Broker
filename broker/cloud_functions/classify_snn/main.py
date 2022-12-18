@@ -3,20 +3,15 @@
 
 """Classify alerts using SuperNNova (M¨oller & de Boissi`ere 2019)."""
 
-from astropy.time import Time
-import base64
-from google.cloud import logging
-import json
-import numpy as np
-import pandas as pd
 import os
 from pathlib import Path
-from supernnova.validation.validate_onthefly import classify_lcs
-from typing import Tuple
 
+import numpy as np
+import pandas as pd
+from google.cloud import logging
+from supernnova.validation.validate_onthefly import classify_lcs
 
 from broker_utils import data_utils, gcp_utils, math
-from broker_utils.types import _AlertIds
 
 
 PROJECT_ID = os.getenv("GCP_PROJECT")
