@@ -14,8 +14,7 @@ from astropy import units as u
 from broker_utils import data_utils, gcp_utils, schema_maps, types
 
 
-
-PROJECT_ID = os.getenv("GCP_PROJECT") # For local test set this to GOOGLE_CLOUD_PROJECT
+PROJECT_ID = os.getenv("GCP_PROJECT")  # For local test set this to GOOGLE_CLOUD_PROJECT
 
 
 # This returns a string which is configured when the broker
@@ -28,7 +27,7 @@ PROJECT_ID = os.getenv("GCP_PROJECT") # For local test set this to GOOGLE_CLOUD_
 # (When we deploy to the cloud we set up a broker instance).
 TESTID = os.getenv("TESTID")
 
-SURVEY = os.getenv("SURVEY") # This will return ztf (in future will be our LSST)
+SURVEY = os.getenv("SURVEY")  # This will return ztf (in future will be our LSST)
 
 # connect to the logger
 logging_client = logging.Client()
@@ -37,7 +36,6 @@ logger = logging_client.logger(LOG_NAME)
 
 # GCP resources used in this module
 bq_dataset = f"{SURVEY}_alerts"
-
 
 
 # This is the name of the Pub/Sub topic that this
@@ -51,13 +49,9 @@ if TESTID != "False":  # attach the testid to the names
     ps_topic = f"{ps_topic}-{TESTID}"
 
 
-
-
-
-
 def semantic_compression(alert_dict, schema_map) -> dict:
 
-    source = alert_dict[schema_map['source']]
+    source = alert_dict[schema_map["source"]]
 
     # NEED FILTER MAP FOR _format_for_snn IN classify_snn
     # ALSO NEED mag, magzp, magerr FOR _format_for_snn IN classify_snn
@@ -69,84 +63,76 @@ def semantic_compression(alert_dict, schema_map) -> dict:
     # Will probably be better to leave the types the way they are
     # in the packet
     source_dict = {
-        'jd' : source['jd'],
-        'sourceId' : source['candid'], # candid some might make an int others a string
-        'ra' : source['ra'],
-        'dec' : source['dec'],
-        'magpsf' : source['magpsf'],
-        'sigmapsf' : source['sigmapsf'],
-        'magzpsci' : source['magzpsci'],
-        'magzpsciunc' : source['magzpsciunc'],
-        'diffmaglim' : source['diffmaglim'],
-        'isdiffpos' : source['isdiffpos'],
-        'rb' : source['rb'],  # RealBogus score
-        'drb' : source['drb'],
-
+        "jd": source["jd"],
+        "sourceId": source["candid"],  # candid some might make an int others a string
+        "ra": source["ra"],
+        "dec": source["dec"],
+        "magpsf": source["magpsf"],
+        "sigmapsf": source["sigmapsf"],
+        "magzpsci": source["magzpsci"],
+        "magzpsciunc": source["magzpsciunc"],
+        "diffmaglim": source["diffmaglim"],
+        "isdiffpos": source["isdiffpos"],
+        "rb": source["rb"],  # RealBogus score
+        "drb": source["drb"],
         # HAD TO ADD THESE FOR PURITY REASON DICT
-
-        'nbad' : source['nbad'],
-        'fwhm' : source['fwhm'],
-        'elong' : source['elong'],
-        'magdiff' : source['magdiff'],
-        'fid' : source['fid'],
+        "nbad": source["nbad"],
+        "fwhm": source["fwhm"],
+        "elong": source["elong"],
+        "magdiff": source["magdiff"],
+        "fid": source["fid"],
     }
 
-
-    access_prev = alert_dict[schema_map['prvSources']]
+    access_prev = alert_dict[schema_map["prvSources"]]
 
     prev_sources = []
 
     for prv_s in access_prev:
 
         prev_source_dict = {
-            'prv_jd' : prv_s['jd'],
-            'prv_candid' : prv_s['candid'],
-            'prv_ra' : prv_s['ra'],
-            'prv_dec' : prv_s['dec'],
-            'prv_magpsf' : prv_s['magpsf'],
-            'prv_sigmapsf' : prv_s['sigmapsf'],
-            'prv_magzpsci' : prv_s['magzpsci'],
-            'prv_magzpsciunc' : prv_s['magzpsciunc'],
-            'prv_diffmaglim' : prv_s['diffmaglim'],
-            'prv_isdiffpos' : prv_s['isdiffpos'],
-
-
+            "prv_jd": prv_s["jd"],
+            "prv_candid": prv_s["candid"],
+            "prv_ra": prv_s["ra"],
+            "prv_dec": prv_s["dec"],
+            "prv_magpsf": prv_s["magpsf"],
+            "prv_sigmapsf": prv_s["sigmapsf"],
+            "prv_magzpsci": prv_s["magzpsci"],
+            "prv_magzpsciunc": prv_s["magzpsciunc"],
+            "prv_diffmaglim": prv_s["diffmaglim"],
+            "prv_isdiffpos": prv_s["isdiffpos"],
             # HAD TO ADD THESE FOR PURITY REASON DICT
-
-            'prv_nbad' : source['nbad'],
-            'prv_fwhm' : source['fwhm'],
-            'prv_elong' : source['elong'],
-            'prv_magdiff' : source['magdiff'],
-            'prv_fid' : source['fid'],
+            "prv_nbad": source["nbad"],
+            "prv_fwhm": source["fwhm"],
+            "prv_elong": source["elong"],
+            "prv_magdiff": source["magdiff"],
+            "prv_fid": source["fid"],
         }
 
         prev_sources.append(prev_source_dict)
 
     xmatch = {
-        'ssdistnr' : source['ssdistnr'],
-        'ssmagnr' : source['ssmagnr'],
-        'objectidps1' : source['objectidps1'],
-        'distpsnr1' : source['distpsnr1'],
-        'sgscore1' : source['sgscore1'],
-        'objectidps2' : source['objectidps2'],
-        'distpsnr2' : source['distpsnr2'],
-        'sgscore2' : source['sgscore2'],
-        'objectidps3' : source['objectidps3'],
-        'distpsnr3' : source['distpsnr3'],
-        'sgscore3' : source['sgscore3'],
+        "ssdistnr": source["ssdistnr"],
+        "ssmagnr": source["ssmagnr"],
+        "objectidps1": source["objectidps1"],
+        "distpsnr1": source["distpsnr1"],
+        "sgscore1": source["sgscore1"],
+        "objectidps2": source["objectidps2"],
+        "distpsnr2": source["distpsnr2"],
+        "sgscore2": source["sgscore2"],
+        "objectidps3": source["objectidps3"],
+        "distpsnr3": source["distpsnr3"],
+        "sgscore3": source["sgscore3"],
     }
 
     alert_lite = {
         # This extracts alert ids. This is a named tuple it contains all of the ids
-        'alertIds' : types.AlertIds(schema_map, alert_dict=alert_dict).ids._asdict(), 
-        'source' : source_dict,
-        'prvSources' : tuple(prev_sources), # name of prvSources style may be changed
-        'xmatch' : xmatch,
+        "alertIds": types.AlertIds(schema_map, alert_dict=alert_dict).ids._asdict(),
+        "source": source_dict,
+        "prvSources": tuple(prev_sources),  # name of prvSources style may be changed
+        "xmatch": xmatch,
     }
 
     return alert_lite
-    
-
 
 
 def run(msg: dict, context):
@@ -176,14 +162,14 @@ def run(msg: dict, context):
 
     alert_dict = data_utils.open_alert(
         msg["data"], drop_cutouts=True, schema_map=schema_map
-    ) # this decodes the alert
+    )  # this decodes the alert
 
     alert_lite = semantic_compression(alert_dict, schema_map)
 
     attrs = {
-        "objectId": str(alert_lite['alertIds']["objectId"]),
-        "candid": str(alert_lite['alertIds']["sourceId"]),
-    } # this gets the custom attr for filtering
+        "objectId": str(alert_lite["alertIds"]["objectId"]),
+        "candid": str(alert_lite["alertIds"]["sourceId"]),
+    }  # this gets the custom attr for filtering
 
     # # run the alert through the filter.
 
@@ -191,7 +177,7 @@ def run(msg: dict, context):
     # gcp_utils.publish_pubsub(ps_topic, alert_dict, attrs=attrs)
     #
     gcp_utils.publish_pubsub(
-            ps_topic,
-            alert_lite,
-            attrs = attrs,
+        ps_topic,
+        alert_lite,
+        attrs=attrs,
     )
