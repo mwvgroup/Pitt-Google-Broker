@@ -1,4 +1,4 @@
-# Admin tasks for GCP projects
+# gcloud Command Examples
 
 - [`gcloud` reference](https://cloud.google.com/sdk/gcloud/reference)
 
