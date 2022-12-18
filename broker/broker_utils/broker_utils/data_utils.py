@@ -4,6 +4,7 @@
 survey and broker data.
 """
 
+from typing import Tuple
 
 from astropy.time import Time
 import fastavro
@@ -125,22 +126,6 @@ def alert_dict_to_dataframe(alert_dict: dict, schema_map: dict) -> pd.DataFrame:
 
     return df
 
-
-def alert_lite_to_dataframe(alert_dict: dict) -> pd.DataFrame: 
-    """ Packages an alert into a dataframe.
-    Adapted from: https://github.com/ZwickyTransientFacility/ztf-avro-alert/blob/master/notebooks/Filtering_alerts.ipynb
-    """
-    
-    src_df = pd.DataFrame(alert_dict['source'], index=[0])
-    prvs_df = pd.DataFrame(alert_dict['prvSources'])
-    df = pd.concat([src_df, prvs_df], ignore_index=True)
-
-    return df
-
-
-
-
-
 def _drop_cutouts(alert_dict: dict, schema_map: dict) -> dict:
     """Drop the cutouts from the alert dictionary."""
     cutouts = [
@@ -174,9 +159,3 @@ def jd_to_mjd(jd: float) -> float:
     """ Converts Julian Date to modified Julian Date.
     """
     return Time(jd, format='jd').mjd
-
-
-
-def ztf_fid_names() -> dict:
-    """Return a dictionary mapping the ZTF `fid` (filter ID) to the common name."""
-    return {1: "g", 2: "r", 3: "i"}
