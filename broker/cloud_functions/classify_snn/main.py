@@ -27,7 +27,7 @@ ps_topic = f"{SURVEY}-SuperNNova"
 if TESTID != "False":  # attach the testid to the names
     bq_dataset = f"{bq_dataset}_{TESTID}"
     ps_topic = f"{ps_topic}-{TESTID}"
-bq_table = f"{bq_dataset}.SuperNNova"
+snn_table = f"{bq_dataset}.SuperNNova"
 class_table = f"{bq_dataset}.classifications"
 
 model_dir_name = "ZTF_DMAM_V19_NoC_SNIa_vs_CC_forFink"
@@ -68,7 +68,7 @@ def run(msg: dict, context) -> None:
 
     # store in bigquery
     errors = gcp_utils.insert_rows_bigquery(
-        bq_table,
+        snn_table,
         [
             {
                 **snn_dict,
@@ -104,7 +104,6 @@ def _classify_with_snn(alert_dict: dict) -> dict:
     # classify
     _, pred_probs = classify_lcs(snn_df, model_path, device)
 
-    # extract results to dict and attach object/source ids.
     # use `.item()` to convert numpy -> python types for later json serialization
     pred_probs = pred_probs.flatten()
     snn_dict = {
@@ -125,7 +124,7 @@ def _format_for_snn(alert_dict: dict) -> pd.DataFrame:
     snn_df["FLT"] = alert_df["fid"].map(data_utils.ztf_fid_names())
 
     if SURVEY == "ztf":
-        snn_df["MJD"] = math.jd_to_mjd(alert_df["jd"].loc[0])  # ADDED .loc[0]
+        snn_df["MJD"] = math.jd_to_mjd(alert_df["jd"].loc[0])
         snn_df["FLUXCAL"], snn_df["FLUXCALERR"] = math.mag_to_flux(
             alert_df["magpsf"], alert_df["magzpsci"], alert_df["sigmapsf"]
         )
