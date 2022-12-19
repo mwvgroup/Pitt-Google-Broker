@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-
-"""Filter alerts for purity."""
-
-
+"""Create a "lite" alert containing the subset of fields necessary for broker and downstream."""
 import os
 
 from google.cloud import logging
@@ -12,19 +9,8 @@ from broker_utils import data_utils, gcp_utils, schema_maps, types
 
 
 PROJECT_ID = os.getenv("GCP_PROJECT")  # For local test set this to GOOGLE_CLOUD_PROJECT
-
-
-# This returns a string which is configured when the broker
-# instance is initially set up. When we create resources
-# in the cloud, we need unique test names.
-# (i.e. This is an input variable to the setup script)
-# We cannot have separate pub/sub streams with the same
-# name, (i.e. is_pure), so the testID is appended
-# to all the resource names for the instance you set up
-# (When we deploy to the cloud we set up a broker instance).
 TESTID = os.getenv("TESTID")
-
-SURVEY = os.getenv("SURVEY")  # This will return ztf (in future will be our LSST)
+SURVEY = os.getenv("SURVEY")
 
 # connect to the logger
 logging_client = logging.Client()
@@ -32,47 +18,31 @@ LOG_NAME = "filter-purity"  # same log for all broker instances
 logger = logging_client.logger(LOG_NAME)
 
 # GCP resources used in this module
-bq_dataset = f"{SURVEY}_alerts"
-
-
-# This is the name of the Pub/Sub topic that this
-# module publishes to. (Publishes original alert
-# plus its own results. The next module downstream
-# in the pipeline will listen to this topic)
 ps_topic = f"{SURVEY}-lite"
-
 if TESTID != "False":  # attach the testid to the names
-    bq_dataset = f"{bq_dataset}_{TESTID}"
     ps_topic = f"{ps_topic}-{TESTID}"
 
 
 def semantic_compression(alert_dict, schema_map) -> dict:
+    """Construct and return the `alert_lite` dictionary."""
 
     source = alert_dict[schema_map["source"]]
 
-    # NEED FILTER MAP FOR _format_for_snn IN classify_snn
-    # ALSO NEED mag, magzp, magerr FOR _format_for_snn IN classify_snn
-
-    # FOR tag function WE NEED A WAY TO CHECK THE SURVEY (ZTF, DECAT, ETC)
-    # ALSO NEED TO DETERMINE WHETHER TO CHANGE data_utils.alert_dict_to_dataframe()
-    # TO NOT RELY ON schema_maps
-
-    # Will probably be better to leave the types the way they are
-    # in the packet
     source_dict = {
         "jd": source["jd"],
-        "sourceId": source["candid"],  # candid some might make an int others a string
+        "sourceId": source["candid"],
         "ra": source["ra"],
         "dec": source["dec"],
+        # for classify_snn
         "magpsf": source["magpsf"],
         "sigmapsf": source["sigmapsf"],
         "magzpsci": source["magzpsci"],
         "magzpsciunc": source["magzpsciunc"],
         "diffmaglim": source["diffmaglim"],
+        # for tag
         "isdiffpos": source["isdiffpos"],
-        "rb": source["rb"],  # RealBogus score
+        "rb": source["rb"],
         "drb": source["drb"],
-        # HAD TO ADD THESE FOR PURITY REASON DICT
         "nbad": source["nbad"],
         "fwhm": source["fwhm"],
         "elong": source["elong"],
@@ -97,7 +67,6 @@ def semantic_compression(alert_dict, schema_map) -> dict:
             "prv_magzpsciunc": prv_s["magzpsciunc"],
             "prv_diffmaglim": prv_s["diffmaglim"],
             "prv_isdiffpos": prv_s["isdiffpos"],
-            # HAD TO ADD THESE FOR PURITY REASON DICT
             "prv_nbad": source["nbad"],
             "prv_fwhm": source["fwhm"],
             "prv_elong": source["elong"],
@@ -122,10 +91,9 @@ def semantic_compression(alert_dict, schema_map) -> dict:
     }
 
     alert_lite = {
-        # This extracts alert ids. This is a named tuple it contains all of the ids
         "alertIds": types.AlertIds(schema_map, alert_dict=alert_dict).ids._asdict(),
         "source": source_dict,
-        "prvSources": tuple(prev_sources),  # name of prvSources style may be changed
+        "prvSources": tuple(prev_sources),
         "xmatch": xmatch,
     }
 
@@ -133,12 +101,13 @@ def semantic_compression(alert_dict, schema_map) -> dict:
 
 
 def run(msg: dict, context):
-    """Filter alerts for purity and extragalctic transient, publish results.
+    """Create a "lite" alert containing the subset of fields necessary for broker and downstream.
 
-    For args descriptions, see:
+    Both parameters are required by Cloud Functions, regardless of whether they are used.
+    For parameter descriptions, see:
     https://cloud.google.com/functions/docs/writing/background#function_parameters
 
-    Args:
+    Parameters:
         msg: Pub/Sub message data and attributes.
             `data` field contains the message data in a base64-encoded string.
             `attributes` field contains the message's custom attributes in a dict.
@@ -150,31 +119,15 @@ def run(msg: dict, context):
                 `event_type`: for example: "google.pubsub.topic.publish".
                 `resource`: the resource that emitted the event.
     """
-
-    # This is pulling from a bucket in the cloud
     schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
 
-    # logger.log_text(f"{type(msg['data'])}', severity='DEBUG")
-    # logger.log_text(f"{msg['data']}', severity='DEBUG")
-
-    alert_dict = data_utils.open_alert(
-        msg["data"], drop_cutouts=True, schema_map=schema_map
-    )  # this decodes the alert
+    alert_dict = data_utils.open_alert(msg["data"], drop_cutouts=True, schema_map=schema_map)
 
     alert_lite = semantic_compression(alert_dict, schema_map)
 
     attrs = {
         "objectId": str(alert_lite["alertIds"]["objectId"]),
         "candid": str(alert_lite["alertIds"]["sourceId"]),
-    }  # this gets the custom attr for filtering
+    }
 
-    # # run the alert through the filter.
-
-    # # Publish to Pub/Sub:
-    # gcp_utils.publish_pubsub(ps_topic, alert_dict, attrs=attrs)
-    #
-    gcp_utils.publish_pubsub(
-        ps_topic,
-        alert_lite,
-        attrs=attrs,
-    )
+    gcp_utils.publish_pubsub(ps_topic, alert_lite, attrs=attrs)

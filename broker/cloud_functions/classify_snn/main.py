@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-
 """Classify alerts using SuperNNova (M¨oller & de Boissi`ere 2019)."""
-
 import os
 from pathlib import Path
 
@@ -29,10 +27,7 @@ ps_topic = f"{SURVEY}-SuperNNova"
 if TESTID != "False":  # attach the testid to the names
     bq_dataset = f"{bq_dataset}_{TESTID}"
     ps_topic = f"{ps_topic}-{TESTID}"
-
 bq_table = f"{bq_dataset}.SuperNNova"
-
-# Changed the name stub of the BigQuery table from SuperNNova to classifications
 class_table = f"{bq_dataset}.classifications"
 
 model_dir_name = "ZTF_DMAM_V19_NoC_SNIa_vs_CC_forFink"
@@ -45,12 +40,11 @@ model_path = Path(__file__).resolve().parent / f"{model_dir_name}/{model_file_na
 def run(msg: dict, context) -> None:
     """Classify alert with SuperNNova; publish and store results.
 
-    For args descriptions, see:
+    Both parameters are required by Cloud Functions, regardless of whether they are used.
+    For parameter descriptions, see:
     https://cloud.google.com/functions/docs/writing/background#function_parameters
 
-    This function is intended to be triggered by Pub/Sub messages, via Cloud Functions.
-
-    Args:
+    Parameters:
         msg: Pub/Sub message data and attributes.
             `data` field contains the message data in a base64-encoded string.
             `attributes` field contains the message's custom attributes in a dict.
@@ -64,56 +58,46 @@ def run(msg: dict, context) -> None:
             This argument is not currently used in this function, but the argument is
             required by Cloud Functions, which will call it.
     """
-    alert_lite = data_utils.open_alert(msg["data"])  # Use this in ach module to load alert_lite
+    alert_lite = data_utils.open_alert(msg["data"])
+    attrs = msg["attributes"]
 
-    # classify
-    try:
-        snn_dict = _classify_with_snn(alert_lite)
+    snn_dict = _classify_with_snn(alert_lite)
 
-    # if something goes wrong, let's just log it and exit gracefully
-    # once we know more about what might go wrong, we can make this more specific
-    except Exception as e:
-        logger.log_text(f"Classify error: {e}", severity="WARNING")
+    # announce to pubsub
+    gcp_utils.publish_pubsub(ps_topic, {**alert_lite, "SuperNNova": snn_dict}, attrs=attrs)
 
-    else:
-        # announce to pubsub
-        attrs = msg["attributes"]
-        gcp_utils.publish_pubsub(ps_topic, {**alert_lite, "SuperNNova": snn_dict}, attrs=attrs)
-
-        # store in bigquery
-        errors = gcp_utils.insert_rows_bigquery(
-            bq_table,
-            [
-                {
-                    **snn_dict,
-                    "objectId": alert_lite["alertIds"]["objectId"],
-                    "candid": alert_lite["alertIds"]["sourceId"],
-                }
-            ],
-        )
-        if len(errors) > 0:
-            logger.log_text(f"BigQuery insert error: {errors}", severity="WARNING")
-
-        classifications = [
+    # store in bigquery
+    errors = gcp_utils.insert_rows_bigquery(
+        bq_table,
+        [
             {
-                "objectId": attrs["objectId"],
-                "candid": attrs["candid"],
-                "classifier": "SuperNNova",
-                "classifier_version": 1.3,
-                "class": snn_dict["predicted_class"],
-                "probability": max(snn_dict["prob_class0"], snn_dict["prob_class1"]),
+                **snn_dict,
+                "objectId": alert_lite["alertIds"]["objectId"],
+                "candid": alert_lite["alertIds"]["sourceId"],
             }
-        ]
+        ],
+    )
+    if len(errors) > 0:
+        logger.log_text(f"BigQuery insert error: {errors}", severity="WARNING")
 
-        # store in bigquery
-        errors = gcp_utils.insert_rows_bigquery(class_table, classifications)
-        if len(errors) > 0:
-            logger.log_text(f"BigQuery insert error: {errors}", severity="WARNING")
+    # store in bigquery
+    classifications = [
+        {
+            "objectId": attrs["objectId"],
+            "candid": attrs["candid"],
+            "classifier": "SuperNNova",
+            "classifier_version": 1.3,
+            "class": snn_dict["predicted_class"],
+            "probability": max(snn_dict["prob_class0"], snn_dict["prob_class1"]),
+        }
+    ]
+    errors = gcp_utils.insert_rows_bigquery(class_table, classifications)
+    if len(errors) > 0:
+        logger.log_text(f"BigQuery insert error: {errors}", severity="WARNING")
 
 
 def _classify_with_snn(alert_dict: dict) -> dict:
     """Classify the alert using SuperNNova."""
-    # init
     snn_df = _format_for_snn(alert_dict)
     device = "cpu"
 
@@ -135,23 +119,15 @@ def _classify_with_snn(alert_dict: dict) -> dict:
 def _format_for_snn(alert_dict: dict) -> pd.DataFrame:
     """Compute features and cast to a DataFrame for input to SuperNNova."""
 
-    # cast alert to dataframe
-    alert_df = data_utils.alert_lite_to_dataframe(
-        alert_dict
-    )  # again can we remove schema map from this funciton
+    alert_df = data_utils.alert_lite_to_dataframe(alert_dict)
 
-    # start a dataframe for input to SNN
     snn_df = pd.DataFrame(data={"SNID": alert_dict["alertIds"]["objectId"]}, index=alert_df.index)
-
-    # create the columns expected by SNN
-    snn_df["FLT"] = alert_df["fid"].map(data_utils.ztf_fid_names())  ## REMOVE SCHEMA
+    snn_df["FLT"] = alert_df["fid"].map(data_utils.ztf_fid_names())
 
     if SURVEY == "ztf":
         snn_df["MJD"] = math.jd_to_mjd(alert_df["jd"].loc[0])  # ADDED .loc[0]
         snn_df["FLUXCAL"], snn_df["FLUXCALERR"] = math.mag_to_flux(
-            alert_df["magpsf"],
-            alert_df["magzpsci"],  ## REMOVE SCHEMA
-            alert_df["sigmapsf"],  ## REMOVE SCHEMA
+            alert_df["magpsf"], alert_df["magzpsci"], alert_df["sigmapsf"]
         )
 
     elif SURVEY == "decat":
