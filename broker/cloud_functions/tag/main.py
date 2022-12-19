@@ -16,7 +16,7 @@ SURVEY = os.getenv("SURVEY")
 
 # connect to the logger
 logging_client = logging.Client()
-LOG_NAME = "filter-purity"  # same log for all broker instances
+LOG_NAME = "tag-cloudfnc"  # same log for all broker instances
 logger = logging_client.logger(LOG_NAME)
 
 # GCP resources used in this module
