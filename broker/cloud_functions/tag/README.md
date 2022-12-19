@@ -3,10 +3,9 @@
 Identify basic categorizations.
 Publish results to BigQuery and as Pub/Sub msg attributes.
 
-
 ## is_pure
 
-Adapted from: https://zwickytransientfacility.github.io/ztf-avro-alert/filtering.html
+Adapted from: [https://zwickytransientfacility.github.io/ztf-avro-alert/filtering.html](https://zwickytransientfacility.github.io/ztf-avro-alert/filtering.html)
 
 Quoted from the source:
 
@@ -20,4 +19,4 @@ delivers a relatively pure sample.
 ## is_extragalactic_transient
 
 Check whether alert is likely to be an extragalactic transient.
-Adapted from: https://github.com/ZwickyTransientFacility/ztf-avro-alert/blob/master/notebooks/Filtering_alerts.ipynb
+Adapted from: [https://github.com/ZwickyTransientFacility/ztf-avro-alert/blob/master/notebooks/Filtering_alerts.ipynb](https://github.com/ZwickyTransientFacility/ztf-avro-alert/blob/master/notebooks/Filtering_alerts.ipynb)

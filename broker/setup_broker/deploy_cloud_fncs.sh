@@ -124,8 +124,7 @@ else # Deploy the Cloud Functions
     echo "Deploying Cloud Function: $lite_CF_name"
     lite_entry_point="run"
 
-    cd .. && cd cloud_functions
-    cd lite
+    cd ../cloud_functions/lite || exit
 
     gcloud functions deploy "$lite_CF_name" \
         --entry-point "$lite_entry_point" \
@@ -140,8 +139,7 @@ else # Deploy the Cloud Functions
     tag_entry_point="run"
     memory=512MB  # standard 256MB is too small here
 
-    cd .. && cd cloud_functions
-    cd tag
+    cd ../cloud_functions/tag || exit
 
     gcloud functions deploy "$tag_CF_name" \
         --entry-point "$tag_entry_point" \
