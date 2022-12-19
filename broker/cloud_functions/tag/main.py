@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-
-"""Filter alerts for purity."""
-
+"""Identify basic categorizations; publish results to BigQuery and as Pub/Sub msg attributes."""
 import os
 
 import numpy as np
@@ -13,19 +11,8 @@ from broker_utils import data_utils, gcp_utils
 
 
 PROJECT_ID = os.getenv("GCP_PROJECT")  # For local test set this to GOOGLE_CLOUD_PROJECT
-
-
-# This returns a string which is configured when the broker
-# instance is initially set up. When we create resources
-# in the cloud, we need unique test names.
-# (i.e. This is an input variable to the setup script)
-# We cannot have separate pub/sub streams with the same
-# name, (i.e. is_pure), so the testID is appended
-# to all the resource names for the instance you set up
-# (When we deploy to the cloud we set up a broker instance).
 TESTID = os.getenv("TESTID")
-
-SURVEY = os.getenv("SURVEY")  # This will return ztf (in future will be our LSST)
+SURVEY = os.getenv("SURVEY")
 
 # connect to the logger
 logging_client = logging.Client()
@@ -34,22 +21,11 @@ logger = logging_client.logger(LOG_NAME)
 
 # GCP resources used in this module
 bq_dataset = f"{SURVEY}_alerts"
-
-
-# This is the name of the Pub/Sub topic that this
-# module publishes to. (Publishes original alert
-# plus its own results. The next module downstream
-# in the pipeline will listen to this topic)
 ps_topic = f"{SURVEY}-tagged"
-
 if TESTID != "False":  # attach the testid to the names
     bq_dataset = f"{bq_dataset}_{TESTID}"
     ps_topic = f"{ps_topic}-{TESTID}"
-
-
-# Changed the name stub of the BigQuery table from SuperNNova to classifications
 class_table = f"{bq_dataset}.classifications"
-
 tags_table = f"{bq_dataset}.tags"
 
 
@@ -71,10 +47,10 @@ def is_pure(alert_dict):
 
     rb = source["rb"] >= 0.65  # RealBogus score
 
-    if SURVEY == "decat":  ## How to get find survey type without schema_map
+    if SURVEY == "decat":
         pure = rb
 
-    elif SURVEY == "ztf":  ## How to get find survey type without schema_map
+    elif SURVEY == "ztf":
         nbad = source["nbad"] == 0  # num bad pixels
         fwhm = source["fwhm"] <= 5  # Full Width Half Max, SExtractor [pixels]
         elong = source["elong"] <= 1.2  # major / minor axis, SExtractor
@@ -98,7 +74,7 @@ def _is_extragalactic_transient(alert_dict: dict) -> dict:
     Adapted from:
     https://github.com/ZwickyTransientFacility/ztf-avro-alert/blob/master/notebooks/Filtering_alerts.ipynb
     """
-    if SURVEY == "decat":  ## How to get find survey type without schema_map
+    if SURVEY == "decat":
         # No straightforward way to translate this ZTF filter for DECAT.
         # DECAT alert does not include whether the subtraction (sci-ref) is
         # positive, nor SExtractor results,
@@ -107,11 +83,8 @@ def _is_extragalactic_transient(alert_dict: dict) -> dict:
         # Assume the alert should pass the filter:
         is_extragalactic_transient = True
 
-    elif SURVEY == "ztf":  ## How to get find survey type without schema_map
-        dflc = data_utils.alert_lite_to_dataframe(
-            alert_dict
-        )  # Is schema_map necessary for this function?
-        # NEED TO GO TO data_utils.py and determine whether to take out schema map
+    elif SURVEY == "ztf":
+        dflc = data_utils.alert_lite_to_dataframe(alert_dict)
 
         candidate = dflc.loc[0]
 
@@ -121,7 +94,7 @@ def _is_extragalactic_transient(alert_dict: dict) -> dict:
         ssdistnr = alert_dict["xmatch"]["ssdistnr"]
         if (distpsnr1 is None) or (distpsnr1 > 1.5):  # arcsec
             no_pointsource_counterpart = True
-            # closest candidate == star < 1.5 arcsec away -> candidate probably star
+            # closest candidate == star < 1.5 arcsec away => candidate probably star
         else:
             no_pointsource_counterpart = sgscore1 < 0.5
 
@@ -152,12 +125,13 @@ def _is_extragalactic_transient(alert_dict: dict) -> dict:
 
 
 def run(msg: dict, context):
-    """Filter alerts for purity and extragalctic transient, publish results.
+    """Identify basic categorizations; publish results to BigQuery and as Pub/Sub msg attributes.
 
-    For args descriptions, see:
+    Both parameters are required by Cloud Functions, regardless of whether they are used.
+    For parameter descriptions, see:
     https://cloud.google.com/functions/docs/writing/background#function_parameters
 
-    Args:
+    Parameters:
         msg: Pub/Sub message data and attributes.
             `data` field contains the message data in a base64-encoded string.
             `attributes` field contains the message's custom attributes in a dict.
@@ -171,18 +145,11 @@ def run(msg: dict, context):
     """
 
     alert_lite = data_utils.open_alert(msg["data"])
-
-    attrs = msg["attributes"]  # this gets the custom attr for filtering
+    attrs = msg["attributes"]
 
     purity_reason_dict = is_pure(alert_lite)
+    extragalactic_dict = _is_extragalactic_transient(alert_lite)
 
-    extragalactic_dict = _is_extragalactic_transient(alert_lite)  ## ADDED
-
-    # # run the alert through the filter.
-
-    # # Publish to Pub/Sub:
-    # gcp_utils.publish_pubsub(ps_topic, alert_dict, attrs=attrs)
-    #
     gcp_utils.publish_pubsub(
         ps_topic,
         alert_lite,
@@ -194,26 +161,13 @@ def run(msg: dict, context):
         },
     )
 
-    # # store results to BigQuery, regardless of whether it passes the filter
-    tags_dict = {
-        **attrs,
-        "classifier_version": 0.1,
-        **purity_reason_dict,
-        **extragalactic_dict,
-    }
-
+    tags_dict = {**attrs, "classifier_version": 0.1, **purity_reason_dict, **extragalactic_dict}
     errors = gcp_utils.insert_rows_bigquery(tags_table, [tags_dict])
     if len(errors) > 0:
         logger.log_text(f"BigQuery insert error: {errors}", severity="WARNING")
 
-    # # store results to BigQuery, regardless of whether it passes the filter
     classifications = [
         {
-            # **attrs: objectId and candid (sourceId, but renamed for bigquery)
-            # (same thing as candId, but we call it a sourceId in our internal
-            # broker) [** is a splat, it takes the elements from attrs dict
-            # and unpacks it and passes it to the new dict constr, and passes
-            # it as individual elements]
             "objectId": attrs["objectId"],
             "candid": attrs["candid"],
             "classifier": "purity",
@@ -228,7 +182,6 @@ def run(msg: dict, context):
             "class": extragalactic_dict["is_extragalactic_transient"],
         },
     ]
-
     errors = gcp_utils.insert_rows_bigquery(class_table, classifications)
     if len(errors) > 0:
         logger.log_text(f"BigQuery insert error: {errors}", severity="WARNING")
