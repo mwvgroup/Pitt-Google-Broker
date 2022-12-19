@@ -4,6 +4,7 @@
 
 
 import argparse
+from google import api_core
 from google.cloud import bigquery, logging
 import json
 import numpy as np
@@ -286,16 +287,20 @@ class MetadataCollector:
 
     def _join_metadata(self):
         # join the subscription dfs on index
-        alerts = self.metadata_dfs_dict["alerts"]
+        # if alerts subscription was empty, use an empty dataframe
+        alerts = self.metadata_dfs_dict.get("alerts", pd.DataFrame())
         allothers = [df for t, df in self.metadata_dfs_dict.items() if t != "alerts"]
         self.metadata_df = alerts.join(allothers, how="outer")
 
     def _load_metadata_to_bigquery(self):
-        # by default, conforms the dataframe to the table schema
-        # i.e., converts dtypes and drops extra columns
-        gcp_utils.load_dataframe_bigquery(
-            self.bq_table, self.metadata_df, logger=logger
-        )
+        if not self.metadata_df.empty:
+            # by default, conforms the dataframe to the table schema
+            # i.e., converts dtypes and drops extra columns
+            gcp_utils.load_dataframe_bigquery(
+                self.bq_table, self.metadata_df, logger=logger
+            )
+        else:
+            _log_and_print("metadata_df is empty. Skipping BigQuery upload.")
 
 
 class SubscriptionMetadataCollector:
@@ -378,7 +383,12 @@ class SubscriptionMetadataCollector:
                 n = n_new
 
         streaming_pull_future.cancel()  # Trigger the shutdown.
-        streaming_pull_future.result()  # Block until the shutdown is complete.
+        # if the subscription doesn't exist,
+        # we don't know it until calling streaming_pull_future.result()
+        try:
+            streaming_pull_future.result()  # Block until the shutdown is complete.
+        except api_core.exceptions.NotFound:
+            _log_and_print(f"Subscription {self.subscription} not found.")
 
         # log the total
         _log_and_print(

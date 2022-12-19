@@ -96,162 +96,149 @@ Now download the set of test alerts:
 Load alerts and test
 --------------------
 
+[Updated for broker_utils v0.2.37]
+
 Setup
 ~~~~~~~~~~~~~~~~
 
-Activate your conda environment.
-If you recently finished following the instructions above, you will need to deactivate and then activate your conda environment again in order for the environment variables to load.
+Activate your conda environment and open a python prompt.
 
-Import some modules:
+Import tools from broker_utils:
 
 .. code:: python
 
-    from broker_utils import data_utils, gcp_utils
+    from broker_utils.data_utils import decode_alert, load_alert
+    from broker_utils.gcp_utils import publish_pubsub, pull_pubsub, purge_subscription
     from broker_utils.schema_maps import load_schema_map
-    from broker_utils.tests import TestAlert, TestValidator, local_alerts
+    from broker_utils.testing import AlertPaths, IntegrationTestValidator, TestAlert
 
-Set the keywords that were used to setup your broker instance:
+Set the keywords that were used to setup your broker instance.
+Choose a survey, and fill in your testid.
 
 .. code:: python
 
-    # choose one:
     SURVEY = "ztf"
     SURVEY = "elasticc"
-
-    # fill this in:
     TESTID = ""
 
-Load paths to alerts stored locally:
+To run an integration test you will deploy your module(s), then publish input messages to the trigger topic and pull output messages from a subscription to the modules ouput topic.
+
+Fill in the name of the topic you will publish to and the subscription you will pull from.
 
 .. code:: python
 
-   # get a generator that returns paths to individual avro files
-   paths = local_alerts(SURVEY)
-   # note that a generator will only iterate over elements once.
-   # if you iterate through all of them or just want the complete set of local alerts,
-   # load a new generator.
+    topic = ""
+    topic = f"{SURVEY}-{topic}-{TESTID}"
 
-   # get the path to a single file
-   path = next(paths)
-
-Load a schema map:
-
-.. code:: python
-
-    # this fetches it from a "generic" broker bucket that has public access rights
-   schema_map = load_schema_map('generic', False, SURVEY)
-
-Setup to publish to a topic:
-
-.. code:: python
-
-   # fill in the name stub for the topic that you'll publish to
-   topic_name_stub = ""
-   # set the full topic name
-   topic = f"{SURVEY}-{topic_name_stub}-{TESTID}"
-
-   # to generate mock results for a pipeline module, add its name to the mock list.
-   # the mock results will be attached to the message that you'll publish.
-   # if you don't need this, or don't know what it is, just set `mock = None`.
-   mock = None
-   # mock = ["SuperNNova"]
-
-   # set this verbatim (it will be either json or Avro)
-   publish_as = TestAlert.guess_publish_format(topic)
-
-Setup to pull from a subscription:
-
-.. code:: python
-
-    # fill in your subscription name
     subscrip = ""
-    # or use
-    sub_name_stub = ""
-    subscrip = f"{SURVEY}-{sub_name_stub}-{TESTID}"
+    subscrip = f"{SURVEY}-{subscrip}-{TESTID}"
 
-    # if you plan to do a test that involves pulling a message from a
-    # subscription in order to validate the output,
-    # then it is recommended that you first purge the subscription.
-    # this will delete all messages in the subscription so that you can
-    # be sure that any message you pull was created by your test.
-    gcp_utils.purge_subscription(subscrip)
+You may want to purge all messages from the subscription before running an integration
+test so that old messages do not interfere.
 
+.. code:: python
+
+    purge_subscription(subscrip)
+
+Load a schema map, paths to alerts stored locally, and a ``TestAlert``:
+
+.. code:: python
+
+    apaths = AlertPaths(SURVEY)
+    schema_map = load_schema_map('generic', False, SURVEY)
+
+    talert = TestAlert(
+        apaths.path,
+        schema_map,
+        drop_cutouts=True,
+        mock_modules=None,
+        # mock_modules=["SuperNNova"],
+        serialize=TestAlert.guess_serializer(topic),
+    )
 
 Load an alert as a dictionary for local testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Load one of test alerts into a dictionary.
-This will allow you to test your code locally using real data.
+You can use this alert dictionary to test your code locally with real data.
 
 .. code-block:: python
 
-   # load the alert as a dictionary, dropping the cutouts
-   alert_dict = data_utils.load_alert(
-       path, 'dict', schema_map=schema_map, drop_cutouts=True
-   )
+    alert_dict = talert.data["dict"]
 
-Publish a single alert, then pull from a subscription and check the message
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Integration test using a single alert
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+After deploying your module, run an integration test with a single alert.
+
+First, publish an alert as a message to your module's trigger topic.
 
 .. code:: python
 
-   # load a TestAlert and use it to publish a message
-   test_alert = TestAlert(path, schema_map)
-   gcp_utils.publish_pubsub(
-       topic,
-       message=test_alert.create_msg_payload(publish_as=publish_as, mock=mock),
-       attrs=test_alert.create_msg_attrs(),
-   )
+    publish_pubsub(
+        topic,
+        message=talert.msg_payload,
+        attrs=talert.mock.attrs,
+    )
 
-   # note that the alert_dict that was loaded in the previous section
-   # can also be retrieved with:
-   alert_dict = test_alert.data["dict"]
+Then, pull a message from the subscription to the output topic.
 
-   # pull a message and unpack the payload as a dict
-   msg = gcp_utils.pull_pubsub(subscrip, max_messages=1)  # this returns a list
-   msg_dict = data_utils.decode_alert(msg[0], return_as="dict")
+.. code:: python
 
-   # look at the message to see if it is as-expected
-   msg_dict
+    msgs = pull_pubsub(subscrip, max_messages=1)  # list
+    alert_dict_out = decode_alert(msgs[0])
 
-Publish a batch of alerts, then pull from a subscription and validate the message ids
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    alert_dict_out  # look at the message to see if it is as-expected
+
+Integration test using a batch of alerts
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Do a full integration test.
+
+First, publish a batch of alerts.
+Explicitly create and use a Pub/Sub publisher client to avoid instantiating a new one
+for every alert.
+Keep a list of published alert IDs to validate against in the next step.
 
 Publish:
 
 .. code-block:: python
 
-   # create a publisher client now to avoid instantiating a new one for every alert
-   from google.cloud import pubsub_v1
-   publisher = pubsub_v1.PublisherClient()
+    from google.cloud import pubsub_v1
+    publisher = pubsub_v1.PublisherClient()
+    i_max = 100  # limit the max number of alerts published
 
-   # publish a batch of test alerts
-   # keep a list of ids for later comparison
    published_alert_ids = []
-   i_max = 100  # for sanity, limit the max number of alerts published
-
-   for i, path in enumerate(local_alerts(SURVEY)):
-       test_alert = TestAlert(path, schema_map)
-
-       gcp_utils.publish_pubsub(
-           topic,
-           message=test_alert.create_msg_payload(publish_as=publish_as, mock=mock),
-           attrs=test_alert.create_msg_attrs(),
-           publisher=publisher
+   for i, path in enumerate(apaths.gen()):
+       talert = TestAlert(
+           apaths.path,
+           schema_map,
+           drop_cutouts=True,
+           mock_modules=None,
+           # mock_modules=["SuperNNova"],
+           serialize=TestAlert.guess_serializer(topic),
        )
 
-       published_alert_ids.append(test_alert.ids)
+       publish_pubsub(
+           topic,
+           message=talert.msg_payload,
+           attrs=talert.mock.attrs,
+           publisher=publisher,
+       )
+
+       published_alert_ids.append(talert.ids)
+
        if i > i_max:
            break
 
 Wait to give the alerts time to make their way through the pipeline.
-About 10 seconds per module should be plenty.
-Then pull and validate:
+About 5 seconds per module should be plenty.
+
+Then, use the ``IntegrationTestValidator`` to pull messages from the subscription and
+validate their alert IDs with those that were published in the previous step.
 
 .. code:: python
 
-   # pull messages from the subscription and compare the ids with the published alerts
-   validator = TestValidator(subscrip, published_alert_ids, schema_map)
-   success, pulled_msg_ids = validator.pull_and_compare_ids()
+    validator = IntegrationTestValidator(subscrip, published_alert_ids, schema_map)
+    success = validator.run()
 
 If everything worked as expected, the validator will report ``success = True``.
