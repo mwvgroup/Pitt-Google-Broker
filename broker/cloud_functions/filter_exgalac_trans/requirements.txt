@@ -1,4 +1,0 @@
-astropy
-google-cloud-logging
-numpy
-pgb-broker-utils
