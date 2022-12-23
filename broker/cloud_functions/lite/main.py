@@ -61,17 +61,21 @@ def semantic_compression(alert_dict, schema_map) -> dict:
             "prv_candid": prv_s["candid"],
             "prv_ra": prv_s["ra"],
             "prv_dec": prv_s["dec"],
+            # for classify_snn
             "prv_magpsf": prv_s["magpsf"],
             "prv_sigmapsf": prv_s["sigmapsf"],
             "prv_magzpsci": prv_s["magzpsci"],
             "prv_magzpsciunc": prv_s["magzpsciunc"],
             "prv_diffmaglim": prv_s["diffmaglim"],
+            # for tag
             "prv_isdiffpos": prv_s["isdiffpos"],
-            "prv_nbad": source["nbad"],
-            "prv_fwhm": source["fwhm"],
-            "prv_elong": source["elong"],
-            "prv_magdiff": source["magdiff"],
-            "prv_fid": source["fid"],
+            "prv_rb": prv_s["rb"],
+            "prv_drb": prv_s["drb"],
+            "prv_nbad": prv_s["nbad"],
+            "prv_fwhm": prv_s["fwhm"],
+            "prv_elong": prv_s["elong"],
+            "prv_magdiff": prv_s["magdiff"],
+            "prv_fid": prv_s["fid"],
         }
 
         prev_sources.append(prev_source_dict)
