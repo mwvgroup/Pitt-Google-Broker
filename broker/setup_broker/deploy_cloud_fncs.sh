@@ -14,7 +14,7 @@ zone="${CE_ZONE:-us-central1-a}" # use env variable CE_ZONE if it exists
 #--- GCP resources used in this script
 store_bq_trigger_topic="${survey}-alerts"
 store_bq_CF_name="${survey}-store_in_BigQuery"
-ps_to_gcs_trigger_topic="${survey}-alerts"
+ps_to_gcs_trigger_topic="${survey}-alerts_raw"
 ps_to_gcs_CF_name="${survey}-upload_bytes_to_bucket"
 cue_nc_trigger_topic="${survey}-cue_night_conductor"
 cue_nc_CF_name="${survey}-cue_night_conductor"
@@ -77,6 +77,7 @@ else # Deploy the Cloud Functions
 #--- Pub/Sub -> Cloud Storage Avro cloud function
     echo "Deploying Cloud Function: $ps_to_gcs_CF_name"
     ps_to_gcs_entry_point="run"
+    memory=512MB  # standard 256MB is too small here (it was always on the edge)
 
     cd .. && cd cloud_functions
     cd ps_to_gcs
@@ -84,6 +85,7 @@ else # Deploy the Cloud Functions
     gcloud functions deploy "$ps_to_gcs_CF_name" \
         --entry-point "$ps_to_gcs_entry_point" \
         --runtime python37 \
+        --memory "${memory}" \
         --trigger-topic "$ps_to_gcs_trigger_topic" \
         --set-env-vars TESTID="$testid",SURVEY="$survey"
 

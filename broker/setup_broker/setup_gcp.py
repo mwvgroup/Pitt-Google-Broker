@@ -151,6 +151,8 @@ def _resources(service, survey='ztf', testid='test'):
 
     if service == 'PS':
         topics = {  # '<topic_name>': ['<subscription_name>', ]
+                f'{survey}-alerts_raw':
+                    [f'{survey}-alerts_raw-counter', ],
                 f'{survey}-BigQuery':
                     [f'{survey}-BigQuery-counter'],
                 f'{survey}-alert_avros':
