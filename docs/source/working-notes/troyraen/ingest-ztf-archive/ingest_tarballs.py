@@ -83,7 +83,7 @@ def run():
         pool.map(ingest_one_tarball, tardf["Name"].values)
 
 
-def ingest_one_tarball(tarname):
+def ingest_one_tarball(tarname, nthreads=12):
     """Ingest one tarball from ZTF archive to Cloud Storage bucket and BigQuery table."""
     logging.info(f"Starting tarball {tarname}")
     apaths = download_tarball(tarname)
@@ -105,7 +105,7 @@ def ingest_one_tarball(tarname):
     touch_table(table, falert, schemas.loadavsc(version, nocutouts=True), version)
 
     logging.info("Fixing alerts on disk")
-    with ThreadPool(32) as pool:
+    with ThreadPool(nthreads) as pool:
         pool.map(fix_alert_on_disk, [[f, schema, version] for f in apaths])
 
     bucket = BUCKET()
@@ -153,7 +153,7 @@ def load_alerts_to_bucket(bucket, tarname):
     # macs must use multi-threading not multi-processing, specified with -o flag
     # might as well just use multi-threading to match the ThreadPool invocation of fix_alert_on_disk
     pathglob = f"{ALERTSDIR}/{AVROGLOB(tarname)}"
-    cmd = f"gsutil -m -o GSUtil:parallel_process_count=1 cp -r {pathglob} gs://{bucket.name}"
+    cmd = ["gsutil", "-m", "-o GSUtil:parallel_process_count=1", "cp", "-r", pathglob, f"gs://{bucket.name}"]
     proc = subprocess.run(cmd, capture_output=True)
 
     if proc.returncode != 0:
@@ -379,4 +379,26 @@ def fetch_tarball_names():
 
 
 if __name__ == '__main__':
-    run()
+    # run()
+
+    # examples for machine with 32 vcpus
+
+    # working example
+    # %%time
+    tarname = "ztf_public_20221216.tar.gz"  # 1.0G
+    ingest_one_tarball(tarname, nthreads=30)
+    # CPU times: user 1min 59s, sys: 26.9 s, total: 2min 26s
+    # Wall time: 4min 22s
+
+    # tar extraction error example
+    # %%time
+    tarname = "ztf_public_20200127.tar.gz"  # 3.0G
+    ingest_one_tarball(tarname, nthreads=30)
+
+    # possible example to process multiple tarballs in parallel
+    # since these vcpus are threads and not cores,
+    # it might not even make sense to call Pool
+    tardf = fetch_tarball_names()
+    tarsample = tardf.sample(2)
+    with Pool(2) as pool:
+        pool.map(ingest_one_tarball, tarsample["Name"].values)
