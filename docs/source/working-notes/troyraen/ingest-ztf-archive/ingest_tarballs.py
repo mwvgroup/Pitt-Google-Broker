@@ -157,27 +157,24 @@ def fix_alert_on_disk(args):
     falert.unlink()
 
 
-def load_alerts_to_bucket(bucket, tarname, disable_multiproc_for_mac=False):
+def load_alerts_to_bucket(bucket, tarname):
     """Upload alerts to bucket. This is much simpler to batch and parallelize using `gsutil` command-line tool."""
     logging.info(f"Loading alerts to bucket. {tarname}")
 
-    # pathglob = f"{ALERTSDIR}/{AVROGLOB(tarname)}"
-    # if disable_multiproc_for_mac:
-    #     # must disable multiprocessing with -o to run this on a mac
-    #     cmd = f"gsutil -m -o GSUtil:parallel_process_count=1 cp -r {pathglob} gs://{bucket.name}"
-    # else:
-    #     cmd = f"gsutil -m cp -r {pathglob} gs://{bucket}"
-    # proc = subprocess.run(cmd, capture_output=True)
-    proc = subprocess.run(
-        [Path(__file__).resolve().parent / "alerts_to_bucket.sh", bucket.name, f"{ALERTSDIR}/{AVROGLOB(tarname)}"],
-        # cwd=paths.dout(),
-        capture_output=True,
-    )
+    # gsutil:
+    # -m flag runs uploads in parallel
+    # macs must use multi-threading not multi-processing, specified with -o flag
+    # might as well just use multi-threading to match the ThreadPool invocation of fix_alert_on_disk
+    pathglob = f"{ALERTSDIR}/{AVROGLOB(tarname)}"
+    cmd = f"gsutil -m -o GSUtil:parallel_process_count=1 cp -r {pathglob} gs://{bucket.name}"
+    proc = subprocess.run(cmd, capture_output=True)
+
     if proc.returncode != 0:
         logging.warning(proc)
         REPORT("error", f"{tarname},load_bucket")
         return False
 
+    # all the alerts with fixed schemas have been uploaded, so delete them from disk
     for avro in list(ALERTSDIR.glob(AVROGLOB(tarname))):
         avro.unlink()
     return True
