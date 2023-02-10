@@ -189,7 +189,7 @@ def load_alerts_to_table(table, tarname, bucket):
             ignore_unknown_values=True,  # drop fields that are not in the table schema (cutouts)
         ),
     )
-    REPORT("submitted", tarname)
+    REPORT("submitted", f"{tarname},{job.job_id}")
 
     # if the job succeeds it shouldn't take very long
     # but if it fails it can take hours, so let's not wait for it.
