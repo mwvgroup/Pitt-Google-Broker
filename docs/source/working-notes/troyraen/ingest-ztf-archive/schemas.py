@@ -74,7 +74,7 @@ def fix_schema(schema: dict):
             fld['type']['fields'] = newcandfields
 
         if fld['name'] == "prv_candidates":
-            # fld['type'] is a list, and one item is a record (dict with items then fields)
+            # fld['type'] is a list, and one item is a record (dict with items and fields)
             for fd in fld['type']:
                 if not isinstance(fd, dict):
                     continue
@@ -142,26 +142,25 @@ def _fix_field(field: dict) -> dict:
     """Reorder field['type'] to match field['default'].
 
     Args:
-        `field`:    Avro field (dict) with a 'type' key ~whos value is a list~.
+        `field`:    Avro field (dict) with a 'type' key
     """
     if not isinstance(field["type"], list):
         return field
 
     ftyp = [t for t in field["type"]]
-
     if "null" not in ftyp:
         return field
 
     ftyp.remove("null")
-    fld = {k: v for k, v in field.items() if k != "type"}
+    newfield = {k: v for k, v in field.items() if k != "type"}
 
     if field.get("default") is None:
         # 'null' should appear first
-        fld["type"] = ["null"] + ftyp
-        return fld
+        newfield["type"] = ["null"] + ftyp
+        return newfield
 
-    fld["type"] = ftyp + ["null"]
-    return fld
+    newfield["type"] = ftyp + ["null"]
+    return newfield
 
 
 def pkl2avsc():

@@ -57,8 +57,9 @@ def BUCKET():
 
 
 def AVROGLOB(tarname) -> str:
-    """Return glob string for .avro files."""
+    """Return glob string for .avro files with fixed schemas (relative to ALERTSDIR)."""
     tname = tarname.replace(".tar.gz", "")
+    # this only matches files with fixed schemas not the original alerts extracted from the tarball
     return f"{tname}/*.{tname}.avro"
 
 
@@ -78,24 +79,20 @@ class SchemaParsingError(Exception):
 def run():
     """Ingest all tarballs from ZTF's alert archive."""
     tardf = fetch_tarball_names()
-    # with multiproc:
-    with Pool(3) as pool:
+    with Pool(5) as pool:
         pool.map(ingest_one_tarball, tardf["Name"].values)
-    # for tarname in tardf["Name"]:
-    #     ingest_one_tarball(tarname)
-    # dirname = "ztf_public_20180601"
-    # dirname = "ztf_public_20230121"
 
 
 def ingest_one_tarball(tarname):
-    """Ingest one tarball from ZTF archive."""
+    """Ingest one tarball from ZTF archive to Cloud Storage bucket and BigQuery table."""
     logging.info(f"Starting tarball {tarname}")
     apaths = download_tarball(tarname)
-    try:
-        falert = apaths[0]
-        dalert = falert.parent
-    except IndexError:
-        return
+    # try:
+    #     falert = apaths[0]
+    # except IndexError:
+    #     return
+    falert = apaths[0]
+    dalert = falert.parent
 
     with open(falert, "rb") as fin:
         version = guess_schema_version(fin.read())
@@ -110,15 +107,6 @@ def ingest_one_tarball(tarname):
     logging.info("Fixing alerts on disk")
     with ThreadPool(32) as pool:
         pool.map(fix_alert_on_disk, [[f, schema, version] for f in apaths])
-    # logging.info("Loading alerts to bucket")
-    # for falert in apaths:
-    #     try:
-    #         ingest_alert_to_bucket(falert, bucket, schema, version)
-    #     except Timeout:
-    #         logging.warning("Reconnecting to bucket due to timeout.")
-    #         sleep(5)
-    #         bucket = BUCKET()
-    #         ingest_alert_to_bucket(falert, bucket, schema, version)
 
     bucket = BUCKET()
     success = load_alerts_to_bucket(bucket, tarname)
@@ -151,7 +139,7 @@ def fix_alert_on_disk(args):
     ).name
     fout = falert.parent / filename
 
-    # fix the schema, write a new file, then delete the original alert from disk
+    # fix the schema, write a new file, then delete the original alert from disk since we're done with it
     with open(fout, "wb") as f:
         fa.writer(f, schema, [alert_dict])
     falert.unlink()
@@ -182,7 +170,6 @@ def load_alerts_to_bucket(bucket, tarname):
 
 def load_alerts_to_table(table, tarname, bucket):
     """Load table with all alerts in bucket that correspond to tarname."""
-    # targlob = f"*.{tarname.replace('.tar.gz', '')}.avro"
     aglob = AVROGLOB(tarname).split("/")[-1]
     logging.info(f"Loading alerts to table. avroglob: {aglob}")
     job = BQ_CLIENT.load_table_from_uri(
@@ -191,9 +178,10 @@ def load_alerts_to_table(table, tarname, bucket):
         job_config=bigquery.job.LoadJobConfig(
             write_disposition='WRITE_APPEND',
             source_format="AVRO",
-            ignore_unknown_values=True,  # drop fields that are not in the table schema (schema_uri)
+            ignore_unknown_values=True,  # drop fields that are not in the table schema (cutouts)
         ),
     )
+    # TODO: report submitted but don't wait on result. record job id(?) and check it later
     result = job.result()
     # InternalServerError: 500 An internal error occurred and the request could not be completed. This is usually caused by a transient issue. Retrying the job with back-off as described in the BigQuery SLA should solve the problem: https://cloud.google.com/bigquery/sla. If the error continues to occur please contact support at https://cloud.google.com/support. Error: 80324028
     if result.errors is not None:
@@ -244,54 +232,50 @@ def download_tarball(tarname):
         logging.warning(f"ReadError extracting tar {tarpath}")
         REPORT("error", f"{tarname},extract_tar")
     tarpath.unlink()  # delete the tarball
-    apaths = [p.resolve() for p in adir.glob("*.avro")]
-    return apaths
+    return list(adir.glob("*.avro"))
 
 
 def touch_schema(version, falert):
     """Check that a schema (avsc file) exists for version, creating it from falert if necessary."""
-    spath = schemas.fpath(version)
-    # schema_uri = f"{bucket.name}/{spath.name}"
-    if not spath.is_file():
+    if not schemas.FPATH(version).is_file():
         logging.info(f"Creating schema for version {version}")
-        # create the fixed schema dn upload to bucket
         schemas.alert2avsc(falert, version=version, fixschema=True)
-        # blob = bucket.blob(spath.name)
-        # with open(spath, "rb") as f:
-        #     blob.upload_from_file(f)
-    # parsed_schema = fa.parse_schema(schemas.loadavsc(version=version, nocutouts=False))
 
 
 def touch_table(table, falert, schema_nocutouts, version):
     """Make sure the BigQuery table exists, creating it if necessary."""
     try:
         BQ_CLIENT.get_table(table)
-        logging.debug(f"Table exists {table}")
     except NotFound:
-        alert_dict = {
-            k: v
-            for k, v in open_alert(falert, version).items()
-            if not k.startswith("cutout")
-        }
-        tmp = tempfile.NamedTemporaryFile()
-        with open(tmp.name, "wb") as fout:
-            fa.writer(fout, schema_nocutouts, [alert_dict])
+        pass  # we'll create the table below
+    else:
+        return
 
-        with open(tmp.name, "rb") as f:
-            job = BQ_CLIENT.load_table_from_file(
-                f,
-                table,
-                job_config=bigquery.job.LoadJobConfig(
-                    create_disposition="CREATE_IF_NEEDED",
-                    source_format="AVRO",
-                    clustering_fields=["objectId", "candid"],
-                    destination_table_description=f"Zwicky Transient Facility (ZTF) alerts, schema version {version}",
-                )
+    # easiest way to create the table using the Avro schema is to load an (Avro) alert
+    # we must construct one with the fixed schema and no cutouts
+    tmp = tempfile.NamedTemporaryFile()
+    alert_dict = {
+        k: v
+        for k, v in open_alert(falert, version).items()
+        if not k.startswith("cutout")
+    }
+    with open(tmp.name, "wb") as fout:
+        fa.writer(fout, schema_nocutouts, [alert_dict])
+
+    with open(tmp.name, "rb") as f:
+        job = BQ_CLIENT.load_table_from_file(
+            f,
+            table,
+            job_config=bigquery.job.LoadJobConfig(
+                create_disposition="CREATE_IF_NEEDED",
+                source_format="AVRO",
+                clustering_fields=["objectId", "candid"],
+                destination_table_description=f"Zwicky Transient Facility (ZTF) alerts, schema version {version}",
             )
-        job.result()
-        logging.info(f"Table created: {table}")
-
-    # with open(spath.replace())
+        )
+    tmp.close()
+    job.result()  # TODO: check for errors
+    logging.info(f"Table created: {table}")
 
 
 def create_file_metadata(alert_dict):
@@ -349,24 +333,28 @@ def open_alert(falert, version=None):
             logging.warning(f"Unable to deserialize alert {falert.name}")
             return
 
+    # we expect all alerts from one tarball to have the same schema version
+    # if they don't, human intervention is needed
+    # and we should not proceed with processing any more alerts from this tarball
     if thisversion != version:
         REPORT("error", f"{falert.name},mismatched_versions:{thisversion}_{version}")
         raise ValueError(f"Expected alert version {version} but found {thisversion}.")
 
     n = len(list_of_dicts)
-    if n != 1:
-        REPORT("error", f"{falert.name},too_many_records:{n}")
+    if n != 1:  # this should never happen, but we'd better check
+        REPORT("error", f"{falert.name},wrong_number_of_records:{n}")
         raise ValueError(f"Expected one record in alert packet but found {n}")
 
     return list_of_dicts[0]
 
 
 def fetch_tarball_names():
-    """Download list of all available tarballs to csv."""
+    """Return list of all tarballs available from ZTFURL that we haven't already reported as "done"."""
     tardf = pd.read_html(ZTFURL)[0]
-    # a size of "44" or "74" (bytes) means the tarball is empty
-    tardf = tardf[["Name", "Size"]].dropna(how="all").query("Size not in ['0', '44', '74']")
+    tardf = tardf[["Name", "Size"]].dropna(how="all")
     tardf = tardf.loc[tardf['Name'].str.endswith(".tar.gz")]
+    # a size of "0", "44" or "74" (bytes) means the tarball is empty
+    tardf = tardf.query("Size not in ['0', '44', '74']")
     try:
         dones = pd.read_csv(FDONE, names=["Name"])
         dones = dones['Name'].to_list()
