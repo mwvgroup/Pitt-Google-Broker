@@ -118,7 +118,6 @@ def ingest_one_tarball(tarname):
     except OSError:  # directory is not empty
         REPORT("error", f"{dalert.name},rm_dir")
 
-    REPORT("done", tarname)
     logging.info(f"Done with {tarname}")
 
 
@@ -168,6 +167,15 @@ def load_alerts_to_bucket(bucket, tarname):
     return True
 
 
+def _bigquery_done(job):
+    aglob = job.source_uris[0].split("/")[-1]  # like *.ztf_public_20221216.avro
+    tarname = f"{aglob.split('.')[1]}.tar.gz"
+    if job.errors is not None:
+        REPORT("error", f"bqjob_{job.job_id},{aglob}")
+    else:
+        REPORT("done", tarname)
+
+
 def load_alerts_to_table(table, tarname, bucket):
     """Load table with all alerts in bucket that correspond to tarname."""
     aglob = AVROGLOB(tarname).split("/")[-1]
@@ -181,12 +189,19 @@ def load_alerts_to_table(table, tarname, bucket):
             ignore_unknown_values=True,  # drop fields that are not in the table schema (cutouts)
         ),
     )
-    # TODO: report submitted but don't wait on result. record job id(?) and check it later
-    result = job.result()
+    REPORT("submitted", tarname)
+
+    # if the job succeeds it shouldn't take very long
+    # but if it fails it can take hours, so let's not wait for it.
+    # this starts a helper thread to poll for the status
+    job.add_done_callback(_bigquery_done)
+
+    # job.result()
     # InternalServerError: 500 An internal error occurred and the request could not be completed. This is usually caused by a transient issue. Retrying the job with back-off as described in the BigQuery SLA should solve the problem: https://cloud.google.com/bigquery/sla. If the error continues to occur please contact support at https://cloud.google.com/support. Error: 80324028
-    if result.errors is not None:
-        REPORT("error", f"{tarname},load_table")
-        logging.warning(f"Error loading table for {tarname}. {result.error_result}")
+
+    # if result.errors is not None:
+    #     REPORT("error", f"{tarname},load_table")
+    #     logging.warning(f"Error loading table for {tarname}. {result.error_result}")
 
 
 def ingest_alert_to_bucket_deprecated(falert, bucket, schema, version):
