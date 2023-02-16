@@ -6,8 +6,8 @@ import subprocess
 import tempfile
 import fastavro as fa
 import tarfile
-from multiprocessing import Pool
-from multiprocessing.pool import ThreadPool
+from time import sleep
+from multiprocessing import Pool, Queue, Process
 from google.cloud import storage, bigquery
 from google.cloud.exceptions import PreconditionFailed, NotFound
 import pandas as pd
@@ -37,7 +37,7 @@ handler = logging.FileHandler(LOGSDIR / "ingest_tarballs.log")
 handler.setLevel(logging.INFO)
 handler.setFormatter(
     logging.Formatter(
-        "[%(levelname)s] %(name)s: %(asctime)s [%(processName)s:%(threadName)s] %(message)s"
+        "[%(levelname)s] %(name)s: %(asctime)s [%(process)d:%(processName)s] %(message)s"
     )
 )
 logger = logging.getLogger()
@@ -45,7 +45,7 @@ logger.addHandler(handler)
 
 BQ_CLIENT = bigquery.Client()
 DATASET = f"{SURVEY}_alerts"
-_BUCKET = f"{PROJECT_ID}-{SURVEY}-alert_avros"
+_BUCKET = f"{PROJECT_ID}-{SURVEY}-alerts"
 if TESTID != "False":
     DATASET = f"{DATASET}_{TESTID}"
     _BUCKET = f"{_BUCKET}-{TESTID}"
@@ -79,13 +79,154 @@ class SchemaParsingError(Exception):
 def run():
     """Ingest all tarballs from ZTF's alert archive."""
     tardf = fetch_tarball_names()
-    with Pool(5) as pool:
-        pool.map(ingest_one_tarball, tardf["Name"].values)
+    i = 0
+    sampdf = tardf.sort_index(ascending=False).iloc[i*10:(i+5)*10]
+
+    # nprocs = 8. ntarballs = 10. 33.5 GB
+    #  - CPU times: user 15min 55s, sys: 5min 57s, total: 21min 53s
+    #  - Wall time: 3h 44min 3s
+    # nprocs = 16. ntarballs = 10. 40.1 GB
+    # - CPU times: user 12min 20s, sys: 4min 36s, total: 16min 57s
+    # - Wall time: 2h 25min 12s
+    i, nprocs = 0, 16
+    sampdf = tardf.sort_index(ascending=False).iloc[i*10:(i+5)*10]
+    # print(sum([float(s.strip('MG')) for s in sampdf['Size']]))
+    for row in sampdf.itertuples():
+        ingest_one_tarball((row.Name, row.Size), nprocs=nprocs)
+
+    i, nprocs = 0, 16
+    logging.info(f"nprocs = {nprocs}")
+    sampdf = tardf.sort_index(ascending=False).iloc[i*10:(i+2)*10]
+    print(sum([float(s.strip('G')) for s in sampdf['Size']]))
+    # downloads take forever
+    with Pool(2) as pool:
+        pool.map(ingest_one_tarball, [(r.Name, r.Size) for r in sampdf.itertuples()])
+    # 20 tarballs. 77.3 GB
+
+    # 36: 8
+    # 96: 8
+    # 08: 16
+    # 86: 12
+    # 10: 20
+
+    # QUEUEs
+    # 171 GB in about 24 hours
+    extract_queue, prep_queue, load_queue = Queue(3), Queue(2), Queue(2)
+
+    extract_proc = Process(target=extract_tarballs, args=(extract_queue, prep_queue), name="ExtractTarballs")
+    prep_proc = Process(target=prep_tarballs, args=(prep_queue, load_queue), name="PrepTarballs")
+    load_proc = Process(target=load_tarballs, args=(load_queue,), name="LoadTarballs")
+    procs = [extract_proc, prep_proc, load_proc]
+
+    for proc in procs:
+        proc.start()
+
+    for row in sampdf.itertuples():
+        tarname, tarsize = row.Name, row.Size
+        logging.info(f"Starting tarball {tarname} ({tarsize})")
+        tarpath = download_tarball(tarname)
+        extract_queue.put((tarname, tarpath), block=True)
+    extract_queue.put(("END", "END"))
+
+    for proc in procs:
+        proc.join()
+        proc.close()
+
+    # SERIAL
+    bucket = BUCKET()
+    for row in sampdf.itertuples():
+        tarname, tarsize = row.Name, row.Size
+        logging.info(f"Starting tarball {tarname} ({tarsize})")
+        logging.info("downloading")
+        tarpath = download_tarball(tarname)
+        logging.info("extracting")
+        apaths = _extract_tarball(tarname, tarpath)
+        logging.info("prepping")
+        dalert, table = _prep_tarball(apaths, nprocs=12)
+        logging.info("loading")
+        _load_tarball(tarname, bucket, table, dalert)
+        logging.info(f"done with {tarname} ({tarsize})")
 
 
-def ingest_one_tarball(tarname, nthreads=12):
+def extract_tarballs(queue_in, queue_out):
+    """Extract tarball and return list of paths."""
+    while True:
+        tarname, tarpath = queue_in.get(block=True)
+
+        if tarname == "END":
+            queue_out.put(("END", "END"), block=True)
+            return
+
+        apaths = _extract_tarball(tarname, tarpath)
+        logging.info(f"done with {tarname}")
+        queue_out.put((tarname, apaths), block=True)
+
+
+def prep_tarballs(queue_in, queue_out):
+    """Target for process responsible for preping tarballs for load."""
+    while True:
+        tarname, apaths = queue_in.get(block=True)
+        if tarname == "END":
+            queue_out.put(("END", "END", "END"), block=True)
+            return
+
+        logging.info(f"starting {tarname}")
+        dalert, table = _prep_tarball(apaths)
+        logging.info(f"done with {tarname}")
+        queue_out.put((tarname, table, dalert), block=True)
+
+
+def _prep_tarball(apaths, nprocs=16):
+    """Prep one tarball."""
+    falert = apaths[0]
+    dalert = falert.parent
+
+    with open(falert, "rb") as fin:
+        version = guess_schema_version(fin.read())
+    logging.info(f"Alert version = {version}")
+
+    touch_schema(version, falert)
+    schema = schemas.loadavsc(version=version, nocutouts=False)
+
+    table = f"{PROJECT_ID}.{DATASET}.alerts_v{version.replace('.', '_')}"
+    touch_table(table, falert, schemas.loadavsc(version, nocutouts=True), version)
+
+    logging.info("Fixing alerts on disk")
+    with Pool(nprocs) as pool:
+        pool.map(fix_alert_on_disk, [[f, schema, version] for f in apaths])
+
+    return (dalert, table)
+
+
+def load_tarballs(queue_in):
+    """Target for process responsible for loading tarballs to bucket and table."""
+    bucket = BUCKET()
+    while True:
+        tarname, table, dalert = queue_in.get(block=True)
+        if tarname == "END":
+            sleep(30)  # give bigquery jobs a chance to finish and report back
+            return
+
+        logging.info(f"starting {tarname}")
+        _load_tarball(tarname, bucket, table, dalert)
+        logging.info(f"done with {tarname}")
+
+
+def _load_tarball(tarname, bucket, table, dalert):
+    success = load_alerts_to_bucket(bucket.name, tarname)
+    if success:
+        load_alerts_to_table(table, tarname, BUCKET())
+
+    try:
+        dalert.rmdir()
+    except OSError:  # directory is not empty
+        REPORT("error", f"{dalert.name},rm_dir")
+
+
+def ingest_one_tarball_deprecated(tarrow, nprocs=12):
     """Ingest one tarball from ZTF archive to Cloud Storage bucket and BigQuery table."""
-    logging.info(f"Starting tarball {tarname}")
+    tarname, tarsize = tarrow
+    logging.info(f"Starting tarball {tarname} ({tarsize})")
     apaths = download_tarball(tarname)
     # try:
     #     falert = apaths[0]
@@ -105,8 +246,11 @@ def ingest_one_tarball(tarname, nthreads=12):
     touch_table(table, falert, schemas.loadavsc(version, nocutouts=True), version)
 
     logging.info("Fixing alerts on disk")
-    with ThreadPool(nthreads) as pool:
+    with Pool(nprocs) as pool:
         pool.map(fix_alert_on_disk, [[f, schema, version] for f in apaths])
+    # 8: 3.5/5.9 = 0.6 min / gb
+    # 12: 28/12 = 2.3 min/ gb
+    # 16: 22.5/10 = 2.3 min / gb
 
     bucket = BUCKET()
     success = load_alerts_to_bucket(bucket, tarname)
@@ -118,7 +262,7 @@ def ingest_one_tarball(tarname, nthreads=12):
     except OSError:  # directory is not empty
         REPORT("error", f"{dalert.name},rm_dir")
 
-    logging.info(f"Done with {tarname}")
+    logging.info(f"ingest_one_tarball done with {tarname}")
 
 
 def fix_alert_on_disk(args):
@@ -144,16 +288,17 @@ def fix_alert_on_disk(args):
     falert.unlink()
 
 
-def load_alerts_to_bucket(bucket, tarname):
+def load_alerts_to_bucket(bucketname, tarname, nprocs=16):
     """Upload alerts to bucket. This is much simpler to batch and parallelize using `gsutil` command-line tool."""
     logging.info(f"Loading alerts to bucket. {tarname}")
 
     # gsutil:
     # -m flag runs uploads in parallel
     # macs must use multi-threading not multi-processing, specified with -o flag
-    # might as well just use multi-threading to match the ThreadPool invocation of fix_alert_on_disk
+    # test on GCP VM shows no time difference with and without -o flag
     pathglob = f"{ALERTSDIR}/{AVROGLOB(tarname)}"
-    cmd = ["gsutil", "-m", "-o GSUtil:parallel_process_count=1", "cp", "-r", pathglob, f"gs://{bucket.name}"]
+    cmd = ["gsutil", "-m", f"-o GSUtil:parallel_process_count={nprocs}", "cp", "-r", pathglob, f"gs://{bucketname}"]
+    # cmd = ["gsutil", "-m", "cp", "-r", pathglob, f"gs://{bucketname}"]
     proc = subprocess.run(cmd, capture_output=True)
 
     if proc.returncode != 0:
@@ -165,15 +310,6 @@ def load_alerts_to_bucket(bucket, tarname):
     for avro in list(ALERTSDIR.glob(AVROGLOB(tarname))):
         avro.unlink()
     return True
-
-
-def _bigquery_done(job):
-    aglob = job.source_uris[0].split("/")[-1]  # like *.ztf_public_20221216.avro
-    tarname = f"{aglob.split('.')[1]}.tar.gz"
-    if job.errors is not None:
-        REPORT("error", f"bqjob_{job.job_id},{aglob}")
-    else:
-        REPORT("done", tarname)
 
 
 def load_alerts_to_table(table, tarname, bucket):
@@ -194,7 +330,8 @@ def load_alerts_to_table(table, tarname, bucket):
     # if the job succeeds it shouldn't take very long
     # but if it fails it can take hours, so let's not wait for it.
     # this starts a helper thread to poll for the status
-    job.add_done_callback(_bigquery_done)
+    # this causes occassional problems. let's just check on submitted jobs later
+    # job.add_done_callback(_bigquery_done)
 
     # job.result()
     # InternalServerError: 500 An internal error occurred and the request could not be completed. This is usually caused by a transient issue. Retrying the job with back-off as described in the BigQuery SLA should solve the problem: https://cloud.google.com/bigquery/sla. If the error continues to occur please contact support at https://cloud.google.com/support. Error: 80324028
@@ -204,40 +341,7 @@ def load_alerts_to_table(table, tarname, bucket):
     #     logging.warning(f"Error loading table for {tarname}. {result.error_result}")
 
 
-def ingest_alert_to_bucket_deprecated(falert, bucket, schema, version):
-    """Load one alert, fix the schema, and upload to the bucket."""
-    alert_dict = open_alert(falert)
-    blob = bucket.blob(
-        AlertFilename(
-            {
-                "objectId": alert_dict["objectId"],
-                "sourceId": alert_dict["candid"],
-                "topic": falert.parent.name,
-                "format": "avro",
-            }
-        ).name
-    )
-    blob.metadata = create_file_metadata(alert_dict)
-
-    # fix the schema, upload, then delete the alert from disk
-    # tmp = tempfile.NamedTemporaryFile()
-    # with open(tmp.name, "wb") as fout:
-    with tempfile.TemporaryFile() as f:
-        fa.writer(f, schema, [alert_dict])
-        try:
-            # with open(tmp.name, "rb") as f:
-            blob.upload_from_file(f, if_generation_match=0, rewind=True)
-        except PreconditionFailed:  # if filename already exists in bucket. triggered by if_generation_match=0
-            pass
-    # tmp.close()
-    # os.unlink(tmp.name)
-    falert.unlink()
-
-
-def download_tarball(tarname):
-    """Download tarball from ZTFUTL, extract, return list of paths."""
-    logging.info(f"Downloading tarball {tarname}")
-    tarpath, headers = urlretrieve(f"{ZTFURL}/{tarname}", ALERTSDIR / tarname)
+def _extract_tarball(tarname, tarpath):
     adir = ALERTSDIR / tarname.replace(".tar.gz", "")
     try:
         with tarfile.open(tarpath, "r") as tar:
@@ -245,9 +349,22 @@ def download_tarball(tarname):
     except tarfile.ReadError:
         # log the error, then continue processing any alerts that were successfully extracted
         logging.warning(f"ReadError extracting tar {tarpath}")
-        REPORT("error", f"{tarname},extract_tar")
+        REPORT("error", f"{tarname},extract_tar_ReadError")
+    except PermissionError:
+        logging.warning(f"PermissionError extracting tar {tarpath}")
+        REPORT("error", f"{tarname},extract_tar_PermissionError")
+
     tarpath.unlink()  # delete the tarball
-    return list(adir.glob("*.avro"))
+    apaths = list(adir.glob("*.avro"))
+    return apaths
+
+
+def download_tarball(tarname):
+    """Download tarball from ZTFUTL."""
+    logging.info(f"Downloading tarball {tarname}")
+    tarpath, headers = urlretrieve(f"{ZTFURL}/{tarname}", ALERTSDIR / tarname)
+    logging.info(f"download_tarball done with {tarname}")
+    return tarpath
 
 
 def touch_schema(version, falert):
@@ -328,6 +445,36 @@ def _hi(p):
     print(f'hi {p}')
 
 
+def ingest_alert_to_bucket_deprecated(falert, bucket, schema, version):
+    """Load one alert, fix the schema, and upload to the bucket."""
+    alert_dict = open_alert(falert)
+    blob = bucket.blob(
+        AlertFilename(
+            {
+                "objectId": alert_dict["objectId"],
+                "sourceId": alert_dict["candid"],
+                "topic": falert.parent.name,
+                "format": "avro",
+            }
+        ).name
+    )
+    blob.metadata = create_file_metadata(alert_dict)
+
+    # fix the schema, upload, then delete the alert from disk
+    # tmp = tempfile.NamedTemporaryFile()
+    # with open(tmp.name, "wb") as fout:
+    with tempfile.TemporaryFile() as f:
+        fa.writer(f, schema, [alert_dict])
+        try:
+            # with open(tmp.name, "rb") as f:
+            blob.upload_from_file(f, if_generation_match=0, rewind=True)
+        except PreconditionFailed:  # if filename already exists in bucket. triggered by if_generation_match=0
+            pass
+    # tmp.close()
+    # os.unlink(tmp.name)
+    falert.unlink()
+
+
 def open_alert(falert, version=None):
     """Open alert from file, check that versions match, then return alert as a dict."""
     with open(falert, "rb") as fin:
@@ -363,13 +510,42 @@ def open_alert(falert, version=None):
     return list_of_dicts[0]
 
 
-def fetch_tarball_names():
+def _bigquery_done(job):
+    aglob = job.source_uris[0].split("/")[-1]  # like *.ztf_public_20221216.avro
+    tarname = f"{aglob.split('.')[1]}.tar.gz"
+    if job.errors is not None:
+        REPORT("error", f"bqjob_{job.job_id},{aglob}")
+    else:
+        REPORT("done", tarname)
+
+
+def check_submitted_jobs():
+    """Check jobs submitted to BigQuery and update the done report."""
+    logging.info("Checking on status of submitted BigQuery jobs.")
+    dones = pd.read_csv(FDONE, names=["tarname"]).squeeze()
+    errs = pd.read_csv(FERR, names=["tarname", "error"]).query("error == 'load_table'")["tarname"]
+    reported = list(dones) + list(errs)
+
+    subdf = pd.read_csv(FSUB, names=["tarname", "jobid"]).query("tarname not in @reported")
+    for row in subdf.itertuples():
+        job = BQ_CLIENT.get_job(row.jobid)
+        if job.done():
+            _bigquery_done(job)
+
+    logging.info("status check done")
+
+
+def fetch_tarball_names(check_submitted=True):
     """Return list of all tarballs available from ZTFURL that we haven't already reported as "done"."""
+    if check_submitted:
+        check_submitted_jobs()
+
     tardf = pd.read_html(ZTFURL)[0]
     tardf = tardf[["Name", "Size"]].dropna(how="all")
     tardf = tardf.loc[tardf['Name'].str.endswith(".tar.gz")]
     # a size of "0", "44" or "74" (bytes) means the tarball is empty
     tardf = tardf.query("Size not in ['0', '44', '74']")
+
     try:
         dones = pd.read_csv(FDONE, names=["Name"])
         dones = dones['Name'].to_list()
@@ -386,19 +562,20 @@ if __name__ == '__main__':
     # working example
     # %%time
     tarname = "ztf_public_20221216.tar.gz"  # 1.0G
-    ingest_one_tarball(tarname, nthreads=30)
+    ingest_one_tarball(tarname, nprocs=30)
     # CPU times: user 1min 59s, sys: 26.9 s, total: 2min 26s
     # Wall time: 4min 22s
 
     # tar extraction error example
     # %%time
     tarname = "ztf_public_20200127.tar.gz"  # 3.0G
-    ingest_one_tarball(tarname, nthreads=30)
+    ingest_one_tarball(tarname, nprocs=30)
 
     # possible example to process multiple tarballs in parallel
     # since these vcpus are threads and not cores,
     # it might not even make sense to call Pool
     tardf = fetch_tarball_names()
     tarsample = tardf.sample(2)
+    print(tarsample)
     with Pool(2) as pool:
         pool.map(ingest_one_tarball, tarsample["Name"].values)

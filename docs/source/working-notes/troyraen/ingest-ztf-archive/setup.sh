@@ -8,12 +8,15 @@ TESTID="raenarch"  # choose your own testid
 PROJECT_ID="${GOOGLE_CLOUD_PROJECT}"
 echo $PROJECT_ID
 
-bucket="${PROJECT_ID}-ztf-alert_avros-${TESTID}"
+bucket="${PROJECT_ID}-ztf-alerts-${TESTID}"
 dataset="ztf_alerts_${TESTID}"
 vmname="ingest-ztfarchive-${TESTID}"
 zone='us-central1-a'
 
 gsutil mb "gs://${bucket}"
+gcloud storage buckets add-iam-policy-binding "gs://${bucket}" \
+    --member=allUsers
+    --role=roles/storage.objectViewer
 # gsutil -m rm -r "gs://${bucket}"
 
 bq mk "${dataset}"
