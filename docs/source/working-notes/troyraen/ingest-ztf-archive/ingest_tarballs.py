@@ -29,7 +29,9 @@ LOGSDIR.mkdir(exist_ok=True)
 FDONE = LOGSDIR / "done.csv"
 FERR = LOGSDIR / "error.csv"
 FSUB = LOGSDIR / "submitted-to-bigquery.csv"
-ALERTSDIR = Path(__file__).parent / "alerts"
+# ALERTSDIR = Path(__file__).parent / "alerts"
+# ALERTSDIR = Path("/mnt/disks/ssdalerts") / "alerts"
+ALERTSDIR = Path("/mnt/disks/localssd") / "alerts"
 ALERTSDIR.mkdir(exist_ok=True)
 ZTFURL = "https://ztf.uw.edu/alerts/public"
 
@@ -78,9 +80,9 @@ class SchemaParsingError(Exception):
 
 def run():
     """Ingest all tarballs from ZTF's alert archive."""
-    tardf = fetch_tarball_names()
-    i = 0
-    sampdf = tardf.sort_index(ascending=False).iloc[i*10:(i+5)*10]
+    # tardf = fetch_tarball_names()
+    # i = 0
+    # sampdf = tardf.sort_index(ascending=False).iloc[i*10:(i+5)*10]
 
     # nprocs = 8. ntarballs = 10. 33.5 GB
     #  - CPU times: user 15min 55s, sys: 5min 57s, total: 21min 53s
@@ -88,20 +90,20 @@ def run():
     # nprocs = 16. ntarballs = 10. 40.1 GB
     # - CPU times: user 12min 20s, sys: 4min 36s, total: 16min 57s
     # - Wall time: 2h 25min 12s
-    i, nprocs = 0, 16
-    sampdf = tardf.sort_index(ascending=False).iloc[i*10:(i+5)*10]
-    # print(sum([float(s.strip('MG')) for s in sampdf['Size']]))
-    for row in sampdf.itertuples():
-        ingest_one_tarball((row.Name, row.Size), nprocs=nprocs)
-
-    i, nprocs = 0, 16
-    logging.info(f"nprocs = {nprocs}")
-    sampdf = tardf.sort_index(ascending=False).iloc[i*10:(i+2)*10]
-    print(sum([float(s.strip('G')) for s in sampdf['Size']]))
-    # downloads take forever
-    with Pool(2) as pool:
-        pool.map(ingest_one_tarball, [(r.Name, r.Size) for r in sampdf.itertuples()])
-    # 20 tarballs. 77.3 GB
+    # i, nprocs = 0, 16
+    # sampdf = tardf.sort_index(ascending=False).iloc[i*10:(i+5)*10]
+    # # print(sum([float(s.strip('MG')) for s in sampdf['Size']]))
+    # for row in sampdf.itertuples():
+    #     ingest_one_tarball((row.Name, row.Size), nprocs=nprocs)
+    #
+    # i, nprocs = 0, 16
+    # logging.info(f"nprocs = {nprocs}")
+    # sampdf = tardf.sort_index(ascending=False).iloc[i*10:(i+2)*10]
+    # print(sum([float(s.strip('G')) for s in sampdf['Size']]))
+    # # downloads take forever
+    # with Pool(2) as pool:
+    #     pool.map(ingest_one_tarball, [(r.Name, r.Size) for r in sampdf.itertuples()])
+    # # 20 tarballs. 77.3 GB
 
     # 36: 8
     # 96: 8
@@ -109,43 +111,86 @@ def run():
     # 86: 12
     # 10: 20
 
-    # QUEUEs
-    # 171 GB in about 24 hours
-    extract_queue, prep_queue, load_queue = Queue(3), Queue(2), Queue(2)
-
-    extract_proc = Process(target=extract_tarballs, args=(extract_queue, prep_queue), name="ExtractTarballs")
-    prep_proc = Process(target=prep_tarballs, args=(prep_queue, load_queue), name="PrepTarballs")
-    load_proc = Process(target=load_tarballs, args=(load_queue,), name="LoadTarballs")
-    procs = [extract_proc, prep_proc, load_proc]
-
-    for proc in procs:
-        proc.start()
-
-    for row in sampdf.itertuples():
-        tarname, tarsize = row.Name, row.Size
-        logging.info(f"Starting tarball {tarname} ({tarsize})")
-        tarpath = download_tarball(tarname)
-        extract_queue.put((tarname, tarpath), block=True)
-    extract_queue.put(("END", "END"))
-
-    for proc in procs:
-        proc.join()
-        proc.close()
+    # # QUEUEs
+    # # 171 GB in about 24 hours
+    # extract_queue, prep_queue, load_queue = Queue(3), Queue(2), Queue(2)
+    #
+    # extract_proc = Process(target=extract_tarballs, args=(extract_queue, prep_queue), name="ExtractTarballs")
+    # prep_proc = Process(target=prep_tarballs, args=(prep_queue, load_queue), name="PrepTarballs")
+    # load_proc = Process(target=load_tarballs, args=(load_queue,), name="LoadTarballs")
+    # procs = [extract_proc, prep_proc, load_proc]
+    #
+    # for proc in procs:
+    #     proc.start()
+    #
+    # for row in sampdf.itertuples():
+    #     tarname, tarsize = row.Name, row.Size
+    #     logging.info(f"Starting tarball {tarname} ({tarsize})")
+    #     tarpath = download_tarball(tarname)
+    #     extract_queue.put((tarname, tarpath), block=True)
+    # extract_queue.put(("END", "END"))
+    #
+    # for proc in procs:
+    #     proc.join()
+    #     proc.close()
 
     # SERIAL
+    tardf = fetch_tarball_names()
+    bigdf = tardf.query("SizeG >= 25").sort_index(ascending=False)
+    lastog = 'ztf_public_20190220.tar.gz'
+    sampdf = tardf.query("Name > @lastog").sort_index(ascending=False)
     bucket = BUCKET()
-    for row in sampdf.itertuples():
+    # 136 GB in ?
+    #***************** ztf_public_20181113.tar.gz,no_space_for_74G_tarball
+
+    def run_row(row, nprocs, nthreads):
         tarname, tarsize = row.Name, row.Size
         logging.info(f"Starting tarball {tarname} ({tarsize})")
         logging.info("downloading")
-        tarpath = download_tarball(tarname)
+        tarpath = it.download_tarball(tarname)
         logging.info("extracting")
-        apaths = _extract_tarball(tarname, tarpath)
+        apaths = it._extract_tarball(tarname, tarpath)
         logging.info("prepping")
-        dalert, table = _prep_tarball(apaths, nprocs=12)
+        dalert, table = it._prep_tarball(apaths, nprocs=nprocs)
         logging.info("loading")
-        _load_tarball(tarname, bucket, table, dalert)
+        success = it.load_alerts_to_bucket(bucket.name, tarname, nprocs=nprocs, nthreads=nthreads)
+        if success:
+            it.load_alerts_to_table(table, tarname, bucket)
+        try:
+            dalert.rmdir()
+        except OSError:
+            it.REPORT("error", f"{dalert.name},rm_dir")
         logging.info(f"done with {tarname} ({tarsize})")
+
+    for row in sampdf.iloc[53:100].itertuples():
+        run_row(row, 16, 1)
+
+# ztf_public_20190524
+
+# ---- bigdf
+# df25 = bigdf.query('SizeG == 25')
+#
+# row = df25.iloc[0]
+# ztf_public_20181114.tar.gz 25G with nproc = 16
+# CPU times: user 7min, sys: 2min 30s, total: 9min 31s
+# Wall time: 1h 6min 15s
+#
+# row = df25.iloc[1]
+# ztf_public_20200821.tar.gz 25G with nproc = 32
+# Wall time: 1h 7min
+#
+# row = df25.iloc[2]
+# ztf_public_20201019.tar.gz 25G with nproc = 8
+# CPU times: user 7min 12s, sys: 2min 28s, total: 9min 41s
+# Wall time: 1h 8min 12s
+#
+# ztf_public_20210210.tar.gz 26G with nprocs = 16, nthreads=8
+# CPU times: user 7min 12s, sys: 2min 28s, total: 9min 40s
+# Wall time: 1h 7min 42s
+#
+# bigdf.iloc[:6] 257G
+# CPU times: user 1h 14min 1s, sys: 25min 38s, total: 1h 39min 40s
+# Wall time: 11h 32min 42s
 
 
 def extract_tarballs(queue_in, queue_out):
@@ -183,7 +228,7 @@ def _prep_tarball(apaths, nprocs=16):
 
     with open(falert, "rb") as fin:
         version = guess_schema_version(fin.read())
-    logging.info(f"Alert version = {version}")
+    logging.info(f"alert version = {version}")
 
     touch_schema(version, falert)
     schema = schemas.loadavsc(version=version, nocutouts=False)
@@ -191,7 +236,7 @@ def _prep_tarball(apaths, nprocs=16):
     table = f"{PROJECT_ID}.{DATASET}.alerts_v{version.replace('.', '_')}"
     touch_table(table, falert, schemas.loadavsc(version, nocutouts=True), version)
 
-    logging.info("Fixing alerts on disk")
+    logging.info("fixing schemas")
     with Pool(nprocs) as pool:
         pool.map(fix_alert_on_disk, [[f, schema, version] for f in apaths])
 
@@ -288,16 +333,21 @@ def fix_alert_on_disk(args):
     falert.unlink()
 
 
-def load_alerts_to_bucket(bucketname, tarname, nprocs=16):
+def load_alerts_to_bucket(bucketname, tarname, nprocs=16, nthreads=8):
     """Upload alerts to bucket. This is much simpler to batch and parallelize using `gsutil` command-line tool."""
-    logging.info(f"Loading alerts to bucket. {tarname}")
+    logging.info(f"loading to bucket {tarname}")
+    # some of these tarballs get extracted with an extra directory level
+    if len(list(ALERTSDIR.glob(AVROGLOB(tarname)))) > 0:
+        pathglob = f"{ALERTSDIR}/{AVROGLOB(tarname)}"
+    else:
+        pathglob = f"{ALERTSDIR}/{tarname.replace('.tar.gz', '')}/{AVROGLOB(tarname)}"
 
     # gsutil:
     # -m flag runs uploads in parallel
     # macs must use multi-threading not multi-processing, specified with -o flag
     # test on GCP VM shows no time difference with and without -o flag
-    pathglob = f"{ALERTSDIR}/{AVROGLOB(tarname)}"
-    cmd = ["gsutil", "-m", f"-o GSUtil:parallel_process_count={nprocs}", "cp", "-r", pathglob, f"gs://{bucketname}"]
+    multio = f"GSUtil:parallel_process_count={nprocs},parallel_thread_count={nthreads}"
+    cmd = ["gsutil", "-m", f"-o {multio}", "cp", "-r", pathglob, f"gs://{bucketname}"]
     # cmd = ["gsutil", "-m", "cp", "-r", pathglob, f"gs://{bucketname}"]
     proc = subprocess.run(cmd, capture_output=True)
 
@@ -315,7 +365,7 @@ def load_alerts_to_bucket(bucketname, tarname, nprocs=16):
 def load_alerts_to_table(table, tarname, bucket):
     """Load table with all alerts in bucket that correspond to tarname."""
     aglob = AVROGLOB(tarname).split("/")[-1]
-    logging.info(f"Loading alerts to table. avroglob: {aglob}")
+    logging.info(f"submitting bigquery load job {tarname}")
     job = BQ_CLIENT.load_table_from_uri(
         f"gs://{bucket.name}/{aglob}",
         table,
@@ -356,14 +406,17 @@ def _extract_tarball(tarname, tarpath):
 
     tarpath.unlink()  # delete the tarball
     apaths = list(adir.glob("*.avro"))
+    # some of these tarballs get extracted with an extra directory level
+    if len(apaths) == 0:
+        apaths = list((adir / tarname.replace(".tar.gz", "")).glob("*.avro"))
     return apaths
 
 
 def download_tarball(tarname):
     """Download tarball from ZTFUTL."""
-    logging.info(f"Downloading tarball {tarname}")
+    # logging.info(f"Downloading tarball {tarname}")
     tarpath, headers = urlretrieve(f"{ZTFURL}/{tarname}", ALERTSDIR / tarname)
-    logging.info(f"download_tarball done with {tarname}")
+    # logging.info(f"download_tarball done with {tarname}")
     return tarpath
 
 
@@ -535,6 +588,16 @@ def check_submitted_jobs():
     logging.info("status check done")
 
 
+def _convert_tarsize(size, to="GiB"):
+    num = float(size.strip("KMG"))
+    if size.endswith("G"):
+        return num
+    if size.endswith("M"):
+        return num / 1024
+    if size.endswith("K"):
+        return num / 1024 / 2014
+
+
 def fetch_tarball_names(check_submitted=True):
     """Return list of all tarballs available from ZTFURL that we haven't already reported as "done"."""
     if check_submitted:
@@ -542,9 +605,10 @@ def fetch_tarball_names(check_submitted=True):
 
     tardf = pd.read_html(ZTFURL)[0]
     tardf = tardf[["Name", "Size"]].dropna(how="all")
-    tardf = tardf.loc[tardf['Name'].str.endswith(".tar.gz")]
+    tardf = tardf.loc[tardf['Name'].str.endswith(".tar.gz"), :]
     # a size of "0", "44" or "74" (bytes) means the tarball is empty
-    tardf = tardf.query("Size not in ['0', '44', '74']")
+    tardf = tardf.query("Size not in ['0', '44', '55', '74']")
+    tardf.loc[:, 'SizeG'] = tardf['Size'].apply(_convert_tarsize)
 
     try:
         dones = pd.read_csv(FDONE, names=["Name"])
