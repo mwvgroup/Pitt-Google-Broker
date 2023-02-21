@@ -1,2 +1,5 @@
 ztf_public_20230208.tar.gz,PermissionError: [Errno 13] Permission denied: '/home/troyraen/ingest/alerts/ztf_public_20230208/2229311112915015028.avro'
 ztf_public_20230207.tar.gz,extract_tar_PermissionError
+ztf_public_20221021.tar.gz,extract_tar_PermissionError
+ztf_public_20190524,rm_dir
+ztf_public_20190525,rm_dir
