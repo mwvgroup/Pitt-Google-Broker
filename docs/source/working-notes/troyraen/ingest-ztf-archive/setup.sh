@@ -73,11 +73,10 @@ rm add-google-cloud-ops-agent-repo.sh
 
 # the ssd must be reformatted and mounted
 # it must be remounted after reboot, and data is *not* persisted
-sshg "${vmname}-big"
 # lsblk
 ssdname="localssd"
 mntdir="${ssdname}"
-sudo mkfs.ext4 -F "/dev/${ssdname}"
+sudo mkfs.ext4 -F "/dev/${ssdname}"  # this erases the disk
 sudo mkdir -p "/mnt/disks/${mntdir}"
 sudo mount "/dev/${ssdname}" "/mnt/disks/${mntdir}"  # repeat after reboot
 sudo chmod a+w "/mnt/disks/${mntdir}"
@@ -92,7 +91,7 @@ rm Anaconda3-2022.05-Linux-x86_64.sh
 source ~/.bashrc
 conda create -n pgb python=3.7
 conda activate pgb
-# we don't use this much but it installs other dependencies we need
+# we don't use this much but it installs several other dependencies we need
 pip3 install pgb-broker-utils
 pip3 uninstall fastavro
 pip3 install fastavro==1.4.4

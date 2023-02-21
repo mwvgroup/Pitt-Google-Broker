@@ -135,39 +135,35 @@ def run():
     #     proc.close()
 
     # SERIAL
-    tardf = fetch_tarball_names()
+    tardf = it.fetch_tarball_names()
     bigdf = tardf.query("SizeG >= 25").sort_index(ascending=False)
     lastog = 'ztf_public_20190220.tar.gz'
     sampdf = tardf.query("Name > @lastog").sort_index(ascending=False)
-    bucket = BUCKET()
-    # 136 GB in ?
+    df20idx = tardf['Name'].str.strip('ztf_public_.tar.gz').str.startswith("2020")
+    df20 = tardf.loc[df20idx].sort_index(ascending=False)
+    bucket = it.BUCKET()
+
     #***************** ztf_public_20181113.tar.gz,no_space_for_74G_tarball
 
-    def run_row(row, nprocs, nthreads):
-        tarname, tarsize = row.Name, row.Size
-        logging.info(f"Starting tarball {tarname} ({tarsize})")
-        logging.info("downloading")
-        tarpath = it.download_tarball(tarname)
-        logging.info("extracting")
-        apaths = it._extract_tarball(tarname, tarpath)
-        logging.info("prepping")
-        dalert, table = it._prep_tarball(apaths, nprocs=nprocs)
-        logging.info("loading")
-        success = it.load_alerts_to_bucket(bucket.name, tarname, nprocs=nprocs, nthreads=nthreads)
-        if success:
-            it.load_alerts_to_table(table, tarname, bucket)
-        try:
-            dalert.rmdir()
-        except OSError:
-            it.REPORT("error", f"{dalert.name},rm_dir")
-        logging.info(f"done with {tarname} ({tarsize})")
-
-    for row in sampdf.iloc[53:100].itertuples():
-        run_row(row, 16, 1)
+    for row in df20[:100].itertuples():
+        it._run_row(row, bucket)
+        # run_row(row, 16, 1)
 
 # ztf_public_20190524
+# ingest - 11471 - ztf_public_20200224 - mydf = df20.iloc[45:100].query('SizeG < 25')
+# double - 11700 - ztf_public_20200712 - mydf = df20.iloc[136:200].query('SizeG < 25')
+# triple - 16255 - ztf_public_20201012 - mydf = df20[220:].query('SizeG < 25')
+
+# ---- original machine
+# 307 GB
+# CPU times: user 1h 32min 46s, sys: 36min 32s, total: 2h 9min 18s
+# Wall time: 23h 35min 57s
 
 # ---- bigdf
+# 258 GB in 18h 15m
+# 368 GB in 1d 4m
+# 377 GB in 1d 50m
+#
 # df25 = bigdf.query('SizeG == 25')
 #
 # row = df25.iloc[0]
@@ -191,6 +187,26 @@ def run():
 # bigdf.iloc[:6] 257G
 # CPU times: user 1h 14min 1s, sys: 25min 38s, total: 1h 39min 40s
 # Wall time: 11h 32min 42s
+
+
+def _run_row(row, bucket, nprocs=None, nthreads=None):
+    tarname, tarsize = row.Name, row.Size
+    logging.info(f"Starting tarball {tarname} ({tarsize})")
+    logging.info("downloading")
+    tarpath = download_tarball(tarname)
+    logging.info("extracting")
+    apaths = _extract_tarball(tarname, tarpath)
+    logging.info("prepping")
+    dalert, table = _prep_tarball(apaths, nprocs=nprocs)
+    logging.info("loading")
+    success = load_alerts_to_bucket(bucket.name, tarname, nprocs=nprocs, nthreads=nthreads)
+    if success:
+        load_alerts_to_table(table, tarname, bucket)
+    try:
+        dalert.rmdir()
+    except OSError:
+        REPORT("error", f"{dalert.name},rm_dir")
+    logging.info(f"done with {tarname} ({tarsize})")
 
 
 def extract_tarballs(queue_in, queue_out):
@@ -346,8 +362,11 @@ def load_alerts_to_bucket(bucketname, tarname, nprocs=16, nthreads=8):
     # -m flag runs uploads in parallel
     # macs must use multi-threading not multi-processing, specified with -o flag
     # test on GCP VM shows no time difference with and without -o flag
-    multio = f"GSUtil:parallel_process_count={nprocs},parallel_thread_count={nthreads}"
-    cmd = ["gsutil", "-m", f"-o {multio}", "cp", "-r", pathglob, f"gs://{bucketname}"]
+    if nprocs is None and nthreads is None:
+        cmd = ["gsutil", "-m", "cp", "-r", pathglob, f"gs://{bucketname}"]
+    else:
+        multio = f"GSUtil:parallel_process_count={nprocs},parallel_thread_count={nthreads}"
+        cmd = ["gsutil", "-m", f"-o {multio}", "cp", "-r", pathglob, f"gs://{bucketname}"]
     # cmd = ["gsutil", "-m", "cp", "-r", pathglob, f"gs://{bucketname}"]
     proc = subprocess.run(cmd, capture_output=True)
 
@@ -574,18 +593,27 @@ def _bigquery_done(job):
 
 def check_submitted_jobs():
     """Check jobs submitted to BigQuery and update the done report."""
-    logging.info("Checking on status of submitted BigQuery jobs.")
-    dones = pd.read_csv(FDONE, names=["tarname"]).squeeze()
-    errs = pd.read_csv(FERR, names=["tarname", "error"]).query("error == 'load_table'")["tarname"]
+    logging.info("checking status of BigQuery jobs")
+    # get lists of tarballs previously reported as done or errored on table load
+    try:
+        dones = list(pd.read_csv(FDONE, names=["tarname"]).squeeze())
+    except FileNotFoundError:
+        dones = []
+    try:
+        errs = list(pd.read_csv(FERR, names=["tarname", "error"]).query("error == 'load_table'")["tarname"])
+    except FileNotFoundError:
+        errs = []
     reported = list(dones) + list(errs)
 
-    subdf = pd.read_csv(FSUB, names=["tarname", "jobid"]).query("tarname not in @reported")
+    # check on and record submitted jobs not previously reported as done or errored on load
+    try:
+        subdf = pd.read_csv(FSUB, names=["tarname", "jobid"]).query("tarname not in @reported")
+    except FileNotFoundError:
+        return
     for row in subdf.itertuples():
         job = BQ_CLIENT.get_job(row.jobid)
         if job.done():
             _bigquery_done(job)
-
-    logging.info("status check done")
 
 
 def _convert_tarsize(size, to="GiB"):
@@ -600,16 +628,19 @@ def _convert_tarsize(size, to="GiB"):
 
 def fetch_tarball_names(check_submitted=True):
     """Return list of all tarballs available from ZTFURL that we haven't already reported as "done"."""
+    tardf = pd.read_html(ZTFURL)[0]
+    # clean it up
+    tardf = tardf[["Name", "Size"]].dropna(how="all")
+    tardf['SizeG'] = tardf['Size'].apply(_convert_tarsize)
+    tardf = tardf.loc[tardf['Name'].str.endswith(".tar.gz"), :]
+    # if size is in bytes, the tarball is empty and SizeG is NaN
+    tardf = tardf.dropna(subset=["SizeG"])
+    # a size of "0", "44" or "74" (bytes) means the tarball is empty
+    # tardf = tardf.query("Size not in ['0', '44', '55', '74']")
+
+    # drop everything that's done
     if check_submitted:
         check_submitted_jobs()
-
-    tardf = pd.read_html(ZTFURL)[0]
-    tardf = tardf[["Name", "Size"]].dropna(how="all")
-    tardf = tardf.loc[tardf['Name'].str.endswith(".tar.gz"), :]
-    # a size of "0", "44" or "74" (bytes) means the tarball is empty
-    tardf = tardf.query("Size not in ['0', '44', '55', '74']")
-    tardf.loc[:, 'SizeG'] = tardf['Size'].apply(_convert_tarsize)
-
     try:
         dones = pd.read_csv(FDONE, names=["Name"])
         dones = dones['Name'].to_list()
