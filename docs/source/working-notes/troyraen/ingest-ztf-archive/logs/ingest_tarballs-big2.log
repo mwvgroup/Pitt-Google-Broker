@@ -3441,3 +3441,129 @@
 [INFO] root: 2023-02-23 23:29:49,801 [350075:MainProcess] loading to bucket ztf_public_20210430.tar.gz
 [INFO] root: 2023-02-23 23:30:02,595 [350015:MainProcess] done with ztf_public_20230126.tar.gz (4.8G)
 [INFO] root: 2023-02-23 23:33:58,182 [350075:MainProcess] done with ztf_public_20210430.tar.gz (2.3G)
+[INFO] root: 2023-02-24 06:26:26,677 [350075:MainProcess] Starting tarball ztf_public_20230127.tar.gz (7.8G)
+[INFO] root: 2023-02-24 06:26:26,678 [350075:MainProcess] downloading
+[INFO] root: 2023-02-24 06:28:33,485 [350075:MainProcess] extracting
+[INFO] root: 2023-02-24 06:30:23,733 [350075:MainProcess] prepping
+[INFO] root: 2023-02-24 06:30:23,735 [350075:MainProcess] alert version = 3.3
+[INFO] root: 2023-02-24 06:30:23,895 [350075:MainProcess] fixing schemas
+[INFO] root: 2023-02-24 06:30:53,400 [350075:MainProcess] loading
+[INFO] root: 2023-02-24 06:30:53,402 [350075:MainProcess] loading to bucket ztf_public_20230127.tar.gz
+[INFO] root: 2023-02-24 06:45:52,101 [350075:MainProcess] done with ztf_public_20230127.tar.gz (7.8G)
+[INFO] root: 2023-02-24 06:45:52,155 [350075:MainProcess] Starting tarball ztf_public_20230128.tar.gz (15G)
+[INFO] root: 2023-02-24 06:45:52,155 [350075:MainProcess] downloading
+[INFO] root: 2023-02-24 06:49:43,619 [350075:MainProcess] extracting
+[INFO] root: 2023-02-24 06:53:12,456 [350075:MainProcess] prepping
+[INFO] root: 2023-02-24 06:53:12,458 [350075:MainProcess] alert version = 3.3
+[INFO] root: 2023-02-24 06:53:12,604 [350075:MainProcess] fixing schemas
+[INFO] root: 2023-02-24 06:54:14,877 [350075:MainProcess] loading
+[INFO] root: 2023-02-24 06:54:14,879 [350075:MainProcess] loading to bucket ztf_public_20230128.tar.gz
+[INFO] root: 2023-02-24 07:23:58,453 [350075:MainProcess] done with ztf_public_20230128.tar.gz (15G)
+[INFO] root: 2023-02-24 07:23:58,552 [350075:MainProcess] Starting tarball ztf_public_20230202.tar.gz (6.7G)
+[INFO] root: 2023-02-24 07:23:58,552 [350075:MainProcess] downloading
+[INFO] root: 2023-02-24 07:25:50,372 [350075:MainProcess] extracting
+[INFO] root: 2023-02-24 07:27:26,738 [350075:MainProcess] prepping
+[INFO] root: 2023-02-24 07:27:26,739 [350075:MainProcess] alert version = 3.3
+[INFO] root: 2023-02-24 07:27:26,896 [350075:MainProcess] fixing schemas
+[INFO] root: 2023-02-24 07:27:53,264 [350075:MainProcess] loading
+[INFO] root: 2023-02-24 07:27:53,265 [350075:MainProcess] loading to bucket ztf_public_20230202.tar.gz
+[INFO] root: 2023-02-24 07:41:07,970 [350075:MainProcess] done with ztf_public_20230202.tar.gz (6.7G)
+[INFO] root: 2023-02-24 07:41:08,014 [350075:MainProcess] Starting tarball ztf_public_20230203.tar.gz (2.7G)
+[INFO] root: 2023-02-24 07:41:08,014 [350075:MainProcess] downloading
+[INFO] root: 2023-02-24 07:41:55,110 [350075:MainProcess] extracting
+[INFO] root: 2023-02-24 07:42:33,911 [350075:MainProcess] prepping
+[INFO] root: 2023-02-24 07:42:33,913 [350075:MainProcess] alert version = 3.3
+[INFO] root: 2023-02-24 07:42:34,106 [350075:MainProcess] fixing schemas
+[INFO] root: 2023-02-24 07:42:45,392 [350075:MainProcess] loading
+[INFO] root: 2023-02-24 07:42:45,393 [350075:MainProcess] loading to bucket ztf_public_20230203.tar.gz
+[INFO] root: 2023-02-24 07:48:01,011 [350075:MainProcess] done with ztf_public_20230203.tar.gz (2.7G)
+[INFO] root: 2023-02-24 07:48:01,032 [350075:MainProcess] Starting tarball ztf_public_20230204.tar.gz (6.8G)
+[INFO] root: 2023-02-24 07:48:01,033 [350075:MainProcess] downloading
+[INFO] root: 2023-02-24 07:49:53,864 [350075:MainProcess] extracting
+[INFO] root: 2023-02-24 07:51:29,869 [350075:MainProcess] prepping
+[INFO] root: 2023-02-24 07:51:29,870 [350075:MainProcess] alert version = 3.3
+[INFO] root: 2023-02-24 07:51:30,042 [350075:MainProcess] fixing schemas
+[INFO] root: 2023-02-24 07:51:59,301 [350075:MainProcess] loading
+[INFO] root: 2023-02-24 07:51:59,303 [350075:MainProcess] loading to bucket ztf_public_20230204.tar.gz
+[INFO] root: 2023-02-24 08:04:42,056 [350075:MainProcess] done with ztf_public_20230204.tar.gz (6.8G)
+[INFO] root: 2023-02-24 08:04:42,104 [350075:MainProcess] Starting tarball ztf_public_20230205.tar.gz (2.9G)
+[INFO] root: 2023-02-24 08:04:42,104 [350075:MainProcess] downloading
+[INFO] root: 2023-02-24 08:05:31,587 [350075:MainProcess] extracting
+[INFO] root: 2023-02-24 08:06:12,285 [350075:MainProcess] prepping
+[INFO] root: 2023-02-24 08:06:12,286 [350075:MainProcess] alert version = 3.3
+[INFO] root: 2023-02-24 08:06:12,412 [350075:MainProcess] fixing schemas
+[INFO] root: 2023-02-24 08:06:25,279 [350075:MainProcess] loading
+[INFO] root: 2023-02-24 08:06:25,281 [350075:MainProcess] loading to bucket ztf_public_20230205.tar.gz
+[INFO] root: 2023-02-24 08:11:54,027 [350075:MainProcess] done with ztf_public_20230205.tar.gz (2.9G)
+[INFO] root: 2023-02-24 08:11:54,055 [350075:MainProcess] Starting tarball ztf_public_20230206.tar.gz (1.3G)
+[INFO] root: 2023-02-24 08:11:54,055 [350075:MainProcess] downloading
+[INFO] root: 2023-02-24 08:12:15,592 [350075:MainProcess] extracting
+[INFO] root: 2023-02-24 08:12:33,143 [350075:MainProcess] prepping
+[INFO] root: 2023-02-24 08:12:33,145 [350075:MainProcess] alert version = 3.3
+[INFO] root: 2023-02-24 08:12:33,288 [350075:MainProcess] fixing schemas
+[INFO] root: 2023-02-24 08:12:38,728 [350075:MainProcess] loading
+[INFO] root: 2023-02-24 08:12:38,730 [350075:MainProcess] loading to bucket ztf_public_20230206.tar.gz
+[INFO] root: 2023-02-24 08:15:00,644 [350075:MainProcess] done with ztf_public_20230206.tar.gz (1.3G)
+[INFO] root: 2023-02-24 08:15:00,661 [350075:MainProcess] Starting tarball ztf_public_20230207.tar.gz (2.0G)
+[INFO] root: 2023-02-24 08:15:00,662 [350075:MainProcess] downloading
+[INFO] root: 2023-02-24 08:15:33,934 [350075:MainProcess] extracting
+[INFO] root: 2023-02-24 08:16:01,888 [350075:MainProcess] prepping
+[INFO] root: 2023-02-24 08:16:01,890 [350075:MainProcess] alert version = 3.3
+[INFO] root: 2023-02-24 08:16:02,019 [350075:MainProcess] fixing schemas
+[INFO] root: 2023-02-24 08:16:10,947 [350075:MainProcess] loading
+[INFO] root: 2023-02-24 08:16:10,948 [350075:MainProcess] loading to bucket ztf_public_20230207.tar.gz
+[INFO] root: 2023-02-24 08:19:55,027 [350075:MainProcess] done with ztf_public_20230207.tar.gz (2.0G)
+[INFO] root: 2023-02-24 08:19:55,040 [350075:MainProcess] Starting tarball ztf_public_20230216.tar.gz (3.6G)
+[INFO] root: 2023-02-24 08:19:55,041 [350075:MainProcess] downloading
+[INFO] root: 2023-02-24 08:20:54,746 [350075:MainProcess] extracting
+[INFO] root: 2023-02-24 08:21:43,746 [350075:MainProcess] prepping
+[INFO] root: 2023-02-24 08:21:43,748 [350075:MainProcess] alert version = 3.3
+[INFO] root: 2023-02-24 08:21:43,908 [350075:MainProcess] fixing schemas
+[INFO] root: 2023-02-24 08:22:00,256 [350075:MainProcess] loading
+[INFO] root: 2023-02-24 08:22:00,258 [350075:MainProcess] loading to bucket ztf_public_20230216.tar.gz
+[INFO] root: 2023-02-24 08:28:29,550 [350075:MainProcess] done with ztf_public_20230216.tar.gz (3.6G)
+[INFO] root: 2023-02-24 08:28:29,578 [350075:MainProcess] Starting tarball ztf_public_20230217.tar.gz (3.2G)
+[INFO] root: 2023-02-24 08:28:29,579 [350075:MainProcess] downloading
+[INFO] root: 2023-02-24 08:29:21,137 [350075:MainProcess] extracting
+[INFO] root: 2023-02-24 08:30:03,847 [350075:MainProcess] prepping
+[INFO] root: 2023-02-24 08:30:03,848 [350075:MainProcess] alert version = 3.3
+[INFO] root: 2023-02-24 08:30:04,007 [350075:MainProcess] fixing schemas
+[INFO] root: 2023-02-24 08:30:18,606 [350075:MainProcess] loading
+[INFO] root: 2023-02-24 08:30:18,607 [350075:MainProcess] loading to bucket ztf_public_20230217.tar.gz
+[INFO] root: 2023-02-24 08:36:07,325 [350075:MainProcess] done with ztf_public_20230217.tar.gz (3.2G)
+[INFO] root: 2023-02-24 08:36:07,353 [350075:MainProcess] Starting tarball ztf_public_20230218.tar.gz (10G)
+[INFO] root: 2023-02-24 08:36:07,353 [350075:MainProcess] downloading
+[INFO] root: 2023-02-24 08:38:55,227 [350075:MainProcess] extracting
+[INFO] root: 2023-02-24 08:41:16,018 [350075:MainProcess] prepping
+[INFO] root: 2023-02-24 08:41:16,019 [350075:MainProcess] alert version = 3.3
+[INFO] root: 2023-02-24 08:41:16,172 [350075:MainProcess] fixing schemas
+[INFO] root: 2023-02-24 08:42:03,901 [350075:MainProcess] loading
+[INFO] root: 2023-02-24 08:42:03,903 [350075:MainProcess] loading to bucket ztf_public_20230218.tar.gz
+[INFO] root: 2023-02-24 09:01:06,963 [350075:MainProcess] done with ztf_public_20230218.tar.gz (10G)
+[INFO] root: 2023-02-24 09:01:07,027 [350075:MainProcess] Starting tarball ztf_public_20230219.tar.gz (17G)
+[INFO] root: 2023-02-24 09:01:07,027 [350075:MainProcess] downloading
+[INFO] root: 2023-02-24 09:05:49,720 [350075:MainProcess] extracting
+[INFO] root: 2023-02-24 09:09:55,484 [350075:MainProcess] prepping
+[INFO] root: 2023-02-24 09:09:55,496 [350075:MainProcess] alert version = 3.3
+[INFO] root: 2023-02-24 09:09:55,662 [350075:MainProcess] fixing schemas
+[INFO] root: 2023-02-24 09:11:14,910 [350075:MainProcess] loading
+[INFO] root: 2023-02-24 09:11:14,912 [350075:MainProcess] loading to bucket ztf_public_20230219.tar.gz
+[INFO] root: 2023-02-24 09:44:17,530 [350075:MainProcess] done with ztf_public_20230219.tar.gz (17G)
+[INFO] root: 2023-02-24 09:44:17,638 [350075:MainProcess] Starting tarball ztf_public_20230220.tar.gz (9.1M)
+[INFO] root: 2023-02-24 09:44:17,638 [350075:MainProcess] downloading
+[INFO] root: 2023-02-24 09:44:18,332 [350075:MainProcess] extracting
+[INFO] root: 2023-02-24 09:44:18,458 [350075:MainProcess] prepping
+[INFO] root: 2023-02-24 09:44:18,459 [350075:MainProcess] alert version = 3.3
+[INFO] root: 2023-02-24 09:44:18,606 [350075:MainProcess] fixing schemas
+[INFO] root: 2023-02-24 09:44:18,906 [350075:MainProcess] loading
+[INFO] root: 2023-02-24 09:44:18,908 [350075:MainProcess] loading to bucket ztf_public_20230220.tar.gz
+[INFO] root: 2023-02-24 09:44:23,443 [350075:MainProcess] done with ztf_public_20230220.tar.gz (9.1M)
+[INFO] root: 2023-02-24 09:44:23,445 [350075:MainProcess] Starting tarball ztf_public_20230221.tar.gz (9.5G)
+[INFO] root: 2023-02-24 09:44:23,445 [350075:MainProcess] downloading
+[INFO] root: 2023-02-24 09:47:02,240 [350075:MainProcess] extracting
+[INFO] root: 2023-02-24 09:49:20,683 [350075:MainProcess] prepping
+[INFO] root: 2023-02-24 09:49:20,687 [350075:MainProcess] alert version = 3.3
+[INFO] root: 2023-02-24 09:49:20,834 [350075:MainProcess] fixing schemas
+[INFO] root: 2023-02-24 09:50:04,427 [350075:MainProcess] loading
+[INFO] root: 2023-02-24 09:50:04,429 [350075:MainProcess] loading to bucket ztf_public_20230221.tar.gz
+[INFO] root: 2023-02-24 10:08:06,352 [350075:MainProcess] done with ztf_public_20230221.tar.gz (9.5G)
