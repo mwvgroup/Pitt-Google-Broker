@@ -44,6 +44,8 @@ ALERTSDIR.mkdir(exist_ok=True)
 ZTFURL = "https://ztf.uw.edu/alerts/public"
 PARQUET_DIR = LOGSDIR / "alerts-in-bucket.parquet"
 PARQUET_DIR.mkdir(exist_ok=True)
+PARQUET_DIR_CACHE = LOGSDIR / "alerts-in-bucket.cache.parquet"
+PARQUET_DIR_CACHE.mkdir(exist_ok=True)
 
 handler = logging.FileHandler(LOGSDIR / "ingest_tarballs.log")
 handler.setLevel(logging.INFO)
@@ -482,7 +484,7 @@ def _chunk_to_parquet(chunkidx, chunk):
     parquet_format = pads.ParquetFileFormat()
     pads.write_dataset(
         pa.Table.from_pandas(objdf),
-        base_dir=PARQUET_DIR,
+        base_dir=PARQUET_DIR_CACHE,
         partitioning=pads.partitioning(schema=partschema, flavor="hive"),
         basename_template=f"chunk{chunkidx}-part{{i}}.snappy.parquet",
         existing_data_behavior="overwrite_or_ignore",
@@ -498,18 +500,49 @@ def _chunk_to_parquet(chunkidx, chunk):
     del objdf
 
 
+def _consolidate_parquet_partition(args):
+    dataset, tarstem = args
+    partschema = pa.schema([pa.field(name="tarstem", type=pa.string())])
+    parquet_format = pads.ParquetFileFormat()
+
+    scanner = pads.Scanner.from_dataset(dataset, filter=(pac.field("tarstem") == tarstem))
+    pads.write_dataset(
+        scanner.to_reader(),
+        base_dir=PARQUET_DIR,
+        partitioning=pads.partitioning(schema=partschema, flavor="hive"),
+        basename_template=f"part{{i}}.snappy.parquet",
+        file_options=parquet_format.make_write_options(
+            **dict(compression="snappy", version="1.0", write_statistics=False)
+        ),
+        format=parquet_format,
+        existing_data_behavior="overwrite_or_ignore",
+        min_rows_per_group=3_000_000,
+        max_rows_per_group=4_000_000,
+    )
+
+
+def _consolidate_parquet():
+    dataset = pads.dataset(PARQUET_DIR_CACHE, partitioning="hive")
+    tardf = fetch_tarball_names(clean=[])
+    tarstems = tardf["Name"].str.replace(".tar.gz", "")
+    with Pool(12) as pool:
+        pool.map(_consolidate_parquet_partition, [(dataset, tarstem) for tarstem in tarstems])
+
+
 def object_csv_to_parquet(csvin):
     # csvin can be obtained by running the following in a bash shell:
     # gsutil ls gs://${bucket} > csvin
     with pacsv.open_csv(
         csvin,
-        read_options=pacsv.ReadOptions(column_names=["alerturi"], block_size=1024 ** 3),
+        read_options=pacsv.ReadOptions(column_names=["alerturi"], block_size=1024 ** 2),
         convert_options=pacsv.ConvertOptions(
             column_types=pa.schema([pa.field(name="alerturi", type=pa.string())])
         ),
     ) as reader:
         for chunkidx, chunk in enumerate(reader):
             _chunk_to_parquet(chunkidx, chunk)
+
+    _consolidate_parquet()
 
 
 def _extract_tarball(tarname, tarpath):
