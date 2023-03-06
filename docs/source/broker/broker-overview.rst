@@ -51,7 +51,7 @@ across GCP.
    -  Cloud Function [`upload_bytes_to_bucket`]
 
       -  Listens to PS topic [`alerts`]
-      -  Stores in GCS bucket [`alert_avros`]
+      -  Stores in GCS bucket [`alerts`]
       -  GCS bucket triggers Pub/Sub topic [`alert_avros`]
 
 3. **BigQuery Database Storage** (alert -> BigQuery)
@@ -60,7 +60,7 @@ across GCP.
 
       -  Listens to PS topic [`alerts`]
       -  Stores in BQ dataset [`alerts`] in tables
-         [`alerts`] and [`DIASource`]
+         [`alerts_v3_3`] and [`DIASource`]
       -  Publishes to Pub/Sub topic [`BigQuery`]
 
 4. **SuperNNova Classifier** (extragalactic transient alert -> SuperNNova ->

@@ -109,7 +109,7 @@ def _resources(service, survey='ztf', testid='test'):
     if service == 'BQ':
         datasets = {
             f'{survey}_alerts':
-                ['alerts', 'DIASource', 'SuperNNova', 'metadata', 'classifications', 'tags']
+                ['alerts_v3_3', 'DIASource', 'SuperNNova', 'metadata', 'classifications', 'tags']
         }
 
         # append the testid to the dataset name only
@@ -136,7 +136,7 @@ def _resources(service, survey='ztf', testid='test'):
             f'{PROJECT_ID}-{survey}-dataflow': [],
             f'{PROJECT_ID}-{survey}-testing_bucket':
                 ['ztf_3.3_validschema_1154446891615015011.avro'],
-            f'{PROJECT_ID}-{survey}-alert_avros': [],
+            f'{PROJECT_ID}-{survey}-alerts': [],
         }
         # Files are currently expected to reside in the
         # ``../../tests/test_alerts`` directory.

@@ -56,7 +56,7 @@ def run(msg: dict, context: functions_v1.context.Context) -> None:
 def insert_rows_alerts(alert_dict: dict):
     """Insert rows into the `alerts` table via the streaming API."""
     # send to bigquery
-    table_id = f"{bq_dataset}.alerts"
+    table_id = f"{bq_dataset}.alerts_v{alert_dict['schemavsn'].replace('.', '_')}"
     errors = gcp_utils.insert_rows_bigquery(table_id, [alert_dict])
 
     # handle errors; if none, save table id for Pub/Sub message
