@@ -3,7 +3,7 @@
 # dependencies for a Cloud Function must be specified in a `requirements.txt`
 # file (or packaged with the function) in the same directory as `main.py`
 
-fastavro
+fastavro==1.4.4  # above 1.4.4 gives a schema parsing error trying to read temp_file
 google-cloud-logging
 google-cloud-storage==1.38.0
 pgb-broker-utils>=0.2.36
