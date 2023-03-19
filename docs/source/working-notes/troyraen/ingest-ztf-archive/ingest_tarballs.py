@@ -7,22 +7,29 @@ import subprocess
 import tarfile
 import tempfile
 from datetime import datetime
-from multiprocessing import Pool, Process, Queue
+from multiprocessing import Pool
 from pathlib import Path
 from time import sleep
 from urllib.request import urlretrieve
 
 import fastavro as fa
+import numpy as np
 import pandas as pd
 import pyarrow as pa
 import schemas
 from broker_utils.types import AlertFilename
 from google.cloud import bigquery, storage
-from google.cloud.exceptions import NotFound, PreconditionFailed
-from pyarrow import compute as pac
-from pyarrow import csv as pacsv
-from pyarrow import dataset as pads
-
+from google.cloud.exceptions import (
+    GatewayTimeout,
+    NotFound,
+    PreconditionFailed,
+    ServiceUnavailable,
+)
+from pyarrow import compute as pc
+from pyarrow import csv as csv
+from pyarrow import dataset as ds
+from pyarrow import parquet as pq
+from requests.exceptions import ReadTimeout
 
 PROJECT_ID = os.getenv("GCP_PROJECT")
 TESTID = os.getenv("TESTID")
@@ -33,11 +40,10 @@ LOGSDIR.mkdir(exist_ok=True)
 FDONE = LOGSDIR / "done.csv"
 FERR = LOGSDIR / "error.csv"
 FSCHEMACHANGE = LOGSDIR / "schema-change.csv"
-SCHEMA_CHANGE_DF = pd.read_csv(FSCHEMACHANGE, names=["tarname", "version"]).sort_values(
-    "version", ascending=False
-)
 FSUB = LOGSDIR / "submitted-to-bigquery.csv"
 FUP = LOGSDIR / "uploaded-to-bucket.csv"
+FCH = LOGSDIR / "bucket-changed.csv"
+FDEL = LOGSDIR / "deleted-from-bucket.csv"
 ALERTSDIR = Path(__file__).parent / "alerts"
 # ALERTSDIR = Path("/mnt/disks/localssd") / "alerts"  # for machines with SSD
 ALERTSDIR.mkdir(exist_ok=True)
@@ -58,16 +64,41 @@ logger = logging.getLogger()
 logger.addHandler(handler)
 
 BQ_CLIENT = bigquery.Client()
-DATASET = f"{SURVEY}_alerts"
+STORAGE_CLIENT = storage.Client()
+# DATASET = f"{SURVEY}_alerts"
+DATASET = f"{SURVEY}"
 _BUCKET = f"{PROJECT_ID}-{SURVEY}-alerts"
 if TESTID != "False":
     DATASET = f"{DATASET}_{TESTID}"
     _BUCKET = f"{_BUCKET}-{TESTID}"
+_TABLE = f"{PROJECT_ID}.{DATASET}.alerts"
 
 
-def BUCKET():
-    """Create new client, connect to bucket, and return it."""
-    return storage.Client().get_bucket(f"{_BUCKET}")
+def BUCKET(version=None, nameonly=False, newclient=False):
+    """Connect to the bucket and return it."""
+    client = storage.Client() if newclient else STORAGE_CLIENT
+
+    if version is None:
+        if nameonly:
+            return _BUCKET
+        return client.get_bucket(client.bucket(_BUCKET, user_project=PROJECT_ID))
+
+    if TESTID != "False":
+        raise NotImplementedError("versioned bucket names not implemented for TESTID != False")
+
+    bucket = _BUCKET.replace("ztf-alerts", "ztf_alerts") + f"_v{version.replace('.', '_')}"
+    if nameonly:
+        return bucket
+    return client.get_bucket(client.bucket(bucket, user_project=PROJECT_ID))
+
+
+def TABLE(version=None, nameonly=True):
+    """Return the name of the table."""
+    if not nameonly:
+        raise NotImplementedError("fetching the table is not implemented here")
+    if version is None:
+        return _TABLE
+    return f"{_TABLE}_v{version.replace('.', '_')}"
 
 
 def AVROGLOB(tarname) -> str:
@@ -79,9 +110,35 @@ def AVROGLOB(tarname) -> str:
 
 def REPORT(kind, msg):
     """Write the message to file."""
-    fout = {"done": FDONE, "error": FERR, "submitted": FSUB, "uploaded": FUP}
+    fout = {
+        "done": FDONE,
+        "error": FERR,
+        "submitted": FSUB,
+        "uploaded": FUP,
+        "moved-bucket": FCH,
+        "deleted-from-bucket": FDEL,
+    }
     with open(fout[kind], "a") as f:
         f.write(f"{msg}\n")
+
+
+def LOAD(which="done"):
+    if which == "done":
+        return pd.read_csv(FDONE, names=["tarname"])["tarname"].to_list()
+    if which == "error":
+        return pd.read_csv(FERR, names=["tarname", "error"])
+    if which == "uploaded":
+        return pd.read_csv(FUP, names=["tarname"])["tarname"].to_list()
+    if which == "moved-bucket":
+        return pd.read_csv(FCH, names=["tarstem"])["tarstem"].to_list()
+    if which == "deleted-from-bucket":
+        return pd.read_csv(FDEL, names=["tarstem", "bucket"])
+    if which == "submitted":
+        return pd.read_csv(FSUB, names=["tarname", "jobid"])
+    if which == "schema-change":
+        return pd.read_csv(
+            FSCHEMACHANGE, names=["tarname", "version", "firstday", "lastday"]
+        ).sort_values("version", ascending=False)
 
 
 class SchemaParsingError(Exception):
@@ -92,169 +149,258 @@ class SchemaParsingError(Exception):
 
 def run():
     """Ingest all tarballs from ZTF's alert archive."""
-    # tardf = fetch_tarball_names()
-    # i = 0
-    # sampdf = tardf.sort_index(ascending=False).iloc[i*10:(i+5)*10]
-
-    # nprocs = 8. ntarballs = 10. 33.5 GB
-    #  - CPU times: user 15min 55s, sys: 5min 57s, total: 21min 53s
-    #  - Wall time: 3h 44min 3s
-    # nprocs = 16. ntarballs = 10. 40.1 GB
-    # - CPU times: user 12min 20s, sys: 4min 36s, total: 16min 57s
-    # - Wall time: 2h 25min 12s
-    # i, nprocs = 0, 16
-    # sampdf = tardf.sort_index(ascending=False).iloc[i*10:(i+5)*10]
-    # # print(sum([float(s.strip('MG')) for s in sampdf['Size']]))
-    # for row in sampdf.itertuples():
-    #     ingest_one_tarball((row.Name, row.Size), nprocs=nprocs)
-    #
-    # i, nprocs = 0, 16
-    # logging.info(f"nprocs = {nprocs}")
-    # sampdf = tardf.sort_index(ascending=False).iloc[i*10:(i+2)*10]
-    # print(sum([float(s.strip('G')) for s in sampdf['Size']]))
-    # # downloads take forever
-    # with Pool(2) as pool:
-    #     pool.map(ingest_one_tarball, [(r.Name, r.Size) for r in sampdf.itertuples()])
-    # # 20 tarballs. 77.3 GB
-
-    # 36: 8
-    # 96: 8
-    # 08: 16
-    # 86: 12
-    # 10: 20
-
-    # # QUEUEs
-    # # 171 GB in about 24 hours
-    # extract_queue, prep_queue, load_queue = Queue(3), Queue(2), Queue(2)
-    #
-    # extract_proc = Process(target=extract_tarballs, args=(extract_queue, prep_queue), name="ExtractTarballs")
-    # prep_proc = Process(target=prep_tarballs, args=(prep_queue, load_queue), name="PrepTarballs")
-    # load_proc = Process(target=load_tarballs, args=(load_queue,), name="LoadTarballs")
-    # procs = [extract_proc, prep_proc, load_proc]
-    #
-    # for proc in procs:
-    #     proc.start()
-    #
-    # for row in sampdf.itertuples():
-    #     tarname, tarsize = row.Name, row.Size
-    #     logging.info(f"Starting tarball {tarname} ({tarsize})")
-    #     tarpath = download_tarball(tarname)
-    #     extract_queue.put((tarname, tarpath), block=True)
-    # extract_queue.put(("END", "END"))
-    #
-    # for proc in procs:
-    #     proc.join()
-    #     proc.close()
-
-    # SERIAL - load to bucket
-    tardf = it.fetch_tarball_names()
-    # bigdf = tardf.query("SizeG >= 25").sort_index(ascending=False)
-    # lastog = 'ztf_public_20190220.tar.gz'
-    # sampdf = tardf.query("Name > @lastog").sort_index(ascending=False)
-    df19idx = tardf["Name"].str.strip("ztf_public_").str.startswith("2019")  # big
-    df19 = tardf.loc[df19idx].sort_index(ascending=False)
-    df20idx = tardf["Name"].str.strip("ztf_public_").str.startswith("2020")  # 2020
-    df20 = tardf.loc[df20idx].query("SizeG < 25").sort_index(ascending=False)
-    df21idx = tardf["Name"].str.strip("ztf_public_").str.startswith("2021")  # big
-    df21 = tardf.loc[df21idx].query("SizeG < 25").sort_index(ascending=False)
-    df22idx = tardf["Name"].str.strip("ztf_public_").str.startswith("2022")  # 2020
-    df22 = tardf.loc[df22idx].query("SizeG < 25").sort_index(ascending=False)
-    df23idx = tardf["Name"].str.strip("ztf_public_").str.startswith("2023")  # big
-    df23 = tardf.loc[df23idx].sort_index(ascending=False)
-    bucket = it.BUCKET()
-
-    for row in df23.iloc[:10].itertuples():
-        it._run_row(row, bucket, load_table=False)
-        # run_row(row, 16, 1)
-
-    # ztf_public_20210108
-
-    # ingest - 11471 - ztf_public_20200224 - mydf = df20.iloc[45:100].query('SizeG < 25') - 55
-    # double - 11700 - ztf_public_20200712 - mydf = df20.iloc[136:200].query('SizeG < 25') - 62
-    # triple - 16255 - ztf_public_20201012 - mydf = df20.iloc[220:].query('SizeG < 25') - 67
-
-    # ---- original machine
-    # 307 GB
-    # CPU times: user 1h 32min 46s, sys: 36min 32s, total: 2h 9min 18s
-    # Wall time: 23h 35min 57s
-
-    # ---- bigdf
-    # 244 GB in 12h 25m
-    # 246 GB in 12h 38m
-    # 234 GB in 12h 11m
-    # 551 GB in 1d 4h
-    # 562 GB in 1d 3h
-    # before resizing to 32 cpu 48G ram:
-    # 258 GB in 18h 15m
-    # 368 GB in 1d 4m
-    # 377 GB in 1d 50m
-    #
-    # df25 = bigdf.query('SizeG == 25')
-    #
-    # row = df25.iloc[0]
-    # ztf_public_20181114.tar.gz 25G with nproc = 16
-    # CPU times: user 7min, sys: 2min 30s, total: 9min 31s
-    # Wall time: 1h 6min 15s
-    #
-    # row = df25.iloc[1]
-    # ztf_public_20200821.tar.gz 25G with nproc = 32
-    # Wall time: 1h 7min
-    #
-    # row = df25.iloc[2]
-    # ztf_public_20201019.tar.gz 25G with nproc = 8
-    # CPU times: user 7min 12s, sys: 2min 28s, total: 9min 41s
-    # Wall time: 1h 8min 12s
-    #
-    # ztf_public_20210210.tar.gz 26G with nprocs = 16, nthreads=8
-    # CPU times: user 7min 12s, sys: 2min 28s, total: 9min 40s
-    # Wall time: 1h 7min 42s
-    #
-    # bigdf.iloc[:6] 257G
-    # CPU times: user 1h 14min 1s, sys: 25min 38s, total: 1h 39min 40s
-    # Wall time: 11h 32min 42s
-
-    # load to table
-    # get list of objects in bucket by running the following in a bash shell:
-    # gsutil ls gs://${bucket} > alerts-in-bucket.txt
-    it.object_csv_to_parquet(csvin=it.LOGSDIR / "alerts-in-bucket.txt.gz")
-    objectds = pads.dataset(it.PARQUET_DIR, partitioning="hive")
-    tardf = it.fetch_tarball_names(clean=["done"])
-    for row in tardf.itertuples():
-        tarname = row.Name
-        it.load_alerts_to_table((tarname, objectds))
-        #     table=f"{it.PROJECT_ID}.{it.DATASET}.alerts_v{it.version_from_tarname(tarname).replace('.', '_')}",
-        #     tarname=tarname,
-        #     urilist=objectds.to_table(
-        #         filter=(pac.field("tarstem") == tarname.replace(".tar.gz", ""))
-        #     )["alerturi"].to_pylist(),
-        # )
-    # try to parallelize
-    with Pool(4) as pool:
-        pool.map(load_alerts_to_table, [(tarname, objectds) for tarname in tardf["Name"].values])
+    pass
 
 
-# def load_alerts_to_table(table, tarname, bucket):
-# def load_alerts_to_table(table, tarname, urilist):
-def load_alerts_to_table(args):
+def create_table_from_bucket(version="3.3"):
+    # try to load_table_from_uri with the whole bucket
+    # if we have the same restrictions/errors as for globstring,
+    # maybe try loading from an external source
+    # https://cloud.google.com/bigquery/docs/external-data-sources
+    # and then query -> new table to persist in bigquery
+
+    # use WRITE_EMPTY to throw error if table exists, WRITE_TRUNCATE to overwrite silently
+    job_config = bigquery.job.LoadJobConfig(
+        write_disposition="WRITE_EMPTY", source_format="AVRO", ignore_unknown_values=True
+    )
+    job = BQ_CLIENT.load_table_from_uri(
+        source_uris="gs://" + BUCKET(version=version, nameonly=True) + "/*",
+        destination=TABLE(version, nameonly=True).replace("alerts_v1_8", "alerts_v1_8_test"),
+        job_config=job_config,
+    )
+    job.done()
+
+
+def separate_alerts_into_versioned_buckets():
+    # assert tardf deals with a single version
+    # .query(f"Name > '{mindate}'")
+    objectds = ds.dataset(PARQUET_DIR, partitioning="hive")
+    moved = LOAD("moved-bucket")
+    # filter=(pc.field("tarstem") == tarstem)
+    # schemachangedf = load("schema-change")
+    # tarstems = [ts.split("/")[-2].replace("tarstem=", "") for ts in objectds.files]
+    for row in LOAD("schema-change").itertuples():
+        filter = ~pc.field("tarstem").isin(moved)
+        filter = filter & (pc.field("tarstem") >= f"ztf_public_{row.firstday}")
+        if not np.isnan(row.lastday):
+            filter = filter & (pc.field("tarstem") <= f"ztf_public_{int(row.lastday)}")
+
+        # one fragment is one night
+        for i, frag in enumerate(objectds.get_fragments(filter=filter)):
+            if i >= 83:
+                continue
+            _change_buckets_one_night(frag, row.version)
+
+
+def _get_buckets_from_version(version):
+    global source_bucket
+    source_bucket = BUCKET(version=None, newclient=True)
+    if version is not None:
+        global destination_bucket
+        destination_bucket = BUCKET(version=str(version), newclient=True)
+
+
+def tarstem_from_parquet_path(parquetpath):
+    return re.search(r"(tarstem=)(.*)/part", parquetpath).group(2)
+
+
+def _change_buckets_one_night(frag, version, npool=50):
+    tarstem = tarstem_from_parquet_path(frag.path)
+    # for uri in frag.to_table()["alerturi"].to_pylist():
+    #     tarstems = _change_buckets_one_alert(uri, source_bucket, destination_bucket)
+
+    with Pool(npool, initializer=_get_buckets_from_version, initargs=(version,)) as pool:
+        urilist = frag.to_table()["alerturi"].to_pylist()
+        print(f"{datetime.now()} starting {tarstem} with {len(urilist)} uris")
+        # args = [(uri, source_bucket, destination_bucket) for uri in urilist]
+        success = True
+        for result in pool.imap_unordered(_change_buckets_one_alert, urilist, chunksize=1000):
+            success = all([result, success])
+
+    if success:
+        REPORT("moved-bucket", tarstem)
+    else:
+        REPORT("error", f"{frag.path},change_buckets")
+
+
+def _change_buckets_one_alert(uri):
+    # uri, src_bucket, dest_bucket = args
+    global source_bucket
+    global destination_bucket
+
+    # construct new name. need to turn something like this:
+    # 'gs://ardent-cycling-243415-ztf-alerts/ZTF17aaaedfm.563381786215015006.ztf_public_20180718.avro'
+    # into this:
+    # 'gs://ardent-cycling-243415-ztf_alerts_v3_3/ztf_public_20180718/ZTF17aaaedfm/563381786215015006.avro'
+    # bucket is dealt with separately. need to construct new filename.
+    name_parts = uri.split("/")[-1].split(".")
+    # = ['ZTF17aaaedfm', '563381786215015006', 'ztf_public_20180718', 'avro']
+    blob = source_bucket.blob(".".join(name_parts))  # does not make a separate http request
+    new_name = f"{name_parts[2]}/{name_parts[0]}/{name_parts[1]}.{name_parts[3]}"
+    # = 'ztf_public_20180602/ZTF17aadnrzy/517454783715015049.avro'
+
+    # move it
+    try:
+        blob_copy = source_bucket.copy_blob(
+            blob=blob, destination_bucket=destination_bucket, new_name=new_name
+        )
+
+    # catch some known transient errors and try again
+    except (ReadTimeout, ServiceUnavailable) as e:
+        print(f"sleeping 30. caught exception {e}")
+        sleep(30)
+        blob_copy = source_bucket.copy_blob(
+            blob=blob, destination_bucket=destination_bucket, new_name=new_name
+        )
+
+    # catch anything that may have gone wrong. if the move didn't succeed, we need to know
+    finally:
+        try:
+            assert blob_copy.name == new_name
+        except Exception as e:
+            REPORT("error", f"{uri},{e}")
+            return False
+
+    return True
+
+
+def delete_alerts_from_bucket():
+    """Delete alerts from original bucket. Call after separate_alerts_into_versioned_buckets()."""
+    objectds = ds.dataset(PARQUET_DIR, partitioning="hive")
+    moved = LOAD("moved-bucket")
+    deleted = LOAD("deleted-from-bucket")["tarstem"].to_list()
+    moved_not_deleted = [tarstem for tarstem in moved if tarstem not in deleted]
+
+    for row in LOAD("schema-change").itertuples():
+        filter = pc.field("tarstem").isin(moved_not_deleted)
+        filter = filter & (pc.field("tarstem") >= f"ztf_public_{row.firstday}")
+        if not np.isnan(row.lastday):
+            filter = filter & (pc.field("tarstem") <= f"ztf_public_{int(row.lastday)}")
+
+        # one fragment is one night
+        for frag in objectds.get_fragments(filter=filter):
+            _delete_from_bucket_one_night(frag)
+            # if i >= 83:
+            #     continue
+            # namelist = [uri.split("/")[-1] for uri in urilist]
+            # source_bucket.delete_blobs(namelist)
+    # new_name = f"{obj_name[2]}/{obj_name[0]}/{obj_name[1]}.{obj_name[3]}"
+
+
+def _delete_from_bucket_one_night(frag, npool=50):
+    tarstem = re.search(r"(tarstem=)(.*)/part", frag.path).group(2)
+    with Pool(npool, initializer=_get_buckets_from_version, initargs=(None,)) as pool:
+        urilist = frag.to_table()["alerturi"].to_pylist()
+        print(f"{datetime.now()} starting {tarstem} with {len(urilist)} uris")
+        success = True
+        for result in pool.imap_unordered(_delete_from_bucket_one_alert, urilist, chunksize=1000):
+            success = all([result, success])
+    if success:
+        REPORT("deleted-from-bucket", f"{tarstem},{BUCKET(version=None, nameonly=True)}")
+    else:
+        REPORT("error", f"{frag.path},delete_from_bucket")
+
+
+def _delete_from_bucket_one_alert(uri):
+    global source_bucket
+    blob = source_bucket.blob(uri.split("/")[-1])  # does not make a separate http request
+
+    try:
+        blob.delete()
+
+    except NotFound:
+        # object doesn't exist. that's fine, let's just ~note it and~ move on
+        # print("object not found " + uri)
+        pass
+
+    # catch some known transient errors and try again
+    except (GatewayTimeout, ServiceUnavailable) as e:
+        print(f"sleeping 30. caught exception {e}")
+        sleep(30)
+        # the object sometimes gets deleted on the first try, before this error gets triggered
+        try:
+            blob.delete()
+        except NotFound:
+            pass
+
+    return True
+
+
+def yyyymmdd_from_jd(jd):
+    return pd.to_datetime(jd, unit="D", origin="julian").strftime("%Y%m%d")
+
+
+def query_table_for_jd(version="3.3", usecache=True, convert_to_date=True):
+    version = str(version)
+    fcsv = LOGSDIR / f"table_counts_v{version.replace('.', '_')}.csv"
+    if usecache:
+        try:
+            counts = pd.read_csv(fcsv).squeeze()
+        except FileNotFoundError:
+            pass
+        else:
+            if convert_to_date:
+                return counts.sort_values("date").set_index("date").squeeze()
+            return counts.sort_values("jd").set_index("jd").squeeze()
+
+    sql = (
+        # cast -> int returns the closest integer value. halfway cases (0.5) round away from 0
+        f"SELECT CAST(candidate.jd as INT64) as jd, COUNT(candid) as count "
+        f"FROM `{TABLE(version=version)}` "
+        f"GROUP BY jd"
+    )
+    query_job = BQ_CLIENT.query(sql)
+    counts = query_job.result().to_dataframe()
+
+    if convert_to_date:
+        counts["date"] = yyyymmdd_from_jd(counts["jd"].to_numpy())
+        counts = counts[["date", "count"]].sort_values("date").set_index("date").squeeze()
+    else:
+        counts = counts.sort_values("jd").set_index("jd").squeeze()
+
+    counts.to_csv(fcsv)
+    return counts
+
+    # sql = (
+    #     f"SELECT candid, candidate.jd as jd "
+    #     f"FROM `{PROJECT_ID}.{DATASET}.alerts` "
+    #     f"WHERE candidate.jd > {jd} AND candidate.jd < {jd+1}"
+    # )
+    # from matplotlib import pyplot as plt
+    # df = df.sort_values('jd')
+    # plt.loglog(df["jd"].to_numpy(), df["candid"].to_numpy(), marker=".", linewidth=0)
+    # plt.show(block=False)
+
+
+def load_alerts_to_table_one_night(args):
     """Load table with all alerts in urilist."""
     tarname, objectds = args
+    logging.info(f"submitting bigquery load jobs for {tarname}")
+
     tarstem = tarname.replace(".tar.gz", "")
-    urilist = objectds.to_table(filter=(pac.field("tarstem") == tarstem))["alerturi"].to_pylist()
+    urilist = objectds.to_table(filter=(pc.field("tarstem") == tarstem))["alerturi"].to_pylist()
     # aglob = AVROGLOB(tarname).split("/")[-1]
-    logging.info(f"submitting bigquery load job {tarname}")
-    job = BQ_CLIENT.load_table_from_uri(
-        # glob string load jobs fail after awhile (too many objects in bucket?).
-        # f"gs://{bucket.name}/{aglob}",
-        # pass explicit list of uris instead
-        urilist,
-        table=f"{PROJECT_ID}.{DATASET}.alerts_v{version_from_tarname(tarname).replace('.', '_')}",
-        job_config=bigquery.job.LoadJobConfig(
-            write_disposition="WRITE_APPEND",
-            source_format="AVRO",
-            ignore_unknown_values=True,  # drop fields that are not in the table schema (cutouts)
-        ),
+    # tbl = f"{PROJECT_ID}.{DATASET}.alerts_v{version_from_tarname(tarname).replace('.', '_')}"
+    tbl = TABLE(version_from_tarname(tarname))
+    job_config = bigquery.job.LoadJobConfig(
+        write_disposition="WRITE_APPEND", source_format="AVRO", ignore_unknown_values=True
     )
-    REPORT("submitted", f"{tarname},{job.job_id}")
+
+    # need to submit in batches. load_table_from_uri has a limit of 10_000
+    j, jobs, bqlim = 0, [], 10_000
+    while True:
+        if j * bqlim >= len(urilist):
+            break
+
+        jobs.append(
+            BQ_CLIENT.load_table_from_uri(
+                source_uris=urilist[j * bqlim : (j + 1) * bqlim],
+                destination=tbl,
+                job_config=job_config,
+            )
+        )
+        REPORT("submitted", f"{tarname},{jobs[-1].job_id}")
+        j += 1
 
     # if the job succeeds it shouldn't take very long
     # but if it fails it can take hours, so let's not wait for it.
@@ -265,17 +411,13 @@ def load_alerts_to_table(args):
     # job.result()
     # InternalServerError: 500 An internal error occurred and the request could not be completed. This is usually caused by a transient issue. Retrying the job with back-off as described in the BigQuery SLA should solve the problem: https://cloud.google.com/bigquery/sla. If the error continues to occur please contact support at https://cloud.google.com/support. Error: 80324028
 
-    # if result.errors is not None:
-    #     REPORT("error", f"{tarname},load_table")
-    #     logging.warning(f"Error loading table for {tarname}. {result.error_result}")
-
-    sleep(60)
-    if job.done():
-        _bigquery_done(job)
+    sleep(j * 10)
+    # if job.done():
+    #     _bigquery_done(job)
 
 
 def version_from_tarname(tarname):
-    for row in SCHEMA_CHANGE_DF.itertuples():
+    for row in LOAD("schema-change").itertuples():
         if tarname > row.tarname:
             return str(row.version)
 
@@ -292,7 +434,7 @@ def _run_row(row, bucket, load_table=False, nprocs=None, nthreads=None):
     logging.info("loading")
     success = load_alerts_to_bucket(bucket.name, tarname, nprocs=nprocs, nthreads=nthreads)
     if success and load_table:
-        load_alerts_to_table(table, tarname, bucket)
+        load_alerts_to_table_one_night(table, tarname, bucket)
     try:
         dalert.rmdir()
     except OSError:
@@ -342,7 +484,8 @@ def _prep_tarball(apaths, nprocs=16):
     touch_schema(version, falert)
     schema = schemas.loadavsc(version=version, nocutouts=False)
 
-    table = f"{PROJECT_ID}.{DATASET}.alerts_v{version.replace('.', '_')}"
+    # table = f"{PROJECT_ID}.{DATASET}.alerts_v{version.replace('.', '_')}"
+    table = TABLE(version)
     touch_table(table, falert, schemas.loadavsc(version, nocutouts=True), version)
 
     logging.info("fixing schemas")
@@ -369,7 +512,7 @@ def load_tarballs(queue_in):
 def _load_tarball(tarname, bucket, table, dalert):
     success = load_alerts_to_bucket(bucket.name, tarname)
     if success:
-        load_alerts_to_table(table, tarname, BUCKET())
+        load_alerts_to_table_one_night(table, tarname, BUCKET())
 
     try:
         dalert.rmdir()
@@ -396,7 +539,7 @@ def ingest_one_tarball_deprecated(tarrow, nprocs=12):
     touch_schema(version, falert)
     schema = schemas.loadavsc(version=version, nocutouts=False)
 
-    table = f"{PROJECT_ID}.{DATASET}.alerts_v{version.replace('.', '_')}"
+    table = TABLE(version)
     touch_table(table, falert, schemas.loadavsc(version, nocutouts=True), version)
 
     logging.info("Fixing alerts on disk")
@@ -409,7 +552,7 @@ def ingest_one_tarball_deprecated(tarrow, nprocs=12):
     bucket = BUCKET()
     success = load_alerts_to_bucket(bucket, tarname)
     if success:
-        load_alerts_to_table(table, tarname, bucket)
+        load_alerts_to_table_one_night(table, tarname, bucket)
 
     try:
         dalert.rmdir()
@@ -481,11 +624,11 @@ def _chunk_to_parquet(chunkidx, chunk):
     objdf = pa.Table.from_batches([chunk]).to_pandas()
     objdf["tarstem"] = objdf["alerturi"].str.split(".").str[-2]
 
-    parquet_format = pads.ParquetFileFormat()
-    pads.write_dataset(
+    parquet_format = ds.ParquetFileFormat()
+    ds.write_dataset(
         pa.Table.from_pandas(objdf),
         base_dir=PARQUET_DIR_CACHE,
-        partitioning=pads.partitioning(schema=partschema, flavor="hive"),
+        partitioning=ds.partitioning(schema=partschema, flavor="hive"),
         basename_template=f"chunk{chunkidx}-part{{i}}.snappy.parquet",
         existing_data_behavior="overwrite_or_ignore",
         format=parquet_format,
@@ -500,42 +643,58 @@ def _chunk_to_parquet(chunkidx, chunk):
     del objdf
 
 
-def _consolidate_parquet_partition(args):
-    dataset, tarstem = args
-    partschema = pa.schema([pa.field(name="tarstem", type=pa.string())])
-    parquet_format = pads.ParquetFileFormat()
+def _consolidate_parquet_partition(tarstem):
+    tardir = PARQUET_DIR_CACHE / f"tarstem={tarstem}"
+    if not tardir.is_dir():
+        return
 
-    scanner = pads.Scanner.from_dataset(dataset, filter=(pac.field("tarstem") == tarstem))
-    pads.write_dataset(
-        scanner.to_reader(),
+    meta_collect = []
+
+    def file_visitor(written_file):
+        meta_collect.append(written_file.metadata)
+
+    # read everything in this directory
+    tbl = pq.read_table(tardir)
+    # we loose the partition column by reading this way. add it back in.
+    partfield = pa.field(name="tarstem", type=pa.string())
+    tbl = tbl.append_column(field_=partfield, column=[[tarstem] * len(tbl)])
+
+    parquet_format = ds.ParquetFileFormat()
+    ds.write_dataset(
+        tbl,
         base_dir=PARQUET_DIR,
-        partitioning=pads.partitioning(schema=partschema, flavor="hive"),
+        partitioning=ds.partitioning(schema=pa.schema([partfield]), flavor="hive"),
         basename_template=f"part{{i}}.snappy.parquet",
         file_options=parquet_format.make_write_options(
             **dict(compression="snappy", version="1.0", write_statistics=False)
         ),
         format=parquet_format,
         existing_data_behavior="overwrite_or_ignore",
+        file_visitor=file_visitor,
         min_rows_per_group=3_000_000,
         max_rows_per_group=4_000_000,
     )
 
+    return meta_collect
+
 
 def _consolidate_parquet():
-    dataset = pads.dataset(PARQUET_DIR_CACHE, partitioning="hive")
+    # previous step creates large number of small files.
+    # next line take a very long time (several hours). don't do it this way. iterate dir instead.
+    # dataset = ds.dataset(PARQUET_DIR_CACHE, partitioning="hive")
     tardf = fetch_tarball_names(clean=[])
-    tarstems = tardf["Name"].str.replace(".tar.gz", "")
+    tarstems = tardf["Name"].str.replace(".tar.gz", "").to_list()
     with Pool(12) as pool:
-        pool.map(_consolidate_parquet_partition, [(dataset, tarstem) for tarstem in tarstems])
+        pool.map(_consolidate_parquet_partition, tarstems)
 
 
 def object_csv_to_parquet(csvin):
     # csvin can be obtained by running the following in a bash shell:
     # gsutil ls gs://${bucket} > csvin
-    with pacsv.open_csv(
+    with csv.open_csv(
         csvin,
-        read_options=pacsv.ReadOptions(column_names=["alerturi"], block_size=1024 ** 2),
-        convert_options=pacsv.ConvertOptions(
+        read_options=csv.ReadOptions(column_names=["alerturi"], block_size=1024 ** 2),
+        convert_options=csv.ConvertOptions(
             column_types=pa.schema([pa.field(name="alerturi", type=pa.string())])
         ),
     ) as reader:
@@ -714,7 +873,18 @@ def open_alert(falert, version=None):
     return list_of_dicts[0]
 
 
-def _bigquery_done(job):
+def _bigquery_done_deprecated(job):
+    aglob = job.source_uris[0].split("/")[-1]  # like *.ztf_public_20221216.avro
+    tarname = f"{aglob.split('.')[1]}.tar.gz"
+    if job.errors is not None:
+        REPORT(
+            "error", f"{aglob.replace('*.', '').replace('.avro', '.tar.gz')},bqjob_{job.job_id}"
+        )
+    else:
+        REPORT("done", tarname)
+
+
+def _bigquery_done(jobs):
     aglob = job.source_uris[0].split("/")[-1]  # like *.ztf_public_20221216.avro
     tarname = f"{aglob.split('.')[1]}.tar.gz"
     if job.errors is not None:
@@ -731,30 +901,44 @@ def check_submitted_jobs():
 
     # get submitted jobs
     try:
-        subdf = pd.read_csv(FSUB, names=["tarname", "jobid"])
+        subdf = LOAD("submitted")
     except FileNotFoundError:
         return
 
     # remove tarballs previously reported as done
     try:
-        dones = list(pd.read_csv(FDONE, names=["tarname"]).squeeze())
+        dones = LOAD("done")
     except FileNotFoundError:
         dones = []
     subdf = subdf.query("tarname not in @dones")
 
     # remove jobids previously reported as errored
     try:
-        errs = pd.read_csv(FERR, names=["tarname", "error"])["error"]
+        errs = LOAD("error")["error"]
         errs = list(errs.loc[errs.str.startswith("bqjob_")].str.replace("bqjob_", ""))
     except FileNotFoundError:
         errs = []
     subdf = subdf.query("jobid not in @errs")
 
     # check and report on remaining jobs
-    for row in subdf.itertuples():
-        job = BQ_CLIENT.get_job(row.jobid)
-        if job.done():
-            _bigquery_done(job)
+    for tarname, jobsdf in subdf.groupby("tarname"):
+        _check_bigquery_jobs(tarname, jobsdf)
+
+
+def _check_bigquery_jobs(tarname, jobsdf):
+    """Check all jobs in jobsdf. Report tarname as done if all jobs completed without error."""
+    jobs = [BQ_CLIENT.get_job(row.jobid) for row in jobsdf.itertuples()]
+
+    # if any jobs is not done, just return
+    if any([(not job.done()) for job in jobs]):
+        return
+
+    if any([job.errors for job in jobs]):
+        print(f"{tarname} errors: {[job.errors for job in jobs]}")
+        return
+
+    # all jobs succeeded
+    REPORT("done", tarname)
 
 
 def _convert_tarsize(size):
@@ -781,26 +965,26 @@ def fetch_tarball_names(clean=["uploaded", "submitted"]):
     reported = []
     if "uploaded" in clean:
         try:
-            uploaded = pd.read_csv(FUP, names=["tarname"])["tarname"].to_list()
+            uploaded = LOAD("uploaded")
         except FileNotFoundError:
             uploaded = []
         reported = list(set(uploaded + reported))
 
     if "submitted" in clean:
         try:
-            submitted = pd.read_csv(FSUB, names=["tarname", "jobid"])["tarname"].to_list()
+            submitted = LOAD("submitted")["tarname"].to_list()
         except FileNotFoundError:
             submitted = []
         reported = list(set(submitted + reported))
 
     if "done" in clean:
         try:
-            dones = pd.read_csv(FDONE, names=["tarname"])["tarname"].to_list()
+            dones = LOAD("done")
         except FileNotFoundError:
             dones = []
         reported = list(set(dones + reported))
 
-    return tardf.query(f"Name not in {reported}")
+    return tardf.query(f"Name not in {reported}").sort_values("Name").reset_index()
 
 
 if __name__ == "__main__":
