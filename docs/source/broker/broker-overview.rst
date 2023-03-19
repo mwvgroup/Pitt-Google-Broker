@@ -43,15 +43,16 @@ across GCP.
 
       -  Runs the Kafka plugin
          `CloudPubSubConnector <https://github.com/GoogleCloudPlatform/pubsub/tree/master/kafka-connector>`__
-      -  Publishes to Pub/Sub topic [`alerts`]
+      -  Publishes to Pub/Sub topic [`alerts_raw`]
 
 2. **Avro File Storage** (alert -> fix schema if needed -> Cloud Storage
    bucket)
 
    -  Cloud Function [`upload_bytes_to_bucket`]
 
-      -  Listens to PS topic [`alerts`]
+      -  Listens to PS topic [`alerts_raw`]
       -  Stores in GCS bucket [`alerts`]
+      -  Publishes to Pub/Sub topic [`alerts`]
       -  GCS bucket triggers Pub/Sub topic [`alert_avros`]
 
 3. **BigQuery Database Storage** (alert -> BigQuery)
