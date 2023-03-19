@@ -108,7 +108,7 @@ def _resources(service, survey='ztf', testid='test'):
 
     if service == 'BQ':
         datasets = {
-            f'{survey}_alerts':
+            survey:
                 ['alerts_v3_3', 'DIASource', 'SuperNNova', 'metadata', 'classifications', 'tags']
         }
 

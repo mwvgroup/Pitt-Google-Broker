@@ -22,7 +22,7 @@ log_name = "classify-snn-cloudfnc"  # same log for all broker instances
 logger = logging_client.logger(log_name)
 
 # GCP resources used in this module
-bq_dataset = f"{SURVEY}_alerts"
+bq_dataset = SURVEY
 ps_topic = f"{SURVEY}-SuperNNova"
 if TESTID != "False":  # attach the testid to the names
     bq_dataset = f"{bq_dataset}_{TESTID}"

@@ -21,7 +21,7 @@ log_name = "store-bigquery-cloudfnc"  # same log for all broker instances
 logger = logging_client.logger(log_name)
 
 # GCP resources used in this module
-bq_dataset = f"{SURVEY}_alerts"
+bq_dataset = SURVEY
 ps_topic = f"{SURVEY}-BigQuery"
 if TESTID != "False":
     bq_dataset = f"{bq_dataset}_{TESTID}"
