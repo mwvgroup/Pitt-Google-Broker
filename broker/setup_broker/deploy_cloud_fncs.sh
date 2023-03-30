@@ -14,13 +14,15 @@ zone="${CE_ZONE:-us-central1-a}" # use env variable CE_ZONE if it exists
 #--- GCP resources used in this script
 store_bq_trigger_topic="${survey}-alerts"
 store_bq_CF_name="${survey}-store_in_BigQuery"
-ps_to_gcs_trigger_topic="${survey}-alerts"
+ps_to_gcs_trigger_topic="${survey}-alerts_raw"
 ps_to_gcs_CF_name="${survey}-upload_bytes_to_bucket"
 check_cue_trigger_topic="${survey}-cue_night_conductor"
 check_cue_CF_name="${survey}-check_cue_response"
-filter_exgal_trigger_topic="${survey}-alerts"
-filter_exgal_CF_name="${survey}-filter_exgalac_trans"
-classify_snn_trigger_topic="${survey}-exgalac_trans_cf"
+lite_trigger_topic="${survey}-alerts"
+lite_CF_name="${survey}-lite"
+tag_trigger_topic="${survey}-lite"
+tag_CF_name="${survey}-tag"
+classify_snn_trigger_topic="${survey}-tag"
 classify_snn_CF_name="${survey}-classify_with_SuperNNova"
 # use test resources, if requested
 if [ "$testid" != "False" ]; then
@@ -30,8 +32,10 @@ if [ "$testid" != "False" ]; then
     ps_to_gcs_CF_name="${ps_to_gcs_CF_name}-${testid}"
     check_cue_trigger_topic="${check_cue_trigger_topic}-${testid}"
     check_cue_CF_name="${check_cue_CF_name}-${testid}"
-    filter_exgal_trigger_topic="${filter_exgal_trigger_topic}-${testid}"
-    filter_exgal_CF_name="${filter_exgal_CF_name}-${testid}"
+    lite_trigger_topic="${lite_trigger_topic}-${testid}"
+    lite_CF_name="${lite_CF_name}-${testid}"
+    tag_trigger_topic="${tag_trigger_topic}-${testid}"
+    tag_CF_name="${tag_CF_name}-${testid}"
     classify_snn_trigger_topic="${classify_snn_trigger_topic}-${testid}"
     classify_snn_CF_name="${classify_snn_CF_name}-${testid}"
 fi
@@ -42,7 +46,8 @@ if [ "$teardown" = "True" ]; then
         gcloud functions delete "$store_bq_CF_name"
         gcloud functions delete "$ps_to_gcs_CF_name"
         gcloud functions delete "$check_cue_CF_name"
-        gcloud functions delete "$filter_exgal_CF_name"
+        gcloud functions delete "$lite_CF_name"
+        gcloud functions delete "$tag_CF_name"
         gcloud functions delete "$classify_snn_CF_name"
     fi
 
@@ -67,6 +72,7 @@ else # Deploy the Cloud Functions
 #--- Pub/Sub -> Cloud Storage Avro cloud function
     echo "Deploying Cloud Function: $ps_to_gcs_CF_name"
     ps_to_gcs_entry_point="run"
+    memory=512MB  # standard 256MB is too small here (it was always on the edge)
 
     cd .. && cd cloud_functions
     cd ps_to_gcs
@@ -74,6 +80,7 @@ else # Deploy the Cloud Functions
     gcloud functions deploy "$ps_to_gcs_CF_name" \
         --entry-point "$ps_to_gcs_entry_point" \
         --runtime python37 \
+        --memory "${memory}" \
         --trigger-topic "$ps_to_gcs_trigger_topic" \
         --set-env-vars TESTID="$testid",SURVEY="$survey"
 
@@ -94,6 +101,36 @@ else # Deploy the Cloud Functions
 
     cd $OGdir
 
+#--- alerts-lite cloud function
+    echo "Deploying Cloud Function: $lite_CF_name"
+    lite_entry_point="run"
+
+    cd ../cloud_functions/lite || exit
+
+    gcloud functions deploy "$lite_CF_name" \
+        --entry-point "$lite_entry_point" \
+        --runtime python37 \
+        --trigger-topic "$lite_trigger_topic" \
+        --set-env-vars TESTID="$testid",SURVEY="$survey"
+
+    cd $OGdir
+
+#--- tag alerts cloud function
+    echo "Deploying Cloud Function: $tag_CF_name"
+    tag_entry_point="run"
+    memory=512MB  # standard 256MB is too small here
+
+    cd ../cloud_functions/tag || exit
+
+    gcloud functions deploy "$tag_CF_name" \
+        --entry-point "$tag_entry_point" \
+        --runtime python37 \
+        --memory "$memory" \
+        --trigger-topic "$tag_trigger_topic" \
+        --set-env-vars TESTID="$testid",SURVEY="$survey"
+
+    cd $OGdir
+
 #--- classify with SNN cloud function
     echo "Deploying Cloud Function: $classify_snn_CF_name"
     classify_snn_entry_point="run"
@@ -107,21 +144,6 @@ else # Deploy the Cloud Functions
         --memory "$memory" \
         --runtime python37 \
         --trigger-topic "$classify_snn_trigger_topic" \
-        --set-env-vars TESTID="$testid",SURVEY="$survey"
-
-    cd $OGdir
-
-#--- filter for extragalactic transients cloud function
-    echo "Deploying Cloud Function: $filter_exgal_CF_name"
-    filter_exgal_entry_point="run"
-
-    cd .. && cd cloud_functions
-    cd filter_exgalac_trans
-
-    gcloud functions deploy "$filter_exgal_CF_name" \
-        --entry-point "$filter_exgal_entry_point" \
-        --runtime python37 \
-        --trigger-topic "$filter_exgal_trigger_topic" \
         --set-env-vars TESTID="$testid",SURVEY="$survey"
 
     cd $OGdir

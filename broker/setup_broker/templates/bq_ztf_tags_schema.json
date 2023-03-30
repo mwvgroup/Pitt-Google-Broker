@@ -1,0 +1,86 @@
+[
+  {
+    "description": "DIA object identifier or name",
+    "mode": "REQUIRED",
+    "name": "objectId",
+    "type": "STRING"
+  },
+  {
+    "description": "DIA source (candidate) identifier",
+    "mode": "REQUIRED",
+    "name": "candid",
+    "type": "INTEGER"
+  },
+  {
+    "description": "Tags classifier version",
+    "mode": "NULLABLE",
+    "name": "classifier_version",
+    "type": "FLOAT"
+  },
+  {
+    "description": "Predicted class (see the class_descriptions table for more info)",
+    "mode": "NULLABLE",
+    "name": "is_pure",
+    "type": "INTEGER"
+  },
+  {
+    "description": "High real/bogus score (see the class_descriptions table for more info)",
+    "mode": "NULLABLE",
+    "name": "rb",
+    "type": "INTEGER"
+  },
+  {
+    "description": "No bad pixels (see the class_descriptions table for more info)",
+    "mode": "NULLABLE",
+    "name": "nbad",
+    "type": "INTEGER"
+  },
+  {
+    "description": "Low full width half max (SExtractor) (see the class_descriptions table for more info)",
+    "mode": "NULLABLE",
+    "name": "fwhm",
+    "type": "INTEGER"
+  },
+  {
+    "description": "Small ellipticity (major / minor axis, SExtractor) (see the class_descriptions table for more info)",
+    "mode": "NULLABLE",
+    "name": "elong",
+    "type": "INTEGER"
+  },
+  {
+    "description": "Small aperture - psf (see the class_descriptions table for more info)",
+    "mode": "NULLABLE",
+    "name": "magdiff",
+    "type": "INTEGER"
+  },
+  {
+    "description": "Predicted class (see the class_descriptions table for more info)",
+    "mode": "NULLABLE",
+    "name": "is_extragalactic_transient",
+    "type": "INTEGER"
+  },
+  {
+    "description": "Whether the subtraction is positive (see the class_descriptions table for more info)",
+    "mode": "NULLABLE",
+    "name": "is_positive_sub",
+    "type": "INTEGER"
+  },
+  {
+    "description": "Whether there is a pointsource counterpart (see the class_descriptions table for more info)",
+    "mode": "NULLABLE",
+    "name": "no_pointsource_counterpart",
+    "type": "INTEGER"
+  },
+  {
+    "description": "Whether the object is moving (see the class_descriptions table for more info)",
+    "mode": "NULLABLE",
+    "name": "not_moving",
+    "type": "INTEGER"
+  },
+  {
+    "description": "Whether the object is a solar system object (see the class_descriptions table for more info)",
+    "mode": "NULLABLE",
+    "name": "no_ssobject",
+    "type": "INTEGER"
+  }
+]
