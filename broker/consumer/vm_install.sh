@@ -8,10 +8,28 @@ H="Metadata-Flavor: Google"
 consumerVM=$(curl "${baseurl}/instance/name" -H "${H}")
 zone=$(curl "${baseurl}/instance/zone" -H "${H}")
 
+# parse the survey name and testid from the VM name
+survey=$(echo "$consumerVM" | awk -F "-" '{print $1}')
+if [ "$consumerVM" = "${survey}-consumer" ]; then
+    testid="False"
+else
+    testid=$(echo "$consumerVM" | awk -F "-" '{print $NF}')
+fi
+
+#--- GCP resources used in this script
+broker_bucket="${PROJECT_ID}-${survey}-broker_files"
+# use test resources, if requested
+if [ "$testid" != "False" ]; then
+    broker_bucket="${broker_bucket}-${testid}"
+fi
+
 #--- Install general utils
 apt-get update
-apt-get install -y wget screen software-properties-common
+apt-get install -y wget screen software-properties-common snapd
 # software-properties-common installs add-apt-repository
+# install yq (requires snap)
+snap install core
+snap install yq
 
 #--- Install Java and the dev kit
 # see https://www.digitalocean.com/community/tutorials/how-to-install-java-with-apt-on-debian-10

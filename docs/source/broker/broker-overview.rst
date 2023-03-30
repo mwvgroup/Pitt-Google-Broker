@@ -15,12 +15,12 @@ Broker Components
 
 The **consumer** (1, see list below) ingests a survey's Kafka stream and
 republishes it as a Pub/Sub stream. The **data storage** (2 and 3) and
-**science processing** (4) components subscribe to the consumer's
-Pub/Sub stream. (The SuperNNova classifier (5) is implemented separately.)
+**science processing** () components subscribe to the consumer's
+Pub/Sub stream. (The SuperNNova classifier (4) is implemented separately.)
 These components store their output data in Cloud
 Storage and/or BigQuery, and publish to dedicated Pub/Sub topics. The
-**night conductor** (6) orchestrates the broker, starting up resources
-and jobs at night and shutting them down in the morning.
+**night conductor** (5) processes Pub/Sub counter subscriptions to collect metadata.
+**Uptime checks** (6) check that VMs start/stop as expected.
 
 To view the resources, see :doc:`../broker/run-a-broker-instance/view-resources`.
 
@@ -77,23 +77,17 @@ across GCP.
          -  Stores in BigQuery table [`SuperNNova`]
          -  Publishes to PS topic [`SuperNNova`]
 
-5. **Night Conductor** (orchestrates GCP resources and jobs to run the
-   broker each night; collects metadata)
+5. **Night Conductor** (collects metadata)
 
-   -  Compute Engine VM [`night-conductor`]
+   -  Compute Engine VM [`night-conductor`] running a python script
 
-      -  Auto-Scheduled with (Cloud Scheduler -> Pub/Sub -> Cloud
-         Function -> start VM):
+6. **Uptime checks** (check that VMs start/stop as expected)
 
-         -  Cloud Scheduler cron jobs [`cue_night_conductor_START`
-            and `cue_night_conductor_END`]
-         -  Pub/Sub topic [`cue_night_conductor`]
-         -  Cloud Function [`cue_night_conductor`]
+   -  Cloud Function [`cue_night_conductor`]
 
-      -  Broker's response to the auto-scheduler's cue is checked
-         by:
-
-         -  Cloud Function [`check_cue_response`]
+      -  Listens to PS topic [`cue_night_conductor`] which is published by the
+         Cloud Scheduler cron jobs [`cue_night_conductor_START`
+         and `cue_night_conductor_END`]
 
 --------------
 

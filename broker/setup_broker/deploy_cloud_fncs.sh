@@ -16,9 +16,7 @@ store_bq_trigger_topic="${survey}-alerts"
 store_bq_CF_name="${survey}-store_in_BigQuery"
 ps_to_gcs_trigger_topic="${survey}-alerts_raw"
 ps_to_gcs_CF_name="${survey}-upload_bytes_to_bucket"
-cue_nc_trigger_topic="${survey}-cue_night_conductor"
-cue_nc_CF_name="${survey}-cue_night_conductor"
-check_cue_trigger_topic="${cue_nc_trigger_topic}"
+check_cue_trigger_topic="${survey}-cue_night_conductor"
 check_cue_CF_name="${survey}-check_cue_response"
 lite_trigger_topic="${survey}-alerts"
 lite_CF_name="${survey}-lite"
@@ -32,8 +30,6 @@ if [ "$testid" != "False" ]; then
     store_bq_CF_name="${store_bq_CF_name}-${testid}"
     ps_to_gcs_trigger_topic="${ps_to_gcs_trigger_topic}-${testid}"
     ps_to_gcs_CF_name="${ps_to_gcs_CF_name}-${testid}"
-    cue_nc_trigger_topic="${cue_nc_trigger_topic}-${testid}"
-    cue_nc_CF_name="${cue_nc_CF_name}-${testid}"
     check_cue_trigger_topic="${check_cue_trigger_topic}-${testid}"
     check_cue_CF_name="${check_cue_CF_name}-${testid}"
     lite_trigger_topic="${lite_trigger_topic}-${testid}"
@@ -49,7 +45,6 @@ if [ "$teardown" = "True" ]; then
     if [ "$testid" != "False" ]; then
         gcloud functions delete "$store_bq_CF_name"
         gcloud functions delete "$ps_to_gcs_CF_name"
-        gcloud functions delete "$cue_nc_CF_name"
         gcloud functions delete "$check_cue_CF_name"
         gcloud functions delete "$lite_CF_name"
         gcloud functions delete "$tag_CF_name"
@@ -91,21 +86,6 @@ else # Deploy the Cloud Functions
 
     cd $OGdir
 
-#--- Cue night-conductor cloud function
-    echo "Deploying Cloud Function: $cue_nc_CF_name"
-    cue_nc_entry_point="run"
-
-    cd .. && cd cloud_functions
-    cd cue_night_conductor
-
-    gcloud functions deploy "$cue_nc_CF_name" \
-        --entry-point "$cue_nc_entry_point" \
-        --runtime python37 \
-        --trigger-topic "$cue_nc_trigger_topic" \
-        --set-env-vars TESTID="$testid",SURVEY="$survey",ZONE="$zone"
-
-    cd $OGdir
-
 #--- Check cue response cloud function
     echo "Deploying Cloud Function: $check_cue_CF_name"
     check_cue_entry_point="run"
@@ -117,8 +97,7 @@ else # Deploy the Cloud Functions
         --entry-point "$check_cue_entry_point" \
         --runtime python37 \
         --trigger-topic "$check_cue_trigger_topic" \
-        --set-env-vars TESTID="$testid",SURVEY="$survey",ZONE="$zone" \
-        --timeout 540s  # allow the CF to sleep without timing out
+        --set-env-vars TESTID="$testid",SURVEY="$survey",ZONE="$zone"
 
     cd $OGdir
 
