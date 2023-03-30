@@ -109,7 +109,7 @@ def _resources(service, survey='ztf', testid='test'):
     if service == 'BQ':
         datasets = {
             f'{survey}_alerts':
-                ['alerts', 'DIASource', 'SuperNNova', 'metadata']
+                ['alerts', 'DIASource', 'SuperNNova', 'metadata', 'classifications', 'tags']
         }
 
         # append the testid to the dataset name only
@@ -151,18 +151,20 @@ def _resources(service, survey='ztf', testid='test'):
 
     if service == 'PS':
         topics = {  # '<topic_name>': ['<subscription_name>', ]
+                f'{survey}-alerts_raw':
+                    [f'{survey}-alerts_raw-counter', ],
                 f'{survey}-BigQuery':
                     [f'{survey}-BigQuery-counter'],
                 f'{survey}-alert_avros':
                     [f'{survey}-alert_avros-counter'],
                 f'{survey}-alerts':
                     [f'{survey}-alerts-counter', f'{survey}-alerts-reservoir', ],
-                f'{survey}-alerts_pure':
-                    [f'{survey}-alerts_pure-counter', ],
+                f'{survey}-lite':
+                    [f'{survey}-lite-counter', ],
+                f'{survey}-tagged':
+                    [f'{survey}-tagged-counter', ],
                 f'{survey}-cue_night_conductor':
                     [],
-                f'{survey}-exgalac_trans_cf':
-                    [f'{survey}-exgalac_trans_cf-counter'],
                 f'{survey}-SuperNNova':
                     [f'{survey}-SuperNNova-counter'],
         }
