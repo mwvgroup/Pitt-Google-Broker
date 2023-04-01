@@ -72,7 +72,7 @@ echo "Configuring VMs..."
 ./create_vms.sh "$broker_bucket" "$testid" "$teardown" "$survey"
 
 
-#--- Create the cron jobs that schedule night-conductor
+#--- Create the cron jobs that check the VM status
 echo
 echo "Setting up Cloud Scheduler cron jobs"
 ./create_cron_jobs.sh "$testid" "$teardown" "$survey"

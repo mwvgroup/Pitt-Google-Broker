@@ -4,6 +4,7 @@
 
 
 import argparse
+from google import api_core
 from google.cloud import bigquery, logging
 import json
 import numpy as np
@@ -37,6 +38,7 @@ def _resource_names(survey: str, testid: Union[str, bool]):
 
     # pubsub names as {topic name stub: full subscription name}
     name_stubs = [
+        "alerts_raw",
         "alerts",
         "BigQuery",
         "alert_avros",
@@ -83,12 +85,12 @@ class MetadataCollector:
     The DIA ids are used to join the metadata from all counters,
     and the result is stored to the BigQuery "metadata" table.
 
-    The messages coming from the main "alerts" stream require special handling because
+    The messages coming from the main "alerts_raw" stream require special handling because
     the Consumer, from which they originate, does not open the messages and therefore
     it cannot attach the DIA ids as metadata.
     To fix this, the Cloud Function that stores the alert Avro files has been
     configured to grab and store the only unique identifier available, the
-    Pub/Sub message_id, which is used here to associate "alerts" stream messages with
+    Pub/Sub message_id, which is used here to associate "alerts_raw" stream messages with
     DIA ids.
 
     Any collected attributes that do not have a matching column in the BigQuery table
@@ -183,19 +185,27 @@ class MetadataCollector:
         # this will have to be handled by the SubscriptionMetadataCollector
         requested_fields.extend(tfields)
 
-        # extra fields needed to properly join the dfs in _add_ids_to_alerts_stream()
-        if topic_stub == "alerts":
+        # extra fields needed to properly join the dfs in _add_ids_to_alerts_raw_stream()
+        if topic_stub == "alerts_raw":
             requested_fields.append("message_id")
         if topic_stub == "alert_avros":
             requested_fields.append("file_origin_message_id")
+
+        # remove fields in the BQ table schema that are now obsolete because alerts_raw took over responsibility
+        if topic_stub == "alerts":
+            for field in ("kafka_topic", "kafka_timestamp", "message_id"):
+                try:
+                    requested_fields.remove(field)
+                except ValueError:
+                    pass
 
         return requested_fields
 
     def _format_dfs_for_join_and_load(self):
         """Standardize index/names/types so data can be joined, loaded to BigQuery."""
         oid, sid = self.index
-        # all subscriptions have the index columns except the alerts df... fix it
-        self._add_ids_to_alerts_stream()
+        # all subscriptions have the index columns except the alerts_raw df... fix it
+        self._add_ids_to_alerts_raw_stream()
 
         for topic_stub, df in self.metadata_dfs_dict.items():
             # set the index with explicit types
@@ -203,7 +213,7 @@ class MetadataCollector:
             df = df.set_index([oid, sid])
 
             # convert some types
-            if topic_stub == "alerts":
+            if topic_stub == "alerts_raw":
                 # convert the kafka timestamp to np.datetime64
                 df["kafka.timestamp"] = pd.to_datetime(
                     df["kafka.timestamp"], unit="ms", utc=True
@@ -228,19 +238,19 @@ class MetadataCollector:
             # store it
             self.metadata_dfs_dict[topic_stub] = df
 
-    def _add_ids_to_alerts_stream(self):
-        """Add objectId and sourceId to alerts stream metadata.
+    def _add_ids_to_alerts_raw_stream(self):
+        """Add objectId and sourceId to alerts_raw stream metadata.
 
-        The messages coming from the main "alerts" stream require special handling
+        The messages coming from the main "alerts_raw" stream require special handling
         because the Consumer, from which they originate, does not open the messages and
         therefore it cannot attach the DIA ids as metadata.
 
         To fix this, the Cloud Function that stores the alert Avro files has been
         configured to grab and store the only unique identifier available, the
-        Pub/Sub message_id, which is used here to associate "alerts" stream messages
+        Pub/Sub message_id, which is used here to associate "alerts_raw" stream messages
         with DIA ids.
         """
-        if "alerts" not in self.metadata_dfs_dict.keys():
+        if "alerts_raw" not in self.metadata_dfs_dict:
             return
 
         # column names
@@ -255,47 +265,51 @@ class MetadataCollector:
         df_avros = df_avros[[oid, sid]]  # drop the columns we don't need
         df_avros = df_avros[~df_avros.index.duplicated(keep="first")]  # drop duplicates
 
-        # add the ids to the alerts metadata
-        df_alerts = self.metadata_dfs_dict["alerts"].reset_index()
-        df_alerts = df_alerts.astype({msg_id: int}).set_index(msg_id)
-        df_alerts[oid] = df_avros[oid]
-        df_alerts[sid] = df_avros[sid]
+        # add the ids to the alerts_raw metadata
+        df_alerts_raw = self.metadata_dfs_dict["alerts_raw"].reset_index()
+        df_alerts_raw = df_alerts_raw.astype({msg_id: int}).set_index(msg_id)
+        df_alerts_raw[oid] = df_avros[oid]
+        df_alerts_raw[sid] = df_avros[sid]
 
         # handle messages that were not matched to an oid and sid
-        null_ids = df_alerts[df_alerts[[oid, sid]].isnull().any(axis=1)].index
+        null_ids = df_alerts_raw[df_alerts_raw[[oid, sid]].isnull().any(axis=1)].index
         if len(null_ids) > 0:
             # fill in the oid, sid with "unknown-{pubsub message_id}"
             def unk(row):
                 return f"unknown-{row.name}"
 
-            df_alerts.loc[df_alerts[oid].isnull(), oid] = df_alerts.apply(unk, axis=1)
-            df_alerts.loc[df_alerts[sid].isnull(), sid] = df_alerts.apply(unk, axis=1)
+            df_alerts_raw.loc[df_alerts_raw[oid].isnull(), oid] = df_alerts_raw.apply(unk, axis=1)
+            df_alerts_raw.loc[df_alerts_raw[sid].isnull(), sid] = df_alerts_raw.apply(unk, axis=1)
 
             # log some info
             _log_and_print(
                 (
-                    f"Cannot match {len(null_ids)} messages from the alerts stream "
+                    f"Cannot match {len(null_ids)} messages from the alerts_raw stream "
                     f"to an {oid} and {sid}. "
-                    f"Their Pub/Sub message ids are: {null_ids.tolist()}"
+                    # f"Their Pub/Sub message ids are: {null_ids.tolist()}"
                 ),
-                severity="DEBUG",
+                severity="INFO",
             )
 
         # store the updated df
-        self.metadata_dfs_dict["alerts"] = df_alerts.reset_index()
+        self.metadata_dfs_dict["alerts_raw"] = df_alerts_raw.reset_index()
 
     def _join_metadata(self):
         # join the subscription dfs on index
-        alerts = self.metadata_dfs_dict["alerts"]
-        allothers = [df for t, df in self.metadata_dfs_dict.items() if t != "alerts"]
-        self.metadata_df = alerts.join(allothers, how="outer")
+        # if alerts_raw subscription was empty, use an empty dataframe
+        alerts_raw = self.metadata_dfs_dict.get("alerts_raw", pd.DataFrame())
+        allothers = [df for t, df in self.metadata_dfs_dict.items() if t != "alerts_raw"]
+        self.metadata_df = alerts_raw.join(allothers, how="outer")
 
     def _load_metadata_to_bigquery(self):
-        # by default, conforms the dataframe to the table schema
-        # i.e., converts dtypes and drops extra columns
-        gcp_utils.load_dataframe_bigquery(
-            self.bq_table, self.metadata_df, logger=logger
-        )
+        if not self.metadata_df.empty:
+            # by default, conforms the dataframe to the table schema
+            # i.e., converts dtypes and drops extra columns
+            gcp_utils.load_dataframe_bigquery(
+                self.bq_table, self.metadata_df, logger=logger
+            )
+        else:
+            _log_and_print("metadata_df is empty. Skipping BigQuery upload.")
 
 
 class SubscriptionMetadataCollector:
@@ -378,7 +392,12 @@ class SubscriptionMetadataCollector:
                 n = n_new
 
         streaming_pull_future.cancel()  # Trigger the shutdown.
-        streaming_pull_future.result()  # Block until the shutdown is complete.
+        # if the subscription doesn't exist,
+        # we don't know it until calling streaming_pull_future.result()
+        try:
+            streaming_pull_future.result()  # Block until the shutdown is complete.
+        except api_core.exceptions.NotFound:
+            _log_and_print(f"Subscription {self.subscription} not found.")
 
         # log the total
         _log_and_print(
