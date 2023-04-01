@@ -108,11 +108,13 @@ the requirements file before doing ``pip install``.
 
     PROJECT_ID=my-pgb-project  # replace with your GCP Project ID
     KEY_PATH=local/path/GCP_auth_key.json  # same path as in step 3
-
+    REGION="us-central1"  # replace with the region of your choice
+    ZONE="${REGION}-a"  # replace with the zone of your choice
 
     export GOOGLE_CLOUD_PROJECT="$PROJECT_ID"
     export GOOGLE_APPLICATION_CREDENTIALS="$KEY_PATH"
-    # export CLOUDSDK_COMPUTE_ZONE=
+    export CLOUDSDK_COMPUTE_REGION="${REGION}"
+    export CLOUDSDK_COMPUTE_ZONE="${ZONE}"
 
 If you are using a Conda environment, you can configure the environment
 variables as follows:
@@ -121,6 +123,7 @@ variables as follows:
 
     PROJECT_ID=my-pgb-project  # replace with your GCP Project ID
     KEY_PATH=local/path/for/key/file.json  # same path as in step 3
+    REGION="us-central1"  # replace with the region of your choice
 
     # log into the environment and create de/activate files
     conda activate pgb
@@ -133,8 +136,12 @@ variables as follows:
     # add environment variables
     echo "export GOOGLE_CLOUD_PROJECT='$PROJECT_ID'" >> ./etc/conda/activate.d/env_vars.sh
     echo "export GOOGLE_APPLICATION_CREDENTIALS='$KEY_PATH'" >> ./etc/conda/activate.d/env_vars.sh
+    echo "export CLOUDSDK_COMPUTE_REGION='${REGION}'" >> ./etc/conda/activate.d/env_vars.sh
+    echo "export CLOUDSDK_COMPUTE_ZONE='${ZONE}'" >> ./etc/conda/activate.d/env_vars.sh
     echo 'unset GOOGLE_CLOUD_PROJECT' >> ./etc/conda/deactivate.d/env_vars.sh
     echo 'unset GOOGLE_APPLICATION_CREDENTIALS' >> ./etc/conda/deactivate.d/env_vars.sh
+    echo 'unset CLOUDSDK_COMPUTE_REGION' >> ./etc/conda/deactivate.d/env_vars.sh
+    echo 'unset CLOUDSDK_COMPUTE_ZONE' >> ./etc/conda/deactivate.d/env_vars.sh
 
 5. **Check that your authentication works** by making an API request.
    Here we request a list of Cloud Storage buckets (in Python):
