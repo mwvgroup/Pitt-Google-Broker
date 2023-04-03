@@ -1,13 +1,14 @@
 """Ingest all tarballs from ZTF's alert archive."""
-from datetime import timezone
+from datetime import datetime, timezone
 from multiprocessing import Pool
 
-import numpy as np
 import pandas as pd
 import pyarrow.compute as pc
 import pyarrow.dataset as ds
 import pyarrow.parquet as pq
 from google.cloud import bigquery
+from google.cloud.exceptions import TooManyRequests
+from time import sleep
 
 import ingest_tarballs as it
 
@@ -67,7 +68,6 @@ import ingest_tarballs as it
 #     proc.join()
 #     proc.close()
 # endregion
-
 
 # region ---- SERIAL - load to bucket
 tardf = it.fetch_tarball_names()
@@ -210,7 +210,8 @@ it.separate_alerts_into_versioned_buckets()
 it.delete_alerts_from_bucket()
 
 # this took 1 minute with 100_000 objects in bucket, crashed with 4mil in the bucket
-it.create_table_from_bucket(version="1.8")
+# it used gs://{bucket}/*
+# it.create_table_from_bucket(version="1.8")
 # endregion
 
 # region ---- check what made it from ZTF archive all the way to table
@@ -218,61 +219,79 @@ it.create_table_from_bucket(version="1.8")
 tardf = it.fetch_tarball_names(clean=[])
 ztftarstems = tardf["Name"].str.replace(".tar.gz", "").to_list()
 ztftarstems.sort()
+
+objectds = it.LOAD("parquet")
 objtarstems = set(it.tarstem_from_parquet_path(frag.path) for frag in objectds.get_fragments())
 objtarstems = list(objtarstems)
 objtarstems.sort()
+
 not_ingested = [tarstem for tarstem in ztftarstems if tarstem not in objtarstems]
 
 # check total number of alerts per date that are in the table vs the bucket
-def object_datecounts_from_schemarow(row):
-    filter = pc.field("tarstem") >= f"ztf_public_{row.firstday}"
-    if not np.isnan(row.lastday):
-        filter = filter & (pc.field("tarstem") <= f"ztf_public_{int(row.lastday)}")
-    obj_tarstemcounts = pd.DataFrame(
-        [
-            (it.tarstem_from_parquet_path(frag.path), frag.metadata.num_rows)
-            for frag in objectds.get_fragments(filter=filter)
-        ],
-        columns=["tarstem", "numrows"],
-    )
-    obj_tarstemcounts["date"] = (
-        obj_tarstemcounts["tarstem"]
-        .str.replace("ztf_public_", "")
-        .str.split("_")
-        .str[0]
-        .astype(int)
-    )
-    obj_datecounts = obj_tarstemcounts[["date", "numrows"]].groupby("date").sum().squeeze()
-    return obj_datecounts
-
-
-ibnt = []
 for row in it.LOAD("schema-change").itertuples():
-    obj_datecounts = object_datecounts_from_schemarow(row)
-    row_datecounts = it.query_table_for_jd(
-        version=row.version, usecache=True, convert_to_date=True
-    )
-
-    # if everything was loaded to table correctly,
-    # the first date should show -1 (one alert was used to create the table and is thus duplicated in the table)
-    # the rest should show zero
-    # so this should sum to -1
+    version = row.version
+    obj_datecounts = it.object_datecounts_from_schemarow(row, objectds)
+    row_datecounts = it.query_table_for_jd(version=version, usecache=True, convert_to_date=True)
     inbucket_nottable = obj_datecounts.subtract(row_datecounts)
-    ibnt.append(inbucket_nottable)
+    # if everything was loaded to table correctly this should sum to 0
     print(inbucket_nottable.sum())
 
+# load bucket -> table if not already done
+date = "20190418"
+it.load_alerts_to_table_one_night((f"ztf_public_{date}"))
 # endregion
 
-# region ---- copy tables to new dataset
-for row in it.LOAD("schema-change").itertuples():
-    desttbl = it.TABLE(str(row.version), nameonly=True)
-    srctbl = desttbl.replace("ztf.alerts", "ztf_alerts.alerts")
-    query_job = it.BQ_CLIENT.query(
-        f"SELECT * FROM `{srctbl}`",
-        job_config=bigquery.job.QueryJobConfig(
-            destination=desttbl, write_disposition="WRITE_APPEND"
-        ),
-    )
-    # query_job.done()
+# region ---- v3.3 move, delete, load
+# create table
+# doesn't work with bucket and dataset in different locations
+# randomv33uri = "gs://ardent-cycling-243415-ztf-alerts/ZTF17aaaaaal.1380386795815015014.ztf_public_20201012.avro"
+# load_job = it.BQ_CLIENT.load_table_from_uri(
+#     source_uris=randomv33uri,
+#     destination=it.TABLE("3.3", nameonly=True),
+#     job_config=bigquery.job.LoadJobConfig(
+#         write_disposition="WRITE_APPEND", source_format="AVRO", ignore_unknown_values=True
+#     ),
+# )
 
+# remove submitted-to-bigquery.csv to start fresh!
+# clean done.csv to remove v3.3
+
+# move, delete, load
+objectds = it.LOAD("parquet")
+moved = it.LOAD("moved-bucket")
+scdf = it.LOAD("schema-change")
+row = scdf.iloc[0]
+filter = ~pc.field("tarstem").isin(moved) & (pc.field("tarstem") >= f"ztf_public_{row.firstday}")
+# 9 parallel screens worked ok
+# but, wait 30 min between starting each screen to give cloud storage time to scale
+# https://cloud.google.com/storage/docs/request-rate
+numscreens, screen = 3, 0
+numfrags_perscreen = sum(1 for _ in objectds.get_fragments(filter=filter)) // numscreens
+npool = 24
+for i, frag in enumerate(objectds.get_fragments(filter=filter)):
+    if (i < screen * numfrags_perscreen) or (i >= (screen + 1) * numfrags_perscreen):
+        continue
+    try:
+        it.change_buckets_one_night(
+            frag, row.version, delete_after_copy=True, loadtable=False, npool=npool
+        )
+    # if we get stopped for hotspotting, move on to the next night. will have to come back later
+    except TooManyRequests as e:
+        print(f"sleeping 15. caught exception {e}")
+        sleep(15)
+
+    # print(frag.path)
+# endregion
+
+# region ---- scratch
+jd = it.jd_from_yyyymmdd(date)
+sql = (
+    # cast -> int returns the closest integer value. halfway cases (0.5) round away from 0
+    f"SELECT CAST(candidate.jd as INT64) as jd, COUNT(DISTINCT candid) as count "
+    f"FROM `{it.TABLE(version=version)}` "
+    f"WHERE CAST(candidate.jd as INT64) = {jd} "
+    f"GROUP BY jd"
+)
+query_job = it.BQ_CLIENT.query(sql)
+counts = query_job.result().to_dataframe()
 # endregion

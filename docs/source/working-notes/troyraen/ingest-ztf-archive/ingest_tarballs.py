@@ -6,9 +6,10 @@ import re
 import subprocess
 import tarfile
 import tempfile
-from datetime import datetime
+from datetime import datetime, timezone
 from multiprocessing import Pool
 from pathlib import Path
+from random import shuffle
 from time import sleep
 from urllib.request import urlretrieve
 
@@ -66,7 +67,7 @@ logger.addHandler(handler)
 BQ_CLIENT = bigquery.Client()
 STORAGE_CLIENT = storage.Client()
 # DATASET = f"{SURVEY}_alerts"
-DATASET = f"{SURVEY}"
+DATASET = SURVEY
 _BUCKET = f"{PROJECT_ID}-{SURVEY}-alerts"
 if TESTID != "False":
     DATASET = f"{DATASET}_{TESTID}"
@@ -135,10 +136,14 @@ def LOAD(which="done"):
         return pd.read_csv(FDEL, names=["tarstem", "bucket"])
     if which == "submitted":
         return pd.read_csv(FSUB, names=["tarname", "jobid"])
+
     if which == "schema-change":
         return pd.read_csv(
             FSCHEMACHANGE, names=["tarname", "version", "firstday", "lastday"]
         ).sort_values("version", ascending=False)
+
+    if which == "parquet":
+        return ds.dataset(PARQUET_DIR, partitioning="hive")
 
 
 class SchemaParsingError(Exception):
@@ -152,29 +157,42 @@ def run():
     pass
 
 
-def create_table_from_bucket(version="3.3"):
-    # try to load_table_from_uri with the whole bucket
-    # if we have the same restrictions/errors as for globstring,
-    # maybe try loading from an external source
-    # https://cloud.google.com/bigquery/docs/external-data-sources
-    # and then query -> new table to persist in bigquery
+def load_tables():
+    objectds = LOAD("parquet")
+    dones = LOAD("done")
+    for row in LOAD("schema-change").itertuples():
+        filter = ~pc.field("tarstem").isin(dones)
+        filter = filter & (pc.field("tarstem") >= f"ztf_public_{row.firstday}")
+        if not np.isnan(row.lastday):
+            filter = filter & (pc.field("tarstem") <= f"ztf_public_{int(row.lastday)}")
 
-    # use WRITE_EMPTY to throw error if table exists, WRITE_TRUNCATE to overwrite silently
-    job_config = bigquery.job.LoadJobConfig(
-        write_disposition="WRITE_EMPTY", source_format="AVRO", ignore_unknown_values=True
+        # one fragment is one night
+        for frag in objectds.get_fragments(filter=filter):
+            #     if i >= 83:
+            #         continue
+            #     change_buckets_one_night(frag, row.version, delete=delete, loadtable=loadtable)
+            load_alerts_to_table_one_night(tarstem_from_parquet_path(frag.path))
+
+
+def load_alerts_to_table_one_night(tarstem):
+    logging.info(f"submitting bigquery load jobs for {tarstem}")
+    version = version_from_tarname(tarstem + ".tar.gz")
+    # urilist = objectds.to_table(filter=(pc.field("tarstem") == tarstem))["alerturi"].to_pylist()
+    load_job = BQ_CLIENT.load_table_from_uri(
+        source_uris="gs://" + BUCKET(version, nameonly=True) + "/" + tarstem + "/*",
+        destination=TABLE(version, nameonly=True),
+        job_config=bigquery.job.LoadJobConfig(
+            write_disposition="WRITE_APPEND", source_format="AVRO", ignore_unknown_values=True
+        ),
     )
-    job = BQ_CLIENT.load_table_from_uri(
-        source_uris="gs://" + BUCKET(version=version, nameonly=True) + "/*",
-        destination=TABLE(version, nameonly=True).replace("alerts_v1_8", "alerts_v1_8_test"),
-        job_config=job_config,
-    )
-    job.done()
+    # load_job.done()
+    REPORT("submitted", f"{tarstem}.tar.gz,{load_job.job_id}")
 
 
-def separate_alerts_into_versioned_buckets():
+def separate_alerts_into_versioned_buckets(delete_after_copy=True, loadtable=True):
     # assert tardf deals with a single version
     # .query(f"Name > '{mindate}'")
-    objectds = ds.dataset(PARQUET_DIR, partitioning="hive")
+    objectds = LOAD("parquet")
     moved = LOAD("moved-bucket")
     # filter=(pc.field("tarstem") == tarstem)
     # schemachangedf = load("schema-change")
@@ -186,63 +204,91 @@ def separate_alerts_into_versioned_buckets():
             filter = filter & (pc.field("tarstem") <= f"ztf_public_{int(row.lastday)}")
 
         # one fragment is one night
-        for i, frag in enumerate(objectds.get_fragments(filter=filter)):
-            if i >= 83:
-                continue
-            _change_buckets_one_night(frag, row.version)
+        for frag in objectds.get_fragments(filter=filter):
+            change_buckets_one_night(
+                frag, row.version, delete_after_copy=delete_after_copy, loadtable=loadtable
+            )
 
 
-def _get_buckets_from_version(version):
+def _init_change_buckets(version, _delete_after_move=True):
     global source_bucket
     source_bucket = BUCKET(version=None, newclient=True)
+
     if version is not None:
         global destination_bucket
         destination_bucket = BUCKET(version=str(version), newclient=True)
+
+    global delete_after_move
+    delete_after_move = _delete_after_move
+
+
+def object_datecounts_from_schemarow(row, objectds):
+    filter = pc.field("tarstem") >= f"ztf_public_{row.firstday}"
+    if not np.isnan(row.lastday):
+        filter = filter & (pc.field("tarstem") <= f"ztf_public_{int(row.lastday)}")
+    obj_tarstemcounts = pd.DataFrame(
+        [
+            (tarstem_from_parquet_path(frag.path), frag.metadata.num_rows)
+            for frag in objectds.get_fragments(filter=filter)
+        ],
+        columns=["tarstem", "numrows"],
+    )
+    obj_tarstemcounts["date"] = (
+        obj_tarstemcounts["tarstem"]
+        .str.replace("ztf_public_", "")
+        .str.split("_")
+        .str[0]
+        .astype(int)
+    )
+    obj_datecounts = obj_tarstemcounts[["date", "numrows"]].groupby("date").sum().squeeze()
+    return obj_datecounts
 
 
 def tarstem_from_parquet_path(parquetpath):
     return re.search(r"(tarstem=)(.*)/part", parquetpath).group(2)
 
 
-def _change_buckets_one_night(frag, version, npool=50):
+def change_buckets_one_night(frag, version, *, npool=50, delete_after_copy=True, loadtable=True):
     tarstem = tarstem_from_parquet_path(frag.path)
-    # for uri in frag.to_table()["alerturi"].to_pylist():
-    #     tarstems = _change_buckets_one_alert(uri, source_bucket, destination_bucket)
-
-    with Pool(npool, initializer=_get_buckets_from_version, initargs=(version,)) as pool:
+    logging.info(f"changing buckets {tarstem}")
+    with Pool(
+        npool, initializer=_init_change_buckets, initargs=(version, delete_after_copy)
+    ) as pool:
         urilist = frag.to_table()["alerturi"].to_pylist()
+        # randomize the list to help avoid hotspotting
+        # see https://cloud.google.com/storage/docs/request-rate
+        shuffle(urilist)
         print(f"{datetime.now()} starting {tarstem} with {len(urilist)} uris")
-        # args = [(uri, source_bucket, destination_bucket) for uri in urilist]
         success = True
+
         for result in pool.imap_unordered(_change_buckets_one_alert, urilist, chunksize=1000):
             success = all([result, success])
 
-    if success:
-        REPORT("moved-bucket", tarstem)
-    else:
+    if not success:
         REPORT("error", f"{frag.path},change_buckets")
+        return
+
+    REPORT("moved-bucket", tarstem)
+    if delete_after_copy:
+        REPORT("deleted-from-bucket", f"{tarstem},{BUCKET(version=None, nameonly=True)}")
+
+    if loadtable:
+        load_alerts_to_table_one_night(tarstem)
 
 
 def _change_buckets_one_alert(uri):
-    # uri, src_bucket, dest_bucket = args
     global source_bucket
     global destination_bucket
+    global delete_after_move
 
-    # construct new name. need to turn something like this:
-    # 'gs://ardent-cycling-243415-ztf-alerts/ZTF17aaaedfm.563381786215015006.ztf_public_20180718.avro'
-    # into this:
-    # 'gs://ardent-cycling-243415-ztf_alerts_v3_3/ztf_public_20180718/ZTF17aaaedfm/563381786215015006.avro'
-    # bucket is dealt with separately. need to construct new filename.
-    name_parts = uri.split("/")[-1].split(".")
-    # = ['ZTF17aaaedfm', '563381786215015006', 'ztf_public_20180718', 'avro']
-    blob = source_bucket.blob(".".join(name_parts))  # does not make a separate http request
-    new_name = f"{name_parts[2]}/{name_parts[0]}/{name_parts[1]}.{name_parts[3]}"
-    # = 'ztf_public_20180602/ZTF17aadnrzy/517454783715015049.avro'
+    current_name = uri.split("/")[-1]
+    current_blob = source_bucket.blob(current_name)  # does not make a separate http request
+    _, new_name = new_object_uri(uri, None, return_parts=True)
 
     # move it
     try:
         blob_copy = source_bucket.copy_blob(
-            blob=blob, destination_bucket=destination_bucket, new_name=new_name
+            blob=current_blob, destination_bucket=destination_bucket, new_name=new_name
         )
 
     # catch some known transient errors and try again
@@ -250,17 +296,24 @@ def _change_buckets_one_alert(uri):
         print(f"sleeping 30. caught exception {e}")
         sleep(30)
         blob_copy = source_bucket.copy_blob(
-            blob=blob, destination_bucket=destination_bucket, new_name=new_name
+            blob=current_blob, destination_bucket=destination_bucket, new_name=new_name
         )
+
+    # if not found, assume it's already been moved and do not report an error
+    except NotFound as e:
+        blob_copy = None
 
     # catch anything that may have gone wrong. if the move didn't succeed, we need to know
     finally:
         try:
-            assert blob_copy.name == new_name
+            if blob_copy is not None:
+                assert blob_copy.name == new_name
         except Exception as e:
             REPORT("error", f"{uri},{e}")
             return False
 
+    if delete_after_move:
+        return _delete_from_bucket_one_alert(uri)
     return True
 
 
@@ -288,8 +341,9 @@ def delete_alerts_from_bucket():
 
 
 def _delete_from_bucket_one_night(frag, npool=50):
-    tarstem = re.search(r"(tarstem=)(.*)/part", frag.path).group(2)
-    with Pool(npool, initializer=_get_buckets_from_version, initargs=(None,)) as pool:
+    tarstem = tarstem_from_parquet_path(frag.path)
+    logging.info(f"deleting from bucket {tarstem}")
+    with Pool(npool, initializer=_init_change_buckets, initargs=(None,)) as pool:
         urilist = frag.to_table()["alerturi"].to_pylist()
         print(f"{datetime.now()} starting {tarstem} with {len(urilist)} uris")
         success = True
@@ -330,6 +384,12 @@ def yyyymmdd_from_jd(jd):
     return pd.to_datetime(jd, unit="D", origin="julian").strftime("%Y%m%d")
 
 
+def jd_from_yyyymmdd(yyyymmdd):
+    ts = pd.Timestamp(yyyymmdd, tz=timezone.utc)
+    # this is an integer mutiple of 0.5 and we need it to round away from zero, so add a little bit
+    return round(ts.to_julian_date() + 1e-4)
+
+
 def query_table_for_jd(version="3.3", usecache=True, convert_to_date=True):
     version = str(version)
     fcsv = LOGSDIR / f"table_counts_v{version.replace('.', '_')}.csv"
@@ -340,25 +400,25 @@ def query_table_for_jd(version="3.3", usecache=True, convert_to_date=True):
             pass
         else:
             if convert_to_date:
-                return counts.sort_values("date").set_index("date").squeeze()
-            return counts.sort_values("jd").set_index("jd").squeeze()
+                return counts[["date", "count"]].sort_values("date").set_index("date").squeeze()
+            return counts[["jd", "count"]].sort_values("jd").set_index("jd").squeeze()
 
     sql = (
         # cast -> int returns the closest integer value. halfway cases (0.5) round away from 0
-        f"SELECT CAST(candidate.jd as INT64) as jd, COUNT(candid) as count "
+        f"SELECT CAST(candidate.jd as INT64) as jd, COUNT(DISTINCT candid) as count "
         f"FROM `{TABLE(version=version)}` "
         f"GROUP BY jd"
     )
     query_job = BQ_CLIENT.query(sql)
     counts = query_job.result().to_dataframe()
+    counts["date"] = yyyymmdd_from_jd(counts["jd"].to_numpy()).astype(int)
+    counts.to_csv(fcsv)
 
     if convert_to_date:
-        counts["date"] = yyyymmdd_from_jd(counts["jd"].to_numpy())
         counts = counts[["date", "count"]].sort_values("date").set_index("date").squeeze()
     else:
-        counts = counts.sort_values("jd").set_index("jd").squeeze()
+        counts = counts[["jd", "count"]].sort_values("jd").set_index("jd").squeeze()
 
-    counts.to_csv(fcsv)
     return counts
 
     # sql = (
@@ -372,13 +432,33 @@ def query_table_for_jd(version="3.3", usecache=True, convert_to_date=True):
     # plt.show(block=False)
 
 
-def load_alerts_to_table_one_night(args):
+def new_object_uri(old_object_uri, version, return_parts=False):
+    """Return object uri with new naming syntax given object uri with old syntax."""
+    # construct new name. need to turn something like this:
+    # 'gs://ardent-cycling-243415-ztf-alerts/ZTF17aaaedfm.563381786215015006.ztf_public_20180718.avro'
+    # into this:
+    # 'gs://ardent-cycling-243415-ztf_alerts_v3_3/ztf_public_20180718/ZTF17aaaedfm/563381786215015006.avro'
+
+    bucket = BUCKET(version, nameonly=True)
+    # like ardent-cycling-243415-ztf_alerts_v3_3
+
+    name_parts = old_object_uri.split("/")[-1].split(".")
+    new_name = f"{name_parts[2]}/{name_parts[0]}/{name_parts[1]}.{name_parts[3]}"
+    # like ztf_public_20180602/ZTF17aadnrzy/517454783715015049.avro
+
+    if return_parts:
+        return bucket, new_name
+    return "gs://" + bucket + "/" + new_name
+
+
+def load_alerts_to_table_one_night_deprecated(args):
     """Load table with all alerts in urilist."""
     tarname, objectds = args
     logging.info(f"submitting bigquery load jobs for {tarname}")
 
     tarstem = tarname.replace(".tar.gz", "")
     urilist = objectds.to_table(filter=(pc.field("tarstem") == tarstem))["alerturi"].to_pylist()
+    # uris = [new_object_uri(uri, version) for uri in urilist]
     # aglob = AVROGLOB(tarname).split("/")[-1]
     # tbl = f"{PROJECT_ID}.{DATASET}.alerts_v{version_from_tarname(tarname).replace('.', '_')}"
     tbl = TABLE(version_from_tarname(tarname))
