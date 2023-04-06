@@ -245,7 +245,7 @@ def setup_bigquery(survey='ztf', testid='test', teardown=False, versiontag="v3_3
     _do_not_delete_production_resources(survey=survey, testid=testid, teardown=teardown)
 
     datasets = _resources('BQ', survey=survey, testid=testid, versiontag=versiontag)
-    bigquery_client = bigquery.Client()
+    bigquery_client = bigquery.Client(location=region)
 
     for dataset, tables in datasets.items():
         if teardown:
@@ -414,7 +414,7 @@ def setup_buckets(survey='ztf', testid='test', teardown=False, versiontag="v3_3"
         except NotFound:
             if not teardown:
                 # Create bucket
-                storage_client.create_bucket(bucket_name)
+                storage_client.create_bucket(bucket_name, location=region)
                 print(f'Created bucket {bucket_name}')
         else:
             if teardown:

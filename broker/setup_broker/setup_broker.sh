@@ -11,6 +11,7 @@ survey="${3:-ztf}"
 # 'ztf' or 'decat'
 schema_version="${4:-3.3}"
 versiontag="v$(echo ${schema_version} | tr . _)"  # 3.3 -> v3_3
+region="${5:-us-central1}"
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT # get the environment variable
 
 #--- Make the user confirm the settings
@@ -58,7 +59,7 @@ if [ "$testid" != "False" ]; then
     fi
 else
     # setup production resources
-    python3 setup_gcp.py --survey="$survey" --production --confirmed
+    python3 setup_gcp.py --survey="$survey" --production --confirmed --region="${region}"
 fi
 
 
