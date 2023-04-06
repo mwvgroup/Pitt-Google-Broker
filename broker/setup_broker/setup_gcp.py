@@ -93,7 +93,7 @@ from google.cloud import bigquery, pubsub_v1, storage
 PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
 
 
-def _resources(service, survey='ztf', testid='test'):
+def _resources(service, survey='ztf', testid='test', versiontag="v3_3"):
     """ Names the GCP resources to be setup/torn down.
 
     Args:
@@ -104,12 +104,14 @@ def _resources(service, survey='ztf', testid='test'):
         testid (False or str): False: Use production resources.
                                 str: Use test resources. (This string is
                                 appended to the resource names.)
+        versiontag (str): Tag indicating Avro schema version. Appended to
+                          some resource names.
     """
 
     if service == 'BQ':
         datasets = {
-            f'{survey}_alerts':
-                ['alerts', 'DIASource', 'SuperNNova', 'metadata', 'classifications', 'tags']
+            survey:
+                [f'alerts_{versiontag}', 'DIASource', 'SuperNNova', 'metadata', 'classifications', 'tags']
         }
 
         # append the testid to the dataset name only
@@ -133,10 +135,9 @@ def _resources(service, survey='ztf', testid='test'):
     if service == 'GCS':
         buckets = {  # '<bucket-name>': ['<file-name to upload>',]
             f'{PROJECT_ID}-{survey}-broker_files': [],
-            f'{PROJECT_ID}-{survey}-dataflow': [],
             f'{PROJECT_ID}-{survey}-testing_bucket':
                 ['ztf_3.3_validschema_1154446891615015011.avro'],
-            f'{PROJECT_ID}-{survey}-alert_avros': [],
+            f'{PROJECT_ID}-{survey}_alerts_{versiontag}': [],
         }
         # Files are currently expected to reside in the
         # ``../../tests/test_alerts`` directory.
@@ -224,7 +225,7 @@ def _confirm_options(survey, testid, teardown):
         sys.exit(msg)
 
 
-def setup_bigquery(survey='ztf', testid='test', teardown=False) -> None:
+def setup_bigquery(survey='ztf', testid='test', teardown=False, versiontag="v3_3", region="us-central1") -> None:
     """Create the necessary Big Query datasets if they do not already exist
     Args:
         survey (str): which astronomical survey the broker instance will
@@ -234,13 +235,16 @@ def setup_bigquery(survey='ztf', testid='test', teardown=False) -> None:
                                 str: Use test resources. (This string is
                                 appended to the resource names.)
         teardown (bool): if True, delete resources rather than setting them up
+        versiontag (str): Tag indicating Avro schema version. Appended to
+                          some resource names.
+        region (str): GCP region of the dataset.
 
     New datasets include:
-      ``{survey}-alerts``
+      ``{survey}``
     """
     _do_not_delete_production_resources(survey=survey, testid=testid, teardown=teardown)
 
-    datasets = _resources('BQ', survey=survey, testid=testid)
+    datasets = _resources('BQ', survey=survey, testid=testid, versiontag=versiontag)
     bigquery_client = bigquery.Client()
 
     for dataset, tables in datasets.items():
@@ -382,7 +386,7 @@ def _setup_dashboard_resource_names(survey='ztf', testid='test'):
     return resource_maps
 
 
-def setup_buckets(survey='ztf', testid='test', teardown=False) -> None:
+def setup_buckets(survey='ztf', testid='test', teardown=False, versiontag="v3_3", region="us-central1") -> None:
     """Create new storage buckets and upload testing files.
     Files are expected to reside in the ``tests/test_alerts`` directory.
 
@@ -394,10 +398,13 @@ def setup_buckets(survey='ztf', testid='test', teardown=False) -> None:
                                 str: Use test resources. (This string is
                                 appended to the resource names.)
         teardown (bool): if True, delete resources rather than setting them up
+        versiontag (str): Tag indicating Avro schema version. Appended to
+                          some resource names.
+        region (str): GCP region of the bucket.
     """
     _do_not_delete_production_resources(survey=survey, testid=testid, teardown=teardown)
 
-    buckets = _resources('GCS', survey=survey, testid=testid)
+    buckets = _resources('GCS', survey=survey, testid=testid, versiontag=versiontag)
     storage_client = storage.Client()
 
     for bucket_name, files in buckets.items():
@@ -490,7 +497,9 @@ def setup_pubsub(survey='ztf', testid='test', teardown=False) -> None:
                     print(f'Created subscription {sub_name}')
 
 
-def auto_setup(survey='ztf', testid='test', teardown=False, confirmed=False) -> None:
+def auto_setup(
+    survey='ztf', testid='test', teardown=False, confirmed=False, versiontag="v3_3", region="us-central1"
+) -> None:
     """Create and setup GCP products required by the ``broker`` package.
 
     Args:
@@ -509,8 +518,8 @@ def auto_setup(survey='ztf', testid='test', teardown=False, confirmed=False) -> 
     if not confirmed:
         _confirm_options(survey, testid, teardown)
 
-    setup_bigquery(survey=survey, testid=testid, teardown=teardown)
-    setup_buckets(survey=survey, testid=testid, teardown=teardown)
+    setup_bigquery(survey=survey, testid=testid, teardown=teardown, versiontag=versiontag, region=region)
+    setup_buckets(survey=survey, testid=testid, teardown=teardown, versiontag=versiontag, region=region)
     setup_pubsub(survey=survey, testid=testid, teardown=teardown)
     setup_dashboard(survey=survey, testid=testid, teardown=teardown)
 
@@ -555,10 +564,24 @@ if __name__ == "__main__":
         default=False,
         help="User has already confirmed settings; try not to ask again.\n",
     )
+    parser.add_argument(
+        '--versiontag',
+        dest='versiontag',
+        default='v3_3',
+        help='Tag indicating Avro schema version. Appended to some resource names.\n',
+    )
+    parser.add_argument(
+        '--region',
+        dest='region',
+        default='us-central1',
+        help='GCP region for resource locations.\n',
+    )
     known_args, __ = parser.parse_known_args()
 
     auto_setup(survey=known_args.survey,
                testid=known_args.testid,
                teardown=known_args.teardown,
-               confirmed=known_args.confirmed
+               confirmed=known_args.confirmed,
+               versiontag=known_args.versiontag,
+               region=known_args.region,
                )

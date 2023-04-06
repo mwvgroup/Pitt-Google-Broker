@@ -9,6 +9,8 @@ teardown="${2:-False}"
 survey="${3:-ztf}"
 # name of the survey this broker instance will ingest
 # 'ztf' or 'decat'
+schema_version="${4:-3.3}"
+versiontag="v$(echo ${schema_version} | tr . _)"  # 3.3 -> v3_3
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT # get the environment variable
 
 #--- Make the user confirm the settings
@@ -32,7 +34,7 @@ fi
 
 #--- GCP resources used directly in this script
 broker_bucket="${PROJECT_ID}-${survey}-broker_files"
-avro_bucket="${PROJECT_ID}-${survey}-alert_avros"
+avro_bucket="${PROJECT_ID}-${survey}_alerts_${versiontag}"
 avro_topic="projects/${PROJECT_ID}/topics/${survey}-alert_avros"
 # use test resources, if requested
 # (there must be a better way to do this)
@@ -49,10 +51,10 @@ echo "Configuring BigQuery, GCS, Pub/Sub resources..."
 if [ "$testid" != "False" ]; then
     if [ "$teardown" = "True" ]; then
         # delete testing resources
-        python3 setup_gcp.py --survey="$survey" --testid="$testid" --teardown --confirmed
+        python3 setup_gcp.py --survey="$survey" --testid="$testid" --teardown --confirmed --versiontag="${versiontag}
     else
         # setup testing resources
-        python3 setup_gcp.py --survey="$survey" --testid="$testid" --confirmed
+        python3 setup_gcp.py --survey="$survey" --testid="$testid" --confirmed --region="${region}" --versiontag="${versiontag}
     fi
 else
     # setup production resources
@@ -106,4 +108,4 @@ fi
 #--- Deploy Cloud Functions
 echo
 echo "Configuring Cloud Functions..."
-./deploy_cloud_fncs.sh "$testid" "$teardown" "$survey"
+./deploy_cloud_fncs.sh "${testid}" "${teardown}" "${survey}" "${versiontag}"

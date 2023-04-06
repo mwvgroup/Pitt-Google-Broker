@@ -35,7 +35,7 @@ log_name = 'ps-to-gcs-cloudfnc'
 logger = logging_client.logger(log_name)
 
 # GCP resources used in this module
-bucket_name = f'{PROJECT_ID}-{SURVEY}-alert_avros'  # store the Avro files
+bucket_name = f"{PROJECT_ID}-{SURVEY}_alerts_{VERSIONTAG}"  # store the Avro files
 ps_topic = f"{SURVEY}-alerts"
 if TESTID != "False":
     bucket_name = f'{bucket_name}-{TESTID}'

@@ -9,6 +9,7 @@ teardown="${2:-False}"
 # "True" tearsdown/deletes resources, else setup
 survey="${3:-ztf}"
 # name of the survey this broker instance will ingest
+versiontag="${4:-v3_3}"
 zone="${CE_ZONE:-us-central1-a}" # use env variable CE_ZONE if it exists
 
 #--- GCP resources used in this script
@@ -65,7 +66,7 @@ else # Deploy the Cloud Functions
         --entry-point "$store_bq_entry_point" \
         --runtime python37 \
         --trigger-topic "$store_bq_trigger_topic" \
-        --set-env-vars TESTID="$testid",SURVEY="$survey"
+        --set-env-vars TESTID="${testid}",SURVEY="${survey}",VERSIONTAG="${versiontag}"
 
     cd $OGdir
 
@@ -82,7 +83,7 @@ else # Deploy the Cloud Functions
         --runtime python37 \
         --memory "${memory}" \
         --trigger-topic "$ps_to_gcs_trigger_topic" \
-        --set-env-vars TESTID="$testid",SURVEY="$survey"
+        --set-env-vars TESTID="${testid}",SURVEY="${survey}",VERSIONTAG="${versiontag}"
 
     cd $OGdir
 
@@ -97,7 +98,7 @@ else # Deploy the Cloud Functions
         --entry-point "$check_cue_entry_point" \
         --runtime python37 \
         --trigger-topic "$check_cue_trigger_topic" \
-        --set-env-vars TESTID="$testid",SURVEY="$survey",ZONE="$zone"
+        --set-env-vars TESTID="${testid}",SURVEY="${survey}",VERSIONTAG="${versiontag}"
 
     cd $OGdir
 
@@ -111,7 +112,7 @@ else # Deploy the Cloud Functions
         --entry-point "$lite_entry_point" \
         --runtime python37 \
         --trigger-topic "$lite_trigger_topic" \
-        --set-env-vars TESTID="$testid",SURVEY="$survey"
+        --set-env-vars TESTID="${testid}",SURVEY="${survey}",VERSIONTAG="${versiontag}"
 
     cd $OGdir
 
@@ -127,7 +128,7 @@ else # Deploy the Cloud Functions
         --runtime python37 \
         --memory "$memory" \
         --trigger-topic "$tag_trigger_topic" \
-        --set-env-vars TESTID="$testid",SURVEY="$survey"
+        --set-env-vars TESTID="${testid}",SURVEY="${survey}",VERSIONTAG="${versiontag}"
 
     cd $OGdir
 
@@ -144,7 +145,7 @@ else # Deploy the Cloud Functions
         --memory "$memory" \
         --runtime python37 \
         --trigger-topic "$classify_snn_trigger_topic" \
-        --set-env-vars TESTID="$testid",SURVEY="$survey"
+        --set-env-vars TESTID="${testid}",SURVEY="${survey}",VERSIONTAG="${versiontag}"
 
     cd $OGdir
 
