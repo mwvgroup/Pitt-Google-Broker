@@ -10,7 +10,7 @@ survey="${3:-ztf}"
 # name of the survey this broker instance will ingest
 # 'ztf' or 'decat'
 schema_version="${4:-3.3}"
-versiontag="v$(echo ${schema_version} | tr . _)"  # 3.3 -> v3_3
+versiontag=v$(echo "${schema_version}" | tr . _)  # 3.3 -> v3_3
 region="${5:-us-central1}"
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT # get the environment variable
 
@@ -53,10 +53,10 @@ echo "Configuring BigQuery, GCS, Pub/Sub resources..."
 if [ "$testid" != "False" ]; then
     if [ "$teardown" = "True" ]; then
         # delete testing resources
-        python3 setup_gcp.py --survey="$survey" --testid="$testid" --teardown --confirmed --versiontag="${versiontag}
+        python3 setup_gcp.py --survey="$survey" --testid="$testid" --teardown --confirmed --versiontag="${versiontag}"
     else
         # setup testing resources
-        python3 setup_gcp.py --survey="$survey" --testid="$testid" --confirmed --region="${region}" --versiontag="${versiontag}
+        python3 setup_gcp.py --survey="$survey" --testid="$testid" --confirmed --region="${region}" --versiontag="${versiontag}"
     fi
 else
     # setup production resources
