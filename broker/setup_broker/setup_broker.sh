@@ -42,6 +42,7 @@ avro_topic="projects/${PROJECT_ID}/topics/${survey}-alert_avros"
 # (there must be a better way to do this)
 if [ "$testid" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
+    bq_dataset="${bq_dataset}_${testid}"
     avro_bucket="${avro_bucket}-${testid}"
     avro_topic="${avro_topic}-${testid}"
 fi
@@ -91,7 +92,7 @@ echo "Configuring VMs..."
 #--- Create the cron jobs that check the VM status
 echo
 echo "Setting up Cloud Scheduler cron jobs"
-./create_cron_jobs.sh "$testid" "$teardown" "$survey"
+./create_cron_jobs.sh "$testid" "$teardown" "$survey" "$region"
 
 
 if [ "$teardown" != "True" ]; then

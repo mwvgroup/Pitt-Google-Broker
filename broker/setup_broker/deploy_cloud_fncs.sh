@@ -23,7 +23,7 @@ lite_trigger_topic="${survey}-alerts"
 lite_CF_name="${survey}-lite"
 tag_trigger_topic="${survey}-lite"
 tag_CF_name="${survey}-tag"
-classify_snn_trigger_topic="${survey}-tag"
+classify_snn_trigger_topic="${survey}-tagged"
 classify_snn_CF_name="${survey}-classify_with_SuperNNova"
 # use test resources, if requested
 if [ "$testid" != "False" ]; then

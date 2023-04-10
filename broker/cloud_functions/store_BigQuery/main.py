@@ -42,7 +42,7 @@ def run(msg: dict, context: functions_v1.context.Context) -> None:
         context: Metadata describing the Cloud Function's trigging event.
     """
     # extract the alert
-    alert_dict = data_utils.decode_alert(
+    alert_dict = data_utils.open_alert(
         base64.b64decode(msg["data"]), drop_cutouts=True, schema_map=schema_map
     )
 
