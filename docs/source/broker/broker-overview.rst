@@ -29,13 +29,19 @@ Details and Name Stubs
 
 Resource name stubs are given below in brackets []. For a given broker
 instance, the actual resource names will have the survey keyword
-prepended, and the testid keyword appended. The character "-"
+prepended, and the testid keyword appended (not shown in the list below). The character "-"
 separates the stub from the keywords (unless it is restricted by GCP
 naming rules, in which case "_" is used). For example, a broker
 instance set up with ``survey=ztf`` and ``testid=mytestid`` will have a
-consumer VM named `ztf-consumer-mytestid`. See :doc:`broker-instance-keywords` for details. Note that Cloud
-Storage buckets also have the project ID prepended, for uniqueness
-across GCP.
+consumer VM named `ztf-consumer-mytestid`. See :doc:`broker-instance-keywords` for details.
+
+A `versiontag` representing the Avro-schema version of the incoming alerts is appended to names of
+the BigQuery table and Cloud Storage bucket housing raw alert data (shown below).
+If the schema version is "3.3", the versiontag will be "v3_3".
+The reason for the "_" is that the naming rules of some GCP resources prohibit the use of ".".
+
+Cloud Storage bucket names must be unique across GCP, so the project ID is prepended
+(before `survey`; not shown below).
 
 1. **Consumer** (Kafka -> Pub/Sub)
 
@@ -51,7 +57,7 @@ across GCP.
    -  Cloud Function [`upload_bytes_to_bucket`]
 
       -  Listens to PS topic [`alerts`]
-      -  Stores in GCS bucket [`alert_avros`]
+      -  Stores in GCS bucket [`alerts_{versiontag}`]
       -  GCS bucket triggers Pub/Sub topic [`alert_avros`]
 
 3. **BigQuery Database Storage** (alert -> BigQuery)
@@ -59,8 +65,8 @@ across GCP.
    -  Cloud Function [`store_in_BigQuery`]
 
       -  Listens to PS topic [`alerts`]
-      -  Stores in BQ dataset [`alerts`] in tables
-         [`alerts`] and [`DIASource`]
+      -  Stores in BQ dataset [`survey`] in tables
+         [`alerts_{versiontag}`] and [`DIASource`]
       -  Publishes to Pub/Sub topic [`BigQuery`]
 
 4. **SuperNNova Classifier** (extragalactic transient alert -> SuperNNova ->

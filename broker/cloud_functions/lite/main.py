@@ -30,13 +30,13 @@ def semantic_compression(alert_dict, schema_map) -> dict:
 
     source_dict = {
         "jd": source["jd"],
-        "sourceId": source["candid"],
+        "sourceId": source[schema_map["sourceId"]],
         "ra": source["ra"],
         "dec": source["dec"],
         # for classify_snn
-        "magpsf": source["magpsf"],
-        "sigmapsf": source["sigmapsf"],
-        "magzpsci": source["magzpsci"],
+        "mag": source[schema_map["mag"]],
+        "magerr": source[schema_map["magerr"]],
+        "magzp": source[schema_map["magzp"]],
         "magzpsciunc": source["magzpsciunc"],
         "diffmaglim": source["diffmaglim"],
         # for tag
@@ -47,7 +47,7 @@ def semantic_compression(alert_dict, schema_map) -> dict:
         "fwhm": source["fwhm"],
         "elong": source["elong"],
         "magdiff": source["magdiff"],
-        "fid": source["fid"],
+        "filter": source[schema_map["filter"]],
     }
 
     access_prev = alert_dict[schema_map["prvSources"]]
@@ -57,25 +57,24 @@ def semantic_compression(alert_dict, schema_map) -> dict:
     for prv_s in access_prev:
 
         prev_source_dict = {
-            "prv_jd": prv_s["jd"],
-            "prv_candid": prv_s["candid"],
-            "prv_ra": prv_s["ra"],
-            "prv_dec": prv_s["dec"],
+            "jd": prv_s["jd"],
+            "sourceId": prv_s[schema_map["sourceId"]],
+            "ra": prv_s["ra"],
+            "dec": prv_s["dec"],
             # for classify_snn
-            "prv_magpsf": prv_s["magpsf"],
-            "prv_sigmapsf": prv_s["sigmapsf"],
-            "prv_magzpsci": prv_s["magzpsci"],
-            "prv_magzpsciunc": prv_s["magzpsciunc"],
-            "prv_diffmaglim": prv_s["diffmaglim"],
+            "mag": prv_s[schema_map["mag"]],
+            "magerr": prv_s[schema_map["magerr"]],
+            "magzp": prv_s[schema_map["magzp"]],
+            "magzpsciunc": prv_s["magzpsciunc"],
+            "diffmaglim": prv_s["diffmaglim"],
             # for tag
-            "prv_isdiffpos": prv_s["isdiffpos"],
-            "prv_rb": prv_s["rb"],
-            "prv_drb": prv_s["drb"],
-            "prv_nbad": prv_s["nbad"],
-            "prv_fwhm": prv_s["fwhm"],
-            "prv_elong": prv_s["elong"],
-            "prv_magdiff": prv_s["magdiff"],
-            "prv_fid": prv_s["fid"],
+            "isdiffpos": prv_s["isdiffpos"],
+            "rb": prv_s["rb"],
+            "nbad": prv_s["nbad"],
+            "fwhm": prv_s["fwhm"],
+            "elong": prv_s["elong"],
+            "magdiff": prv_s["magdiff"],
+            "filter": prv_s[schema_map["filter"]],
         }
 
         prev_sources.append(prev_source_dict)
