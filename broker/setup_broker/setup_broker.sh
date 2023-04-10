@@ -77,6 +77,10 @@ if [ "$teardown" != "True" ]; then
 
     bq add-iam-policy-binding \
         --member="allUsers" \
+        --role="roles/bigquery.metadataViewer" \
+        "${bq_dataset}"
+    bq add-iam-policy-binding \
+        --member="allUsers" \
         --role="roles/bigquery.dataViewer" \
         "${bq_dataset}"
 
