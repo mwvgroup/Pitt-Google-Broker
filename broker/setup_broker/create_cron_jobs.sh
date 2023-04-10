@@ -29,8 +29,8 @@ fi
 if [ "$teardown" = "True" ]; then
     # ensure that we do not teardown production resources
     if [ "$testid" != "False" ]; then
-        gcloud scheduler jobs delete $night_conductor_START --location $region
-        gcloud scheduler jobs delete $night_conductor_END --location $region
+        gcloud scheduler jobs delete "$night_conductor_START" --location "$region"
+        gcloud scheduler jobs delete "$night_conductor_END" --location "$region"
     fi
 
 #--- Create cron jobs
@@ -46,14 +46,14 @@ else
         --topic $cue_night_conductor \
         --message-body $msgSTART \
         --time-zone $timezone \
-        --location $region
+        --location "$region"
 
     gcloud scheduler jobs create pubsub $night_conductor_END \
         --schedule "${scheduleEND}" \
         --topic $cue_night_conductor \
         --message-body $msgEND \
         --time-zone $timezone \
-        --location $region
+        --location "$region"
 
     # Tell the user the schedule and how to change it
     echo
@@ -72,8 +72,8 @@ else
 
     # if this is a testing instance, pause the jobs and tell the user how to resume
     if [ "$testid" != "False" ]; then
-        gcloud scheduler jobs pause $night_conductor_START --location $region
-        gcloud scheduler jobs pause $night_conductor_END --location $region
+        gcloud scheduler jobs pause "$night_conductor_START" --location "$region"
+        gcloud scheduler jobs pause "$night_conductor_END" --location "$region"
 
         echo
         echo "The 'cue night-conductor' cron jobs have been placed in the 'pause' state."
