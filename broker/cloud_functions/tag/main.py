@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-"""Identify basic categorizations; publish results to BigQuery and as Pub/Sub msg attributes."""
+"""Identify basic categorizations; publish results to BigQuery and as Pub/Sub messsage attributes.
+
+Pub/Sub message attributes can be used for subscription filtering.
+"""
 import os
 
 import numpy as np
@@ -157,7 +160,7 @@ def run(msg: dict, context):
             **attrs,
             **{k: str(v) for k, v in purity_reason_dict.items()},
             **{k: str(v) for k, v in extragalactic_dict.items()},
-            "fid": str(alert_lite["source"]["fid"]),
+            "fid": str(alert_lite["source"]["filter"]),
         },
     )
 
