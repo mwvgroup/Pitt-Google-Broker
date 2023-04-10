@@ -91,7 +91,8 @@ def _is_extragalactic_transient(alert_dict: dict) -> dict:
 
         candidate = dflc.loc[0]
 
-        is_positive_sub = candidate["isdiffpos"] == "t"
+        # include both encodings of a positive image subtraction (sci minus ref)
+        is_positive_sub = (candidate["isdiffpos"] in ["t", 1])
         distpsnr1 = alert_dict["xmatch"]["distpsnr1"]
         sgscore1 = alert_dict["xmatch"]["sgscore1"]
         ssdistnr = alert_dict["xmatch"]["ssdistnr"]
