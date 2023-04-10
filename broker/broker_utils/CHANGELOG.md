@@ -11,6 +11,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## \[Unreleased\]<a name="unreleased"></a>
 
 
+## \[0.2.46\] - 2023-04-09
+
+### Changed
+
+- Alert filename "objectId.sourceId.topic.avro" -> "topic/objectId/sourceId.avro"
+
 ## \[0.2.45\] - 2022-10-22
 
 ### Fixed

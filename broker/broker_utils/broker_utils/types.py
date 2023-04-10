@@ -4,6 +4,7 @@
 
 from dataclasses import dataclass
 import logging
+import re
 from typing import NamedTuple, Union
 
 from .schema_maps import get_key, get_value
@@ -26,9 +27,9 @@ class AlertFilename:
     class ParsedFilename(NamedTuple):
         """Component parts of an ``AlertFilename``."""
 
+        topic: Union[str, None] = None
         objectId: Union[str, int, float, None] = None
         sourceId: Union[str, int, float, None] = None
-        topic: Union[str, None] = None
         format: str = "avro"
 
     def __init__(self, aname: Union[str, dict]):
@@ -43,15 +44,16 @@ class AlertFilename:
         """
         if isinstance(aname, str):
             self.name = aname
-            self.parsed = self.ParsedFilename._make(aname.split("."))
+            self.parsed = self.ParsedFilename._make(re.split('/|\.', aname))
 
         elif isinstance(aname, dict):
-            self.parsed = self.ParsedFilename(
+            parsed = self.ParsedFilename(
                 **dict(
                     (k, v) for k, v in aname.items() if k in self.ParsedFilename._fields
                 )
             )
-            self.name = ".".join(str(i) for i in self.parsed)
+            self.parsed = parsed
+            self.name = f"{parsed.topic}/{parsed.objectId}/{parsed.sourceId}.{parsed.format}"
 
 
 @dataclass
