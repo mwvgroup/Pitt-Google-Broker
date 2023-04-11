@@ -1,5 +1,5 @@
 #! /bin/bash
-# Deploys or deletes broker Cloud Functions
+# Deploys or deletes broker Cloud Function
 # This script will not delete Cloud Functions that are in production
 
 testid="${1:-test}"
@@ -28,15 +28,11 @@ if [ "$teardown" = "True" ]; then
     fi
 
 else # Deploy the Cloud Functions
-    OGdir=$(pwd)
 
 #--- classify with SNN cloud function
     echo "Deploying Cloud Function: $classify_snn_CF_name"
     classify_snn_entry_point="run"
     memory=512MB  # standard 256MB is too small here
-
-    cd .. && cd cloud_functions
-    cd classify_snn
 
     gcloud functions deploy "$classify_snn_CF_name" \
         --entry-point "$classify_snn_entry_point" \
@@ -44,7 +40,5 @@ else # Deploy the Cloud Functions
         --runtime python37 \
         --trigger-topic "$classify_snn_trigger_topic" \
         --set-env-vars TESTID="${testid}",SURVEY="${survey}",VERSIONTAG="${versiontag}"
-
-    cd $OGdir
 
 fi
