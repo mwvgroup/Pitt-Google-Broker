@@ -10,7 +10,7 @@ from google.cloud import bigquery
 from google.cloud.exceptions import TooManyRequests
 from time import sleep
 
-import ingest_tarballs as it
+import ingest_tarballs_working_version as it
 
 # region ---- start
 # tardf = fetch_tarball_names()
