@@ -8,14 +8,15 @@ TESTID="raenarch"  # choose your own testid
 PROJECT_ID="${GOOGLE_CLOUD_PROJECT}"
 echo $PROJECT_ID
 
+# set some variables
 schema_version="3_3"
 bucket="${PROJECT_ID}-ztf_alerts_v${schema_version}-${TESTID}"
-# dataset="ztf_alerts_${TESTID}"
 dataset="ztf_${TESTID}"
 vmname="ingest-ztfarchive-${TESTID}"
 region="us-central1"
 zone="${region}-a"
 
+# create bucket
 gsutil mb -l "${region}" "gs://${bucket}"
 gsutil uniformbucketlevelaccess set on "gs://${bucket}"
 gsutil requesterpays set on "gs://${bucket}"
@@ -25,15 +26,13 @@ gcloud storage buckets add-iam-policy-binding "gs://${bucket}" \
 # gsutil -m rm -r "gs://${bucket}"
 # gsutil ls gs://${bucket} > alerts-in-bucket.txt
 
+# create datset
 bq mk --location "${region}" "${dataset}"
 # bq rm "${dataset}"
 # bq rm --table "${dataset}.${table}"
 
-# VM
+# create VMs
 #
-# after watching it run, we seem to need hi cpu/memory
-# for example: https://cloud.google.com/compute/docs/general-purpose-machines#n1-high-cpu
-# machinetype="n1-highcpu-32"
 installscript="""#! /bin/bash
 echo 'GCP_PROJECT=${PROJECT_ID}' >> /etc/environment
 echo 'TESTID=${TESTID}' >> /etc/environment
@@ -42,16 +41,15 @@ apt-get update
 apt-get install -y wget python3-pip screen
 gcloud compute instances remove-metadata ${vmname} --zone=${zone} --keys=startup-script
 """
-# ----- big
+#
+# big machine with ssd used for bulk of the work
+# need hi cpu/memory for example: https://cloud.google.com/compute/docs/general-purpose-machines#n1-high-cpu
 # standard disk space is actually networked storage
 # a local ssd drive is faster, allows more IOPS, etc.
 # https://cloud.google.com/compute/docs/disks/add-local-ssd#gcloud
 # https://cloud.google.com/compute/docs/disks/performance?_ga=2.32094903.-865460638.1622387917#performance_limits
 # https://cloud.google.com/compute/docs/disks/optimizing-pd-performance
-# machinetype="custom-16-32768"  # 32768 = 32G
 machinetype="custom-32-49152"  # 49152 = 48G
-# gcloud compute instances create "${vmname}-big" \
-# gcloud compute instances create "${vmname}-2020" \
 gcloud compute instances create "${vmname}" \
     --local-ssd="interface=SCSI" \
     --zone="${zone}" \
@@ -61,7 +59,7 @@ gcloud compute instances create "${vmname}" \
 # will get warning about partition resizing but i've ignored it and seems fine
 # gcloud compute instances delete "${vmname}"
 
-# just for load bucket -> table
+# smaller machine without ssd just for load bucket -> table
 machinetype="e2-custom-6-16896"  # 6 vCPU, 16.5 GB mem
 disksize="20GB"  # need just a little more than default of 10 GB
 gcloud compute instances create "${vmname}" \
@@ -81,11 +79,11 @@ curl -sSO https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh
 sudo bash add-google-cloud-ops-agent-repo.sh --also-install
 rm add-google-cloud-ops-agent-repo.sh
 
-# the ssd must be reformatted and mounted
-# this comman lists the devices
+# the ssd must be reformatted and mounted (only needed for machine with ssd)
+# list the devices
 lsblk
 # find the name of the device with 375G and enter it below
-ssdname="sda"
+ssdname="sdb"
 mntdir="localssd"
 sudo mkfs.ext4 -F "/dev/${ssdname}"  # this erases the disk
 sudo mkdir -p "/mnt/disks/${mntdir}"

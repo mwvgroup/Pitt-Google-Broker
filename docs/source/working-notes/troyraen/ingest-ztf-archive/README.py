@@ -233,7 +233,8 @@ for row in it.LOAD("schema-change").itertuples():
     obj_datecounts = it.object_datecounts_from_schemarow(row, objectds)
     row_datecounts = it.query_table_for_jd(version=version, usecache=True, convert_to_date=True)
     inbucket_nottable = obj_datecounts.subtract(row_datecounts)
-    # if everything was loaded to table correctly this should sum to 0
+    # ~if everything was loaded to table correctly this should sum to 0~
+    # nans get in the way
     print(inbucket_nottable.sum())
 
 # load bucket -> table if not already done
@@ -281,6 +282,22 @@ for i, frag in enumerate(objectds.get_fragments(filter=filter)):
         sleep(15)
 
     # print(frag.path)
+# endregion
+
+# region ---- ingest the last few days
+# get list of tarstems that still need to be ingested (do once, then load from logs/not-ingested.txt)
+scdf = it.LOAD("schema-change")
+# logs/bucket-folders.txt was copy-pasted from the gcp console
+folders = pd.read_csv("logs/bucket-folders.txt", names=["topic"]).squeeze()
+tardf = it.fetch_tarball_names(clean=[])
+ztfv3 = tardf.query('Name > "ztf_public_20190618.tar.gz"')["Name"].str.replace(".tar.gz", "")
+notingested = set(ztfv3) - set(folders)
+# tarstems are "ztf_public_yyyymmdd" while topics are "ztf_yyyymmdd_programid1"
+# manually remove these dates, then manually save the list to logs/not-ingested.txt
+folders[folders.str.endswith("programid1")]
+
+notingested = pd.read_csv("logs/not-ingested.txt", names=["tarstem"]).squeeze()
+
 # endregion
 
 # region ---- scratch
