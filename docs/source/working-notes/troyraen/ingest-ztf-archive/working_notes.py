@@ -285,7 +285,11 @@ for i, frag in enumerate(objectds.get_fragments(filter=filter)):
 # endregion
 
 # region ---- ingest the last few days
-# get list of tarstems that still need to be ingested (do once, then load from logs/not-ingested.txt)
+import ingest_tarballs as it  # use the cleaned-up version
+import pandas as pd
+
+# do once. afterwards, load from logs/not-ingested.txt
+# get list of tarstems that still need to be ingested
 scdf = it.LOAD("schema-change")
 # logs/bucket-folders.txt was copy-pasted from the gcp console
 folders = pd.read_csv("logs/bucket-folders.txt", names=["topic"]).squeeze()
@@ -296,8 +300,13 @@ notingested = set(ztfv3) - set(folders)
 # manually remove these dates, then manually save the list to logs/not-ingested.txt
 folders[folders.str.endswith("programid1")]
 
-notingested = pd.read_csv("logs/not-ingested.txt", names=["tarstem"]).squeeze()
+# get tardf of dates that need to be ingested
+notingested = pd.read_csv("logs/not-ingested.txt", names=["tarstem"])
+notingested["tarname"] = notingested["tarstem"] + ".tar.gz"
+tardf = it.fetch_tarball_names(clean=["done", "uploaded"])
+tardf = tardf.query(f"Name in {notingested['tarname'].to_list()}")
 
+it.run(tardf=tardf, load_table=False)
 # endregion
 
 # region ---- scratch

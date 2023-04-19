@@ -46,6 +46,7 @@ gcloud compute instances remove-metadata ${vmname} --zone=${zone} --keys=startup
 # need hi cpu/memory for example: https://cloud.google.com/compute/docs/general-purpose-machines#n1-high-cpu
 # standard disk space is actually networked storage
 # a local ssd drive is faster, allows more IOPS, etc.
+# machines with ssd cannot be turned off, only deleted.
 # https://cloud.google.com/compute/docs/disks/add-local-ssd#gcloud
 # https://cloud.google.com/compute/docs/disks/performance?_ga=2.32094903.-865460638.1622387917#performance_limits
 # https://cloud.google.com/compute/docs/disks/optimizing-pd-performance
