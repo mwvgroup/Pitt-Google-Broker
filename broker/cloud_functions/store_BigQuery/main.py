@@ -14,6 +14,7 @@ from broker_utils import data_utils, gcp_utils, schema_maps
 PROJECT_ID = os.getenv("GCP_PROJECT")
 TESTID = os.getenv("TESTID")
 SURVEY = os.getenv("SURVEY")
+VERSIONTAG = os.getenv("VERSIONTAG")
 
 # connect to the cloud logger
 logging_client = logging.Client()
@@ -41,7 +42,7 @@ def run(msg: dict, context: functions_v1.context.Context) -> None:
         context: Metadata describing the Cloud Function's trigging event.
     """
     # extract the alert
-    alert_dict = data_utils.decode_alert(
+    alert_dict = data_utils.open_alert(
         base64.b64decode(msg["data"]), drop_cutouts=True, schema_map=schema_map
     )
 
@@ -56,7 +57,7 @@ def run(msg: dict, context: functions_v1.context.Context) -> None:
 def insert_rows_alerts(alert_dict: dict):
     """Insert rows into the `alerts` table via the streaming API."""
     # send to bigquery
-    table_id = f"{bq_dataset}.alerts_v{alert_dict['schemavsn'].replace('.', '_')}"
+    table_id = f"{bq_dataset}.alerts_{VERSIONTAG}"
     errors = gcp_utils.insert_rows_bigquery(table_id, [alert_dict])
 
     # handle errors; if none, save table id for Pub/Sub message
@@ -106,9 +107,7 @@ def _extract_ztf_source(alert_dict: dict):
     # get string of previous candidates' candid, comma-separated
     if alert_dict["prv_candidates"] is not None:
         prv_candids = ",".join(
-            str(pc["candid"])
-            for pc in alert_dict["prv_candidates"]
-            if pc["candid"] is not None
+            str(pc["candid"]) for pc in alert_dict["prv_candidates"] if pc["candid"] is not None
         )
     else:
         prv_candids = None

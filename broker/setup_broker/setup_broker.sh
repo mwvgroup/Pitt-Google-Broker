@@ -9,6 +9,9 @@ teardown="${2:-False}"
 survey="${3:-ztf}"
 # name of the survey this broker instance will ingest
 # 'ztf' or 'decat'
+schema_version="${4:-3.3}"
+versiontag=v$(echo "${schema_version}" | tr . _)  # 3.3 -> v3_3
+region="${5:-us-central1}"
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT # get the environment variable
 
 #--- Make the user confirm the settings
@@ -32,12 +35,14 @@ fi
 
 #--- GCP resources used directly in this script
 broker_bucket="${PROJECT_ID}-${survey}-broker_files"
-avro_bucket="${PROJECT_ID}-${survey}-alert_avros"
+bq_dataset="${survey}"
+avro_bucket="${PROJECT_ID}-${survey}_alerts_${versiontag}"
 avro_topic="projects/${PROJECT_ID}/topics/${survey}-alert_avros"
 # use test resources, if requested
 # (there must be a better way to do this)
 if [ "$testid" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
+    bq_dataset="${bq_dataset}_${testid}"
     avro_bucket="${avro_bucket}-${testid}"
     avro_topic="${avro_topic}-${testid}"
 fi
@@ -49,20 +54,36 @@ echo "Configuring BigQuery, GCS, Pub/Sub resources..."
 if [ "$testid" != "False" ]; then
     if [ "$teardown" = "True" ]; then
         # delete testing resources
-        python3 setup_gcp.py --survey="$survey" --testid="$testid" --teardown --confirmed
+        python3 setup_gcp.py --survey="$survey" --testid="$testid" --teardown --confirmed --versiontag="${versiontag}"
     else
         # setup testing resources
-        python3 setup_gcp.py --survey="$survey" --testid="$testid" --confirmed
+        python3 setup_gcp.py --survey="$survey" --testid="$testid" --confirmed --region="${region}" --versiontag="${versiontag}"
     fi
 else
     # setup production resources
-    python3 setup_gcp.py --survey="$survey" --production --confirmed
+    python3 setup_gcp.py --survey="$survey" --production --confirmed --region="${region}"
 fi
 
 
-#--- Upload broker files to GCS
+#--- finish setting up buckets and dataset
 if [ "$teardown" != "True" ]; then
     ./upload_broker_bucket.sh "$broker_bucket"
+
+    gsutil uniformbucketlevelaccess set on "gs://${avro_bucket}"
+    gsutil requesterpays set on "gs://${avro_bucket}"
+    gcloud storage buckets add-iam-policy-binding "gs://${avro_bucket}" \
+        --member="allUsers" \
+        --role="roles/storage.objectViewer"
+
+    bq add-iam-policy-binding \
+        --member="allUsers" \
+        --role="roles/bigquery.metadataViewer" \
+        "${bq_dataset}"
+    bq add-iam-policy-binding \
+        --member="allUsers" \
+        --role="roles/bigquery.dataViewer" \
+        "${bq_dataset}"
+
 fi
 
 
@@ -72,10 +93,10 @@ echo "Configuring VMs..."
 ./create_vms.sh "$broker_bucket" "$testid" "$teardown" "$survey"
 
 
-#--- Create the cron jobs that schedule night-conductor
+#--- Create the cron jobs that check the VM status
 echo
 echo "Setting up Cloud Scheduler cron jobs"
-./create_cron_jobs.sh "$testid" "$teardown" "$survey"
+./create_cron_jobs.sh "$testid" "$teardown" "$survey" "$region"
 
 
 if [ "$teardown" != "True" ]; then
@@ -106,4 +127,4 @@ fi
 #--- Deploy Cloud Functions
 echo
 echo "Configuring Cloud Functions..."
-./deploy_cloud_fncs.sh "$testid" "$teardown" "$survey"
+./deploy_cloud_fncs.sh "${testid}" "${teardown}" "${survey}" "${versiontag}"

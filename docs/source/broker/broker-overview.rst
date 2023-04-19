@@ -15,12 +15,12 @@ Broker Components
 
 The **consumer** (1, see list below) ingests a survey's Kafka stream and
 republishes it as a Pub/Sub stream. The **data storage** (2 and 3) and
-**science processing** (4) components subscribe to the consumer's
-Pub/Sub stream. (The SuperNNova classifier (5) is implemented separately.)
+**science processing** () components subscribe to the consumer's
+Pub/Sub stream. (The SuperNNova classifier (4) is implemented separately.)
 These components store their output data in Cloud
 Storage and/or BigQuery, and publish to dedicated Pub/Sub topics. The
-**night conductor** (6) orchestrates the broker, starting up resources
-and jobs at night and shutting them down in the morning.
+**night conductor** (5) processes Pub/Sub counter subscriptions to collect metadata.
+**Uptime checks** (6) check that VMs start/stop as expected.
 
 To view the resources, see :doc:`../broker/run-a-broker-instance/view-resources`.
 
@@ -29,13 +29,19 @@ Details and Name Stubs
 
 Resource name stubs are given below in brackets []. For a given broker
 instance, the actual resource names will have the survey keyword
-prepended, and the testid keyword appended. The character "-"
+prepended, and the testid keyword appended (not shown in the list below). The character "-"
 separates the stub from the keywords (unless it is restricted by GCP
 naming rules, in which case "_" is used). For example, a broker
 instance set up with ``survey=ztf`` and ``testid=mytestid`` will have a
-consumer VM named `ztf-consumer-mytestid`. See :doc:`broker-instance-keywords` for details. Note that Cloud
-Storage buckets also have the project ID prepended, for uniqueness
-across GCP.
+consumer VM named `ztf-consumer-mytestid`. See :doc:`broker-instance-keywords` for details.
+
+A `versiontag` representing the Avro-schema version of the incoming alerts is appended to names of
+the BigQuery table and Cloud Storage bucket housing raw alert data (shown below).
+If the schema version is "3.3", the versiontag will be "v3_3".
+The reason for the "_" is that the naming rules of some GCP resources prohibit the use of ".".
+
+Cloud Storage bucket names must be unique across GCP, so the project ID is prepended
+(before `survey`; not shown below).
 
 1. **Consumer** (Kafka -> Pub/Sub)
 
@@ -50,9 +56,8 @@ across GCP.
 
    -  Cloud Function [`upload_bytes_to_bucket`]
 
-      -  Listens to PS topic [`alerts_raw`]
-      -  Stores in GCS bucket [`alerts`]
-      -  Publishes to Pub/Sub topic [`alerts`]
+      -  Listens to PS topic [`alerts`]
+      -  Stores in GCS bucket [`alerts_{versiontag}`]
       -  GCS bucket triggers Pub/Sub topic [`alert_avros`]
 
 3. **BigQuery Database Storage** (alert -> BigQuery)
@@ -60,8 +65,8 @@ across GCP.
    -  Cloud Function [`store_in_BigQuery`]
 
       -  Listens to PS topic [`alerts`]
-      -  Stores in BQ dataset [`alerts`] in tables
-         [`alerts_v3_3`] and [`DIASource`]
+      -  Stores in BQ dataset [`survey`] in tables
+         [`alerts_{versiontag}`] and [`DIASource`]
       -  Publishes to Pub/Sub topic [`BigQuery`]
 
 4. **SuperNNova Classifier** (extragalactic transient alert -> SuperNNova ->
@@ -78,23 +83,17 @@ across GCP.
          -  Stores in BigQuery table [`SuperNNova`]
          -  Publishes to PS topic [`SuperNNova`]
 
-5. **Night Conductor** (orchestrates GCP resources and jobs to run the
-   broker each night; collects metadata)
+5. **Night Conductor** (collects metadata)
 
-   -  Compute Engine VM [`night-conductor`]
+   -  Compute Engine VM [`night-conductor`] running a python script
 
-      -  Auto-Scheduled with (Cloud Scheduler -> Pub/Sub -> Cloud
-         Function -> start VM):
+6. **Uptime checks** (check that VMs start/stop as expected)
 
-         -  Cloud Scheduler cron jobs [`cue_night_conductor_START`
-            and `cue_night_conductor_END`]
-         -  Pub/Sub topic [`cue_night_conductor`]
-         -  Cloud Function [`cue_night_conductor`]
+   -  Cloud Function [`cue_night_conductor`]
 
-      -  Broker's response to the auto-scheduler's cue is checked
-         by:
-
-         -  Cloud Function [`check_cue_response`]
+      -  Listens to PS topic [`cue_night_conductor`] which is published by the
+         Cloud Scheduler cron jobs [`cue_night_conductor_START`
+         and `cue_night_conductor_END`]
 
 --------------
 

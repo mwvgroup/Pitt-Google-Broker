@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-"""Identify basic categorizations; publish results to BigQuery and as Pub/Sub msg attributes."""
+"""Identify basic categorizations; publish results to BigQuery and as Pub/Sub messsage attributes.
+
+Pub/Sub message attributes can be used for subscription filtering.
+"""
 import os
 
 import numpy as np
@@ -88,7 +91,8 @@ def _is_extragalactic_transient(alert_dict: dict) -> dict:
 
         candidate = dflc.loc[0]
 
-        is_positive_sub = candidate["isdiffpos"] == "t"
+        # include both encodings of a positive image subtraction (sci minus ref)
+        is_positive_sub = (candidate["isdiffpos"] in ["t", 1])
         distpsnr1 = alert_dict["xmatch"]["distpsnr1"]
         sgscore1 = alert_dict["xmatch"]["sgscore1"]
         ssdistnr = alert_dict["xmatch"]["ssdistnr"]
@@ -157,7 +161,7 @@ def run(msg: dict, context):
             **attrs,
             **{k: str(v) for k, v in purity_reason_dict.items()},
             **{k: str(v) for k, v in extragalactic_dict.items()},
-            "fid": str(alert_lite["source"]["fid"]),
+            "fid": str(alert_lite["source"]["filter"]),
         },
     )
 
