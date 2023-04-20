@@ -23,24 +23,24 @@ from broker_utils.types import AlertFilename, AlertIds
 from exceptions import SchemaParsingError
 
 
-PROJECT_ID = os.getenv("GCP_PROJECT")
-TESTID = os.getenv("TESTID")
-SURVEY = os.getenv("SURVEY")
+PROJECT_ID = os.getenv('GCP_PROJECT')
+TESTID = os.getenv('TESTID')
+SURVEY = os.getenv('SURVEY')
 VERSIONTAG = os.getenv("VERSIONTAG")
 
 schema_map = load_schema_map(SURVEY, TESTID)
 
 # connect to the cloud logger
 logging_client = logging.Client()
-log_name = "ps-to-gcs-cloudfnc"
+log_name = 'ps-to-gcs-cloudfnc'
 logger = logging_client.logger(log_name)
 
 # GCP resources used in this module
 bucket_name = f"{PROJECT_ID}-{SURVEY}_alerts_{VERSIONTAG}"  # store the Avro files
 ps_topic = f"{SURVEY}-alerts"
 if TESTID != "False":
-    bucket_name = f"{bucket_name}-{TESTID}"
-    ps_topic = f"{ps_topic}-{TESTID}"
+    bucket_name = f'{bucket_name}-{TESTID}'
+    ps_topic = f'{ps_topic}-{TESTID}'
 
 client = storage.Client()
 bucket = client.get_bucket(client.bucket(bucket_name, user_project=PROJECT_ID))
@@ -59,7 +59,7 @@ class TempAlertFile(SpooledTemporaryFile):
     def rollover(self) -> None:
         """Move contents of the spooled file from memory onto disk"""
 
-        log.warning(f"Alert size exceeded max memory size: {self._max_size}")
+        log.warning(f'Alert size exceeded max memory size: {self._max_size}')
         super().rollover()
 
     @property
@@ -108,12 +108,12 @@ def upload_bytes_to_bucket(msg, context) -> None:
     associated pickle file in the valid_schemas directory.
     """
 
-    data = base64.b64decode(msg["data"])  # alert packet, bytes
-    attributes = msg["attributes"]
+    data = base64.b64decode(msg['data'])  # alert packet, bytes
+    attributes = msg['attributes']
     # Get the survey name and version
     # survey = guess_schema_survey(data)
 
-    with TempAlertFile(max_size=max_alert_packet_size, mode="w+b") as temp_file:
+    with TempAlertFile(max_size=max_alert_packet_size, mode='w+b') as temp_file:
         temp_file.write(data)
         temp_file.seek(0)
 
@@ -130,7 +130,7 @@ def upload_bytes_to_bucket(msg, context) -> None:
             }
         ).name
 
-        if SURVEY == "ztf":
+        if SURVEY == 'ztf':
             fix_schema(temp_file, alert, data, filename)
         temp_file.seek(0)
 
@@ -150,17 +150,17 @@ def upload_bytes_to_bucket(msg, context) -> None:
                 str(alert_ids.id_keys.objectId): str(alert_ids.objectId),
                 str(alert_ids.id_keys.sourceId): str(alert_ids.sourceId),
                 **attributes,
-            },
+            }
         )
 
 
 def create_file_metadata(alert, context, alert_ids):
     """Return key/value pairs to be attached to the file as metadata."""
-    metadata = {"file_origin_message_id": context.event_id}
+    metadata = {'file_origin_message_id': context.event_id}
     metadata[alert_ids.id_keys.objectId] = alert_ids.objectId
     metadata[alert_ids.id_keys.sourceId] = alert_ids.sourceId
-    metadata["ra"] = alert[0][schema_map["source"]]["ra"]
-    metadata["dec"] = alert[0][schema_map["source"]]["dec"]
+    metadata['ra'] = alert[0][schema_map['source']]['ra']
+    metadata['dec'] = alert[0][schema_map['source']]['dec']
     return metadata
 
 
@@ -184,9 +184,9 @@ def fix_schema(temp_file, alert, data, filename):
 
     # get the corrected schema if it exists, else return
     try:
-        fpkl = f"valid_schemas/{SURVEY}_v{version}.pkl"
+        fpkl = f'valid_schemas/{SURVEY}_v{version}.pkl'
         inpath = Path(__file__).resolve().parent / fpkl
-        with inpath.open("rb") as infile:
+        with inpath.open('rb') as infile:
             valid_schema = pickle.load(infile)
 
     except FileNotFoundError:
@@ -212,8 +212,8 @@ def guess_schema_version(alert_bytes: bytes) -> str:
     version_regex_pattern = b'("version":\s")([0-9]*\.[0-9]*)(")'
     version_match = re.search(version_regex_pattern, alert_bytes)
     if version_match is None:
-        err_msg = f"Could not guess schema version for alert {alert_bytes}"
-        logger.log_text(err_msg, severity="ERROR")
+        err_msg = f'Could not guess schema version for alert {alert_bytes}'
+        logger.log_text(err_msg, severity='ERROR')
         raise SchemaParsingError(err_msg)
 
     return version_match.group(2).decode()
@@ -222,7 +222,6 @@ def guess_schema_version(alert_bytes: bytes) -> str:
 # mock data and run the module
 if __name__ == "__main__":
     from broker_utils.testing import Mock
-
     mock = Mock(schema_map=schema_map, drop_cutouts=False, serialize="avro")
     args = mock.cfinput
     run(args.msg, args.context)

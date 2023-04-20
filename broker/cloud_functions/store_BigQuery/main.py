@@ -107,7 +107,9 @@ def _extract_ztf_source(alert_dict: dict):
     # get string of previous candidates' candid, comma-separated
     if alert_dict["prv_candidates"] is not None:
         prv_candids = ",".join(
-            str(pc["candid"]) for pc in alert_dict["prv_candidates"] if pc["candid"] is not None
+            str(pc["candid"])
+            for pc in alert_dict["prv_candidates"]
+            if pc["candid"] is not None
         )
     else:
         prv_candids = None
