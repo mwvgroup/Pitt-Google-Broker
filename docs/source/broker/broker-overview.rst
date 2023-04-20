@@ -49,7 +49,7 @@ Cloud Storage bucket names must be unique across GCP, so the project ID is prepe
 
       -  Runs the Kafka plugin
          `CloudPubSubConnector <https://github.com/GoogleCloudPlatform/pubsub/tree/master/kafka-connector>`__
-      -  Publishes to Pub/Sub topic [`alerts_raw`]
+      -  Publishes to Pub/Sub topic [`alerts`]
 
 2. **Avro File Storage** (alert -> fix schema if needed -> Cloud Storage
    bucket)

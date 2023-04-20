@@ -29,9 +29,9 @@ def _resource_names(survey: str, testid: Union[str, bool]):
 
     # bigquery table
     if not testid:
-        names["bq_table"] = f"{survey}.metadata"
+        names["bq_table"] = f"{survey}_alerts.metadata"
     else:
-        names["bq_table"] = f"{survey}_{testid}.metadata"
+        names["bq_table"] = f"{survey}_alerts_{testid}.metadata"
     # table column names
     table = bigquery.Client().get_table(names["bq_table"])
     names["bq_table_cols"] = [s.name for s in table.schema]
