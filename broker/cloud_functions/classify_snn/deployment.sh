@@ -35,6 +35,7 @@ fi
 #--- GCP resources used in this script
 classify_snn_trigger_topic="${survey}-tagged"
 classify_snn_CF_name="${survey}-classify_with_SuperNNova"
+
 # use test resources, if requested
 if [ "${testid}" != "False" ]; then
     classify_snn_trigger_topic="${classify_snn_trigger_topic}-${testid}"
@@ -44,12 +45,10 @@ fi
 if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources
     if [ "${testid}" != "False" ]; then
-        echo "Deleting Cloud Function: ${classify_snn_CF_name}"
         gcloud functions delete "${classify_snn_CF_name}"
     fi
 
 else # Deploy the Cloud Functions
-
 #--- classify with SNN cloud function
     echo "Deploying Cloud Function: ${classify_snn_CF_name}"
     classify_snn_entry_point="run"
@@ -61,5 +60,4 @@ else # Deploy the Cloud Functions
         --runtime python37 \
         --trigger-topic "${classify_snn_trigger_topic}" \
         --set-env-vars TESTID="${testid}",SURVEY="${survey}",VERSIONTAG="${versiontag}"
-
 fi
