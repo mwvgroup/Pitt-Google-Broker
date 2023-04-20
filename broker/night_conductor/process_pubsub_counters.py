@@ -63,10 +63,7 @@ def _log_and_print(msg, severity="INFO"):
 
 
 def run(
-    survey: str,
-    testid: Union[str, bool],
-    timeout: int,
-    testrun: bool,
+    survey: str, testid: Union[str, bool], timeout: int, testrun: bool,
 ):
     """Collect and store all metadata in the Pub/Sub counters."""
     collector = MetadataCollector(survey, testid, timeout, testrun)
@@ -218,7 +215,9 @@ class MetadataCollector:
             # convert some types
             if topic_stub == "alerts_raw":
                 # convert the kafka timestamp to np.datetime64
-                df["kafka.timestamp"] = pd.to_datetime(df["kafka.timestamp"], unit="ms", utc=True)
+                df["kafka.timestamp"] = pd.to_datetime(
+                    df["kafka.timestamp"], unit="ms", utc=True
+                )
                 # Pub/Sub schema says message_id is a str,
                 # which I (Troy) confirmed by manually pulling a message.
                 # But for some reason it is a float64 in this df. Convert it.
@@ -268,6 +267,11 @@ class MetadataCollector:
         # add the ids to the alerts_raw metadata
         df_alerts_raw = self.metadata_dfs_dict["alerts_raw"].reset_index()
         df_alerts_raw = df_alerts_raw.astype({msg_id: int}).set_index(msg_id)
+
+        # pubsub message_id duplicated when msg is *published* once but *received* twice. drop duplicates.
+        df_alerts_raw = df_alerts_raw[~df_alerts_raw.index.duplicated(keep="first")]
+        df_avros = df_avros[~df_avros.index.duplicated(keep="first")]
+
         df_alerts_raw[oid] = df_avros[oid]
         df_alerts_raw[sid] = df_avros[sid]
 
@@ -305,7 +309,9 @@ class MetadataCollector:
         if not self.metadata_df.empty:
             # by default, conforms the dataframe to the table schema
             # i.e., converts dtypes and drops extra columns
-            gcp_utils.load_dataframe_bigquery(self.bq_table, self.metadata_df, logger=logger)
+            gcp_utils.load_dataframe_bigquery(
+                self.bq_table, self.metadata_df, logger=logger
+            )
         else:
             _log_and_print("metadata_df is empty. Skipping BigQuery upload.")
 
