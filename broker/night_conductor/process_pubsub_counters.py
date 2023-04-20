@@ -469,8 +469,9 @@ class SubscriptionMetadataCollector:
         df = pd.DataFrame(self.metadata_dicts_list)
         n = len(df)
 
-        # messages can be published multiple times. we only care about the first one.
-        df = df.sort_values("publish_time").drop_duplicates("message_id", keep="first")
+        # messages can be published multiple times. ~we only care about the first one.~
+        # actually, let's keep them to know whether the de-duper is working
+        # df = df.sort_values("publish_time").drop_duplicates("message_id", keep="first")
         # log the number we dropped
         nnew = len(df)
         if n - nnew > 0:
