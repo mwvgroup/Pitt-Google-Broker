@@ -11,5 +11,5 @@ extragalactic_transient,0.1,,is_positive_sub,science minus reference image is po
 extragalactic_transient,0.1,,no_pointsource_counterpart,no counterpart in Pan-STARRS1 closer than 1.5 arcsec,distpsnr1 is None or > 1.5 [arcsec]
 extragalactic_transient,0.1,,not_moving,2+ detections at least 30 min apart,
 extragalactic_transient,0.1,,no_ssobject,distance to nearest known solar system object > 5 arcsec,
-SuperNNova,,0,SN Ia,
-SuperNNova,,1,not a SN Ia,
+SuperNNova,1.3,0,SN Ia,,
+SuperNNova,1.3,1,not a SN Ia,,

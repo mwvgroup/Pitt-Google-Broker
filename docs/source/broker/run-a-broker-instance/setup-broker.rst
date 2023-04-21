@@ -37,11 +37,18 @@ Setup the Broker Instance
     # Setup a broker instance
     survey=ztf  # ztf or decat
     testid=mytest  # replace with your choice of testid
-    teardown=False
-    ./setup_broker.sh "$testid" "$teardown" "$survey"
+    teardown=False  # False to create resources
+    version="3.3"  # avro schema version of incoming alerts
 
-See `What does setup_broker.sh do?`_
-for details.
+    # setup all GCP resources for a broker instance
+    ./setup_broker.sh "$testid" "$teardown" "$survey" "$version"
+
+See :doc:`../broker-overview` for a description of ``survey``, ``testid``, and
+``version`` (which gets transformed to a ``versiontag``).
+When the Avro schema changes, a new `alerts_{versiontag}` table and bucket need to be created,
+and the `versiontag` environment variable on all Cloud Functions needs to be updated.
+
+See `What does setup_broker.sh do?`_ for details about the script itself.
 
 Upload Kafka Authentication Files
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

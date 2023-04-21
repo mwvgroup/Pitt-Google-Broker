@@ -22,7 +22,7 @@ log_name = "classify-snn-cloudfnc"  # same log for all broker instances
 logger = logging_client.logger(log_name)
 
 # GCP resources used in this module
-bq_dataset = f"{SURVEY}_alerts"
+bq_dataset = SURVEY
 ps_topic = f"{SURVEY}-SuperNNova"
 if TESTID != "False":  # attach the testid to the names
     bq_dataset = f"{bq_dataset}_{TESTID}"
@@ -121,12 +121,12 @@ def _format_for_snn(alert_dict: dict) -> pd.DataFrame:
     alert_df = data_utils.alert_lite_to_dataframe(alert_dict)
 
     snn_df = pd.DataFrame(data={"SNID": alert_dict["alertIds"]["objectId"]}, index=alert_df.index)
-    snn_df["FLT"] = alert_df["fid"].map(data_utils.ztf_fid_names())
+    snn_df["FLT"] = alert_df["filter"].map(data_utils.ztf_fid_names())
 
     if SURVEY == "ztf":
         snn_df["MJD"] = math.jd_to_mjd(alert_df["jd"].loc[0])
         snn_df["FLUXCAL"], snn_df["FLUXCALERR"] = math.mag_to_flux(
-            alert_df["magpsf"], alert_df["magzpsci"], alert_df["sigmapsf"]
+            alert_df["mag"], alert_df["magzp"], alert_df["magerr"]
         )
 
     elif SURVEY == "decat":
