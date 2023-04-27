@@ -10,7 +10,8 @@ testid="${2:-test}"
 teardown="${3:-False}" # "True" tearsdown/deletes resources, else setup
 survey="${4:-ztf}"
 # name of the survey this broker instance will ingest
-zone="${5:-us-central1-a}"
+region="${5:-us-central1}"
+zone="${6:-us-central1-a}"
 
 #--- GCP resources used in this script
 consumerVM="${survey}-consumer"
@@ -22,6 +23,7 @@ if [ "$testid" != "False" ]; then
     consumerVM="${consumerVM}-${testid}"
     nconductVM="${nconductVM}-${testid}"
 fi
+consumerIP="${consumerVM}"  # gcp resource name of the consumer's static ip address
 
 #--- Teardown resources
 if [ "$teardown" = "True" ]; then
@@ -51,8 +53,7 @@ else
 
 #--- Consumer VM
     # create a static ip address so that it can be whitelisted by the survey
-    gcloud compute addresses create ADDRESS_NAME  \
-        --region=REGION
+    gcloud compute addresses create "${consumerIP}" --region="${region}"
     # create schedule
     start_schedule='30 1 * * *'  # 1:30am UTC / 5:30pm PDT, everyday
     stop_schedule='55 13 * * *'  # 1:55pm UTC / 6:55am PDT, everyday
@@ -70,6 +71,7 @@ else
     gcloud compute instances create "$consumerVM" \
         --resource-policies="${consumerVMsched}" \
         --zone="$zone" \
+        --address="$consumerIP" \
         --machine-type="$machinetype" \
         --scopes=cloud-platform \
         --metadata="${googlelogging},${startupscript},${shutdownscript}" \
