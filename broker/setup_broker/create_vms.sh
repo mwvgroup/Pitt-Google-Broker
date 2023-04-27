@@ -10,7 +10,7 @@ testid="${2:-test}"
 teardown="${3:-False}" # "True" tearsdown/deletes resources, else setup
 survey="${4:-ztf}"
 # name of the survey this broker instance will ingest
-zone="${CE_ZONE:-us-central1-a}" # use env variable CE_ZONE if it exists
+zone="${5:-us-central1-a}"
 
 #--- GCP resources used in this script
 consumerVM="${survey}-consumer"
@@ -50,6 +50,9 @@ else
         --metadata=google-logging-enabled=true,startup-script-url="$installscript"
 
 #--- Consumer VM
+    # create a static ip address so that it can be whitelisted by the survey
+    gcloud compute addresses create ADDRESS_NAME  \
+        --region=REGION
     # create schedule
     start_schedule='30 1 * * *'  # 1:30am UTC / 5:30pm PDT, everyday
     stop_schedule='55 13 * * *'  # 1:55pm UTC / 6:55am PDT, everyday

@@ -12,6 +12,8 @@ survey="${3:-ztf}"
 schema_version="${4:-3.3}"
 versiontag=v$(echo "${schema_version}" | tr . _)  # 3.3 -> v3_3
 region="${5:-us-central1}"
+zone="${region}-a"  # just use zone "a" instead of adding another script arg
+
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT # get the environment variable
 
 #--- Make the user confirm the settings
@@ -90,7 +92,7 @@ fi
 #--- Create VM instances
 echo
 echo "Configuring VMs..."
-./create_vms.sh "$broker_bucket" "$testid" "$teardown" "$survey"
+./create_vms.sh "$broker_bucket" "$testid" "$teardown" "$survey" "$zone"
 
 
 #--- Create the cron jobs that check the VM status
@@ -127,4 +129,4 @@ fi
 #--- Deploy Cloud Functions
 echo
 echo "Configuring Cloud Functions..."
-./deploy_cloud_fncs.sh "${testid}" "${teardown}" "${survey}" "${versiontag}"
+./deploy_cloud_fncs.sh "${testid}" "${teardown}" "${survey}" "${versiontag}" "${zone}"
