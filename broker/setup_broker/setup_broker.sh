@@ -127,4 +127,28 @@ fi
 #--- Deploy Cloud Functions
 echo
 echo "Configuring Cloud Functions..."
-./deploy_cloud_fncs.sh "${testid}" "${teardown}" "${survey}" "${versiontag}"
+cd .. && cd cloud_functions
+
+#--- Check cue response cloud function
+cd check_cue_response
+./deployment.sh "${testid}" "${teardown}" "${survey}" "${versiontag}"
+
+#--- classify with SNN cloud function
+cd .. && cd classify_snn
+./deployment.sh "${testid}" "${teardown}" "${survey}" "${versiontag}"
+
+#--- alerts-lite cloud function
+cd .. && cd lite
+./deployment.sh "${testid}" "${teardown}" "${survey}" "${versiontag}"
+
+#--- Pub/Sub -> Cloud Storage Avro cloud function
+cd .. && cd ps_to_gcs
+./deployment.sh "${testid}" "${teardown}" "${survey}" "${versiontag}"
+
+#--- BigQuery storage cloud function
+cd .. && cd store_BigQuery
+./deployment.sh "${testid}" "${teardown}" "${survey}" "${versiontag}"
+
+#--- tag alerts cloud function
+cd .. && cd tag
+./deployment.sh "${testid}" "${teardown}" "${survey}" "${versiontag}"
