@@ -12,26 +12,6 @@ survey="${3:-ztf}"
 versiontag="${4:-v3_3}"
 zone="${CE_ZONE:-us-central1-a}" # use env variable CE_ZONE if it exists
 
-#--- Make the user confirm the settings
-echo
-echo "deployment.sh will run with the following configs: "
-echo
-echo "testid = ${testid}"
-echo "teardown = ${teardown}"
-echo "survey = ${survey}"
-echo "versiontag = ${versiontag}"
-echo "zone = ${zone}"
-echo
-echo "Continue? [y/(n)]: "
-
-read input
-input="${input:-n}"
-if [ "${input}" != "y" ]; then
-    echo "Exiting setup."
-    echo
-    exit
-fi
-
 #--- GCP resources used in this script
 ps_to_gcs_trigger_topic="${survey}-alerts_raw"
 ps_to_gcs_CF_name="${survey}-upload_bytes_to_bucket"
