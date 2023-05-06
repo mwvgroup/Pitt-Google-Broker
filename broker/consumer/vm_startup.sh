@@ -25,7 +25,7 @@ fi
 
 #--- GCP resources used in this script
 broker_bucket="${PROJECT_ID}-${survey}-broker_files"
-PS_TOPIC_DEFAULT="${survey}-alerts"
+PS_TOPIC_DEFAULT="${survey}-alerts_raw"
 # use test resources, if requested
 if [ "$testid" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"

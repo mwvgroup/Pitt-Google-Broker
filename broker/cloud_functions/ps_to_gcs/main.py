@@ -26,6 +26,7 @@ from exceptions import SchemaParsingError
 PROJECT_ID = os.getenv('GCP_PROJECT')
 TESTID = os.getenv('TESTID')
 SURVEY = os.getenv('SURVEY')
+VERSIONTAG = os.getenv("VERSIONTAG")
 
 schema_map = load_schema_map(SURVEY, TESTID)
 
@@ -35,13 +36,14 @@ log_name = 'ps-to-gcs-cloudfnc'
 logger = logging_client.logger(log_name)
 
 # GCP resources used in this module
-bucket_name = f'{PROJECT_ID}-{SURVEY}-alert_avros'  # store the Avro files
+bucket_name = f"{PROJECT_ID}-{SURVEY}_alerts_{VERSIONTAG}"  # store the Avro files
 ps_topic = f"{SURVEY}-alerts"
 if TESTID != "False":
     bucket_name = f'{bucket_name}-{TESTID}'
     ps_topic = f'{ps_topic}-{TESTID}'
 
-bucket = storage.Client().get_bucket(bucket_name)
+client = storage.Client()
+bucket = client.get_bucket(client.bucket(bucket_name, user_project=PROJECT_ID))
 
 # By default, spool data in memory to avoid IO unless data is too big
 # LSST alerts are anticipated at 80 kB, so 150 kB should be plenty

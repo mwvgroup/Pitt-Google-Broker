@@ -93,7 +93,7 @@ from google.cloud import bigquery, pubsub_v1, storage
 PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
 
 
-def _resources(service, survey='ztf', testid='test'):
+def _resources(service, survey='ztf', testid='test', versiontag="v3_3"):
     """ Names the GCP resources to be setup/torn down.
 
     Args:
@@ -104,19 +104,29 @@ def _resources(service, survey='ztf', testid='test'):
         testid (False or str): False: Use production resources.
                                 str: Use test resources. (This string is
                                 appended to the resource names.)
+        versiontag (str): Tag indicating Avro schema version. Appended to
+                          some resource names.
     """
 
     if service == 'BQ':
         datasets = {
-            f'{survey}_alerts':
-                ['alerts', 'DIASource', 'SuperNNova', 'metadata', 'classifications', 'tags']
+            survey: [
+                f'alerts_{versiontag}',
+                'class_descriptions',
+                'classifications',
+                'DIASource',
+                'SuperNNova',
+                'metadata',
+                'tags',
+            ]
         }
+        table_data = {"class_descriptions": "class_descriptions_data"}
 
         # append the testid to the dataset name only
         if testid is not False:
             dtmp = {f'{key}_{testid}': val for key, val in datasets.items()}
             datasets = dtmp
-        return datasets
+        return (datasets, table_data)
 
     if service == 'dashboard':
         # get resources not named elsewhere in this function
@@ -133,10 +143,9 @@ def _resources(service, survey='ztf', testid='test'):
     if service == 'GCS':
         buckets = {  # '<bucket-name>': ['<file-name to upload>',]
             f'{PROJECT_ID}-{survey}-broker_files': [],
-            f'{PROJECT_ID}-{survey}-dataflow': [],
             f'{PROJECT_ID}-{survey}-testing_bucket':
                 ['ztf_3.3_validschema_1154446891615015011.avro'],
-            f'{PROJECT_ID}-{survey}-alert_avros': [],
+            f'{PROJECT_ID}-{survey}_alerts_{versiontag}': [],
         }
         # Files are currently expected to reside in the
         # ``../../tests/test_alerts`` directory.
@@ -224,7 +233,7 @@ def _confirm_options(survey, testid, teardown):
         sys.exit(msg)
 
 
-def setup_bigquery(survey='ztf', testid='test', teardown=False) -> None:
+def setup_bigquery(survey='ztf', testid='test', teardown=False, versiontag="v3_3", region="us-central1") -> None:
     """Create the necessary Big Query datasets if they do not already exist
     Args:
         survey (str): which astronomical survey the broker instance will
@@ -234,14 +243,17 @@ def setup_bigquery(survey='ztf', testid='test', teardown=False) -> None:
                                 str: Use test resources. (This string is
                                 appended to the resource names.)
         teardown (bool): if True, delete resources rather than setting them up
+        versiontag (str): Tag indicating Avro schema version. Appended to
+                          some resource names.
+        region (str): GCP region of the dataset.
 
     New datasets include:
-      ``{survey}-alerts``
+      ``{survey}``
     """
     _do_not_delete_production_resources(survey=survey, testid=testid, teardown=teardown)
 
-    datasets = _resources('BQ', survey=survey, testid=testid)
-    bigquery_client = bigquery.Client()
+    (datasets, table_data) = _resources('BQ', survey=survey, testid=testid, versiontag=versiontag)
+    bigquery_client = bigquery.Client(location=region)
 
     for dataset, tables in datasets.items():
         if teardown:
@@ -259,17 +271,27 @@ def setup_bigquery(survey='ztf', testid='test', teardown=False) -> None:
                 print(f'Created dataset: {dataset}')
 
             # create the tables
+            # use the bq CLI so we can create the table from a schema file
             for table in tables:
-                table_id = f'{PROJECT_ID}.{dataset}.{table}'
                 try:
+                    table_id = f'{PROJECT_ID}.{dataset}.{table}'
                     bigquery_client.get_table(table_id)
                     print(f'Skipping existing table: {table_id}.')
                 except NotFound:
-                    # use CLI so we can create the table from a schema file
-                    bqmk = f'bq mk --table {PROJECT_ID}:{dataset}.{table} templates/bq_{survey}_{table}_schema.json'
-                    out = subprocess.check_output(shlex.split(bqmk))
-                    print(f'{out}')  # should be a success message
-
+                    table_id = f"{PROJECT_ID}:{dataset}.{table}"
+                    schema = f"templates/bq_{survey}_{table}_schema"
+                    if table_data.get(table):
+                        # make the table and load the data
+                        data = f"templates/bq_{survey}_{table_data[table]}.csv"
+                        flags = f"--schema={schema}.json --source_format=CSV"
+                        bqload = f'bq load {flags} {table_id} {data}'
+                        out = subprocess.check_output(shlex.split(bqload))
+                        print(f'{out}')  # should be a success message
+                    else:
+                        # no data to load, just create the table
+                        bqmk = f'bq mk --table {table_id} {schema}.json'
+                        out = subprocess.check_output(shlex.split(bqmk))
+                        print(f'{out}')  # should be a success message
 
 def setup_dashboard(survey='ztf', testid='test', teardown=False) -> None:
     """Create a monitoring dashboard for the broker instance.
@@ -382,7 +404,7 @@ def _setup_dashboard_resource_names(survey='ztf', testid='test'):
     return resource_maps
 
 
-def setup_buckets(survey='ztf', testid='test', teardown=False) -> None:
+def setup_buckets(survey='ztf', testid='test', teardown=False, versiontag="v3_3", region="us-central1") -> None:
     """Create new storage buckets and upload testing files.
     Files are expected to reside in the ``tests/test_alerts`` directory.
 
@@ -394,10 +416,13 @@ def setup_buckets(survey='ztf', testid='test', teardown=False) -> None:
                                 str: Use test resources. (This string is
                                 appended to the resource names.)
         teardown (bool): if True, delete resources rather than setting them up
+        versiontag (str): Tag indicating Avro schema version. Appended to
+                          some resource names.
+        region (str): GCP region of the bucket.
     """
     _do_not_delete_production_resources(survey=survey, testid=testid, teardown=teardown)
 
-    buckets = _resources('GCS', survey=survey, testid=testid)
+    buckets = _resources('GCS', survey=survey, testid=testid, versiontag=versiontag)
     storage_client = storage.Client()
 
     for bucket_name, files in buckets.items():
@@ -407,7 +432,7 @@ def setup_buckets(survey='ztf', testid='test', teardown=False) -> None:
         except NotFound:
             if not teardown:
                 # Create bucket
-                storage_client.create_bucket(bucket_name)
+                storage_client.create_bucket(bucket_name, location=region)
                 print(f'Created bucket {bucket_name}')
         else:
             if teardown:
@@ -490,7 +515,9 @@ def setup_pubsub(survey='ztf', testid='test', teardown=False) -> None:
                     print(f'Created subscription {sub_name}')
 
 
-def auto_setup(survey='ztf', testid='test', teardown=False, confirmed=False) -> None:
+def auto_setup(
+    survey='ztf', testid='test', teardown=False, confirmed=False, versiontag="v3_3", region="us-central1"
+) -> None:
     """Create and setup GCP products required by the ``broker`` package.
 
     Args:
@@ -509,8 +536,8 @@ def auto_setup(survey='ztf', testid='test', teardown=False, confirmed=False) -> 
     if not confirmed:
         _confirm_options(survey, testid, teardown)
 
-    setup_bigquery(survey=survey, testid=testid, teardown=teardown)
-    setup_buckets(survey=survey, testid=testid, teardown=teardown)
+    setup_bigquery(survey=survey, testid=testid, teardown=teardown, versiontag=versiontag, region=region)
+    setup_buckets(survey=survey, testid=testid, teardown=teardown, versiontag=versiontag, region=region)
     setup_pubsub(survey=survey, testid=testid, teardown=teardown)
     setup_dashboard(survey=survey, testid=testid, teardown=teardown)
 
@@ -555,10 +582,24 @@ if __name__ == "__main__":
         default=False,
         help="User has already confirmed settings; try not to ask again.\n",
     )
+    parser.add_argument(
+        '--versiontag',
+        dest='versiontag',
+        default='v3_3',
+        help='Tag indicating Avro schema version. Appended to some resource names.\n',
+    )
+    parser.add_argument(
+        '--region',
+        dest='region',
+        default='us-central1',
+        help='GCP region for resource locations.\n',
+    )
     known_args, __ = parser.parse_known_args()
 
     auto_setup(survey=known_args.survey,
                testid=known_args.testid,
                teardown=known_args.teardown,
-               confirmed=known_args.confirmed
+               confirmed=known_args.confirmed,
+               versiontag=known_args.versiontag,
+               region=known_args.region,
                )
