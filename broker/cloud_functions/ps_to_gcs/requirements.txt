@@ -3,7 +3,29 @@
 # dependencies for a Cloud Function must be specified in a `requirements.txt`
 # file (or packaged with the function) in the same directory as `main.py`
 
-fastavro==1.4.4  # known to work. some newer versions give a schema parsing error
+fastavro==1.4.4  # fastavro==1.4.4 is known to work for ztf (see below)
 google-cloud-logging
 google-cloud-storage==1.38.0
 pgb-broker-utils>=0.2.46
+
+# fastavro note:
+#
+# fastavro==1.4.4 is known to work for ztf
+# fastavro==1.7.3 gives the following schema parsing error:
+#   TypeError: float() argument must be a string or a number, not 'NoneType'
+# no other fastavro versions have been tested
+#
+# This is very likely a ZTF-specific problem, due to the non-standard ordering of their
+# Avro schema types (the same problem that causes us to do a "fix schema" step
+# before storing the Avros in the bucket).
+#
+# ----- code to reproduce the error -----
+#
+# import fastavro as fa
+#
+# # test alert stored with the repo
+# falert = "tests/test_alerts/ztf_3.3_1154308030015010004.avro"
+#
+# # standard fastavro call to deserialize into a list of dicts
+# with open(falert, "rb") as fin:
+#     list_of_dicts = list(fa.reader(fin))  # works with v1.4.4, errors with v1.7.3
