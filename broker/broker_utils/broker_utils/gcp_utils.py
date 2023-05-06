@@ -312,17 +312,30 @@ def query_bigquery(
 ) -> bigquery.job.QueryJob:
     """Query BigQuery.
 
+    Args:
+        query:
+            SQL query statement.
+        project_id:
+            The GCP project id that will be used to make the API call.
+            If not provided, the Pitt-Google production project id will be used.
+        job_config:
+            Optional job config to send with the query.
+
     Example query:
         ``
         query = (
             f'SELECT * '
-            f'FROM `{project_id}.{dataset}.{table}` '
+            f'FROM `{dataset_project_id}.{dataset}.{table}` '
             f'WHERE objectId={objectId} '
         )
         ``
 
-    Example of working with the query_job:
+    Examples of working with the query_job:
         ``
+        # Cast it to a DataFrame:
+        query_job.to_dataframe()
+
+        # Iterate row-by-row
         for r, row in enumerate(query_job):
             # row values can be accessed by field name or index
             print(f"objectId={row[0]}, candid={row['candid']}")

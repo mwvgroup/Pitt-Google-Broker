@@ -15,16 +15,20 @@ from tempfile import SpooledTemporaryFile
 import fastavro
 from google.cloud import logging
 from google.cloud import storage
+from google.cloud.exceptions import PreconditionFailed
 
-from broker_utils import schema_maps
+from broker_utils import gcp_utils
+from broker_utils.schema_maps import load_schema_map
+from broker_utils.types import AlertFilename, AlertIds
 from exceptions import SchemaParsingError
+
 
 PROJECT_ID = os.getenv('GCP_PROJECT')
 TESTID = os.getenv('TESTID')
 SURVEY = os.getenv('SURVEY')
+VERSIONTAG = os.getenv("VERSIONTAG")
 
-schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
-storage_client = storage.Client()
+schema_map = load_schema_map(SURVEY, TESTID)
 
 # connect to the cloud logger
 logging_client = logging.Client()
@@ -32,11 +36,14 @@ log_name = 'ps-to-gcs-cloudfnc'
 logger = logging_client.logger(log_name)
 
 # GCP resources used in this module
-bucket_name = f'{PROJECT_ID}-{SURVEY}-alert_avros'  # store the Avro files
+bucket_name = f"{PROJECT_ID}-{SURVEY}_alerts_{VERSIONTAG}"  # store the Avro files
+ps_topic = f"{SURVEY}-alerts"
 if TESTID != "False":
     bucket_name = f'{bucket_name}-{TESTID}'
-# connect to the avro bucket
-bucket = storage_client.get_bucket(bucket_name)
+    ps_topic = f'{ps_topic}-{TESTID}'
+
+client = storage.Client()
+bucket = client.get_bucket(client.bucket(bucket_name, user_project=PROJECT_ID))
 
 # By default, spool data in memory to avoid IO unless data is too big
 # LSST alerts are anticipated at 80 kB, so 150 kB should be plenty
@@ -86,7 +93,12 @@ def run(msg, context) -> None:
                 `event_type`: for example: "google.pubsub.topic.publish".
                 `resource`: the resource that emitted the event.
     """
-    upload_bytes_to_bucket(msg, context)
+    try:
+        upload_bytes_to_bucket(msg, context)
+    # this is raised by blob.upload_from_file if the object already exists in the bucket
+    except PreconditionFailed:
+        # we'll simply return, and the duplicate alert will go no further in our pipeline
+        return
 
 
 def upload_bytes_to_bucket(msg, context) -> None:
@@ -107,33 +119,49 @@ def upload_bytes_to_bucket(msg, context) -> None:
 
         alert = extract_alert_dict(temp_file)
         temp_file.seek(0)
-        filename = create_filename(alert, attributes)
+        alert_ids = AlertIds(schema_map, alert_dict=alert[0])
+
+        filename = AlertFilename(
+            {
+                "objectId": alert_ids.objectId,
+                "sourceId": alert_ids.sourceId,
+                "topic": attributes.get("kafka.topic", "no_topic"),
+                "format": "avro",
+            }
+        ).name
+
         if SURVEY == 'ztf':
             fix_schema(temp_file, alert, data, filename)
         temp_file.seek(0)
 
         blob = bucket.blob(filename)
-        blob.upload_from_file(temp_file)
-        attach_file_metadata(blob, alert, context)  # must be after file upload
+        blob.metadata = create_file_metadata(alert, context, alert_ids)
 
-    logger.log_text(f'Uploaded {filename} to {bucket.name}')
+        # raise a PreconditionFailed exception if filename already exists in the bucket using "if_generation_match=0"
+        # let it raise. the main function will catch it and then drop the message.
+        blob.upload_from_file(temp_file, if_generation_match=0)
 
-def attach_file_metadata(blob, alert, context):
+        # Cloud Storage says this is not a duplicate, so now we publish the broker's main "alerts" stream
+        temp_file.seek(0)
+        gcp_utils.publish_pubsub(
+            ps_topic,
+            temp_file.read(),
+            attrs={
+                str(alert_ids.id_keys.objectId): str(alert_ids.objectId),
+                str(alert_ids.id_keys.sourceId): str(alert_ids.sourceId),
+                **attributes,
+            }
+        )
+
+
+def create_file_metadata(alert, context, alert_ids):
+    """Return key/value pairs to be attached to the file as metadata."""
     metadata = {'file_origin_message_id': context.event_id}
-    metadata['objectId'] = alert[0]['objectId']
-    metadata['candid'] = alert[0]['candid']
+    metadata[alert_ids.id_keys.objectId] = alert_ids.objectId
+    metadata[alert_ids.id_keys.sourceId] = alert_ids.sourceId
     metadata['ra'] = alert[0][schema_map['source']]['ra']
     metadata['dec'] = alert[0][schema_map['source']]['dec']
-    blob.metadata = metadata
-    blob.patch()
-
-def create_filename(alert, attributes):
-    # alert is a single alert dict wrapped in a list
-    oid = alert[0][schema_map['objectId']]
-    sid = alert[0][schema_map['source']][schema_map['sourceId']]
-    topic = attributes['kafka.topic']
-    filename = f'{oid}.{sid}.{topic}.avro'
-    return filename
+    return metadata
 
 
 def extract_alert_dict(temp_file):
@@ -162,8 +190,6 @@ def fix_schema(temp_file, alert, data, filename):
             valid_schema = pickle.load(infile)
 
     except FileNotFoundError:
-        msg = f'Original schema header retained for {SURVEY} v{version}; file {filename}'
-        logger.log_text(msg)
         return
 
     # write the corrected file
@@ -171,8 +197,6 @@ def fix_schema(temp_file, alert, data, filename):
     fastavro.writer(temp_file, valid_schema, alert)
     temp_file.truncate()  # removes leftover data
     temp_file.seek(0)
-
-    logger.log_text(f'Schema header reformatted for {SURVEY} v{version}; file {filename}')
 
 
 def guess_schema_version(alert_bytes: bytes) -> str:
@@ -193,3 +217,13 @@ def guess_schema_version(alert_bytes: bytes) -> str:
         raise SchemaParsingError(err_msg)
 
     return version_match.group(2).decode()
+
+
+# mock data and run the module
+if __name__ == "__main__":
+    from broker_utils.testing import Mock
+    mock = Mock(schema_map=schema_map, drop_cutouts=False, serialize="avro")
+    args = mock.cfinput
+    run(args.msg, args.context)
+
+    print(mock.my_test_alert.ids)

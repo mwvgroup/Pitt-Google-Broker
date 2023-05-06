@@ -1,9 +1,82 @@
-# Admin tasks for GCP projects
+# gcloud Examples<a name="gcloud-examples"></a>
 
-- [`gcloud` reference](https://cloud.google.com/sdk/gcloud/reference)
+<!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
 
+- [gcloud Examples](#gcloud-examples)
+  - [Setup](#setup)
+  - [BigQuery](#bigquery)
+  - [Cloud Functions](#cloud-functions)
+  - [Cloud Run](#cloud-run)
+  - [Cloud Storage](#cloud-storage)
+  - [Compute Engine](#compute-engine)
+    - [Compute Engine Schedule](#compute-engine-schedule)
+  - [Pub/Sub](#pubsub)
+  - [Service account](#service-account)
 
-## Cloud Run
+<!-- mdformat-toc end -->
+
+External reference:
+
+- [Google's `gcloud` CLI reference](https://cloud.google.com/sdk/gcloud/reference)
+
+## Setup<a name="setup"></a>
+
+The following variables are used in many of the examples on this page.
+Set them to your own preferences.
+
+[Broker Instance Keywords](../../broker/broker-instance-keywords.rst):
+
+```bash
+SURVEY="ztf"
+TESTID="mytest"
+```
+
+[Environment variables](pittgoogle-client.rtfd.io/pubsub/docs/source/overview/env-vars.html):
+
+```bash
+export GOOGLE_CLOUD_PROJECT="avid-heading-329016"  # this is our development project
+export GOOGLE_APPLICATION_CREDENTIALS="/path/to/GCP_auth_key.json"
+```
+
+Default zone/region when creating VMs and other compute-related resources:
+
+```bash
+export CLOUDSDK_COMPUTE_REGION='us-central1'
+export CLOUDSDK_COMPUTE_ZONE='us-central1-a'
+```
+
+## BigQuery<a name="bigquery"></a>
+
+Create a dataset
+
+```bash
+dataset_name="my-dataset"   # choose a name for your dataset
+
+# Create the dataset
+# bq library comes with gcloud
+bq mk --dataset "${GOOGLE_CLOUD_PROJECT}:dataset_name" \
+    --location="${REGION}"
+```
+
+## Cloud Functions<a name="cloud-functions"></a>
+
+```bash
+CF_name="my-cloud-function"     # choose a name for your Cloud Function
+entry_point="run"               # fill in name of module's entry-point function
+trigger_topic="my-topic"        # fill in name of Pub/Sub topic that will trigger your function
+
+# deploy. run this command from within the directory containing your Cloud Function
+gcloud functions deploy "${CF_name}" \
+    --entry-point "${entry_point}" \
+    --runtime python37 \
+    --trigger-topic "$trigger_topic" \
+    --set-env-vars TESTID="${TESTID}",SURVEY="${SURVEY}"
+
+# delete
+gcloud functions delete "${CF_name}"
+```
+
+## Cloud Run<a name="cloud-run"></a>
 
 - [Instructions to create resources with pubsub trigger](https://cloud.google.com/run/docs/triggering/pubsub-push#command-line)
 
@@ -12,13 +85,9 @@ Initialize variables
 ```bash
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT
 PROJECT_NUMBER=$(gcloud projects list \
-    --filter="$(gcloud config get-value project)" \
-    --format="value(PROJECT_NUMBER)" \
-)
-
-# broker instance keywords
-SURVEY="ztf"
-TESTID="False"
+        --filter="$(gcloud config get-value project)" \
+        --format="value(PROJECT_NUMBER)" \
+    )
 
 # name for the Run service you're deploying, and related resources
 NAME_STUB="xmatch_AbrilCVs"
@@ -76,9 +145,9 @@ gcloud run deploy "$NAME_LOWER_DASH" --image "$IMAGE_URL"  \
 Allow Pub/Sub to create authentication tokens in the project:
 
 ```bash
-gcloud projects add-iam-policy-binding ${PROJECT_ID} \
-     --member=serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com \
-     --role=roles/iam.serviceAccountTokenCreator
+gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+    --member="serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com" \
+    --role="roles/iam.serviceAccountTokenCreator"
 ```
 
 Create a service account and give it permission to invoke cloud run.
@@ -104,8 +173,54 @@ gcloud pubsub subscriptions create "$SUBSCRIPTION" \
     --ack-deadline="$ACK_DEADLINE"
 ```
 
+## Cloud Storage<a name="cloud-storage"></a>
 
-## Pub/Sub
+Download the avro file for a single alert:
+
+```bash
+bucket="${GOOGLE_CLOUD_PROJECT}-${survey}-alert_avros"
+filename="<objectId>.<sourceId>.<kafkaTopic>.avro"
+# filename="100000238.200000476050.elasticc-2022fall.avro"
+local_dir="/<path>/<to>/<local>/<dir>"
+gsutil cp "gs://${bucket}/${filename}" ${local_dir}/.
+```
+
+## Compute Engine<a name="compute-engine"></a>
+
+### Compute Engine Schedule<a name="compute-engine-schedule"></a>
+
+Create a schedule (only needs to be done once)
+[unix-cron format](https://cloud.google.com/scheduler/docs/configuring/cron-job-schedules)
+
+```bash
+schedule_name="my-schedule"     # choose schedule name
+start_schedule="* * * * *"      # choose start time. (UTC, unix-cron format, link above)
+stop_schedule="* * * * *"       # choose stop time. (UTC, unix-cron format, link above)
+description="schedule"          # fill in a description
+
+gcloud compute resource-policies create instance-schedule "${schedule_name}" \
+    --description="${description}" \
+    --vm-start-schedule="${start_schedule}" \
+    --vm-stop-schedule="${stop_schedule}" \
+    --timezone="UTC"
+```
+
+Attach/unattach a schedule to a VM
+
+```bash
+vm_name="my-vm"                 # set this to the VM name
+schedule_name="my-schedule"     # set this to the schedule name
+
+# Attach schedule
+gcloud compute instances add-resource-policies "${nconductVM}" \
+    --resource-policies="${nconductVMsched}"
+
+# Unattach schedule
+gcloud compute instances remove-resource-policies "${nconductVM}" \
+    --resource-policies="${nconductVMsched}"
+```
+
+## Pub/Sub<a name="pubsub"></a>
 
 - [https://cloud.google.com/sdk/gcloud/reference/pubsub](https://cloud.google.com/sdk/gcloud/reference/pubsub)
 
@@ -123,7 +238,9 @@ gcloud pubsub subscriptions create "$SUBSCRIPTION" \
     --topic-project="$TOPIC_PROJECT"
 ```
 
-## Service account
+## Service account<a name="service-account"></a>
+
+See also [service-account.md](service-account.md).
 
 ```bash
 NAME="tjraen-owner"

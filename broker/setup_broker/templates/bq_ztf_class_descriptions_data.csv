@@ -1,0 +1,15 @@
+purity,0.1,0,,likely artifact or low quality data,~(rb and nbad and fwhm and elong and magdiff)
+purity,0.1,1,,likely real source with high quality data,rb and nbad and fwhm and elong and magdiff
+purity,0.1,,rb,high real/bogus score,rb >= 0.65
+purity,0.1,,nbad,no bad pixels,nbad == 0 [pixels]
+purity,0.1,,fwhm,low full width half max (SExtractor),fwhm <= 5 [pixels]
+purity,0.1,,elong,"small ellipticity (major / minor axis, SExtractor)",elong <= 1.2
+purity,0.1,,magdiff,small aperture - psf,abs(magdiff) <= 0.1 [mag]
+extragalactic_transient,0.1,0,,not likely to be an extragalactic transient,~(is_positive_sub and no_pointsource_counterpart and not_moving and no_ssobject)
+extragalactic_transient,0.1,1,,likely to be an extragalactic transient,is_positive_sub and no_pointsource_counterpart and not_moving and no_ssobject
+extragalactic_transient,0.1,,is_positive_sub,science minus reference image is positive,"isdiffpos in [t, 1]"
+extragalactic_transient,0.1,,no_pointsource_counterpart,no counterpart in Pan-STARRS1 closer than 1.5 arcsec,distpsnr1 is None or > 1.5 [arcsec]
+extragalactic_transient,0.1,,not_moving,2+ detections at least 30 min apart,
+extragalactic_transient,0.1,,no_ssobject,distance to nearest known solar system object > 5 arcsec,
+SuperNNova,1.3,0,SN Ia,,
+SuperNNova,1.3,1,not a SN Ia,,

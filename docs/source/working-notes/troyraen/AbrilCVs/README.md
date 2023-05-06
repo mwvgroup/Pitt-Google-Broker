@@ -27,7 +27,7 @@ import os
 import pandas as pd
 from astropy.coordinates import SkyCoord
 project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
-dir = "/Users/troyraen/Documents/broker/troy/troy/AbrilCVs"
+dir = "/Users/troyraen/Documents/broker/Pitt-Google/troy/docs/source/working-notes/troyraen/AbrilCVs"
 fcat = f"{dir}/J_MNRAS_492_L40/catalog.dat"
 ftns = f"{dir}/tns_search_cvs.csv"
 fasn = f"{dir}/ASAS-SN/cvs.csv"
