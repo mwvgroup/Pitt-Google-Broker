@@ -467,19 +467,6 @@ class SubscriptionMetadataCollector:
     def _package_metadata_into_df(self):
         # cast the collected metadata to a df
         df = pd.DataFrame(self.metadata_dicts_list)
-        n = len(df)
-
-        # messages can be published multiple times. ~we only care about the first one.~
-        # actually, let's keep them to know whether the de-duper is working
-        # df = df.sort_values("publish_time").drop_duplicates("message_id", keep="first")
-        # log the number we dropped
-        nnew = len(df)
-        if n - nnew > 0:
-            _log_and_print(
-                f"Dropping {n-nnew} messages that are duplicates of previously "
-                f"published messages in the subscription {self.subscription}."
-            )
-
         # keep only the requested fields
         keepcols = self._keep_field_names(self.requested_fields, df.columns)
         self.metadata_df = df[keepcols]
