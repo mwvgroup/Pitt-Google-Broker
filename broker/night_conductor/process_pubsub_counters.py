@@ -261,7 +261,7 @@ class MetadataCollector:
         df_avros = df_avros.set_index(msg_id)
         df_avros = df_avros[[oid, sid]]  # drop the columns we don't need
 
-        # add the ids to the alerts_raw metadata
+        # prepare the alerts_raw dataframe
         df_alerts_raw = self.metadata_dfs_dict["alerts_raw"].reset_index()
         df_alerts_raw = df_alerts_raw.astype({msg_id: int}).set_index(msg_id)
 
@@ -269,6 +269,7 @@ class MetadataCollector:
         df_alerts_raw = df_alerts_raw[~df_alerts_raw.index.duplicated(keep="first")]
         df_avros = df_avros[~df_avros.index.duplicated(keep="first")]
 
+        # add the ids to the alerts_raw metadata
         df_alerts_raw[oid] = df_avros[oid]
         df_alerts_raw[sid] = df_avros[sid]
 
