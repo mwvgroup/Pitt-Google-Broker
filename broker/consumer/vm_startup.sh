@@ -71,7 +71,7 @@ do
     # get list of live topics and dump to file
     {
         /bin/kafka-topics \
-            --bootstrap-server public2.alerts.ztf.uw.edu:9094 \
+            --bootstrap-server public.alerts.ztf.uw.edu:9094 \
             --list \
             --command-config ${workingdir}/admin.properties \
             > $fout_topics
