@@ -10,7 +10,7 @@ teardown="${2:-False}"
 survey="${3:-ztf}"
 # name of the survey this broker instance will ingest
 versiontag="${4:-v3_3}"
-zone="${CE_ZONE:-us-central1-a}" # use env variable CE_ZONE if it exists
+zone="${5:-us-central1-a}"
 
 #--- GCP resources used in this script
 store_bq_trigger_topic="${survey}-alerts"
