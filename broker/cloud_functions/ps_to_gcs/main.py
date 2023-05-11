@@ -15,7 +15,9 @@ from tempfile import SpooledTemporaryFile
 import fastavro
 from google.cloud import logging
 from google.cloud import storage
+from google.cloud.exceptions import PreconditionFailed
 
+from broker_utils import gcp_utils
 from broker_utils.schema_maps import load_schema_map
 from broker_utils.types import AlertFilename, AlertIds
 from exceptions import SchemaParsingError
@@ -24,6 +26,7 @@ from exceptions import SchemaParsingError
 PROJECT_ID = os.getenv('GCP_PROJECT')
 TESTID = os.getenv('TESTID')
 SURVEY = os.getenv('SURVEY')
+VERSIONTAG = os.getenv("VERSIONTAG")
 
 schema_map = load_schema_map(SURVEY, TESTID)
 
@@ -33,10 +36,14 @@ log_name = 'ps-to-gcs-cloudfnc'
 logger = logging_client.logger(log_name)
 
 # GCP resources used in this module
-bucket_name = f'{PROJECT_ID}-{SURVEY}-alert_avros'  # store the Avro files
+bucket_name = f"{PROJECT_ID}-{SURVEY}_alerts_{VERSIONTAG}"  # store the Avro files
+ps_topic = f"{SURVEY}-alerts"
 if TESTID != "False":
     bucket_name = f'{bucket_name}-{TESTID}'
-bucket = storage.Client().get_bucket(bucket_name)
+    ps_topic = f'{ps_topic}-{TESTID}'
+
+client = storage.Client()
+bucket = client.get_bucket(client.bucket(bucket_name, user_project=PROJECT_ID))
 
 # By default, spool data in memory to avoid IO unless data is too big
 # LSST alerts are anticipated at 80 kB, so 150 kB should be plenty
@@ -86,7 +93,12 @@ def run(msg, context) -> None:
                 `event_type`: for example: "google.pubsub.topic.publish".
                 `resource`: the resource that emitted the event.
     """
-    upload_bytes_to_bucket(msg, context)
+    try:
+        upload_bytes_to_bucket(msg, context)
+    # this is raised by blob.upload_from_file if the object already exists in the bucket
+    except PreconditionFailed:
+        # we'll simply return, and the duplicate alert will go no further in our pipeline
+        return
 
 
 def upload_bytes_to_bucket(msg, context) -> None:
@@ -124,20 +136,22 @@ def upload_bytes_to_bucket(msg, context) -> None:
 
         blob = bucket.blob(filename)
         blob.metadata = create_file_metadata(alert, context, alert_ids)
-        blob.upload_from_file(temp_file)
 
-    logger.log_text(f'Uploaded {filename} to {bucket_name}')
+        # raise a PreconditionFailed exception if filename already exists in the bucket using "if_generation_match=0"
+        # let it raise. the main function will catch it and then drop the message.
+        blob.upload_from_file(temp_file, if_generation_match=0)
 
-    del_vars = [
-        data,
-        attributes,
-        temp_file,
-        alert,
-        filename,
-        blob,
-    ]
-    for var in del_vars:
-        del var
+        # Cloud Storage says this is not a duplicate, so now we publish the broker's main "alerts" stream
+        temp_file.seek(0)
+        gcp_utils.publish_pubsub(
+            ps_topic,
+            temp_file.read(),
+            attrs={
+                str(alert_ids.id_keys.objectId): str(alert_ids.objectId),
+                str(alert_ids.id_keys.sourceId): str(alert_ids.sourceId),
+                **attributes,
+            }
+        )
 
 
 def create_file_metadata(alert, context, alert_ids):
@@ -176,8 +190,6 @@ def fix_schema(temp_file, alert, data, filename):
             valid_schema = pickle.load(infile)
 
     except FileNotFoundError:
-        msg = f'Original schema header retained for {SURVEY} v{version}; file {filename}'
-        logger.log_text(msg)
         return
 
     # write the corrected file
@@ -185,8 +197,6 @@ def fix_schema(temp_file, alert, data, filename):
     fastavro.writer(temp_file, valid_schema, alert)
     temp_file.truncate()  # removes leftover data
     temp_file.seek(0)
-
-    logger.log_text(f'Schema header reformatted for {SURVEY} v{version}; file {filename}')
 
 
 def guess_schema_version(alert_bytes: bytes) -> str:

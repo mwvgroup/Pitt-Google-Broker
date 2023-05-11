@@ -144,7 +144,7 @@ Load a schema map, paths to alerts stored locally, and a ``TestAlert``:
 
 .. code:: python
 
-    apaths = AlertPaths()
+    apaths = AlertPaths(SURVEY)
     schema_map = load_schema_map('generic', False, SURVEY)
 
     talert = TestAlert(

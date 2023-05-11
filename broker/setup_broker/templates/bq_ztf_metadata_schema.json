@@ -26,14 +26,26 @@
   {
     "description": "Name of the survey's Kafka topic that originated the alert.",
     "mode": "NULLABLE",
-    "name": "kafka_topic__alerts",
+    "name": "kafka_topic__alerts_raw",
     "type": "STRING"
   },
   {
     "description": "Timestamp of the original alert from the survey's Kafka topic.",
     "mode": "NULLABLE",
-    "name": "kafka_timestamp__alerts",
+    "name": "kafka_timestamp__alerts_raw",
     "type": "TIMESTAMP"
+  },
+  {
+    "description": "Timestamp of the alerts_raw Pub/Sub message.",
+    "mode": "NULLABLE",
+    "name": "publish_time__alerts_raw",
+    "type": "TIMESTAMP"
+  },
+  {
+    "description": "Message ID of the alerts_raw Pub/Sub message.",
+    "mode": "NULLABLE",
+    "name": "message_id__alerts_raw",
+    "type": "STRING"
   },
   {
     "description": "Timestamp of the alerts Pub/Sub message.",

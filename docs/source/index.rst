@@ -16,16 +16,6 @@ The Pitt-Google Broker runs on the `Google Cloud Platform <https://cloud.google.
 ..    Overview<self>
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Access Data
-
-   access-data/data-overview
-   access-data/initial-setup
-   access-data/bigquery
-   access-data/cloud-storage
-   access-data/pubsub
-
-.. toctree::
    :hidden:
    :maxdepth: 1
    :caption: Broker Software
@@ -60,6 +50,8 @@ The Pitt-Google Broker runs on the `Google Cloud Platform <https://cloud.google.
 
    working-notes/early-dev/README
    working-notes/troyraen/index
+
+For the current broker-utils API reference, see the `update_broker_utils branch <https://pitt-broker.readthedocs.io/en/u-tjr-update_broker_utils/api/broker-utils/avro-schemas.html>`__.
 
 ..
 .. Indices and tables
