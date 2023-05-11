@@ -73,7 +73,6 @@ do
         /bin/kafka-topics \
             --bootstrap-server public.alerts.ztf.uw.edu:9092 \
             --list \
-            --command-config ${workingdir}/admin.properties \
             > $fout_topics
     } || {
         true
