@@ -71,9 +71,10 @@ You can use the ``gcloud compute scp`` command for this:
 
     survey=ztf  # use the same survey used in broker setup
     testid=mytest  # use the same testid used in broker setup
+    zone=us-central1-a  # use the VM's zone
 
-    gcloud compute scp krb5.conf "${survey}-consumer-${testid}:/etc/krb5.conf" --zone="$CE_ZONE"
-    gcloud compute scp pitt-reader.user.keytab "${survey}-consumer-${testid}:/home/broker/consumer/pitt-reader.user.keytab" --zone="$CE_ZONE"
+    gcloud compute scp krb5.conf "${survey}-consumer-${testid}:/etc/krb5.conf" --zone="${zone}"
+    gcloud compute scp pitt-reader.user.keytab "${survey}-consumer-${testid}:/home/broker/consumer/pitt-reader.user.keytab" --zone="${zone}"
 
 --------------
 
