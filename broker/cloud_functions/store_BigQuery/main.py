@@ -9,9 +9,7 @@ from typing import Dict, Optional
 
 from google.cloud import functions_v1, logging
 
-from broker_utils import data_utils, gcp_utils
-from broker_utils.schema_maps import load_schema_map, get_key, get_value
-
+from broker_utils import data_utils, gcp_utils, schema_maps
 
 PROJECT_ID = os.getenv("GCP_PROJECT")
 TESTID = os.getenv("TESTID")
@@ -29,8 +27,7 @@ if TESTID != "False":
     bq_dataset = f"{bq_dataset}_{TESTID}"
     ps_topic = f"{ps_topic}-{TESTID}"
 
-schema_map = load_schema_map(SURVEY, TESTID)
-sobjectId, ssourceId = get_key("objectId", schema_map), get_key("sourceId", schema_map)
+schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
 
 
 def run(msg: dict, context: functions_v1.context.Context) -> None:
@@ -150,8 +147,8 @@ def publish_pubsub(alert_dict: dict, table_dicts: Dict[str, Optional[dict]]):
     """Announce the table storage operation to Pub/Sub."""
     # collect attributes
     attrs = {
-        sobjectId: get_value("objectId", alert_dict, schema_map),
-        ssourceId: get_value("sourceId", alert_dict, schema_map),
+        schema_map["objectId"]: str(alert_dict[schema_map["objectId"]]),
+        schema_map["sourceId"]: str(alert_dict[schema_map["sourceId"]]),
     }
     for d in table_dicts:
         attrs.update(d)

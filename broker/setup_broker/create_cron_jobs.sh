@@ -9,7 +9,6 @@ testid="${1:-test}"
 teardown="${2:-False}" # "True" tearsdown/deletes resources, else setup
 survey="${3:-ztf}"
 # name of the survey this broker instance will ingest
-region="${GCP_REGION:-us-central1}"  # use env var, if exists
 
 #--- GCP resources used in this script
 cue_night_conductor="${survey}-cue_night_conductor"
@@ -26,10 +25,8 @@ fi
 if [ "$teardown" = "True" ]; then
     # ensure that we do not teardown production resources
     if [ "$testid" != "False" ]; then
-        gcloud scheduler jobs delete $night_conductor_START \
-            --location "${region}"
-        gcloud scheduler jobs delete $night_conductor_END \
-            --location "${region}"
+        gcloud scheduler jobs delete $night_conductor_START
+        gcloud scheduler jobs delete $night_conductor_END
     fi
 
 #--- Create jobs that schedule night conductor
@@ -41,14 +38,12 @@ else
     msgEND='END'
 
     gcloud scheduler jobs create pubsub $night_conductor_START \
-        --location "${region}" \
         --schedule "${scheduleSTART}" \
         --topic $cue_night_conductor \
         --message-body $msgSTART \
         --time-zone $timezone
 
     gcloud scheduler jobs create pubsub $night_conductor_END \
-        --location "${region}" \
         --schedule "${scheduleEND}" \
         --topic $cue_night_conductor \
         --message-body $msgEND \
@@ -71,15 +66,15 @@ else
 
     # if this is a testing instance, pause the jobs and tell the user how to resume
     if [ "$testid" != "False" ]; then
-        gcloud scheduler jobs pause $night_conductor_START --location "${region}"
-        gcloud scheduler jobs pause $night_conductor_END --location "${region}"
+        gcloud scheduler jobs pause $night_conductor_START
+        gcloud scheduler jobs pause $night_conductor_END
 
         echo
         echo "The 'cue night-conductor' cron jobs have been placed in the 'pause' state."
         echo "To resume them, run"
         echo
-        echo "gcloud scheduler jobs resume ${night_conductor_START} --location ${region}"
-        echo "gcloud scheduler jobs resume ${night_conductor_END} --location ${region}"
+        echo "gcloud scheduler jobs resume $night_conductor_START"
+        echo "gcloud scheduler jobs resume $night_conductor_END"
         echo
     fi
 

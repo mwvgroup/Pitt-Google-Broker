@@ -327,9 +327,6 @@ def _setup_dashboard_json(survey='ztf', testid='test'):
     with open(ftemplate, 'r') as f:
         dstring = json.dumps(json.load(f))
 
-    # insert the project id
-    dstring = dstring.replace("projects/PROJECT_ID/", f"projects/{PROJECT_ID}/")
-
     # change the resource names
     rnames = _setup_dashboard_resource_names(survey=survey, testid=testid)
     # {'old-name': 'new-name'}

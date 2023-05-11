@@ -12,8 +12,7 @@ import pandas as pd
 from pathlib import Path
 from supernnova.validation.validate_onthefly import classify_lcs
 
-from broker_utils import data_utils, gcp_utils
-from broker_utils.schema_maps import load_schema_map, get_key, get_value
+from broker_utils import data_utils, gcp_utils, schema_maps
 
 
 PROJECT_ID = os.getenv("GCP_PROJECT")
@@ -33,8 +32,7 @@ if TESTID != "False":  # attach the testid to the names
     ps_topic = f"{ps_topic}-{TESTID}"
 bq_table = f"{bq_dataset}.SuperNNova"
 
-schema_map = load_schema_map(SURVEY, TESTID)
-sobjectId, ssourceId = get_key("objectId", schema_map), get_key("sourceId", schema_map)
+schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
 
 model_dir_name = "ZTF_DMAM_V19_NoC_SNIa_vs_CC_forFink"
 model_file_name = "vanilla_S_0_CLF_2_R_none_photometry_DF_1.0_N_global_lstm_32x2_0.05_128_True_mean.pt"
@@ -77,8 +75,8 @@ def run(msg: dict, context) -> None:
     else:
         # announce to pubsub
         attrs = {
-            sobjectId: get_value("objectId", alert_dict, schema_map),
-            ssourceId: get_value("sourceId", alert_dict, schema_map),
+            schema_map["objectId"]: str(alert_dict[schema_map["objectId"]]),
+            schema_map["sourceId"]: str(alert_dict[schema_map["sourceId"]]),
         }
         gcp_utils.publish_pubsub(
             ps_topic, {"alert": alert_dict, "SuperNNova": snn_dict}, attrs=attrs
@@ -103,8 +101,8 @@ def _classify_with_snn(alert_dict: dict) -> dict:
     # use `.item()` to convert numpy -> python types for later json serialization
     pred_probs = pred_probs.flatten()
     snn_dict = {
-        sobjectId: snn_df.objectId,
-        ssourceId: snn_df.sourceId,
+        schema_map["objectId"]: snn_df.objectId,
+        schema_map["sourceId"]: snn_df.sourceId,
         "prob_class0": pred_probs[0].item(),
         "prob_class1": pred_probs[1].item(),
         "predicted_class": np.argmax(pred_probs).item(),
@@ -127,8 +125,8 @@ def _format_for_snn(alert_dict: dict) -> pd.DataFrame:
     snn_df["FLT"] = alert_df["fid"].map(schema_map["FILTER_MAP"])
 
     if SURVEY == "ztf":
-        snn_df["MJD"] = math.jd_to_mjd(alert_df["jd"])
-        snn_df["FLUXCAL"], snn_df["FLUXCALERR"] = math.mag_to_flux(
+        snn_df["MJD"] = data_utils.jd_to_mjd(alert_df["jd"])
+        snn_df["FLUXCAL"], snn_df["FLUXCALERR"] = data_utils.mag_to_flux(
             alert_df[schema_map["mag"]],
             alert_df[schema_map["magzp"]],
             alert_df[schema_map["magerr"]],
