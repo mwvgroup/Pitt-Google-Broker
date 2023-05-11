@@ -205,7 +205,7 @@ connection will not succeed.
 
 .. code:: none
 
-    bootstrap.servers=public.alerts.ztf.uw.edu:9094
+    bootstrap.servers=public.alerts.ztf.uw.edu:9092
     group.id=group
     session.timeout.ms=6000
     enable.auto.commit=False
@@ -229,7 +229,7 @@ The following assumes we are using the manual install VM.
     topicday=20210105  # yyyymmdd, must be within 7 days of present
     cd /bin
     ./kafka-console-consumer \
-        --bootstrap-server public.alerts.ztf.uw.edu:9094 \
+        --bootstrap-server public.alerts.ztf.uw.edu:9092 \
         --topic ztf_${topicday}_programid1 \
         --consumer.config /home/ztf_consumer/consumer.properties
     # final argument should point to the consumer.properties file created above
@@ -383,7 +383,7 @@ following:
        useTicketCache=false;
 
     # connecting to ZTF
-    bootstrap.servers=public.alerts.ztf.uw.edu:9094
+    bootstrap.servers=public.alerts.ztf.uw.edu:9092
     # group.id=group
     # session.timeout.ms=6000
     # enable.auto.commit=False
