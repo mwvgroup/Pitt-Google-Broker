@@ -33,13 +33,15 @@ fi
 
 #--- Download config files from GCS
 # remove all files
-rm -r "${brokerdir}/*"
+rm -r "${brokerdir}"
 # download fresh files
+mkdir "${brokerdir}"
 cd ${brokerdir}
 gsutil -m cp -r "gs://${broker_bucket}/consumer" .
 gsutil -m cp -r "gs://${broker_bucket}/schema_maps" .
 # wait a bit, otherwise all the files may not have downloaded yet
 sleep 30s
+cd ${workingdir}
 
 #--- Set the topic names to the "FORCE" metadata attributes if exist, else defaults
 kafka_topic_syntax=$(cat "${brokerdir}/schema_maps/${survey}.yaml" | yq ".TOPIC_SYNTAX")
@@ -63,7 +65,6 @@ sed -i "s/PS_TOPIC/${PS_TOPIC}/g" ${fconfig}
 sed -i "s/KAFKA_TOPIC/${KAFKA_TOPIC}/g" ${fconfig}
 
 #--- Check until alerts start streaming into the topic
-cd ${workingdir}
 alerts_flowing=false
 while [ "${alerts_flowing}" = false ]
 do
