@@ -102,27 +102,15 @@
     "type": "TIMESTAMP"
   },
   {
-    "description": "Timestamp of the alerts_pure Pub/Sub message.",
+    "description": "Timestamp of the Lite Pub/Sub message.",
     "mode": "NULLABLE",
-    "name": "publish_time__alerts_pure",
+    "name": "publish_time__lite",
     "type": "TIMESTAMP"
   },
   {
-    "description": "Timestamp of the exgalac_trans Pub/Sub message.",
+    "description": "Timestamp of the Tagged Pub/Sub message.",
     "mode": "NULLABLE",
-    "name": "publish_time__exgalac_trans",
-    "type": "TIMESTAMP"
-  },
-  {
-    "description": "Timestamp of the salt2 Pub/Sub message.",
-    "mode": "NULLABLE",
-    "name": "publish_time__salt2",
-    "type": "TIMESTAMP"
-  },
-  {
-    "description": "Timestamp of the exgalac_trans_cf Pub/Sub message.",
-    "mode": "NULLABLE",
-    "name": "publish_time__exgalac_trans_cf",
+    "name": "publish_time__tagged",
     "type": "TIMESTAMP"
   },
   {
