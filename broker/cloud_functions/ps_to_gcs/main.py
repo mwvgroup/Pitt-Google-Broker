@@ -28,7 +28,8 @@ TESTID = os.getenv('TESTID')
 SURVEY = os.getenv('SURVEY')
 VERSIONTAG = os.getenv("VERSIONTAG")
 
-schema_map = load_schema_map(SURVEY, TESTID)
+path_to_local_schema_yaml = Path(__file__).resolve().parent / f"{SURVEY}.yaml"
+schema_map = load_schema_map(SURVEY, TESTID, schema=path_to_local_schema_yaml)
 
 # connect to the cloud logger
 logging_client = logging.Client()
