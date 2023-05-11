@@ -3,7 +3,6 @@
 
 brokerdir=/home/broker
 workingdir="${brokerdir}/consumer"
-# mkdir -p ${workingdir} # keytab auth file must already exist in this dir
 
 #--- Get project and instance metadata
 # for info on working with metadata, see here
@@ -31,12 +30,21 @@ if [ "$testid" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
     PS_TOPIC_DEFAULT="${PS_TOPIC_DEFAULT}-${testid}"
 fi
-# default Kafka topic
+
+#--- Download config files from GCS
+# remove all files
+rm -r "${brokerdir}/*"
+# download fresh files
+cd ${brokerdir}
+gsutil -m cp -r "gs://${broker_bucket}/consumer" .
+gsutil -m cp -r "gs://${broker_bucket}/schema_maps" .
+# wait a bit, otherwise all the files may not have downloaded yet
+sleep 30s
+
+#--- Set the topic names to the "FORCE" metadata attributes if exist, else defaults
 kafka_topic_syntax=$(cat "${brokerdir}/schema_maps/${survey}.yaml" | yq ".TOPIC_SYNTAX")
 yyyymmdd=$(date -u '+%Y%m%d')
 KAFKA_TOPIC_DEFAULT="${kafka_topic_syntax/yyyymmdd/${yyyymmdd}}"
-
-#--- Set the topic names to the "FORCE" metadata attributes if exist, else defaults
 KAFKA_TOPIC="${KAFKA_TOPIC_FORCE:-${KAFKA_TOPIC_DEFAULT}}"
 PS_TOPIC="${PS_TOPIC_FORCE:-${PS_TOPIC_DEFAULT}}"
 # set VM metadata, just for clarity and easy viewing
@@ -48,16 +56,6 @@ gcloud compute instances add-metadata "$consumerVM" --zone "$zone" \
 fout_run="${workingdir}/run-connector.out"
 fout_topics="${workingdir}/list.topics"
 
-#--- Download config files from GCS (just grab the whole bucket)
-cd ${brokerdir}
-# remove all consumer files except the keytab
-find ${workingdir} -type f -not -name 'pitt-reader.user.keytab' -delete
-# download fresh files
-gsutil -m cp -r "gs://${broker_bucket}/consumer" .
-gsutil -m cp -r "gs://${broker_bucket}/schema_maps" .
-
-cd ${workingdir}
-
 #--- Set the connector's configs (project and topics)
 fconfig=ps-connector.properties
 sed -i "s/PROJECT_ID/${PROJECT_ID}/g" ${fconfig}
@@ -65,6 +63,7 @@ sed -i "s/PS_TOPIC/${PS_TOPIC}/g" ${fconfig}
 sed -i "s/KAFKA_TOPIC/${KAFKA_TOPIC}/g" ${fconfig}
 
 #--- Check until alerts start streaming into the topic
+cd ${workingdir}
 alerts_flowing=false
 while [ "${alerts_flowing}" = false ]
 do
