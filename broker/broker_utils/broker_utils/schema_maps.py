@@ -8,10 +8,9 @@ import os
 from pathlib import Path
 from typing import Optional, Union
 
+import yaml
 from google.cloud import storage
 from google.cloud.storage.blob import Blob
-import yaml
-
 
 # get project id from environment variable, else default to production project
 # cloud functions use GCP_PROJECT

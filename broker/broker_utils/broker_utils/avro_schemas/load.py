@@ -10,8 +10,8 @@ REGISTERED_SCHEMAS = [
 """
 
 from importlib.resources import path as rpath
-import fastavro
 
+import fastavro
 
 REGISTERED_SCHEMAS = [
     "elasticc.v0_9.alert.avsc",

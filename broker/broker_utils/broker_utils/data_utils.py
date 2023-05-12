@@ -4,22 +4,22 @@
 survey and broker data.
 """
 
+import json
+import logging
+import os
 from base64 import b64decode
 from io import BytesIO
-import os
-import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Union
 
 import fastavro
-import json
+
+from .avro_schemas.load import all as load_all_schemas
+from .types import AlertIds
 
 # load pandas only when necessary. it hogs memory on Cloud Functions.
 if TYPE_CHECKING:
     import pandas as pd
-
-from .avro_schemas.load import all as load_all_schemas
-from .types import AlertIds
 
 
 LOGGER = logging.getLogger(__name__)

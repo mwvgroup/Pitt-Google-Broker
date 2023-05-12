@@ -3,8 +3,8 @@
 """The ``math`` module contains mathematical transforms for survey data."""
 from typing import Tuple
 
-from astropy.time import Time
 import numpy as np
+from astropy.time import Time
 
 
 def mag_to_flux(mag: float, zeropoint: float, magerr: float) -> Tuple[float, float]:

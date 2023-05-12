@@ -5,15 +5,15 @@ GCP resources.
 """
 
 import datetime
+import json
 import os
-
 from concurrent.futures import TimeoutError
+from typing import TYPE_CHECKING, Callable, List, Optional, Union
+
 from google.cloud import bigquery, pubsub_v1, storage
 from google.cloud.logging_v2.logger import Logger
 from google.cloud.pubsub_v1.subscriber.futures import StreamingPullFuture
 from google.cloud.pubsub_v1.types import PubsubMessage, ReceivedMessage
-import json
-from typing import Callable, List, TYPE_CHECKING, Optional, Union
 
 # load pandas only when necessary. it hogs memory on Cloud Functions.
 if TYPE_CHECKING:

@@ -10,7 +10,6 @@ from typing import Optional, Tuple, Union
 
 from google.cloud import pubsub_v1
 
-
 # get project id from environment variable, else default to production project
 # cloud functions use GCP_PROJECT
 if "GCP_PROJECT" in os.environ:

@@ -2,13 +2,12 @@
 # -*- coding: UTF-8 -*-
 """Pitt-Google types."""
 
-from dataclasses import dataclass
 import logging
 import re
+from dataclasses import dataclass
 from typing import NamedTuple, Union
 
 from .schema_maps import get_key, get_value
-
 
 logger = logging.getLogger(__name__)
 

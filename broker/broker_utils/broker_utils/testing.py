@@ -3,19 +3,18 @@
 """Classes and functions used for Pitt-Google broker testing."""
 
 import base64
-from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
 import logging
 import os
+from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import NamedTuple, Union
 
 import numpy as np
 
+from .data_utils import decode_alert, load_alert
 from .gcp_utils import pull_pubsub
-from .data_utils import load_alert, decode_alert
-from .types import _AlertIds, AlertIds
-
+from .types import AlertIds, _AlertIds
 
 logger = logging.getLogger(__name__)
 
