@@ -4,7 +4,7 @@ Using figures.py in this directory:
 
 ```python
 from matplotlib import pyplot as plt
-import figures as figsk
+import figures as figs
 
 # qdate = "20210927"
 # qdate = "20220401"
