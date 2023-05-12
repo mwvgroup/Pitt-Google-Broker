@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Union
 
 import fastavro
 
-from .avro_schemas.load import all as load_all_schemas
+from .avro_schemas.load import load_all_schemas
 from .types import AlertIds
 
 # load pandas only when necessary. it hogs memory on Cloud Functions.

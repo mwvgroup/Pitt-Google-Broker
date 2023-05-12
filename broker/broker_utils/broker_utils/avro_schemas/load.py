@@ -19,14 +19,9 @@ REGISTERED_SCHEMAS = [
 ]
 
 
-def all():
+def load_all_schemas():
     """Load all schemas in SCHEMAS and return as a dictionary."""
-    return dict(
-        [
-            (schema, fastavro.schema.load_schema(_path(schema)))
-            for schema in REGISTERED_SCHEMAS
-        ]
-    )
+    return {schema: fastavro.schema.load_schema(_path(schema)) for schema in REGISTERED_SCHEMAS}
 
 
 def _path(schema):
