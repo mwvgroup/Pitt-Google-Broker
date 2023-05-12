@@ -27,7 +27,12 @@ LOGGER = logging.getLogger(__name__)
 if "GCP_PROJECT" in os.environ:
     import google.cloud.logging
     google.cloud.logging.Client().setup_logging()
-    LOGGER.setLevel(logging.DEBUG)
+
+
+class OpenAlertError(Exception):
+    """Raised after methods for all known alert formats have tried and failed to open the alert."""
+
+    pass
 
 
 def load_alert(
@@ -35,7 +40,7 @@ def load_alert(
     return_as: str = "dict",
     **kwargs
 ) -> Union[bytes, dict, "pd.DataFrame"]:
-    """***Depreciated. Use open_alert() instead.***
+    """***Deprecated. Use open_alert() instead.***
 
     Load alert from file at ``fin`` and return in format ``return_as``.
 
@@ -45,7 +50,7 @@ def load_alert(
                     accepted by ``decode_alert``.
         kwargs:     Keyword arguments for ``decode_alert``.
     """
-    LOGGER.warn("Depreciated. Use open_alert() instead.")
+    LOGGER.warning("Deprecated. Use open_alert() instead.")
     return open_alert(fin, return_as=return_as, **kwargs)
     # first, load to bytes
     # if return_as == "bytes":
@@ -62,10 +67,10 @@ def decode_alert(
     drop_cutouts: bool = False,
     **kwargs
 ) -> Union[dict, "pd.DataFrame"]:
-    """***Depreciated. Use open_alert() instead.***
+    """***Deprecated. Use open_alert() instead.***
 
     Load an alert Avro and return in requested format."""
-    LOGGER.warn("Depreciated. Use open_alert() instead.")
+    LOGGER.warning("Deprecated. Use open_alert() instead.")
     return open_alert(alert_avro, return_as=return_as, drop_cutouts=drop_cutouts, **kwargs)
 
 
@@ -92,8 +97,7 @@ def open_alert(
     trying at least one method for each input format listed above.
     It catches nearlly all ``Exception``s along the way.
     Set the logger level to DEBUG for a record of the try/excepts.
-    If it runs out of methods to try, it raises the error chain instead of returning None.
-    (Every private function it calls behaves the same way.)
+    If it runs out of methods to try, it raises an ``OpenAlertError``.
 
     Args:
         alert:
@@ -110,18 +114,27 @@ def open_alert(
 
     Returns:
         alert data in the requested format
+
+    Raises:
+        ``OpenAlertError`` if none of the methods successfully open the alert.
     """
     # load bytes. we do not need this to load a dict.
     if return_as == "bytes":
         return _alert_to_bytes(alert)
 
-    # load dict. we need this to load a dataframe.
+    # load dict. even if the user doesn't want this, we need it to load a dataframe.
     try:
         alert_dicts = _avro_to_dicts(alert, kwargs.get("load_schema"))
 
     except Exception:
-        # we only expect avro or json, so let an exception raise
-        alert_dicts = _json_to_dicts(alert)
+        try:
+            alert_dicts = _json_to_dicts(alert)
+
+        except Exception:
+            raise OpenAlertError(
+                "Failed to open the alert after trying all known methods for Avro and Json. "
+                "See log warnings and/or set the log level to debug for more information."
+            )
 
     # we expect alerts to have exactly one dict in the list, else raise exception
     alert_dict = alert_dicts[0]
@@ -156,7 +169,7 @@ def _alert_to_bytes(alert: Union[str, Path, bytes]):
 
     except Exception as e:
         excepts.append(e)
-        LOGGER.debug(f"tried: open(alert, 'rb'). caught error: {e}")
+        LOGGER.debug("tried: open(alert, 'rb'). caught error: %r", e)
 
         # maybe alert is already a bytes object
         if isinstance(alert, bytes):
@@ -190,7 +203,17 @@ def _avro_to_dicts(avroin: Union[str, Path, bytes], load_schema: Union[bool, str
     def _read(fin, load_schema):
         # no try/except. load_schema must be properly defined.
         if not load_schema:
-            return [r for r in fastavro.reader(fin)]
+            try:
+                alert_dicts = [r for r in fastavro.reader(fin)]
+            except TypeError as e:
+                LOGGER.warning(
+                    "fastavro raised a TypeError. This can happen with some versions of fastavro "
+                    "when the avro schema has incorrectly defined default types (as some ZTF "
+                    "schemas do). Try fastavro<=1.6.1 or see the related issue for more "
+                    "information https://github.com/fastavro/fastavro/issues/676"
+                )
+                raise e
+            return alert_dicts
         else:
             return _read_schemaless(fin, load_schema)
 
@@ -207,13 +230,14 @@ def _avro_to_dicts(avroin: Union[str, Path, bytes], load_schema: Union[bool, str
                 return [fastavro.schemaless_reader(fin, val)]
             except Exception as e:
                 excepts.append(e)
-                LOGGER.debug(f"tried: schemaless_reader(fin, {key}). caught error: {e}")
+                LOGGER.debug("tried: schemaless_reader(fin, %r). caught error: %r", key, e)
 
         # if we get here, raise an error instead of returning None
         raise excepts[0]
 
     excepts = []
 
+    # now make the calls
     # assume avroin is bytes
     try:
         with BytesIO(avroin) as fin:
@@ -221,16 +245,16 @@ def _avro_to_dicts(avroin: Union[str, Path, bytes], load_schema: Union[bool, str
 
     except Exception as e:
         excepts.append(e)
-        LOGGER.debug(f"tried: BytesIO(avroin). caught error: {e}")
+        LOGGER.debug("tried: BytesIO(avroin). caught error: %r", e)
 
         try:
             # cloud fncs adds a base64 encoding. undo it
             with BytesIO(b64decode(avroin)) as fin:
                 list_of_dicts = _read(fin, load_schema)
 
-        except Exception as e:
-            excepts.append(e)
-            LOGGER.debug(f"tried: BytesIO(base64.b64decode(avroin). caught error: {e}")
+        except Exception as e1:
+            excepts.append(e1)
+            LOGGER.debug("tried: BytesIO(base64.b64decode(avroin). caught error: %r", e1)
 
             # maybe avroin is a local path
             try:
@@ -240,7 +264,7 @@ def _avro_to_dicts(avroin: Union[str, Path, bytes], load_schema: Union[bool, str
             except Exception as e:
                 # unknown format
                 excepts.append(e)
-                LOGGER.debug(f"tried: open(avroin, 'rb'). caught error: {e}")
+                LOGGER.debug("tried: open(avroin, 'rb'). caught error: %r", e)
                 raise excepts[0]
 
     return list_of_dicts
@@ -263,7 +287,7 @@ def _json_to_dicts(jsonin: str):
         list_dict = [json.loads(jsonin)]
 
     except Exception as e:
-        LOGGER.debug(f"tried: json.loads(jsonin). caught error:{e}")
+        LOGGER.debug("tried: json.loads(jsonin). caught error: %r", e)
         excepts.append(e)
 
         try:
@@ -271,7 +295,7 @@ def _json_to_dicts(jsonin: str):
             list_dict = [json.loads(b64decode(jsonin))]
 
         except Exception as e:
-            LOGGER.debug(f"tried: json.loads(base64.b64decode(jsonin)). caught error:{e}")
+            LOGGER.debug("tried: json.loads(base64.b64decode(jsonin)). caught error: %r", e)
             excepts.append(e)
 
             # unknown format
