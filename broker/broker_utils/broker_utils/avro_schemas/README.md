@@ -4,6 +4,7 @@ Note: To add a new schema, add the avsc file(s) to this directory,
 then register the schema in load.py.
 
 There are currently two registered schemas:
+
 - elasticc.v0_9.alert.avsc (incoming alerts from elasticc)
 - elasticc.v0_9.brokerClassification.avsc (outgoing alerts to elasticc)
 

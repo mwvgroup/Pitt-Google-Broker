@@ -10,7 +10,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## \[Unreleased\]<a name="unreleased"></a>
 
-
 ## \[0.2.46\] - 2023-04-09
 
 ### Changed
@@ -30,7 +29,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - `data_utils.alert_lite_to_dataframe()`
 
-
 ## \[0.2.43\] - 2022-08-25
 
 ### Fixed
@@ -41,7 +39,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Fixed
 
-- Fix bug introduced by allowing `data_utils.open_alert()` to blindly send `**kwargs` to the functions it calls. `data_utils.open_alert()` now sends only the arguments that are appropriate for the function it's calling.
+- Fix bug introduced by allowing `data_utils.open_alert()` to blindly send `**kwargs` to the
+  functions it calls. `data_utils.open_alert()` now sends only the arguments that are appropriate
+  for the function it's calling.
 
 ## \[0.2.41\] - 2022-08-19
 
@@ -54,11 +54,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Added
 
 - `avro_schemas` module to handle schemaless alerts. Includes schema data files.
-- `data_utils.open_alert()` which uses a brute-force strategy to try to open alerts of all different formats.
+- `data_utils.open_alert()` which uses a brute-force strategy to try to open alerts of all
+  different formats.
 
 ### Changed
 
-- In `data_utils`, depreciate functions `load_alert()` and `decode_alert()` in favor of `open_alert()`
+- In `data_utils`, deprecate functions `load_alert()` and `decode_alert()` in favor of
+  `open_alert()`
 
 ## \[0.2.39\] - 2022-06-23
 
@@ -81,7 +83,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Changed
 
 - Minor internal improvements and bug fixes to `testing`.
-- Rename attributes `testing.Mock.results` to `testing.Mock.module_results` and `testing.TestAlert.publish_as` to `testing.TestAlert.serialize`.
+- Rename attributes `testing.Mock.results` to `testing.Mock.module_results` and
+  `testing.TestAlert.publish_as` to `testing.TestAlert.serialize`.
 
 ## \[0.2.36\] - 2022-06-20
 
@@ -93,13 +96,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Added
 
-- `types` module containing `_AlertIds`, `AlertIds`, and `AlertFilename`. These were rewritten and moved out of `data_utils`.
+- `types` module containing `_AlertIds`, `AlertIds`, and `AlertFilename`. These were rewritten and
+  moved out of `data_utils`.
 
 ### Changed
 
 - Lazy load `pandas`. It hogs memory on Cloud Functions.
-- Remove `data_utils.AlertIds`, `data_utils.idUtils`, and `data_utils.AlertFilename`. They moved to the new `types` module.
-- Rename `tests` module to `testing` and rewrite the included classes to give them more functionality and make them easier to use.
+- Remove `data_utils.AlertIds`, `data_utils.idUtils`, and `data_utils.AlertFilename`. They moved to
+  the new `types` module.
+- Rename `tests` module to `testing` and rewrite the included classes to give them more
+  functionality and make them easier to use.
 
 ## \[0.2.34\] - 2022-06-17
 
@@ -109,7 +115,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Changed
 
-- updated `tests.TestValidator` to accept keyword argument `ids_in` that determines whether alert IDs are extracted from message attributes or the Avro filename.
+- updated `tests.TestValidator` to accept keyword argument `ids_in` that determines whether
+  alert IDs are extracted from message attributes or the Avro filename.
 
 ## \[0.2.33\] - 2022-06-17
 
@@ -145,7 +152,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Added
 
-- `schema_maps.get_key()` return the key name or the final element in the list corresponding to a schema map and key.
+- `schema_maps.get_key()` return the key name or the final element in the list corresponding to a
+  schema map and key.
 - `schema_maps.get_value()` return the alert value corresponding to a schema map and key.
 
 ### Changed
@@ -162,7 +170,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Changed
 
-- Move functions `jd_to_mjd` and `mag_to_flux` from `data_utils` to the new `math` module. Update SuperNNova Cloud Function to accommodate (outside `broker_utils` at broker/cloud_functions/classify_snn).
+- Move functions `jd_to_mjd` and `mag_to_flux` from `data_utils` to the new `math` module. Update
+  SuperNNova Cloud Function to accommodate (outside `broker_utils` at
+  broker/cloud_functions/classify_snn).
 - Update `schema_maps.load_schema_map` to accept a Path and load from a local file
 
 ### Removed
@@ -173,7 +183,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Added<a name="added-1"></a>
 
-- `data_utils._get_schema_map` function to load schema map from file if needed and check that it is a dict.
+- `data_utils._get_schema_map` function to load schema map from file if needed and check that it
+  is a dict.
 - `data_utils.load_alert` to load an alert from file.
 - Support for passing `alert_avro` as a path to `data_utils.decode_alert`.
 
@@ -193,7 +204,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Changed<a name="changed"></a>
 
-- Set GCP project ID by an environment variable, fall back to the production broker project. Formerly this was hardcoded to production project.
+- Set GCP project ID by an environment variable, fall back to the production broker project.
+  Formerly this was hardcoded to production project.
 - Unpin `numpy`
 - Unpin `google.cloud.bigquery`
 - Unpin `google.cloud.pubsub`. Update `consumer_sim` and `gcp_utils` to accommodate.
