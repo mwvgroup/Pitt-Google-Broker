@@ -12,6 +12,8 @@ survey="${3:-ztf}"
 schema_version="${4:-3.3}"
 versiontag=v$(echo "${schema_version}" | tr . _)  # 3.3 -> v3_3
 region="${5:-us-central1}"
+zone="${region}-a"  # just use zone "a" instead of adding another script arg
+
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT # get the environment variable
 
 #--- Make the user confirm the settings
@@ -90,7 +92,7 @@ fi
 #--- Create VM instances
 echo
 echo "Configuring VMs..."
-./create_vms.sh "$broker_bucket" "$testid" "$teardown" "$survey"
+./create_vms.sh "$broker_bucket" "$testid" "$teardown" "$survey" "$region" "$zone"
 
 
 #--- Create the cron jobs that check the VM status
@@ -131,24 +133,24 @@ cd .. && cd cloud_functions
 
 #--- Check cue response cloud function
 cd check_cue_response
-./deployment.sh "${testid}" "${teardown}" "${survey}" "${versiontag}"
+./deployment.sh "${testid}" "${teardown}" "${survey}" "${versiontag}" "${zone}"
 
 #--- classify with SNN cloud function
 cd .. && cd classify_snn
-./deployment.sh "${testid}" "${teardown}" "${survey}" "${versiontag}"
+./deployment.sh "${testid}" "${teardown}" "${survey}" "${versiontag}" "${zone}"
 
 #--- alerts-lite cloud function
 cd .. && cd lite
-./deployment.sh "${testid}" "${teardown}" "${survey}" "${versiontag}"
+./deployment.sh "${testid}" "${teardown}" "${survey}" "${versiontag}" "${zone}"
 
 #--- Pub/Sub -> Cloud Storage Avro cloud function
 cd .. && cd ps_to_gcs
-./deployment.sh "${testid}" "${teardown}" "${survey}" "${versiontag}"
+./deployment.sh "${testid}" "${teardown}" "${survey}" "${versiontag}" "${zone}"
 
 #--- BigQuery storage cloud function
 cd .. && cd store_BigQuery
-./deployment.sh "${testid}" "${teardown}" "${survey}" "${versiontag}"
+./deployment.sh "${testid}" "${teardown}" "${survey}" "${versiontag}" "${zone}"
 
 #--- tag alerts cloud function
 cd .. && cd tag
-./deployment.sh "${testid}" "${teardown}" "${survey}" "${versiontag}"
+./deployment.sh "${testid}" "${teardown}" "${survey}" "${versiontag}" "${zone}"
