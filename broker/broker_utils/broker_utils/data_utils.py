@@ -149,11 +149,10 @@ def open_alert(
         return alert_dict
 
     # load dataframe
-    elif return_as == "df":
+    if return_as == "df":
         return alert_dict_to_dataframe(alert_dict, kwargs.get("schema_map"))
 
-    else:
-        raise ValueError("Unknown value recieved for `return_as`.")
+    raise ValueError("Unknown value recieved for `return_as`.")
 
 
 def _alert_to_bytes(alert: Union[str, Path, bytes]):
