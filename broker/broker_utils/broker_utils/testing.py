@@ -140,7 +140,7 @@ class Mock:
         self._module_results = None
 
     def _generate_module_results(self):
-        results = dict()
+        results = {}
 
         if "SuperNNova" in self.modules:
             results["SuperNNova"] = self._supernnova_results
@@ -278,16 +278,15 @@ class Mock:
             # return immediately if no schema map was provided
             if self.kwargs.get("schema_map") is None:
                 logger.error("A schema map is required to mock Cloud Function input.")
-                return
+                return None
 
-            else:
-                self._cfinput = self._CFInput(
-                    msg=dict(
-                        data=base64.b64encode(self.my_test_alert.msg_payload),
-                        attributes=self.my_test_alert.mock.attrs,
-                    ),
-                    context=self._CFContext(),
-                )
+            self._cfinput = self._CFInput(
+                msg=dict(
+                    data=base64.b64encode(self.my_test_alert.msg_payload),
+                    attributes=self.my_test_alert.mock.attrs,
+                ),
+                context=self._CFContext(),
+            )
 
         return self._cfinput
 
@@ -517,9 +516,7 @@ class IntegrationTestValidator:
         # self._pull() gets the ids from the message attributes or filenames,
         # which are always strings.
         # convert the published_alert_ids to the same type.
-        idsin = set(
-            [_AlertIds(*[str(id) for id in ids]) for ids in self.published_alert_ids]
-        )
+        idsin = {_AlertIds(*[str(id) for id in ids]) for ids in self.published_alert_ids}
 
         # compare ID sets
         unmatched_ids = idsout.symmetric_difference(idsin)
@@ -528,9 +525,9 @@ class IntegrationTestValidator:
         # log results
         tmp = f"The message IDs pulled from subscription {self.subscrip}"
         if success:
-            logger.info(f"Success! {tmp} match the input.")
+            logger.info("Success! %s match the input.", tmp)
         else:
-            logger.warning(f"Something went wrong. {tmp} do not match the input.")
+            logger.warning("Something went wrong. %s do not match the input.", tmp)
 
         # warn if idsout contains IDs that were not published
         if len(idsout.difference(idsin)) > 0:
@@ -538,9 +535,10 @@ class IntegrationTestValidator:
                 (
                     "Some IDs were pulled that were not reported as published. "
                     "You may want to purge the subcription using\n"
-                    f"\tbroker_utils.gcp_utils.purge_subscription({self.subscrip})\n"
+                    "\tbroker_utils.gcp_utils.purge_subscription(%s)\n"
                     "and run the test again."
-                )
+                ),
+                self.subscrip
             )
 
         return success, unmatched_ids

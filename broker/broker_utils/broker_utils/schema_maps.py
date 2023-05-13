@@ -129,15 +129,18 @@ def get_value(key: str, alert_dict: dict, schema_map: dict) -> Union[int, str]:
     if isinstance(fullkey, str):
         return alert_dict.get(fullkey)
 
-    elif isinstance(fullkey, list):
+    if isinstance(fullkey, list):
         if len(fullkey) == 1:
             return alert_dict.get(fullkey[0])
 
-        elif len(fullkey) == 2:
+        if len(fullkey) == 2:
             return alert_dict.get(fullkey[0]).get(fullkey[1])
 
-        elif len(fullkey) == 3:
+
+        if len(fullkey) == 3:
             return alert_dict.get(fullkey[0]).get(fullkey[1]).get(fullkey[2])
+
+    return None
 
 
 def get_key(key: str, schema_map: dict) -> Union[int, str]:
@@ -147,5 +150,7 @@ def get_key(key: str, schema_map: dict) -> Union[int, str]:
     if isinstance(fullkey, str):
         return fullkey
 
-    elif isinstance(fullkey, list):
+    if isinstance(fullkey, list):
         return fullkey[-1]
+
+    return None
