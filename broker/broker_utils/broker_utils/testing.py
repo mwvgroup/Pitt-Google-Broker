@@ -152,10 +152,11 @@ class Mock:
     def _supernnova_results(self):
         """Return mocked results for SuperNNova module."""
         prob_class1 = np.random.uniform()
+        sid, oid = self.id_tuples
         return dict(
             [
-                (self.id_keys.objectId, self.ids.objectId),
-                (self.id_keys.sourceId, self.ids.sourceId),
+                (oid[0], oid[1]),
+                (sid[0], sid[1]),
                 ("prob_class0", 1 - prob_class1),
                 ("prob_class1", prob_class1),
                 ("predicted_class", round(prob_class1)),
