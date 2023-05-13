@@ -158,14 +158,12 @@ def open_alert(
 
 def _alert_to_bytes(alert: Union[str, Path, bytes]):
     """Read and return the bytes in ``alert`` (assumed to point to a file)."""
-    excepts = []
     # assume alert points to a file
     try:
         with open(alert, "rb") as f:
             return f.read()
 
     except Exception as e:
-        excepts.append(e)
         LOGGER.debug("tried: open(alert, 'rb'). caught error: %r", e)
 
         # maybe alert is already a bytes object
@@ -218,19 +216,15 @@ def _avro_to_dicts(avroin: Union[str, Path, bytes], load_schema: Union[bool, str
             # a specific schema was requested so drop everything else
             schemas = {load_schema: schemas.get(load_schema)}
 
-        excepts = []
         for key, val in schemas.items():
             try:
                 # wrap the dict in a list to match output of _avro_reader
                 return [fastavro.schemaless_reader(fin, val)]
             except Exception as e:
-                excepts.append(e)
                 LOGGER.debug("tried: schemaless_reader(fin, %r). caught error: %r", key, e)
 
         # if we get here, raise an error instead of returning None
-        raise excepts[0]
-
-    excepts = []
+        raise OpenAlertError
 
     # now make the calls
     # assume avroin is bytes
@@ -239,7 +233,6 @@ def _avro_to_dicts(avroin: Union[str, Path, bytes], load_schema: Union[bool, str
             list_of_dicts = _read(fin, load_schema)
 
     except Exception as e:
-        excepts.append(e)
         LOGGER.debug("tried: BytesIO(avroin). caught error: %r", e)
 
         try:
@@ -248,7 +241,6 @@ def _avro_to_dicts(avroin: Union[str, Path, bytes], load_schema: Union[bool, str
                 list_of_dicts = _read(fin, load_schema)
 
         except Exception as e1:
-            excepts.append(e1)
             LOGGER.debug("tried: BytesIO(base64.b64decode(avroin). caught error: %r", e1)
 
             # maybe avroin is a local path
@@ -258,9 +250,8 @@ def _avro_to_dicts(avroin: Union[str, Path, bytes], load_schema: Union[bool, str
 
             except Exception as e2:
                 # unknown format
-                excepts.append(e2)
                 LOGGER.debug("tried: open(avroin, 'rb'). caught error: %r", e2)
-                raise excepts[0]
+                raise e2
 
     return list_of_dicts
 
@@ -276,14 +267,12 @@ def _json_to_dicts(jsonin: str):
         List[dict]:
             ``avroin`` as a list of dictionaries.
     """
-    excepts = []
     try:
         # wrap single dict in list for consistency with _avro_to_dicts()
         list_dict = [json.loads(jsonin)]
 
     except Exception as e:
         LOGGER.debug("tried: json.loads(jsonin). caught error: %r", e)
-        excepts.append(e)
 
         try:
             # cloud fncs adds a base64 encoding. undo it
@@ -291,8 +280,6 @@ def _json_to_dicts(jsonin: str):
 
         except Exception as e1:
             LOGGER.debug("tried: json.loads(base64.b64decode(jsonin)). caught error: %r", e1)
-            excepts.append(e1)
-
             # unknown format
             raise e1
 
