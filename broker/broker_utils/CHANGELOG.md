@@ -10,6 +10,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## \[Unreleased\]<a name="unreleased"></a>
 
+### Changed
+
+- Improve error handling and logging in `data_utils.open_alert`. The function uses a lot of
+  broad try/excepts in a brute-force attempt to open an alert packet that could be in many
+  different formats. These changes do some moderate clean up of the error handling and
+  provide more detail in the logs about a known issue with some versions of fastavro.
+- Sort all imports.
+- Cleanup syntax issues identified by Codacy.
+
+### Fixed
+
+- Bugfix the IDs in `testing.Mock`.
+
 ## \[0.2.46\] - 2023-04-09
 
 ### Changed
