@@ -290,12 +290,12 @@ def _json_to_dicts(jsonin: str):
             # cloud fncs adds a base64 encoding. undo it
             list_dict = [json.loads(b64decode(jsonin))]
 
-        except Exception as e:
-            LOGGER.debug("tried: json.loads(base64.b64decode(jsonin)). caught error: %r", e)
-            excepts.append(e)
+        except Exception as e1:
+            LOGGER.debug("tried: json.loads(base64.b64decode(jsonin)). caught error: %r", e1)
+            excepts.append(e1)
 
             # unknown format
-            raise e
+            raise e1
 
     return list_dict
 
