@@ -146,8 +146,7 @@ def open_alert(
     if return_as == "dict":
         if drop_cutouts:
             return _drop_cutouts(alert_dict, kwargs.get("schema_map"))
-        else:
-            return alert_dict
+        return alert_dict
 
     # load dataframe
     elif return_as == "df":
