@@ -32,8 +32,6 @@ if "GCP_PROJECT" in os.environ:
 class OpenAlertError(Exception):
     """Raised after methods for all known alert formats have tried and failed to open the alert."""
 
-    pass
-
 
 def load_alert(
     fin: Union[str, Path],
@@ -130,11 +128,11 @@ def open_alert(
         try:
             alert_dicts = _json_to_dicts(alert)
 
-        except Exception:
+        except Exception as e:
             raise OpenAlertError(
                 "Failed to open the alert after trying all known methods for Avro and Json. "
                 "See log warnings and/or set the log level to debug for more information."
-            )
+            ) from e
 
     # we expect alerts to have exactly one dict in the list, else raise exception
     alert_dict = alert_dicts[0]
@@ -175,8 +173,7 @@ def _alert_to_bytes(alert: Union[str, Path, bytes]):
         if isinstance(alert, bytes):
             return alert
 
-        else:
-            raise e
+        raise e
 
 
 def _avro_to_dicts(avroin: Union[str, Path, bytes], load_schema: Union[bool, str, None] = None) -> dict:
@@ -204,7 +201,7 @@ def _avro_to_dicts(avroin: Union[str, Path, bytes], load_schema: Union[bool, str
         # no try/except. load_schema must be properly defined.
         if not load_schema:
             try:
-                alert_dicts = [r for r in fastavro.reader(fin)]
+                alert_dicts = list(fastavro.reader(fin))
             except TypeError as e:
                 LOGGER.warning(
                     "fastavro raised a TypeError. This can happen with some versions of fastavro "
@@ -214,8 +211,7 @@ def _avro_to_dicts(avroin: Union[str, Path, bytes], load_schema: Union[bool, str
                 )
                 raise e
             return alert_dicts
-        else:
-            return _read_schemaless(fin, load_schema)
+        return _read_schemaless(fin, load_schema)
 
     def _read_schemaless(fin, load_schema):
         schemas = load_all_schemas()
@@ -261,10 +257,10 @@ def _avro_to_dicts(avroin: Union[str, Path, bytes], load_schema: Union[bool, str
                 with open(avroin, 'rb') as fin:
                     list_of_dicts = _read(fin, load_schema)
 
-            except Exception as e:
+            except Exception as e2:
                 # unknown format
-                excepts.append(e)
-                LOGGER.debug("tried: open(avroin, 'rb'). caught error: %r", e)
+                excepts.append(e2)
+                LOGGER.debug("tried: open(avroin, 'rb'). caught error: %r", e2)
                 raise excepts[0]
 
     return list_of_dicts
@@ -308,7 +304,9 @@ def alert_dict_to_dataframe(alert_dict: dict, schema_map: dict) -> "pd.DataFrame
     """ Packages an alert into a dataframe.
     Adapted from: https://github.com/ZwickyTransientFacility/ztf-avro-alert/blob/master/notebooks/Filtering_alerts.ipynb
     """
+    # lazy-load pandas. it hogs memory on cloud functions.
     import pandas as pd
+
     src_df = pd.DataFrame(alert_dict[schema_map['source']], index=[0])
     prvs_df = pd.DataFrame(alert_dict[schema_map['prvSources']])
     df = pd.concat([src_df, prvs_df], ignore_index=True)
