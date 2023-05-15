@@ -31,7 +31,7 @@ with open('requirements.txt') as f:
 
 setup(
     name='pgb_broker_utils',
-    version='0.2.25',
+    version='0.2.46',
     description='Tools used by the Pitt-Google astronomical alert broker.',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -52,15 +52,16 @@ setup(
 
     packages=find_packages(),  # Required
 
-    # For an analysis of "install_requires" vs pip's requirements files see:
-    # https://packaging.python.org/en/latest/requirements.html
-    install_requires=requirements
-
-    # python_requires='>=3.6, <4',
-
     # If there are data files included in your packages that need to be
     # installed, specify them here.
     # package_data={  # Optional
     #     'sample': ['package_data.dat'],
     # },
+    include_package_data=True,
+
+    # For an analysis of "install_requires" vs pip's requirements files see:
+    # https://packaging.python.org/en/latest/requirements.html
+    install_requires=requirements,
+
+    # python_requires='>=3.6, <4',
 )
