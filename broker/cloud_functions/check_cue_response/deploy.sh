@@ -37,5 +37,5 @@ else # Deploy the Cloud Functions
         --entry-point "${check_cue_entry_point}" \
         --runtime python37 \
         --trigger-topic "${check_cue_trigger_topic}" \
-        --set-env-vars TESTID="${testid}",SURVEY="${survey}",VERSIONTAG="${versiontag}"
+        --set-env-vars TESTID="${testid}",SURVEY="${survey}",VERSIONTAG="${versiontag}",ZONE="${zone}"
 fi
