@@ -129,28 +129,28 @@ fi
 #--- Deploy Cloud Functions
 echo
 echo "Configuring Cloud Functions..."
-cd .. && cd cloud_functions
+cd .. && cd cloud_functions || exit
 
 #--- Check cue response cloud function
-cd check_cue_response
+cd check_cue_response || exit
 ./deploy.sh "${testid}" "${teardown}" "${survey}" "${versiontag}" "${zone}"
 
 #--- classify with SNN cloud function
-cd .. && cd classify_snn
+cd .. && cd classify_snn || exit
 ./deploy.sh "${testid}" "${teardown}" "${survey}" "${versiontag}" "${zone}"
 
 #--- alerts-lite cloud function
-cd .. && cd lite
+cd .. && cd lite || exit
 ./deploy.sh "${testid}" "${teardown}" "${survey}" "${versiontag}" "${zone}"
 
 #--- Pub/Sub -> Cloud Storage Avro cloud function
-cd .. && cd ps_to_gcs
+cd .. && cd ps_to_gcs || exit
 ./deploy.sh "${testid}" "${teardown}" "${survey}" "${versiontag}" "${zone}"
 
 #--- BigQuery storage cloud function
-cd .. && cd store_BigQuery
+cd .. && cd store_BigQuery || exit
 ./deploy.sh "${testid}" "${teardown}" "${survey}" "${versiontag}" "${zone}"
 
 #--- tag alerts cloud function
-cd .. && cd tag
+cd .. && cd tag || exit
 ./deploy.sh "${testid}" "${teardown}" "${survey}" "${versiontag}" "${zone}"
