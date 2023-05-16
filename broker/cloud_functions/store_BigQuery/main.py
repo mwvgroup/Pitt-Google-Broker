@@ -29,7 +29,9 @@ if TESTID != "False":
     bq_dataset = f"{bq_dataset}_{TESTID}"
     ps_topic = f"{ps_topic}-{TESTID}"
 
-path_to_local_schema_yaml = Path(__file__).resolve().parent / f"{SURVEY}.yaml"
+schema_dir_name = "schema_maps"
+schema_file_name = f"{SURVEY}.yaml"
+path_to_local_schema_yaml = Path(__file__).resolve().parent / f"{schema_dir_name}/{schema_file_name}"
 schema_map = schema_maps.load_schema_map(SURVEY, TESTID, schema=path_to_local_schema_yaml)
 
 
