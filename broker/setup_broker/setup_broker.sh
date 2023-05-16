@@ -133,24 +133,24 @@ cd .. && cd cloud_functions
 
 #--- Check cue response cloud function
 cd check_cue_response
-./deployment.sh "${testid}" "${teardown}" "${survey}" "${versiontag}" "${zone}"
+./deploy.sh "${testid}" "${teardown}" "${survey}" "${versiontag}" "${zone}"
 
 #--- classify with SNN cloud function
 cd .. && cd classify_snn
-./deployment.sh "${testid}" "${teardown}" "${survey}" "${versiontag}" "${zone}"
+./deploy.sh "${testid}" "${teardown}" "${survey}" "${versiontag}" "${zone}"
 
 #--- alerts-lite cloud function
 cd .. && cd lite
-./deployment.sh "${testid}" "${teardown}" "${survey}" "${versiontag}" "${zone}"
+./deploy.sh "${testid}" "${teardown}" "${survey}" "${versiontag}" "${zone}"
 
 #--- Pub/Sub -> Cloud Storage Avro cloud function
 cd .. && cd ps_to_gcs
-./deployment.sh "${testid}" "${teardown}" "${survey}" "${versiontag}" "${zone}"
+./deploy.sh "${testid}" "${teardown}" "${survey}" "${versiontag}" "${zone}"
 
 #--- BigQuery storage cloud function
 cd .. && cd store_BigQuery
-./deployment.sh "${testid}" "${teardown}" "${survey}" "${versiontag}" "${zone}"
+./deploy.sh "${testid}" "${teardown}" "${survey}" "${versiontag}" "${zone}"
 
 #--- tag alerts cloud function
 cd .. && cd tag
-./deployment.sh "${testid}" "${teardown}" "${survey}" "${versiontag}" "${zone}"
+./deploy.sh "${testid}" "${teardown}" "${survey}" "${versiontag}" "${zone}"
