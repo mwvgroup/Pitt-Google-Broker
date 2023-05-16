@@ -10,7 +10,6 @@ teardown="${2:-False}"
 survey="${3:-ztf}"
 # name of the survey this broker instance will ingest
 versiontag="${4:-v3_3}"
-zone="${CE_ZONE:-us-central1-a}" # use env variable CE_ZONE if it exists
 
 #--- GCP resources used in this script
 tag_trigger_topic="${survey}-lite"
