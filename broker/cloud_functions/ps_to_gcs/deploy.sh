@@ -10,13 +10,20 @@ teardown="${2:-False}"
 survey="${3:-ztf}"
 # name of the survey this broker instance will ingest
 versiontag="${4:-v3_3}"
+PROJECT_ID="${5:-avid-heading-329016}"
 
 #--- GCP resources used in this script
+avro_bucket="${PROJECT_ID}-${survey}_alerts_${versiontag}"
+avro_topic="projects/${PROJECT_ID}/topics/${survey}-alert_avros"
+broker_bucket="${PROJECT_ID}-${survey}-broker_files"
 ps_to_gcs_trigger_topic="${survey}-alerts_raw"
 ps_to_gcs_CF_name="${survey}-upload_bytes_to_bucket"
 
 # use test resources, if requested
 if [ "${testid}" != "False" ]; then
+    avro_bucket="${avro_bucket}-${testid}"
+    avro_topic="${avro_topic}-${testid}"
+    broker_bucket="${broker_bucket}-${testid}"
     ps_to_gcs_trigger_topic="${ps_to_gcs_trigger_topic}-${testid}"
     ps_to_gcs_CF_name="${ps_to_gcs_CF_name}-${testid}"
 fi
@@ -25,9 +32,29 @@ if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources
     if [ "${testid}" != "False" ]; then
         gcloud functions delete "${ps_to_gcs_CF_name}"
+        gcloud storage rm --recursive "gs://${avro_bucket}/"
+        gcloud storage rm --recursive "gs://${broker_bucket}/"
     fi
 
 else # Deploy the Cloud Functions
+
+    #--- Create buckets
+    if ! gsutil ls -b "gs://${avro_bucket}/" >/dev/null 2>&1; then
+        gsutil mb "gs://${avro_bucket}"
+    fi
+
+    if ! gsutil ls -b "gs://${broker_bucket}/" >/dev/null 2>&1; then
+        gsutil mb "gs://${broker_bucket}"
+    fi
+
+    ./upload_broker_bucket.sh "$broker_bucket"
+
+    gsutil uniformbucketlevelaccess set on "gs://${avro_bucket}"
+    gsutil requesterpays set on "gs://${avro_bucket}"
+    gcloud storage buckets add-iam-policy-binding "gs://${avro_bucket}" \
+        --member="allUsers" \
+        --role="roles/storage.objectViewer"
+
 #--- Pub/Sub -> Cloud Storage Avro cloud function
     echo "Deploying Cloud Function: ${ps_to_gcs_CF_name}"
     ps_to_gcs_entry_point="run"
