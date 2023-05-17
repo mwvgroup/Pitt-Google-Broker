@@ -69,14 +69,6 @@ fi
 
 #--- finish setting up buckets and dataset
 if [ "$teardown" != "True" ]; then
-    ./upload_broker_bucket.sh "$broker_bucket"
-
-    gsutil uniformbucketlevelaccess set on "gs://${avro_bucket}"
-    gsutil requesterpays set on "gs://${avro_bucket}"
-    gcloud storage buckets add-iam-policy-binding "gs://${avro_bucket}" \
-        --member="allUsers" \
-        --role="roles/storage.objectViewer"
-
     bq add-iam-policy-binding \
         --member="allUsers" \
         --role="roles/bigquery.metadataViewer" \
@@ -85,7 +77,6 @@ if [ "$teardown" != "True" ]; then
         --member="allUsers" \
         --role="roles/bigquery.dataViewer" \
         "${bq_dataset}"
-
 fi
 
 
@@ -133,24 +124,24 @@ cd .. && cd cloud_functions || exit
 
 #--- Check cue response cloud function
 cd check_cue_response || exit
-./deploy.sh "${testid}" "${teardown}" "${survey}" "${versiontag}" "${zone}"
+./deploy.sh "$testid" "$teardown" "$survey" "$versiontag" "$zone"
 
 #--- classify with SNN cloud function
 cd .. && cd classify_snn || exit
-./deploy.sh "${testid}" "${teardown}" "${survey}" "${versiontag}" "${zone}"
+./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
 
 #--- alerts-lite cloud function
 cd .. && cd lite || exit
-./deploy.sh "${testid}" "${teardown}" "${survey}" "${versiontag}" "${zone}"
+./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
 
 #--- Pub/Sub -> Cloud Storage Avro cloud function
 cd .. && cd ps_to_gcs || exit
-./deploy.sh "${testid}" "${teardown}" "${survey}" "${versiontag}" "${zone}"
+./deploy.sh "$testid" "$teardown" "$survey" "$versiontag" "$PROJECT_ID"
 
 #--- BigQuery storage cloud function
 cd .. && cd store_BigQuery || exit
-./deploy.sh "${testid}" "${teardown}" "${survey}" "${versiontag}" "${zone}"
+./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
 
 #--- tag alerts cloud function
 cd .. && cd tag || exit
-./deploy.sh "${testid}" "${teardown}" "${survey}" "${versiontag}" "${zone}"
+./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
