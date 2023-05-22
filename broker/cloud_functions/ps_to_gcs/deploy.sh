@@ -41,19 +41,17 @@ else # Deploy the Cloud Functions
     #--- Create buckets
     if ! gsutil ls -b "gs://${avro_bucket}/" >/dev/null 2>&1; then
         gsutil mb "gs://${avro_bucket}"
+        gsutil uniformbucketlevelaccess set on "gs://${avro_bucket}"
+        gsutil requesterpays set on "gs://${avro_bucket}"
+        gcloud storage buckets add-iam-policy-binding "gs://${avro_bucket}" \
+            --member="allUsers" \
+            --role="roles/storage.objectViewer"
     fi
 
     if ! gsutil ls -b "gs://${broker_bucket}/" >/dev/null 2>&1; then
         gsutil mb "gs://${broker_bucket}"
+        ./upload_broker_bucket.sh "$broker_bucket"
     fi
-
-    ./upload_broker_bucket.sh "$broker_bucket"
-
-    gsutil uniformbucketlevelaccess set on "gs://${avro_bucket}"
-    gsutil requesterpays set on "gs://${avro_bucket}"
-    gcloud storage buckets add-iam-policy-binding "gs://${avro_bucket}" \
-        --member="allUsers" \
-        --role="roles/storage.objectViewer"
 
 #--- Pub/Sub -> Cloud Storage Avro cloud function
     echo "Deploying Cloud Function: ${ps_to_gcs_CF_name}"
