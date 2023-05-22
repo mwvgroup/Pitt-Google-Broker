@@ -50,7 +50,11 @@ else # Deploy the Cloud Functions
 
     if ! gsutil ls -b "gs://${broker_bucket}/" >/dev/null 2>&1; then
         gsutil mb "gs://${broker_bucket}"
+        cd .. && cd .. || exit
+        cd setup_broker || exit
         ./upload_broker_bucket.sh "$broker_bucket"
+        cd .. && cd cloud_functions || exit
+        cd ps_to_gcs || exit
     fi
 
 #--- Pub/Sub -> Cloud Storage Avro cloud function
