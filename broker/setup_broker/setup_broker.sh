@@ -69,6 +69,14 @@ fi
 
 #--- finish setting up buckets and dataset
 if [ "$teardown" != "True" ]; then
+    ./upload_broker_bucket.sh "$broker_bucket"
+
+    gsutil uniformbucketlevelaccess set on "gs://${avro_bucket}"
+    gsutil requesterpays set on "gs://${avro_bucket}"
+    gcloud storage buckets add-iam-policy-binding "gs://${avro_bucket}" \
+        --member="allUsers" \
+        --role="roles/storage.objectViewer"
+
     bq add-iam-policy-binding \
         --member="allUsers" \
         --role="roles/bigquery.metadataViewer" \
