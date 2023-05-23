@@ -1,6 +1,6 @@
 SURVEY: elasticc
-SURVEY_SCHEMA: https://github.com/LSSTDESC/plasticc_alerts/tree/main/Examples/plasticc_schema
-SCHEMA_VERSION: v0_9
+SURVEY_SCHEMA: https://github.com/LSSTDESC/elasticc/tree/main/alert_schema
+SCHEMA_VERSION: v0_9_1
 TOPIC_SYNTAX:
 FILTER_MAP:
 objectId: [diaObject, diaObjectId]
