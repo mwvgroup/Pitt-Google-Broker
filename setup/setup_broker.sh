@@ -5,6 +5,7 @@ teardown="${2:-False}"  # "True" tearsdown/deletes resources, else setup
 survey="${3:-elasticc}"  # name of the survey this broker instance will ingest
 max_instances="${4:-500}"  # max N of concurrent Cloud Fnc instances (per deployed module)
 PROJECT_ID="${GOOGLE_CLOUD_PROJECT}"
+BROKER_VERSION=$(cat "../VERSION")
 
 #--- Make the user confirm the settings
 echo
@@ -29,22 +30,16 @@ fi
 avro_bucket="${PROJECT_ID}-${survey}-alert_avros"
 avro_topic="${survey}-alert_avros"
 broker_bucket="${PROJECT_ID}-${survey}-broker_files"
-# bq_dataset="${PROJECT_ID}:${survey}_alerts"
-# bq_topic="projects/${PROJECT_ID}/topics/${survey}-BigQuery"
 topic_alerts="${survey}-alerts"
+
 # use test resources, if requested
 # (there must be a better way to do this)
 if [ "$testid" != "False" ]; then
     avro_bucket="${avro_bucket}-${testid}"
     avro_topic="${avro_topic}-${testid}"
     broker_bucket="${broker_bucket}-${testid}"
-    # bq_dataset="${bq_dataset}_${testid}"
-    # bq_topic="${bq_topic}-${testid}"
     topic_alerts="${topic_alerts}-${testid}"
 fi
-# alerts_table="alerts"
-# source_table="DIASource"
-
 
 # broker bucket
 if [ "${teardown}" != "True" ]; then
@@ -71,13 +66,8 @@ if [ "${teardown}" != "True" ]; then
     echo "Configuring BigQuery, GCS, Pub/Sub resources..."
     # create dashboard
     gcloud monitoring dashboards create --config-from-file="templates/dashboard.json"
-    # create bigquery
-    # bq mk --dataset "${bq_dataset}"
-    # bq mk --table "${bq_dataset}.${alerts_table}" "templates/bq_${survey}_${alerts_table}_schema.json"
-    # bq mk --table "${bq_dataset}.${source_table}" "templates/bq_${survey}_${source_table}_schema.json"
     # create pubsub
     gcloud pubsub topics create "${avro_topic}"
-    # gcloud pubsub topics create "${bq_topic}"
     gcloud pubsub topics create "${topic_alerts}"
     gcloud pubsub subscriptions create "${topic_alerts}-reservoir" --topic "${topic_alerts}"
     gcloud pubsub subscriptions create "${avro_topic}-reservoir" --topic "${avro_topic}"
@@ -102,9 +92,7 @@ if [ "${teardown}" != "True" ]; then
 else
     # ensure that we do not teardown production resources
     if [ "${testid}" != "False" ]; then
-        # bq rm --dataset true "${bq_dataset}"
         gcloud pubsub topics delete "${avro_topic}"
-        # gcloud pubsub topics delete "${bq_topic}"
         gcloud pubsub topics delete "${topic_alerts}"
         gcloud pubsub subscriptions delete "${topic_alerts}-reservoir"
         gcloud pubsub subscriptions delete "${avro_topic}-reservoir"
@@ -115,4 +103,8 @@ fi
 #--- Deploy Cloud Functions
 echo
 echo "Configuring Cloud Functions..."
-./deploy_cloud_fncs.sh "${testid}" "${teardown}" "${survey}" "${max_instances}"
+cd .. && cd broker || exit
+
+#--- Pub/Sub -> Cloud Storage Avro cloud function
+cd cloud_functions && cd ps_to_gcs || exit
+./deploy.sh "$testid" "$teardown" "$survey" "$max_instances" "$PROJECT_ID" "$BROKER_VERSION"
