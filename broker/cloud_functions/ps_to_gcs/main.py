@@ -29,7 +29,7 @@ SURVEY = os.getenv('SURVEY')
 BROKER_VERSION = os.getenv("BROKER_VERSION")
 BROKER_NAME = "Pitt-Google"
 
-schema_in = load_all_schemas()["elasticc.v0_9.alert.avsc"]
+schema_in = load_all_schemas()["elasticc.v0_9_1.alert.avsc"]
 schema_map = load_schema_map(SURVEY, TESTID)
 sobjectId, ssourceId = get_key("objectId", schema_map), get_key("sourceId", schema_map)
 # connect to the cloud logger
