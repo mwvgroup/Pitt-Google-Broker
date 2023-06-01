@@ -10,7 +10,7 @@ teardown="${2:-False}"
 survey="${3:-ztf}"
 # name of the survey this broker instance will ingest
 versiontag="${4:-v3_3}"
-PROJECT_ID="${5:-avid-heading-329016}"
+PROJECT_ID="${PROJECT_ID:-avid-heading-329016}"
 
 #--- GCP resources used in this script
 avro_bucket="${PROJECT_ID}-${survey}_alerts_${versiontag}"

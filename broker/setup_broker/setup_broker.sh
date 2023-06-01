@@ -144,7 +144,7 @@ cd .. && cd lite || exit
 
 #--- Pub/Sub -> Cloud Storage Avro cloud function
 cd .. && cd ps_to_gcs || exit
-./deploy.sh "$testid" "$teardown" "$survey" "$versiontag" "$PROJECT_ID"
+./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
 
 #--- BigQuery storage cloud function
 cd .. && cd store_BigQuery || exit
