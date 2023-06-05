@@ -30,12 +30,11 @@ if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources
     if [ "${testid}" != "False" ]; then
         gcloud functions delete "${ps_to_gcs_CF_name}"
-        gcloud storage rm --recursive "gs://${avro_bucket}/"
     fi
 
 else # Deploy the Cloud Functions
 
-    #--- Create buckets
+    #--- Check to see if required resources exist
     if ! gsutil ls -b "gs://${avro_bucket}/" >/dev/null 2>&1; then
         echo "gs://${avro_bucket} does not exist. Deploy setup_broker.sh to create the required resources"
     fi
