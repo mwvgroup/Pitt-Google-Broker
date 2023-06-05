@@ -37,12 +37,9 @@ if [ "${teardown}" = "True" ]; then
 
 else # Deploy the Cloud Functions
 
-    #--- Create buckets if they do not exist
+    #--- Check to see if required resources exist
     if ! gsutil ls -b "gs://${avro_bucket}/" >/dev/null 2>&1; then
-        gsutil mb "gs://${avro_bucket}"
-        user="allUsers"
-        roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/userPublic"
-        gsutil iam ch "${user}:${roleid}" "gs://${avro_bucket}"
+        echo "gs://${avro_bucket} does not exist. Deploy setup_broker.sh to create the required resources"
     fi
 
 #--- Pub/Sub -> Cloud Storage Avro cloud function
