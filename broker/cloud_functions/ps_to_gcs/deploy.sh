@@ -15,14 +15,12 @@ PROJECT_ID="${PROJECT_ID:-avid-heading-329016}"
 
 #--- GCP resources used in this script
 avro_bucket="${PROJECT_ID}-${survey}-alert_avros"
-avro_topic="${survey}-alert_avros"
 ps_to_gcs_trigger_topic="${survey}-alerts_raw"
 ps_to_gcs_CF_name="${survey}-upload_bytes_to_bucket"
 
 # use test resources, if requested
 if [ "${testid}" != "False" ]; then
     avro_bucket="${avro_bucket}-${testid}"
-    avro_topic="${avro_topic}-${testid}"
     ps_to_gcs_trigger_topic="${ps_to_gcs_trigger_topic}-${testid}"
     ps_to_gcs_CF_name="${ps_to_gcs_CF_name}-${testid}"
 fi
