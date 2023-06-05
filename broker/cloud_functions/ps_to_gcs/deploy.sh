@@ -31,8 +31,6 @@ if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources
     if [ "${testid}" != "False" ]; then
         gcloud functions delete "${ps_to_gcs_CF_name}"
-        o="GSUtil:parallel_process_count=1" # disable multiprocessing for Macs
-        gsutil -m -o "${o}" rm -r "gs://${avro_bucket}"
     fi
 
 else # Deploy the Cloud Functions
