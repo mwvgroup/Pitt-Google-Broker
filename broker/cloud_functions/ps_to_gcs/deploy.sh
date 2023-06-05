@@ -10,8 +10,8 @@ teardown="${2:-False}"
 survey="${3:-elasticc}"
 # name of the survey this broker instance will ingest
 max_instances="${4:-500}"
-PROJECT_ID="${5:-avid-heading-329016}"
-BROKER_VERSION="${6:-0.1.0e}"
+BROKER_VERSION="${5:-0.1.0e}"
+PROJECT_ID="${PROJECT_ID:-avid-heading-329016}"
 
 #--- GCP resources used in this script
 avro_bucket="${PROJECT_ID}-${survey}-alert_avros"
