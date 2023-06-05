@@ -32,7 +32,6 @@ if [ "${teardown}" = "True" ]; then
     if [ "${testid}" != "False" ]; then
         gcloud functions delete "${ps_to_gcs_CF_name}"
         o="GSUtil:parallel_process_count=1" # disable multiprocessing for Macs
-        gsutil -m -o "${o}" rm -r "gs://${broker_bucket}"
         gsutil -m -o "${o}" rm -r "gs://${avro_bucket}"
     fi
 
