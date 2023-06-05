@@ -37,12 +37,7 @@ else # Deploy the Cloud Functions
 
     #--- Create buckets
     if ! gsutil ls -b "gs://${avro_bucket}/" >/dev/null 2>&1; then
-        gsutil mb "gs://${avro_bucket}"
-        gsutil uniformbucketlevelaccess set on "gs://${avro_bucket}"
-        gsutil requesterpays set on "gs://${avro_bucket}"
-        gcloud storage buckets add-iam-policy-binding "gs://${avro_bucket}" \
-            --member="allUsers" \
-            --role="roles/storage.objectViewer"
+        echo "gs://${avro_bucket} does not exist. Deploy setup_broker.sh to create the required resources"
     fi
 
 #--- Pub/Sub -> Cloud Storage Avro cloud function
