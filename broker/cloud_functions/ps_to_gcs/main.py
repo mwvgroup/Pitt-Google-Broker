@@ -30,7 +30,10 @@ BROKER_VERSION = os.getenv("BROKER_VERSION")
 BROKER_NAME = "Pitt-Google"
 
 schema_in = load_all_schemas()["elasticc.v0_9.alert.avsc"]
-schema_map = load_schema_map(SURVEY, TESTID)
+schema_dir_name = "schema_maps"
+schema_file_name = f"{SURVEY}.yaml"
+path_to_local_schema_yaml = Path(__file__).resolve().parent / f"{schema_dir_name}/{schema_file_name}"
+schema_map = load_schema_map(SURVEY, TESTID, schema=path_to_local_schema_yaml)
 sobjectId, ssourceId = get_key("objectId", schema_map), get_key("sourceId", schema_map)
 # connect to the cloud logger
 logging_client = logging.Client()
