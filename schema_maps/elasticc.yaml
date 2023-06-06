@@ -7,9 +7,7 @@ objectId: [diaObject, diaObjectId]
 prvSources: prvDiaSources
 source: diaSource
 sourceId: [diaSource, diaSourceId]
-cutoutDifference: cutoutDifference
 cutoutScience: none
-cutoutTemplate: cutoutTemplate
 filter: filterName
 mag: magpsf
 magerr: sigmapsf
