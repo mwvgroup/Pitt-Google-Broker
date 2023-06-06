@@ -16,17 +16,7 @@
         "mode": "REQUIRED"
       },
       {
-        "name": "ccdVisitId",
-        "type": "INTEGER",
-        "mode": "REQUIRED"
-      },
-      {
         "name": "diaObjectId",
-        "type": "INTEGER",
-        "mode": "NULLABLE"
-      },
-      {
-        "name": "parentDiaSourceId",
         "type": "INTEGER",
         "mode": "NULLABLE"
       },
@@ -64,11 +54,6 @@
         "name": "snr",
         "type": "FLOAT",
         "mode": "REQUIRED"
-      },
-      {
-        "name": "nobs",
-        "type": "FLOAT",
-        "mode": "NULLABLE"
       }
     ]
   },
@@ -83,17 +68,7 @@
         "mode": "REQUIRED"
       },
       {
-        "name": "ccdVisitId",
-        "type": "INTEGER",
-        "mode": "REQUIRED"
-      },
-      {
         "name": "diaObjectId",
-        "type": "INTEGER",
-        "mode": "NULLABLE"
-      },
-      {
-        "name": "parentDiaSourceId",
         "type": "INTEGER",
         "mode": "NULLABLE"
       },
@@ -131,11 +106,6 @@
         "name": "snr",
         "type": "FLOAT",
         "mode": "REQUIRED"
-      },
-      {
-        "name": "nobs",
-        "type": "FLOAT",
-        "mode": "NULLABLE"
       }
     ]
   },
@@ -146,11 +116,6 @@
     "fields": [
       {
         "name": "diaForcedSourceId",
-        "type": "INTEGER",
-        "mode": "REQUIRED"
-      },
-      {
-        "name": "ccdVisitId",
         "type": "INTEGER",
         "mode": "REQUIRED"
       },
@@ -176,43 +141,6 @@
       },
       {
         "name": "psFluxErr",
-        "type": "FLOAT",
-        "mode": "REQUIRED"
-      },
-      {
-        "name": "totFlux",
-        "type": "FLOAT",
-        "mode": "REQUIRED"
-      },
-      {
-        "name": "totFluxErr",
-        "type": "FLOAT",
-        "mode": "REQUIRED"
-      }
-    ]
-  },
-  {
-    "name": "prvDiaNondetectionLimits",
-    "type": "RECORD",
-    "mode": "REPEATED",
-    "fields": [
-      {
-        "name": "ccdVisitId",
-        "type": "INTEGER",
-        "mode": "REQUIRED"
-      },
-      {
-        "name": "midPointTai",
-        "type": "FLOAT",
-        "mode": "REQUIRED"
-      },
-      {
-        "name": "filterName",
-        "type": "STRING",
-        "mode": "REQUIRED"
-      },
-      {
-        "name": "diaNoise",
         "type": "FLOAT",
         "mode": "REQUIRED"
       }
@@ -549,15 +477,5 @@
         "mode": "NULLABLE"
       }
     ]
-  },
-  {
-    "name": "cutoutDifference",
-    "type": "BYTES",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "cutoutTemplate",
-    "type": "BYTES",
-    "mode": "NULLABLE"
   }
 ]

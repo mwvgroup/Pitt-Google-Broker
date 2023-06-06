@@ -10,18 +10,8 @@
     "type": "INTEGER"
   },
   {
-    "mode": "REQUIRED",
-    "name": "ccdVisitId",
-    "type": "INTEGER"
-  },
-  {
     "mode": "NULLABLE",
     "name": "diaObjectId",
-    "type": "INTEGER"
-  },
-  {
-    "mode": "NULLABLE",
-    "name": "parentDiaSourceId",
     "type": "INTEGER"
   },
   {
@@ -57,11 +47,6 @@
   {
     "mode": "REQUIRED",
     "name": "snr",
-    "type": "FLOAT"
-  },
-  {
-    "mode": "NULLABLE",
-    "name": "nobs",
     "type": "FLOAT"
   }
 ]
