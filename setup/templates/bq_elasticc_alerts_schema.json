@@ -197,52 +197,67 @@
         "mode": "NULLABLE"
       },
       {
-        "name": "hostgal_z",
+        "name": "hostgal_zspec",
         "type": "FLOAT",
         "mode": "NULLABLE"
       },
       {
-        "name": "hostgal_z_err",
+        "name": "hostgal_zspec_err",
         "type": "FLOAT",
         "mode": "NULLABLE"
       },
       {
-        "name": "hostgal_zphot_q10",
+        "name": "hostgal_zphot",
         "type": "FLOAT",
         "mode": "NULLABLE"
       },
       {
-        "name": "hostgal_zphot_q20",
+        "name": "hostgal_zphoterr",
         "type": "FLOAT",
         "mode": "NULLABLE"
       },
       {
-        "name": "hostgal_zphot_q30",
+        "name": "hostgal_zphot_q000",
         "type": "FLOAT",
         "mode": "NULLABLE"
       },
       {
-        "name": "hostgal_zphot_q40",
+        "name": "hostgal_zphot_q010",
         "type": "FLOAT",
         "mode": "NULLABLE"
       },
       {
-        "name": "hostgal_zphot_q50",
+        "name": "hostgal_zphot_q020",
         "type": "FLOAT",
         "mode": "NULLABLE"
       },
       {
-        "name": "hostgal_zphot_q60",
+        "name": "hostgal_zphot_q030",
         "type": "FLOAT",
         "mode": "NULLABLE"
       },
       {
-        "name": "hostgal_zphot_q70",
+        "name": "hostgal_zphot_q040",
         "type": "FLOAT",
         "mode": "NULLABLE"
       },
       {
-        "name": "hostgal_zphot_q80",
+        "name": "hostgal_zphot_q050",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal_zphot_q060",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal_zphot_q070",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal_zphot_q080",
         "type": "FLOAT",
         "mode": "NULLABLE"
       },
@@ -252,7 +267,7 @@
         "mode": "NULLABLE"
       },
       {
-        "name": "hostgal_zphot_q99",
+        "name": "hostgal_zphot_q100",
         "type": "FLOAT",
         "mode": "NULLABLE"
       },
@@ -342,62 +357,67 @@
         "mode": "NULLABLE"
       },
       {
-        "name": "hostgal2_z",
+        "name": "hostgal2_zspec",
         "type": "FLOAT",
         "mode": "NULLABLE"
       },
       {
-        "name": "hostgal2_z_err",
+        "name": "hostgal2_zspec_err",
         "type": "FLOAT",
         "mode": "NULLABLE"
       },
       {
-        "name": "hostgal2_zphot_q10",
+        "name": "hostgal2_zphot_q000",
         "type": "FLOAT",
         "mode": "NULLABLE"
       },
       {
-        "name": "hostgal2_zphot_q20",
+        "name": "hostgal2_zphot_q010",
         "type": "FLOAT",
         "mode": "NULLABLE"
       },
       {
-        "name": "hostgal2_zphot_q30",
+        "name": "hostgal2_zphot_q020",
         "type": "FLOAT",
         "mode": "NULLABLE"
       },
       {
-        "name": "hostgal2_zphot_q40",
+        "name": "hostgal2_zphot_q030",
         "type": "FLOAT",
         "mode": "NULLABLE"
       },
       {
-        "name": "hostgal2_zphot_q50",
+        "name": "hostgal2_zphot_q040",
         "type": "FLOAT",
         "mode": "NULLABLE"
       },
       {
-        "name": "hostgal2_zphot_q60",
+        "name": "hostgal2_zphot_q050",
         "type": "FLOAT",
         "mode": "NULLABLE"
       },
       {
-        "name": "hostgal2_zphot_q70",
+        "name": "hostgal2_zphot_q060",
         "type": "FLOAT",
         "mode": "NULLABLE"
       },
       {
-        "name": "hostgal2_zphot_q80",
+        "name": "hostgal2_zphot_q070",
         "type": "FLOAT",
         "mode": "NULLABLE"
       },
       {
-        "name": "hostgal2_zphot_q90",
+        "name": "hostgal2_zphot_q080",
         "type": "FLOAT",
         "mode": "NULLABLE"
       },
       {
-        "name": "hostgal2_zphot_q99",
+        "name": "hostgal2_zphot_q090",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hostgal2_zphot_q100",
         "type": "FLOAT",
         "mode": "NULLABLE"
       },
