@@ -6,6 +6,8 @@
 REGISTERED_SCHEMAS = [
     "elasticc.v0_9.alert.avsc",
     "elasticc.v0_9.brokerClassification.avsc",
+    "elasticc.v0_9_1.alert.avsc",
+    "elasticc.v0_9_1.brokerClassification.avsc",
 ]
 """
 
@@ -16,6 +18,8 @@ import fastavro
 REGISTERED_SCHEMAS = [
     "elasticc.v0_9.alert.avsc",
     "elasticc.v0_9.brokerClassification.avsc",
+    "elasticc.v0_9_1.alert.avsc",
+    "elasticc.v0_9_1.brokerClassification.avsc",
 ]
 
 
