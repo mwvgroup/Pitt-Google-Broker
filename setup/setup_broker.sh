@@ -29,6 +29,8 @@ fi
 #--- GCP resources used directly in this script
 avro_bucket="${PROJECT_ID}-${survey}-alert_avros"
 avro_topic="${survey}-alert_avros"
+bq_dataset="${PROJECT_ID}:${survey}_alerts"
+bq_topic="projects/${PROJECT_ID}/topics/${survey}-BigQuery"
 broker_bucket="${PROJECT_ID}-${survey}-broker_files"
 topic_alerts="${survey}-alerts"
 
@@ -37,6 +39,8 @@ topic_alerts="${survey}-alerts"
 if [ "$testid" != "False" ]; then
     avro_bucket="${avro_bucket}-${testid}"
     avro_topic="${avro_topic}-${testid}"
+    bq_dataset="${bq_dataset}_${testid}"
+    bq_topic="${bq_topic}-${testid}"
     broker_bucket="${broker_bucket}-${testid}"
     topic_alerts="${topic_alerts}-${testid}"
 fi
@@ -66,8 +70,15 @@ if [ "${teardown}" != "True" ]; then
     echo "Configuring BigQuery, GCS, Pub/Sub resources..."
     # create dashboard
     gcloud monitoring dashboards create --config-from-file="templates/dashboard.json"
+    # create bigquery
+    alerts_table="alerts"
+    source_table="DIASource"
+    bq mk --dataset "${bq_dataset}"
+    bq mk --table "${bq_dataset}.${alerts_table}" "templates/bq_${survey}_${alerts_table}_schema.json"
+    bq mk --table "${bq_dataset}.${source_table}" "templates/bq_${survey}_${source_table}_schema.json"
     # create pubsub
     gcloud pubsub topics create "${avro_topic}"
+    gcloud pubsub topics create "${bq_topic}"
     gcloud pubsub topics create "${topic_alerts}"
     gcloud pubsub subscriptions create "${topic_alerts}-reservoir" --topic "${topic_alerts}"
     gcloud pubsub subscriptions create "${avro_topic}-reservoir" --topic "${avro_topic}"
@@ -92,7 +103,9 @@ if [ "${teardown}" != "True" ]; then
 else
     # ensure that we do not teardown production resources
     if [ "${testid}" != "False" ]; then
+        bq rm --dataset true "${bq_dataset}"
         gcloud pubsub topics delete "${avro_topic}"
+        gcloud pubsub topics delete "${bq_topic}"
         gcloud pubsub topics delete "${topic_alerts}"
         gcloud pubsub subscriptions delete "${topic_alerts}-reservoir"
         gcloud pubsub subscriptions delete "${avro_topic}-reservoir"
@@ -113,4 +126,4 @@ cd .. && cd store_BigQuery || exit
 ./deploy.sh "$testid" "$teardown" "$survey"
 
 cd .. && cd .. || exit
-cd .. && cd setup
+cd .. && cd setup || exit
