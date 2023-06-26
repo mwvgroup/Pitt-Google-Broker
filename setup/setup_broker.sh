@@ -108,3 +108,9 @@ cd .. && cd broker || exit
 #--- Pub/Sub -> Cloud Storage Avro cloud function
 cd cloud_functions && cd ps_to_gcs || exit
 ./deploy.sh "$testid" "$teardown" "$survey" "$max_instances" "$BROKER_VERSION"
+
+cd .. && cd store_BigQuery || exit
+./deploy.sh "$testid" "$teardown" "$survey"
+
+cd .. && cd .. || exit
+cd .. && cd setup
