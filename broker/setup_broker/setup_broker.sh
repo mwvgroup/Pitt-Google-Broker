@@ -153,3 +153,7 @@ cd .. && cd store_BigQuery || exit
 #--- tag alerts cloud function
 cd .. && cd tag || exit
 ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
+
+#--- return to setup_broker directory
+cd .. && cd .. || exit
+cd setup_broker
