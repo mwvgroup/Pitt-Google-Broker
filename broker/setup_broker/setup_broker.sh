@@ -156,4 +156,4 @@ cd .. && cd tag || exit
 
 #--- return to setup_broker directory
 cd .. && cd .. || exit
-cd setup_broker
+cd setup_broker || exit
