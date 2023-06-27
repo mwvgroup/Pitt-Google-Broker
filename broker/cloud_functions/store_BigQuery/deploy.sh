@@ -30,7 +30,6 @@ else # Deploy the Cloud Functions
     echo "Deploying Cloud Function: ${store_bq_CF_name}"
     gcloud functions deploy "${store_bq_CF_name}" \
         --entry-point "run" \
-        --source "../broker/cloud_functions/store_BigQuery" \
         --runtime "python37" \
         --trigger-topic "${store_bq_trigger_topic}" \
         --set-env-vars "TESTID=${testid},SURVEY=${survey}"
