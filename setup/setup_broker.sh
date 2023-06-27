@@ -80,7 +80,6 @@ if [ "${teardown}" != "True" ]; then
     # gcloud pubsub topics create "${bq_topic}"
     gcloud pubsub topics create "${topic_alerts}"
     gcloud pubsub subscriptions create "${topic_alerts}-reservoir" --topic "${topic_alerts}"
-    gcloud pubsub subscriptions create "${avro_topic}-reservoir" --topic "${avro_topic}"
 
     # Set IAM policies on resources
     user="allUsers"
@@ -107,7 +106,6 @@ else
         # gcloud pubsub topics delete "${bq_topic}"
         gcloud pubsub topics delete "${topic_alerts}"
         gcloud pubsub subscriptions delete "${topic_alerts}-reservoir"
-        gcloud pubsub subscriptions delete "${avro_topic}-reservoir"
     fi
 fi
 
