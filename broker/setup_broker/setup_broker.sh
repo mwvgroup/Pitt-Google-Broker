@@ -38,13 +38,11 @@ fi
 #--- GCP resources used directly in this script
 broker_bucket="${PROJECT_ID}-${survey}-broker_files"
 bq_dataset="${survey}"
-avro_topic="projects/${PROJECT_ID}/topics/${survey}-alert_avros"
 # use test resources, if requested
 # (there must be a better way to do this)
 if [ "$testid" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
     bq_dataset="${bq_dataset}_${testid}"
-    avro_topic="${avro_topic}-${testid}"
 fi
 
 
