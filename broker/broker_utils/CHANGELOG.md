@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## \[Unreleased\]<a name="unreleased"></a>
 
+## \[0.2.47\] - 2023-06-20
+
 ### Changed
 - `broker_utils/avro_schemas` now contains the alert schemas and broker classification schema for ELAsTiCC schema version 0.9.1
 - `avro_schemas/load.py` registers ELAsTiCC schema version 0.9.1
