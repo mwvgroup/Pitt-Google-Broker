@@ -38,14 +38,12 @@ fi
 #--- GCP resources used directly in this script
 broker_bucket="${PROJECT_ID}-${survey}-broker_files"
 bq_dataset="${survey}"
-avro_bucket="${PROJECT_ID}-${survey}_alerts_${versiontag}"
 avro_topic="projects/${PROJECT_ID}/topics/${survey}-alert_avros"
 # use test resources, if requested
 # (there must be a better way to do this)
 if [ "$testid" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
     bq_dataset="${bq_dataset}_${testid}"
-    avro_bucket="${avro_bucket}-${testid}"
     avro_topic="${avro_topic}-${testid}"
 fi
 
@@ -71,12 +69,6 @@ fi
 if [ "$teardown" != "True" ]; then
     ./upload_broker_bucket.sh "$broker_bucket"
 
-    gsutil uniformbucketlevelaccess set on "gs://${avro_bucket}"
-    gsutil requesterpays set on "gs://${avro_bucket}"
-    gcloud storage buckets add-iam-policy-binding "gs://${avro_bucket}" \
-        --member="allUsers" \
-        --role="roles/storage.objectViewer"
-
     bq add-iam-policy-binding \
         --member="allUsers" \
         --role="roles/bigquery.metadataViewer" \
@@ -101,17 +93,6 @@ echo "Setting up Cloud Scheduler cron jobs"
 
 
 if [ "$teardown" != "True" ]; then
-
-#--- Setup the Pub/Sub notifications on ZTF Avro storage bucket
-    echo
-    echo "Configuring Pub/Sub notifications on GCS bucket..."
-    trigger_event=OBJECT_FINALIZE
-    format=json  # json or none; if json, file metadata sent in message body
-    gsutil notification create \
-                -t "$avro_topic" \
-                -e "$trigger_event" \
-                -f "$format" \
-                "gs://${avro_bucket}"
 
 #--- Create a firewall rule to open the port used by Kafka/ZTF
 # on any instance with the flag --tags=ztfport
@@ -144,7 +125,7 @@ cd .. && cd lite || exit
 
 #--- Pub/Sub -> Cloud Storage Avro cloud function
 cd .. && cd ps_to_gcs || exit
-./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
+./deploy.sh "$testid" "$teardown" "$survey" "$versiontag" "$region"
 
 #--- BigQuery storage cloud function
 cd .. && cd store_BigQuery || exit
