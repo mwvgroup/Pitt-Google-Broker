@@ -74,24 +74,20 @@ if [ "${teardown}" != "True" ]; then
     gcloud pubsub topics create "${bq_topic}"
     gcloud pubsub topics create "${topic_alerts}"
     gcloud pubsub subscriptions create "${topic_alerts}-reservoir" --topic "${topic_alerts}"
-    gcloud pubsub subscriptions create "${avro_topic}-reservoir" --topic "${avro_topic}"
+    
 
     # Set IAM policies on resources
     user="allUsers"
     roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/userPublic"
-    gcloud pubsub topics add-iam-policy-binding "${avro_topic}" --member="${user}" --role="${roleid}"
     gcloud pubsub topics add-iam-policy-binding "${topic_alerts}" --member="${user}" --role="${roleid}"
-    gsutil iam ch "${user}:${roleid}" "gs://${avro_bucket}"
-
 
 else
     # ensure that we do not teardown production resources
     if [ "${testid}" != "False" ]; then
-        bq rm --dataset true "${bq_dataset}"
+        bq rm --recursive=true "${bq_dataset}"
         gcloud pubsub topics delete "${bq_topic}"
         gcloud pubsub topics delete "${topic_alerts}"
         gcloud pubsub subscriptions delete "${topic_alerts}-reservoir"
-        gcloud pubsub subscriptions delete "${avro_topic}-reservoir"
     fi
 fi
 
