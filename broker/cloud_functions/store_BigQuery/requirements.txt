@@ -5,4 +5,4 @@
 
 google-cloud-functions
 google-cloud-logging
-pgb-broker-utils
+pgb-broker-utils>=0.2.47
