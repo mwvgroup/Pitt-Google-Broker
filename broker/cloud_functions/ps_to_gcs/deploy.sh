@@ -71,7 +71,7 @@ else # Deploy the Cloud Functions
         --entry-point "${ps_to_gcs_entry_point}" \
         --runtime python37 \
         --memory "${memory}" \
-        --max-instances ${max_instances} \
+        --max-instances "${max_instances}" \
         --trigger-topic "${ps_to_gcs_trigger_topic}" \
         --set-env-vars TESTID="${testid}",SURVEY="${survey}",BROKER_VERSION="${BROKER_VERSION}"
 fi
