@@ -15,7 +15,7 @@ PROJECT_ID=$GOOGLE_CLOUD_PROJECT # get the environment variable
 
 #--- GCP resources used in this script
 avro_bucket="${PROJECT_ID}-${survey}-alert_avros"
-avro_topic="projects/${PROJECT_ID}/topics/${survey}-alert_avros"
+avro_topic="${survey}-alert_avros"
 ps_to_gcs_trigger_topic="${survey}-alerts_raw"
 ps_to_gcs_CF_name="${survey}-upload_bytes_to_bucket"
 
@@ -31,6 +31,7 @@ if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources
     if [ "${testid}" != "False" ]; then
         gsutil rm -r "gs://${avro_bucket}"
+        gcloud pubsub subscriptions delete "${avro_topic}-reservoir"
         gcloud pubsub topics delete "${avro_topic}"
         gcloud pubsub topics delete "${ps_to_gcs_trigger_topic}"
         gcloud functions delete "${ps_to_gcs_CF_name}"
@@ -40,16 +41,17 @@ else # Deploy the Cloud Functions
 
     #--- Create the bucket that will store the alerts
     region="us-central1"
+    user="allUsers"
     gsutil mb -l "${region}" "gs://${avro_bucket}"
     gsutil uniformbucketlevelaccess set on "gs://${avro_bucket}"
-    gsutil requesterpays set on "gs://${avro_bucket}"
     gcloud storage buckets add-iam-policy-binding "gs://${avro_bucket}" \
-        --member="allUsers" \
+        --member="${user}" \
         --role="roles/storage.objectViewer"
 
     #--- Setup the Pub/Sub notifications on ZTF Avro storage bucket
     echo
     echo "Configuring Pub/Sub notifications on GCS bucket..."
+    roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/userPublic"
     trigger_event=OBJECT_FINALIZE
     format=json  # json or none; if json, file metadata sent in message body
     gsutil notification create \
@@ -57,6 +59,8 @@ else # Deploy the Cloud Functions
         -e "$trigger_event" \
         -f "$format" \
         "gs://${avro_bucket}"
+    gcloud pubsub topics add-iam-policy-binding "${avro_topic}" --member="${user}" --role="${roleid}"
+    gcloud pubsub subscriptions create "${avro_topic}-reservoir" --topic "${avro_topic}"
 
     #--- Pub/Sub -> Cloud Storage Avro cloud function
     echo "Deploying Cloud Function: ${ps_to_gcs_CF_name}"
@@ -67,7 +71,7 @@ else # Deploy the Cloud Functions
         --entry-point "${ps_to_gcs_entry_point}" \
         --runtime python37 \
         --memory "${memory}" \
-        --max-instances "${max_instances}" \
+        --max-instances ${max_instances} \
         --trigger-topic "${ps_to_gcs_trigger_topic}" \
         --set-env-vars TESTID="${testid}",SURVEY="${survey}",BROKER_VERSION="${BROKER_VERSION}"
 fi
