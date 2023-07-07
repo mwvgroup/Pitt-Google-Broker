@@ -11,16 +11,18 @@ survey="${3:-elasticc}"
 # name of the survey this broker instance will ingest
 max_instances="${4:-500}"
 BROKER_VERSION="${5:-0.1.0e}"
-PROJECT_ID="${PROJECT_ID:-avid-heading-329016}"
+PROJECT_ID=$GOOGLE_CLOUD_PROJECT # get the environment variable
 
 #--- GCP resources used in this script
 avro_bucket="${PROJECT_ID}-${survey}-alert_avros"
+avro_topic="projects/${PROJECT_ID}/topics/${survey}-alert_avros"
 ps_to_gcs_trigger_topic="${survey}-alerts_raw"
 ps_to_gcs_CF_name="${survey}-upload_bytes_to_bucket"
 
 # use test resources, if requested
 if [ "${testid}" != "False" ]; then
     avro_bucket="${avro_bucket}-${testid}"
+    avro_topic="${avro_topic}-${testid}"
     ps_to_gcs_trigger_topic="${ps_to_gcs_trigger_topic}-${testid}"
     ps_to_gcs_CF_name="${ps_to_gcs_CF_name}-${testid}"
 fi
@@ -28,17 +30,35 @@ fi
 if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources
     if [ "${testid}" != "False" ]; then
+        gsutil rm -r "gs://${avro_bucket}"
+        gcloud pubsub topics delete "${avro_topic}"
+        gcloud pubsub topics delete "${ps_to_gcs_trigger_topic}"
         gcloud functions delete "${ps_to_gcs_CF_name}"
     fi
 
 else # Deploy the Cloud Functions
 
-    #--- Check to see if required resources exist
-    if ! gsutil ls -b "gs://${avro_bucket}/" >/dev/null 2>&1; then
-        echo "gs://${avro_bucket} does not exist. Deploy setup_broker.sh to create the required resources"
-    fi
+    #--- Create the bucket that will store the alerts
+    region="us-central1"
+    gsutil mb -l "${region}" "gs://${avro_bucket}"
+    gsutil uniformbucketlevelaccess set on "gs://${avro_bucket}"
+    gsutil requesterpays set on "gs://${avro_bucket}"
+    gcloud storage buckets add-iam-policy-binding "gs://${avro_bucket}" \
+        --member="allUsers" \
+        --role="roles/storage.objectViewer"
 
-#--- Pub/Sub -> Cloud Storage Avro cloud function
+    #--- Setup the Pub/Sub notifications on ZTF Avro storage bucket
+    echo
+    echo "Configuring Pub/Sub notifications on GCS bucket..."
+    trigger_event=OBJECT_FINALIZE
+    format=json  # json or none; if json, file metadata sent in message body
+    gsutil notification create \
+        -t "$avro_topic" \
+        -e "$trigger_event" \
+        -f "$format" \
+        "gs://${avro_bucket}"
+
+    #--- Pub/Sub -> Cloud Storage Avro cloud function
     echo "Deploying Cloud Function: ${ps_to_gcs_CF_name}"
     ps_to_gcs_entry_point="run"
     memory=512MB  # standard 256MB is too small here (it was always on the edge)
