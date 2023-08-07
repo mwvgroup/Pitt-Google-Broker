@@ -1,0 +1,17 @@
+SURVEY: decat
+SURVEY_SCHEMA: https://github.com/rknop/decat_schema
+TOPIC_SYNTAX: decat_yyyymmdd_2021A-0113  # replace yyyymmdd with the date
+FILTER_MAP:
+  g DECam SDSS c0001 4720.0 1520.0: g
+  r DECam SDSS c0002 6415.0 1480.0: r
+objectId: objectid
+prvSources: sources
+source: triggersource
+sourceId: sourceid
+cutoutDifference: diffcutout
+cutoutScience: scicutout
+cutoutTemplate: refcutout
+filter: filter
+mag: mag
+magerr: magerr
+magzp: magzp
