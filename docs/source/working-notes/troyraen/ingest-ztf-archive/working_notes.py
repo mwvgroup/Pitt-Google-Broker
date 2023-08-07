@@ -163,7 +163,7 @@ with Pool(4) as pool:
 query_job = it.BQ_CLIENT.query(
     f"SELECT * FROM `{it.PROJECT_ID}.{it.DATASET}.alerts` where candidate.jd > 2459216.5",
     job_config=bigquery.job.QueryJobConfig(
-        destination=f"{it.PROJECT_ID}.{it.DATASET}.alerts_v3_3", write_disposition="WRITE_APPEND",
+        destination=f"{it.PROJECT_ID}.{it.DATASET}.alerts_v3_3", write_disposition="WRITE_APPEND"
     ),
 )
 # query_job.done()
@@ -307,6 +307,233 @@ tardf = it.fetch_tarball_names(clean=["done", "uploaded"])
 tardf = tardf.query(f"Name in {notingested['tarname'].to_list()}")
 
 it.run(tardf=tardf, load_table=False)
+# endregion
+
+# region ---- check what's in the table vs the archive. load table from bucket.
+import ingest_tarballs as it
+from ingest_tarballs_working_version import query_table_for_jd
+
+tardf = it.fetch_tarball_names(clean=[])
+tardf["date"] = (
+    tardf["Name"].str.strip("ztf_public_").str.strip(".tar.gz").str.replace("_programid3", "")
+)
+tardf = tardf.astype({"date": int})
+
+scdf = it.LOAD("schema-change")
+for row in scdf.itertuples():
+    # ztf_dates = tardf.query(f"date >= {row.firstday} and date <= {row.lastday}")["date"].to_list()
+    ztf_dates = tardf.query(f"date >= {row.firstday}")["date"].to_list()
+    row_datecounts = query_table_for_jd(version=row.version, usecache=True, convert_to_date=True)
+    row_dates = row_datecounts.index.to_list()
+    missing = set(ztf_dates) - set(row_dates)
+    print(missing)
+
+# v3.3 still has holes
+for date in missing:
+    tarstem = f"ztf_public_{date}"
+    it.load_alerts_to_table_one_night(tarstem)
+
+# big query bugged out. won't load unless schema matches exactly. can't load alerts containing cutouts
+# endregion
+
+# region ---- create full v3.3 table from bucket
+import pandas as pd
+import re
+import shlex
+import subprocess
+from multiprocessing import Pool
+from google.api_core import page_iterator
+from random import sample
+
+import ingest_tarballs as it
+from ingest_tarballs_working_version import jd_from_yyyymmdd, yyyymmdd_from_jd
+
+version = "3.3"
+bucket = it.BUCKET(version)
+# table_name = it.TABLE(version, nameonly=True)
+table_name = "alerts_v3_3_fullschema"
+table_id = f"{it.PROJECT_ID}.{it.DATASET}.{table_name}"
+
+# create new table including cutout fields
+schema = f"schemas/bq_ztf_alerts_v3_3_fullschema.json"
+bqmk = f"bq mk --table {it.PROJECT_ID}:{it.DATASET}.{table_name} {schema}"
+out = subprocess.check_output(shlex.split(bqmk))
+print(f"{out}")  # should be a success message
+
+# fetch all bucket prefixes. no way to do this directly with the client/bucket
+# workaround found in this issue: https://github.com/googleapis/python-storage/issues/294
+# which is itself adapted from https://stackoverflow.com/a/59008580
+prefix_iter = page_iterator.HTTPIterator(
+    client=bucket.client,
+    api_request=bucket.client._connection.api_request,
+    path=f"/b/{bucket.name}/o",
+    items_key="prefixes",
+    item_to_value=lambda iterator, item: item,
+    extra_params={
+        # "projection": "noAcl",
+        "prefix": "",
+        "delimiter": "/",
+        "userProject": bucket.client.project,
+    },
+)
+prefixes = [pre for pre in prefix_iter]
+
+
+# load table
+def load_table(prefix):
+    bucket_name = "ardent-cycling-243415-ztf_alerts_v3_3"
+    table_name = "alerts_v3_3_fullschema"
+    table_id = f"{it.PROJECT_ID}.{it.DATASET}.{table_name}"
+
+    load_job = it.load_table_from_bucket(
+        table_name=table_id,
+        source_uris=f"gs://{bucket_name}/{prefix}*",
+        reportid=prefix,
+    )
+    load_job.result()  # wait for the job to finish
+
+    return prefix
+
+
+npool = 8
+with Pool(npool) as pool:  # 6hrs
+    for result in pool.imap_unordered(load_table, prefixes, chunksize=100):
+        print(result)
+
+
+# check submitted jobs
+def job_completed_successfully(subdf_row):
+    job = it.BQ_CLIENT.get_job(subdf_row.jobid, location="us-central1")
+    return job.done() and (job.errors is None)
+
+
+subdf = it.LOAD("submitted")
+subdf["success"] = subdf.apply(job_completed_successfully, axis=1)
+
+all(subdf.success)  # True
+set(prefixes) - set(subdf.tarname)  # empty set
+# looks good
+
+# check the table
+# count rows in table
+sql = (
+    # cast -> int returns the closest integer value. halfway cases (0.5) round away from 0
+    f"SELECT CAST(candidate.jd as INT64) as jd, COUNT(candid) as count "
+    f"FROM `{table_id}` "
+    f"GROUP BY jd"
+)
+query_job = it.BQ_CLIENT.query(sql)
+counts = query_job.result().to_dataframe()
+counts["date"] = yyyymmdd_from_jd(counts["jd"].to_numpy()).astype(int)
+counts.to_csv(it.LOGSDIR / f"table_counts_{table_name}.csv")  # save for later
+counts = counts.set_index("date").sort_index()
+
+# check for duplicates
+query_job = it.BQ_CLIENT.query(sql.replace("COUNT(candid)", "COUNT(DISTINCT candid)"))
+distinctcounts = query_job.result().to_dataframe()
+distinctcounts["date"] = yyyymmdd_from_jd(distinctcounts["jd"].to_numpy()).astype(int)
+distinctcounts = distinctcounts.set_index("date").sort_index()
+distinctcounts.equals(counts)  # True. no duplicates
+
+len(prefixes) == len(counts.index)  # False. i think there are some nights with multiple tarnames
+
+prefixes = pd.DataFrame({"prefix": prefixes})
+prefixes["date"] = prefixes.apply(
+    lambda row: int(re.search("[0-9]{8}", row.prefix).group()), axis=1
+)
+len(prefixes.date.unique()) == len(counts.index)  # True
+
+# spot check number of objects in a prefix
+# update: this is killing this small vm. not cpu or memory. i think it's throughput and iops.
+# i checked about 3 and they were fine.
+objectcount = []
+for prefix in sample(list(prefixes.prefix), 10):
+    objectcount.append((prefix, len(list(bucket.list_blobs(prefix=prefix)))))
+objectcount = pd.DataFrame(objectcount, columns=["prefix", "numobjects"])
+objectcount["date"] = objectcount.apply(
+    lambda row: int(re.search("[0-9]{8}", row.prefix).group()), axis=1
+)
+for ocrow in objectcount.itertuples():
+    if len(prefixes.query(f"date == {ocrow.date}").index) != 1:
+        print("date has >1 prefix", ocrow)
+    assert ocrow.numobjects == counts.loc[counts["date"] == ocrow.date, "count"].squeeze()
+
+# clean up and move table
+
+# move/rename existing table
+# cant rename because of recent streaming operations
+# try copy and delete
+ogtable_id = table_id.removesuffix("_fullschema")
+job = it.BQ_CLIENT.copy_table(ogtable_id, ogtable_id + "_og")
+it.BQ_CLIENT.delete_table(ogtable_id)
+
+# drop cutout columns
+for cutout in ["cutoutScience", "cutoutTemplate", "cutoutDifference"]:
+    sql = f"ALTER TABLE {table_id} DROP COLUMN {cutout}"
+    job = it.BQ_CLIENT.query(sql)
+
+# rename table
+sql = f"ALTER TABLE {table_id} RENAME TO {ogtable_id.split('.')[-1]}"
+job = it.BQ_CLIENT.query(sql)
+
+# endregion
+
+# region ---- check stats on final table
+import pandas as pd
+import re
+from google.api_core import page_iterator
+from random import sample
+
+import ingest_tarballs as it
+from ingest_tarballs_working_version import jd_from_yyyymmdd, yyyymmdd_from_jd
+
+version = "3.3"
+bucket = it.BUCKET(version)
+table_name = "alerts_v3_3"
+table_id = f"{it.PROJECT_ID}.{it.DATASET}.{table_name}"
+
+# count rows in table per date
+sql = (
+    # cast -> int returns the closest integer value. halfway cases (0.5) round away from 0
+    f"SELECT CAST(candidate.jd as INT64) as jd, COUNT(candid) as count "
+    f"FROM `{table_id}` "
+    f"GROUP BY jd"
+)
+query_job = it.BQ_CLIENT.query(sql)
+counts = query_job.result().to_dataframe()
+counts["date"] = yyyymmdd_from_jd(counts["jd"].to_numpy()).astype(int)
+counts.to_csv(it.LOGSDIR / f"table_counts_{table_name}.csv")  # save for later
+counts = counts.set_index("date").sort_index()
+
+# check for duplicates
+query_job = it.BQ_CLIENT.query(sql.replace("COUNT(candid)", "COUNT(DISTINCT candid)"))
+distinctcounts = query_job.result().to_dataframe()
+distinctcounts["date"] = yyyymmdd_from_jd(distinctcounts["jd"].to_numpy()).astype(int)
+distinctcounts = distinctcounts.set_index("date").sort_index()
+distinctcounts.equals(counts)  # True. no duplicates
+
+# compare number of days in bucket vs in table
+# get bucket prefixes
+prefix_iter = page_iterator.HTTPIterator(
+    client=bucket.client,
+    api_request=bucket.client._connection.api_request,
+    path=f"/b/{bucket.name}/o",
+    items_key="prefixes",
+    item_to_value=lambda iterator, item: item,
+    extra_params={
+        # "projection": "noAcl",
+        "prefix": "",
+        "delimiter": "/",
+        "userProject": bucket.client.project,
+    },
+)
+prefixes = [pre for pre in prefix_iter]
+prefixes = pd.DataFrame({"prefix": prefixes})
+prefixes["date"] = prefixes.apply(
+    lambda row: int(re.search("[0-9]{8}", row.prefix).group()), axis=1
+)
+len(prefixes.date.unique()) == len(counts.index)  # True
+
 # endregion
 
 # region ---- scratch
