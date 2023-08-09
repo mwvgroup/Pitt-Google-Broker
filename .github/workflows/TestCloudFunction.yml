@@ -3,7 +3,6 @@ name: Test Cloud Functions
 on:
   workflow_dispatch:
   push:
-  pull_request:
 
 jobs:
   run_tests: 
