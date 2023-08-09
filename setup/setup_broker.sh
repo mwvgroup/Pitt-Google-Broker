@@ -3,9 +3,7 @@
 testid="${1:-test}"  # "False" => production. else will be appended to names of all resources
 teardown="${2:-False}"  # "True" tearsdown/deletes resources, else setup
 survey="${3:-elasticc}"  # name of the survey this broker instance will ingest
-max_instances="${4:-500}"  # max N of concurrent Cloud Fnc instances (per deployed module)
 PROJECT_ID="${GOOGLE_CLOUD_PROJECT}"
-BROKER_VERSION=$(cat "../VERSION")
 
 #--- Make the user confirm the settings
 echo
@@ -27,10 +25,13 @@ if [ "${continue_with_setup}" != "y" ]; then
 fi
 
 #--- GCP resources used directly in this script
+alerts_table="alerts"
 bq_dataset="${PROJECT_ID}:${survey}_alerts"
 bq_topic="projects/${PROJECT_ID}/topics/${survey}-BigQuery"
 broker_bucket="${PROJECT_ID}-${survey}-broker_files"
+source_table="DIASource"
 topic_alerts="${survey}-alerts"
+
 
 # use test resources, if requested
 # (there must be a better way to do this)
@@ -65,8 +66,6 @@ if [ "${teardown}" != "True" ]; then
     # create dashboard
     gcloud monitoring dashboards create --config-from-file="templates/dashboard.json"
     # create bigquery
-    alerts_table="alerts"
-    source_table="DIASource"
     bq mk --dataset "${bq_dataset}"
     bq mk --table "${bq_dataset}.${alerts_table}" "templates/bq_${survey}_${alerts_table}_schema.json"
     bq mk --table "${bq_dataset}.${source_table}" "templates/bq_${survey}_${source_table}_schema.json"
@@ -99,7 +98,7 @@ cd .. && cd broker || exit
 
 #--- Pub/Sub -> Cloud Storage Avro cloud function
 cd cloud_functions && cd ps_to_gcs || exit
-./deploy.sh "$testid" "$teardown" "$survey" "$max_instances" "$BROKER_VERSION"
+./deploy.sh "$testid" "$teardown" "$survey"
 
 cd .. && cd store_BigQuery || exit
 ./deploy.sh "$testid" "$teardown" "$survey"
