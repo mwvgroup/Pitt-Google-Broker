@@ -9,9 +9,8 @@ teardown="${2:-False}"
 # "True" tearsdown/deletes resources, else setup
 survey="${3:-elasticc}"
 # name of the survey this broker instance will ingest
-max_instances="${4:-500}"
-BROKER_VERSION="${5:-0.1.0e}"
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT # get the environment variable
+BROKER_VERSION=$(cat "../../../VERSION")
 
 #--- GCP resources used in this script
 avro_bucket="${PROJECT_ID}-${survey}-alert_avros"
@@ -71,7 +70,6 @@ else # Deploy the Cloud Functions
         --entry-point "${ps_to_gcs_entry_point}" \
         --runtime python37 \
         --memory "${memory}" \
-        --max-instances "${max_instances}" \
         --trigger-topic "${ps_to_gcs_trigger_topic}" \
         --set-env-vars TESTID="${testid}",SURVEY="${survey}",BROKER_VERSION="${BROKER_VERSION}"
 fi
