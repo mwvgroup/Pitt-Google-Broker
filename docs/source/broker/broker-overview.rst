@@ -24,8 +24,8 @@ Storage and/or BigQuery, and publish to dedicated Pub/Sub topics. The
 
 To view the resources, see :doc:`../broker/run-a-broker-instance/view-resources`.
 
-Details and Name Stubs
-~~~~~~~~~~~~~~~~~~~~~~
+Pipeline Architecture and Resource Names
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Resource name stubs are given below in brackets []. For a given broker
 instance, the actual resource names will have the survey keyword
@@ -36,7 +36,7 @@ instance set up with ``survey=ztf`` and ``testid=mytestid`` will have a
 consumer VM named `ztf-consumer-mytestid`. See :doc:`broker-instance-keywords` for details.
 
 A `versiontag` representing the Avro-schema version of the incoming alerts is appended to names of
-the BigQuery table and Cloud Storage bucket housing raw alert data (shown below).
+the BigQuery table and Cloud Storage bucket housing the raw alert data.
 If the schema version is "3.3", the versiontag will be "v3_3".
 The reason for the "_" is that the naming rules of some GCP resources prohibit the use of ".".
 
@@ -48,17 +48,32 @@ Cloud Storage bucket names must be unique across GCP, so the project ID is prepe
    -  Compute Engine VM [`consumer`]
 
       -  Runs the Kafka plugin
-         `CloudPubSubConnector <https://github.com/GoogleCloudPlatform/pubsub/tree/master/kafka-connector>`__
-      -  Publishes to Pub/Sub topic [`alerts`]
+         `CloudPubSubConnector <https://github.com/GoogleCloudPlatform/pubsub/tree/master/kafka-connector>`__.
+         This passes the bytes from the Kafka message packet straight through to a Pub/Sub message,
+         and attaches the Kafka metadata (e.g., topic, partition, offset, timestamp) as Pub/Sub
+         message attributes.
+         It does not open the message packet or transform the data in any way.
+      -  Publishes to Pub/Sub topic [`alerts_raw`]
 
 2. **Avro File Storage** (alert -> fix schema if needed -> Cloud Storage
    bucket)
 
    -  Cloud Function [`upload_bytes_to_bucket`]
 
-      -  Listens to PS topic [`alerts`]
+      -  Listens to PS topic [`alerts_raw`]
       -  Stores in GCS bucket [`alerts_{versiontag}`]
-      -  GCS bucket triggers Pub/Sub topic [`alert_avros`]
+      -  Publishes to Pub/Sub topic [`alerts`]
+
+         - This module effectively de-duplicates the Consumer's stream for the rest of the
+           pipeline. It does this by first attempting to upload to the GCS bucket using a
+           keyword arg that throws an error if an object with the same name already exists
+           in the bucket. Alerts are then published to the [`alerts`] topic only if that error
+           is not encountered.
+
+   -  GCS bucket triggers Pub/Sub topic [`alert_avros`]
+
+      - This is a light-weight notification stream announcing that a new object (Avro file) is
+        in the bucket. The messages include the object metadata but not the alert packet/data itself.
 
 3. **BigQuery Database Storage** (alert -> BigQuery)
 
@@ -69,18 +84,37 @@ Cloud Storage bucket names must be unique across GCP, so the project ID is prepe
          [`alerts_{versiontag}`] and [`DIASource`]
       -  Publishes to Pub/Sub topic [`BigQuery`]
 
-4. **SuperNNova Classifier** (extragalactic transient alert -> SuperNNova ->
-   {BigQuery, Pub/Sub})
+4. **Lite** (alert -> semantic compression -> Pub/Sub)
+
+      -  Cloud Function [`lite`]
+
+         -  Listens to PS topic [`alerts`]
+         -  Performs semantic compression producing a more lite-weight stream which contains
+            the subset of original data deemed "most useful". The field names in the resulting
+            "lite" alert packet are also transformed to a standard naming scheme,
+            allowing the downstream modules to be more survey-agnostic.
+         -  Publishes to PS topic [`lite`]
+
+4. **Tag** (lite alert -> basic categorizations -> {BigQuery, Pub/Sub})
+
+      -  Cloud Function [`tag`]
+
+         -  Listens to PS topic [`lite`]
+         -  Produces basic categorizations such as "is pure" and
+            "is likely extragalactic transient". These are attached as message attributes
+            to the outgoing Pub/Sub message so that they are easily accessible and can be
+            used to filter the alert stream without opening the data packet.
+         -  Stores in BigQuery tables [`classifications`] and [`tags`]
+         -  Publishes to PS topic [`tagged`]
+
+4. **SuperNNova Classifier** (lite alert -> SuperNNova classifier -> {BigQuery, Pub/Sub})
 
       -  Cloud Function [`classify_with_SuperNNova`]
 
-         -  Listens to PS topic [`exgalac_trans_cf`]
-
-            - this stream is emitted by the Cloud Function [`filter_exgalac_trans`],
-              which implements the same extragalactic transient filter as the
-              Dataflow job, for comparison.
-
-         -  Stores in BigQuery table [`SuperNNova`]
+         -  Listens to PS topic [`tagged`]
+         -  Produces a Type Ia supernova classification probability using
+            `SuperNNova <https://supernnova.readthedocs.io/en/latest/>`__
+         -  Stores in BigQuery tables [`classifications`] and [`SuperNNova`]
          -  Publishes to PS topic [`SuperNNova`]
 
 5. **Night Conductor** (collects metadata)
