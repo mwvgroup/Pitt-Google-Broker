@@ -6,13 +6,13 @@ December 2021 - Author: Troy Raen
 - [Setup](#setup)
 - [Ingest the Rubin test stream](#ingest-the-rubin-test-stream)
 - [Pull a Pub/Sub message and open it](#pull-a-pubsub-message-and-open-it)
-- [Alternative methods for handling the schema](#alternative-methods-for-handling-the-schema) 
+- [Alternative methods for handling the schema](#alternative-methods-for-handling-the-schema)
 
-# Overview  
+# Overview
 
 Details and access credentials were sent to us by Eric Bellm via email.
 Spencer Nelson provided some additional details specific to our Kafka Connect consumer.
-Here are some links they gave us for reference, which I (Troy Raen) used to set this up:
+Here are some links they gave us for reference which were used to set this up:
 
 - [Rubin sample alerts: obtaining the data with Kafka](https://github.com/lsst-dm/sample_alert_info#obtaining-the-data-with-kafka)
 - [Rubin Alert Stream Integration Endpoint](https://github.com/lsst-dm/sample_alert_info/blob/main/doc/alert_stream_integration_endpoint.md)
@@ -30,40 +30,47 @@ Below is the code I used to set up the necessary resources in GCP, ingest the Ru
 
 # Setup
 
-Clone the repo, checkout the branch (currently `rubin`, but in the future will be merged into `master`), cd into the directory:
+The following assumes you have set the environment variables
+`GOOGLE_CLOUD_PROJECT` and `GOOGLE_APPLICATION_CREDENTIALS`
+to appropriate values for your GCP project and service account credentials, and that
+the service account is authenticated to make `gcloud` calls through the project.
+You may want to
+[activate a service account for `gcloud` calls](https://pitt-broker.readthedocs.io/en/u-tjr-workingnotes/working-notes/troyraen/service-account.html#switch-the-service-account-your-api-calls-use) or
+[set up a GCP project from scratch](https://pitt-broker.readthedocs.io/en/latest/broker/run-a-broker-instance/initial-setup.html#setup-local-environment).
+
+Clone the repo and cd into the directory:
 
 ```bash
 git clone https://github.com/mwvgroup/Pitt-Google-Broker.git
-git checkout u/tjr/rubin
-
 cd Pitt-Google-Broker
 ```
 
-Define variables used below in multiple calls
+Define variables used below in multiple calls.
+The `KAFKA_USERNAME` and `KAFKA_PASSWORD` must be customized
 
 ```bash
-PROJECT_ID="avid-heading-329016"  # project: pitt-google-broker-user-test
+PROJECT_ID="${GOOGLE_CLOUD_PROJECT}"
+# For reference, I ran this with:
+# PROJECT_ID="avid-heading-329016"  # project name: pitt-google-broker-testing
 survey="rubin"
 broker_bucket="${PROJECT_ID}-${survey}-broker_files"
 consumerVM="${survey}-consumer"
 firewallrule="tcpport9094"
 
-# Replace KAFKA_PASSWORD with the appropriate value.
-# Contact Troy Raen if you don't know the password.
-KAFKA_USERNAME="pittgoogle-idfint"
-KAFKA_PASSWORD=""
+# Kafka credentials for the Rubin stream
+KAFKA_USERNAME="pittgoogle-idfint"  # set to correct username
+KAFKA_PASSWORD=""  # set to correct password
 
 PUBSUB_TOPIC="rubin-alerts"
-PUBSUB_SUBSCRIPTION="$PUBSUB_TOPIC"
+PUBSUB_SUBSCRIPTION="${PUBSUB_TOPIC}"
 KAFKA_TOPIC="alerts-simulated"
 ```
 
 Setup resources on Google Cloud Platform.
-(You must be authenticated with `gcloud` using an account that has permissions in the project defined by `PROJECT_ID` above.)
 
 ```bash
 # Create a firewall rule to open port 9094 (only needs to be done once, per project)
-gcloud compute firewall-rules create "$firewallrule" \
+gcloud compute firewall-rules create "${firewallrule}" \
     --allow=tcp:9094 \
     --description="Allow incoming traffic on TCP port 9094" \
     --direction=INGRESS \
@@ -77,19 +84,19 @@ o="GSUtil:parallel_process_count=1" # disable multiprocessing for Macs
 gsutil -m -o "$o" cp -r broker/consumer "gs://${broker_bucket}"
 
 # Create a Pub/Sub topic and subscription for Rubin alerts
-gcloud pubsub topics create $PUBSUB_TOPIC
-gcloud pubsub subscriptions create $PUBSUB_SUBSCRIPTION --topic=$PUBSUB_TOPIC
+gcloud pubsub topics create "${PUBSUB_TOPIC}"
+gcloud pubsub subscriptions create "${PUBSUB_SUBSCRIPTION}" --topic="${PUBSUB_TOPIC}"
 
 # Create a Rubin Consumer VM
 zone="us-central1-a"
 machinetype="e2-standard-2"
 installscript="gs://${broker_bucket}/consumer/vm_install.sh"
-gcloud compute instances create "$consumerVM" \
-    --zone="$zone" \
-    --machine-type="$machinetype" \
+gcloud compute instances create "${consumerVM}" \
+    --zone="${zone}" \
+    --machine-type="${machinetype}" \
     --scopes=cloud-platform \
-    --metadata=google-logging-enabled=true,startup-script-url="$installscript" \
-    --tags="$firewallrule"
+    --metadata=google-logging-enabled=true,startup-script-url="${installscript}" \
+    --tags="${firewallrule}"
 ```
 
 # Ingest the Rubin test stream
@@ -98,14 +105,16 @@ gcloud compute instances create "$consumerVM" \
 
 ```bash
 # start the consumer vm and ssh in
-gcloud compute instances start "$consumerVM"
-gcloud compute ssh "$consumerVM"
+gcloud compute instances start "${consumerVM}"
+gcloud compute ssh "${consumerVM}"
 
 # define some variables
-brokerdir=/home/broker
-workingdir="${brokerdir}/consumer/rubin"
-# Also define the variables from the "Setup" section
-# at the very top of this README file.
+brokerdir=/home/broker                      # user's home dir on this machine
+workingdir="${brokerdir}/consumer/rubin"    # consumer's working dir on this machine
+
+# We will also need the variables defined at the top of this document.
+# Go back up to the "Setup" section and define the variables given
+# in the code block under "Define variables...", in your environment.
 ```
 
 ## Test the connection
@@ -146,7 +155,7 @@ Run the Kafka console consumer
 sudo /bin/kafka-avro-console-consumer \
     --bootstrap-server alert-stream-int.lsst.cloud:9094 \
     --group "${KAFKA_USERNAME}-example-javaconsole" \
-    --topic "$KAFKA_TOPIC" \
+    --topic "${KAFKA_TOPIC}" \
     --property schema.registry.url=https://alert-schemas-int.lsst.cloud \
     --consumer.config consumer.properties \
     --timeout-ms=60000
@@ -159,8 +168,8 @@ Setup:
 
 ```bash
 # download the config files from broker_bucket
-sudo mkdir "$brokerdir"
-sudo gsutil -m cp -r "gs://${broker_bucket}/consumer" "$brokerdir"
+sudo mkdir "${brokerdir}"
+sudo gsutil -m cp -r "gs://${broker_bucket}/consumer" "${brokerdir}"
 
 # set the password in two of the config files
 sudo sed -i "s/KAFKA_PASSWORD/${KAFKA_PASSWORD}/g" "${workingdir}/admin.properties"
@@ -264,9 +273,9 @@ schema_version=1
 fout_rubinschema="rubinschema_v${schema_version}.avsc"
 
 # get list of schema subjects
-curl --silent -X GET -u $SCHEMA_REGISTRY_BASIC_AUTH_USER_INFO $SCHEMA_REGISTRY_URL/subjects
+curl --silent -X GET -u "${SCHEMA_REGISTRY_BASIC_AUTH_USER_INFO}" "${SCHEMA_REGISTRY_URL}/subjects"
 # download a particular schema
-curl --silent -X GET -u $SCHEMA_REGISTRY_BASIC_AUTH_USER_INFO $SCHEMA_REGISTRY_URL/schemas/ids/${schema_version} > $fout_rubinschema
+curl --silent -X GET -u "${SCHEMA_REGISTRY_BASIC_AUTH_USER_INFO}" "${SCHEMA_REGISTRY_URL}/schemas/ids/${schema_version}" > "${fout_rubinschema}"
 ```
 
 ### Read the alert's schema version from the Confluent Wire header

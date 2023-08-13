@@ -1,7 +1,6 @@
 # Connect Pitt-Google to the Rubin alert stream testing deployment
 
-THIS README HAS BEEN MOVED TO THE DIRECTORY broker/consumer/rubin.
-BUT STILL LEAVING IT HERE FOR FUTURE REFERENCE.
+Note: The active copy of this README.md is in broker/consumer/rubin and will be kept up to date as the main LSST alert stream developments. This README.md here is specifically for this test stream.
 
 December 2021 - Author: Troy Raen
 
