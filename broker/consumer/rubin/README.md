@@ -22,7 +22,7 @@ Here are some links they gave us for reference which were used to set this up:
   don't set the key to anything in particular), so you probably want the
   `value.converter` properties."
 - Tools and libraries for VOEvents:
-  https://wiki.ivoa.net/twiki/bin/view/IVOA/IvoaVOEvent#Tools_and_Libraries
+  <https://wiki.ivoa.net/twiki/bin/view/IVOA/IvoaVOEvent#Tools_and_Libraries>
 - [Rubin example: java console consumer](https://github.com/lsst-dm/sample_alert_info/tree/main/examples/alert_stream_integration_endpoint/java_console_consumer)
 
 Rubin alert packets will be Avro serialized, but the schema will not be included with the packet.
@@ -109,7 +109,7 @@ gcloud compute instances create "${consumerVM}" \
 
 ## Ingest the Rubin test stream
 
-### Setup
+### Setup Consumer VM
 
 ```bash
 # start the consumer vm and ssh in
@@ -328,7 +328,7 @@ Kafka Connect can use the Confluent Schema Registry directly.
 But schemas are stored under subjects and Kafka Connect is picky about how those
 subjects are named.
 See
-https://docs.confluent.io/platform/current/schema-registry/serdes-develop/index.html#subject-name-strategy
+<https://docs.confluent.io/platform/current/schema-registry/serdes-develop/index.html#subject-name-strategy>
 **Rubin has set the schema subject name to “alert-packet”**, which does not conform
 to any of the name strategies that Kafka Connect uses.
 I did not find a workaround for this issue.
