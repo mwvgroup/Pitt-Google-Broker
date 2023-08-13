@@ -6,6 +6,7 @@
 import base64
 import os
 from typing import Dict, Optional
+from pathlib import Path
 
 from google.cloud import functions_v1, logging
 
@@ -28,7 +29,10 @@ if TESTID != "False":
     bq_dataset = f"{bq_dataset}_{TESTID}"
     ps_topic = f"{ps_topic}-{TESTID}"
 
-schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
+schema_dir_name = "schema_maps"
+schema_file_name = f"{SURVEY}.yaml"
+path_to_local_schema_yaml = Path(__file__).resolve().parent / f"{schema_dir_name}/{schema_file_name}"
+schema_map = schema_maps.load_schema_map(SURVEY, TESTID, schema=path_to_local_schema_yaml)
 
 
 def run(msg: dict, context: functions_v1.context.Context) -> None:

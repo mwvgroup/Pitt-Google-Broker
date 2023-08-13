@@ -30,8 +30,8 @@ FERR = LOGSDIR / "error.csv"
 FSCHEMACHANGE = LOGSDIR / "schema-change.csv"
 FSUB = LOGSDIR / "submitted-to-bigquery.csv"
 FUP = LOGSDIR / "uploaded-to-bucket.csv"
-# ALERTSDIR = Path(__file__).parent / "alerts"  # for machines without SSD
-ALERTSDIR = Path("/mnt/disks/localssd") / "alerts"  # for machines with SSD
+ALERTSDIR = Path(__file__).parent / "alerts"  # for machines without SSD
+# ALERTSDIR = Path("/mnt/disks/localssd") / "alerts"  # for machines with SSD
 ALERTSDIR.mkdir(exist_ok=True)
 ZTFURL = "https://ztf.uw.edu/alerts/public"
 
@@ -123,19 +123,28 @@ class SchemaParsingError(Exception):
     pass
 
 
-def load_alerts_to_table_one_night(tarstem):
-    logging.info(f"submitting bigquery load jobs for {tarstem}")
-    version = version_from_tarname(tarstem + ".tar.gz")
-    # urilist = objectds.to_table(filter=(pc.field("tarstem") == tarstem))["alerturi"].to_pylist()
+def load_table_from_bucket(table_name, source_uris, reportid):
     load_job = BQ_CLIENT.load_table_from_uri(
-        source_uris="gs://" + BUCKET(version, nameonly=True) + "/" + tarstem + "/*",
-        destination=TABLE(version, nameonly=True),
+        source_uris=source_uris,
+        destination=table_name,
         job_config=bigquery.job.LoadJobConfig(
             write_disposition="WRITE_APPEND", source_format="AVRO", ignore_unknown_values=True
         ),
     )
     # load_job.done()
-    REPORT("submitted", f"{tarstem}.tar.gz,{load_job.job_id}")
+    REPORT("submitted", f"{reportid},{load_job.job_id}")
+    return load_job
+
+
+def load_alerts_to_table_one_night(tarstem):
+    logging.info(f"submitting bigquery load jobs for {tarstem}")
+    version = version_from_tarname(tarstem + ".tar.gz")
+    # urilist = objectds.to_table(filter=(pc.field("tarstem") == tarstem))["alerturi"].to_pylist()
+    load_table_from_bucket(
+        table_name=TABLE(version, nameonly=True),
+        source_uris="gs://" + BUCKET(version, nameonly=True) + "/" + tarstem + "/*",
+        reportid=f"{tarstem}.tar.gz",
+    )
 
 
 def version_from_tarname(tarname):
@@ -383,9 +392,9 @@ def check_submitted_jobs():
         _check_bigquery_jobs(tarname, jobsdf)
 
 
-def _check_bigquery_jobs(tarname, jobsdf):
+def _check_bigquery_jobs(tarname, jobsdf, location="us-central1"):
     """Check all jobs in jobsdf. Report tarname as done if all jobs completed without error."""
-    jobs = [BQ_CLIENT.get_job(row.jobid) for row in jobsdf.itertuples()]
+    jobs = [BQ_CLIENT.get_job(row.jobid, location=location) for row in jobsdf.itertuples()]
 
     # if any jobs is not done, just return
     if any([(not job.done()) for job in jobs]):

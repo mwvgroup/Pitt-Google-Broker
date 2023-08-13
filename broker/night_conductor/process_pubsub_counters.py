@@ -29,9 +29,9 @@ def _resource_names(survey: str, testid: Union[str, bool]):
 
     # bigquery table
     if not testid:
-        names["bq_table"] = f"{survey}_alerts.metadata"
+        names["bq_table"] = f"{survey}.metadata"
     else:
-        names["bq_table"] = f"{survey}_alerts_{testid}.metadata"
+        names["bq_table"] = f"{survey}_{testid}.metadata"
     # table column names
     table = bigquery.Client().get_table(names["bq_table"])
     names["bq_table_cols"] = [s.name for s in table.schema]
@@ -42,11 +42,8 @@ def _resource_names(survey: str, testid: Union[str, bool]):
         "alerts",
         "BigQuery",
         "alert_avros",
-        "alerts_pure",
-        "AllWISE",
-        "exgalac_trans",
-        "salt2",
-        "exgalac_trans_cf",
+        "lite",
+        "tagged",
         "SuperNNova",
     ]
     if not testid:
@@ -263,11 +260,16 @@ class MetadataCollector:
         df_avros[msg_id] = df_avros[msg_id_origin].astype(int)
         df_avros = df_avros.set_index(msg_id)
         df_avros = df_avros[[oid, sid]]  # drop the columns we don't need
-        df_avros = df_avros[~df_avros.index.duplicated(keep="first")]  # drop duplicates
 
-        # add the ids to the alerts_raw metadata
+        # prepare the alerts_raw dataframe
         df_alerts_raw = self.metadata_dfs_dict["alerts_raw"].reset_index()
         df_alerts_raw = df_alerts_raw.astype({msg_id: int}).set_index(msg_id)
+
+        # pubsub message_id duplicated when msg is *published* once but *received* twice. drop duplicates.
+        df_alerts_raw = df_alerts_raw[~df_alerts_raw.index.duplicated(keep="first")]
+        df_avros = df_avros[~df_avros.index.duplicated(keep="first")]
+
+        # add the ids to the alerts_raw metadata
         df_alerts_raw[oid] = df_avros[oid]
         df_alerts_raw[sid] = df_avros[sid]
 
@@ -466,18 +468,6 @@ class SubscriptionMetadataCollector:
     def _package_metadata_into_df(self):
         # cast the collected metadata to a df
         df = pd.DataFrame(self.metadata_dicts_list)
-        n = len(df)
-
-        # messages can be published multiple times. we only care about the first one.
-        df = df.sort_values("publish_time").drop_duplicates("message_id", keep="first")
-        # log the number we dropped
-        nnew = len(df)
-        if n - nnew > 0:
-            _log_and_print(
-                f"Dropping {n-nnew} messages that are duplicates of previously "
-                f"published messages in the subscription {self.subscription}."
-            )
-
         # keep only the requested fields
         keepcols = self._keep_field_names(self.requested_fields, df.columns)
         self.metadata_df = df[keepcols]

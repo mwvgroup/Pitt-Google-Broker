@@ -5,6 +5,7 @@
 #--- Get metadata attributes
 baseurl="http://metadata.google.internal/computeMetadata/v1"
 H="Metadata-Flavor: Google"
+PROJECT_ID=$(curl "${baseurl}/project/project-id" -H "${H}")
 consumerVM=$(curl "${baseurl}/instance/name" -H "${H}")
 zone=$(curl "${baseurl}/instance/zone" -H "${H}")
 

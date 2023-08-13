@@ -145,7 +145,6 @@ def _resources(service, survey='ztf', testid='test', versiontag="v3_3"):
             f'{PROJECT_ID}-{survey}-broker_files': [],
             f'{PROJECT_ID}-{survey}-testing_bucket':
                 ['ztf_3.3_validschema_1154446891615015011.avro'],
-            f'{PROJECT_ID}-{survey}_alerts_{versiontag}': [],
         }
         # Files are currently expected to reside in the
         # ``../../tests/test_alerts`` directory.

@@ -3,13 +3,19 @@
 """ Simulate the consumer by publishing alerts to a Pub/Sub topic.
 """
 
+import os
 import sys
 import time
 from typing import Optional, Tuple, Union
 
 from google.cloud import pubsub_v1
 
-PROJECT_ID = 'ardent-cycling-243415'
+# get project id from environment variable, else default to production project
+# cloud functions use GCP_PROJECT
+if "GCP_PROJECT" in os.environ:
+    PROJECT_ID = os.getenv("GCP_PROJECT")
+else:
+    PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT", "ardent-cycling-243415")
 
 
 def publish_stream(
@@ -102,7 +108,7 @@ def _do_publish_stream(
     while b < Nbatches:
         # get alerts from reservoir
         # response = subscriber.pull(request=request)  # for pubsub2+
-        response = subscriber.pull(**request)
+        response = subscriber.pull(request)
 
         # publish alerts to topic, raise exception on failure
         _publish_received_messages(publisher, topic_path, response)
@@ -183,14 +189,14 @@ def _handle_acks(subscriber, sub_path, ack_ids=[], nack=False):
             "subscription": sub_path,
             "ack_ids": ack_ids,
         }
-        subscriber.acknowledge(**request)
+        subscriber.acknowledge(request)
     else:
         request = {
             "subscription": sub_path,
             "ack_ids": ack_ids,
             "ack_deadline_seconds": 0,
         }
-        subscriber.modify_ack_deadline(**request)
+        subscriber.modify_ack_deadline(request)
 
 
 def _callback(future):
