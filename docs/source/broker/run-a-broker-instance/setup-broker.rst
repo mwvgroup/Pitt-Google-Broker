@@ -42,7 +42,7 @@ Setup the Broker Instance
     use_authentication=false  # whether the consumer VM should use an authenticated connection
 
     # setup all GCP resources for a broker instance
-    ./setup_broker.sh "$testid" "$teardown" "$survey" "$version"
+    ./setup_broker.sh "${testid}" "${teardown}" "${survey}" "${version}" "${use_authentication}"
 
 See :doc:`../broker-overview` for a description of ``survey``, ``testid``,
 ``version`` (which gets transformed to a ``versiontag``), and ``use_authentication``.
