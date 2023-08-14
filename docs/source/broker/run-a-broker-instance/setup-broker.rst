@@ -51,19 +51,20 @@ and the `versiontag` environment variable on all Cloud Functions needs to be upd
 
 See `What does setup_broker.sh do?`_ for details about the script itself.
 
-Upload Kafka Authentication Files
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Upload Kafka Authentication File
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Note: This is not necessary if using an unauthenticated connection.
 
 Note: Do this before the consumer VM finishes its install and shuts
 itself down. Else, you'll need to start it again (see
 :ref:`here <broker/run-a-broker-instance/view-resources:Compute Engine VMs>`).
 
-The consumer VM requires two **authorization files** to connect to the
-ZTF stream. *These must be obtained independently and uploaded to the VM
-manually, stored at the following locations:*
+The consumer VM requires a "keytab" authorization file in order to create an authenticated
+connection to the Kafka broker. *This must be obtained independently and uploaded to the VM
+manually, stored at the following location:*
 
-1. krb5.conf, at VM path /etc/krb5.conf
-2. pitt-reader.user.keytab, at VM path
+- pitt-reader.user.keytab, at VM path
    /home/broker/consumer/pitt-reader.user.keytab
 
 You can use the ``gcloud compute scp`` command for this:
@@ -74,7 +75,6 @@ You can use the ``gcloud compute scp`` command for this:
     testid=mytest  # use the same testid used in broker setup
     zone=us-central1-a  # use the VM's zone
 
-    gcloud compute scp krb5.conf "${survey}-consumer-${testid}:/etc/krb5.conf" --zone="${zone}"
     gcloud compute scp pitt-reader.user.keytab "${survey}-consumer-${testid}:/home/broker/consumer/pitt-reader.user.keytab" --zone="${zone}"
 
 --------------

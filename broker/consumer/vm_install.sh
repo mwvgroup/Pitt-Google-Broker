@@ -24,6 +24,9 @@ if [ "$testid" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
 fi
 
+# krb5.conf goes in a special place. put it there now.
+gsutil cp "gs://${broker_bucket}/consumer/krb5.conf" /etc/krb5.conf
+
 #--- Install general utils
 apt-get update
 apt-get install -y wget screen software-properties-common snapd
