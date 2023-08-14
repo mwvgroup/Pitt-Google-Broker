@@ -12,6 +12,7 @@ survey="${4:-ztf}"
 # name of the survey this broker instance will ingest
 region="${5:-us-central1}"
 zone="${6:-us-central1-a}"
+use_authentication="${7:-false}"
 
 #--- GCP resources used in this script
 consumerVM="${survey}-consumer"
@@ -68,13 +69,14 @@ else
     googlelogging="google-logging-enabled=true"
     startupscript="startup-script-url=gs://${broker_bucket}/consumer/vm_install.sh"
     shutdownscript="shutdown-script-url=gs://${broker_bucket}/consumer/vm_shutdown.sh"
+    authentication="USE_AUTHENTICATION=${use_authentication}"
     gcloud compute instances create "$consumerVM" \
         --resource-policies="${consumerVMsched}" \
         --zone="$zone" \
         --address="$consumerIP" \
         --machine-type="$machinetype" \
         --scopes=cloud-platform \
-        --metadata="${googlelogging},${startupscript},${shutdownscript}" \
+        --metadata="${googlelogging},${startupscript},${shutdownscript},${authentication}" \
         --tags=ztfport # for the firewall rule to open the port
 
 #--- Disable the schedules for testing instances

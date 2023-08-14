@@ -2,6 +2,7 @@
 # Configure and Start the Kafka -> Pub/Sub connector
 
 brokerdir=/home/broker
+# if using an authenticated connection, the keytab file must already exist in the workingdir
 workingdir="${brokerdir}/consumer"
 
 #--- Get project and instance metadata
@@ -13,6 +14,7 @@ PROJECT_ID=$(curl "${baseurl}/project/project-id" -H "${H}")
 zone=$(curl "${baseurl}/instance/zone" -H "${H}")
 PS_TOPIC_FORCE=$(curl "${baseurl}/instance/attributes/PS_TOPIC_FORCE" -H "${H}")
 KAFKA_TOPIC_FORCE=$(curl "${baseurl}/instance/attributes/KAFKA_TOPIC_FORCE" -H "${H}")
+USE_AUTHENTICATION=$(curl "${baseurl}/instance/attributes/USE_AUTHENTICATION" -H "${H}")
 # parse the survey name and testid from the VM name
 consumerVM=$(curl "${baseurl}/instance/name" -H "${H}")
 survey=$(echo "$consumerVM" | awk -F "-" '{print $1}')
@@ -39,7 +41,7 @@ mkdir "${brokerdir}"
 cd ${brokerdir}
 gsutil -m cp -r "gs://${broker_bucket}/consumer" .
 gsutil -m cp -r "gs://${broker_bucket}/schema_maps" .
-# wait a bit, otherwise all the files may not have downloaded yet
+# wait. otherwise the script may continue before all files are downloaded, with adverse behavior.
 sleep 30s
 cd ${workingdir}
 
@@ -68,20 +70,33 @@ sed -i "s/KAFKA_TOPIC/${KAFKA_TOPIC}/g" ${fconfig}
 alerts_flowing=false
 while [ "${alerts_flowing}" = false ]
 do
-    # get list of live topics and dump to file
-    {
-        /bin/kafka-topics \
-            --bootstrap-server public.alerts.ztf.uw.edu:9092 \
-            --list \
-            > $fout_topics
-    } || {
-        true
-    }
+    # get list of topics and dump to file
     # /bin/kafka-topics works, but exits with:
         # TGT renewal thread has been interrupted and will exit.
         # (org.apache.kafka.common.security.kerberos.KerberosLogin)""
     # which kills the while loop. no working suggestions found.
     # passing the error with `|| true`
+    if [ "${USE_AUTHENTICATION}" = true ]
+    then
+        {
+            /bin/kafka-topics \
+                --bootstrap-server public2.alerts.ztf.uw.edu:9094 \
+                --list \
+                --command-config ${workingdir}/admin.properties \
+                > ${fout_topics}
+        } || {
+            true
+        }
+    else
+        {
+            /bin/kafka-topics \
+                --bootstrap-server public.alerts.ztf.uw.edu:9092 \
+                --list \
+                > ${fout_topics}
+        } || {
+            true
+        }
+    fi
 
     # check if our topic is in the list
     if grep -Fq "${KAFKA_TOPIC}" $fout_topics
@@ -93,7 +108,14 @@ do
 done
 
 #--- Start the Kafka -> Pub/Sub connector, save stdout and stderr to file
-/bin/connect-standalone \
-    ${workingdir}/psconnect-worker.properties \
-    ${workingdir}/ps-connector.properties \
-    &>> ${fout_run}
+if [ "${USE_AUTHENTICATION}" = true ]
+then
+    /bin/connect-standalone \
+        ${workingdir}/psconnect-worker-authenticated.properties \
+        ${workingdir}/ps-connector.properties \
+        &>> ${fout_run}
+else
+    /bin/connect-standalone \
+        ${workingdir}/psconnect-worker-unauthenticated.properties \
+        ${workingdir}/ps-connector.properties \
+        &>> ${fout_run}

@@ -39,12 +39,13 @@ Setup the Broker Instance
     testid=mytest  # replace with your choice of testid
     teardown=False  # False to create resources
     version="3.3"  # avro schema version of incoming alerts
+    use_authentication=false  # whether the consumer VM should use an authenticated connection
 
     # setup all GCP resources for a broker instance
     ./setup_broker.sh "$testid" "$teardown" "$survey" "$version"
 
-See :doc:`../broker-overview` for a description of ``survey``, ``testid``, and
-``version`` (which gets transformed to a ``versiontag``).
+See :doc:`../broker-overview` for a description of ``survey``, ``testid``,
+``version`` (which gets transformed to a ``versiontag``), and ``use_authentication``.
 When the Avro schema changes, a new `alerts_{versiontag}` table and bucket need to be created,
 and the `versiontag` environment variable on all Cloud Functions needs to be updated.
 
