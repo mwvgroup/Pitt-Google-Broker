@@ -119,3 +119,4 @@ else
         ${workingdir}/psconnect-worker-unauthenticated.properties \
         ${workingdir}/ps-connector.properties \
         &>> ${fout_run}
+fi
