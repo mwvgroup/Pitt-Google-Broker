@@ -5,7 +5,7 @@ teardown="${2:-False}"  # "True" tearsdown/deletes resources, else setup
 survey="${3:-elasticc}"  # name of the survey this broker instance will ingest
 max_instances="${4:-500}"  # max N of concurrent Cloud Fnc instances (per deployed module)
 region="${5:-us-central1}"
-zone="${region}-a"
+zone="${region}-a" # just use zone "a" instead of adding another script arg
 PROJECT_ID="${GOOGLE_CLOUD_PROJECT}"
 
 #--- Make the user confirm the settings
