@@ -5,7 +5,7 @@ broker_bucket=$1
 testid="${2:-test}"
 teardown="${3:-False}"
 survey="${4:-ztf}"
-zone="${CLOUDSDK_COMPUTE_ZONE:-us-central1-a}"
+zone="${5:-us-central1-a}"
 
 #--- GCP resources used in this script
 consumerVM="${survey}-consumer"

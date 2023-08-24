@@ -5,6 +5,7 @@ teardown="${2:-False}"  # "True" tearsdown/deletes resources, else setup
 survey="${3:-elasticc}"  # name of the survey this broker instance will ingest
 max_instances="${4:-500}"  # max N of concurrent Cloud Fnc instances (per deployed module)
 region="${5:-us-central1}"
+zone="${region}-a"
 PROJECT_ID="${GOOGLE_CLOUD_PROJECT}"
 
 #--- Make the user confirm the settings
@@ -65,7 +66,7 @@ fi
 #--- Create VM instances
 echo
 echo "Configuring VMs..."
-./create_vms.sh "${broker_bucket}" "${testid}" "${teardown}" "${survey}"
+./create_vms.sh "${broker_bucket}" "${testid}" "${teardown}" "${survey}" "${zone}"
 
 #--- Create BQ, PS, GCS resources
 if [ "${teardown}" != "True" ]; then
