@@ -17,7 +17,7 @@ from google.cloud import logging
 from google.cloud import storage
 from google.cloud.exceptions import PreconditionFailed
 
-from broker_utils.avro_schemas.load import all as load_all_schemas
+from broker_utils.avro_schemas.load import load_all_schemas
 from broker_utils.schema_maps import load_schema_map, get_key
 from broker_utils.types import AlertFilename, AlertIds
 from exceptions import SchemaParsingError
@@ -29,7 +29,7 @@ SURVEY = os.getenv('SURVEY')
 BROKER_VERSION = os.getenv("BROKER_VERSION")
 BROKER_NAME = "Pitt-Google"
 
-schema_in = load_all_schemas()["elasticc.v0_9.alert.avsc"]
+schema_in = load_all_schemas()["elasticc.v0_9_1.alert.avsc"]
 schema_map = load_schema_map(SURVEY, TESTID)
 sobjectId, ssourceId = get_key("objectId", schema_map), get_key("sourceId", schema_map)
 # connect to the cloud logger

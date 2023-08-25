@@ -4,6 +4,8 @@ testid="${1:-test}"  # "False" => production. else will be appended to names of 
 teardown="${2:-False}"  # "True" tearsdown/deletes resources, else setup
 survey="${3:-elasticc}"  # name of the survey this broker instance will ingest
 max_instances="${4:-500}"  # max N of concurrent Cloud Fnc instances (per deployed module)
+region="${5:-us-central1}"
+zone="${region}-a" # just use zone "a" instead of adding another script arg
 PROJECT_ID="${GOOGLE_CLOUD_PROJECT}"
 
 #--- Make the user confirm the settings
@@ -49,8 +51,8 @@ fi
 # broker bucket
 if [ "${teardown}" != "True" ]; then
     echo "Creating broker_bucket and uploading files..."
-    gsutil mb -b on "gs://${broker_bucket}"
-    gsutil mb -b on "gs://${avro_bucket}"
+    gsutil mb -b on -l "${region}" "gs://${broker_bucket}"
+    gsutil mb -b on -l "${region}" "gs://${avro_bucket}"
     ./upload_broker_bucket.sh "${broker_bucket}"
 else
     # ensure that we do not teardown production resources
@@ -64,7 +66,7 @@ fi
 #--- Create VM instances
 echo
 echo "Configuring VMs..."
-./create_vms.sh "${broker_bucket}" "${testid}" "${teardown}" "${survey}"
+./create_vms.sh "${broker_bucket}" "${testid}" "${teardown}" "${survey}" "${zone}"
 
 #--- Create BQ, PS, GCS resources
 if [ "${teardown}" != "True" ]; then
@@ -72,7 +74,7 @@ if [ "${teardown}" != "True" ]; then
     # create dashboard
     gcloud monitoring dashboards create --config-from-file="templates/dashboard.json"
     # create bigquery
-    # bq mk --dataset "${bq_dataset}"
+    # bq mk --dataset "${bq_dataset}" --location "${region}"
     # bq mk --table "${bq_dataset}.${alerts_table}" "templates/bq_${survey}_${alerts_table}_schema.json"
     # bq mk --table "${bq_dataset}.${source_table}" "templates/bq_${survey}_${source_table}_schema.json"
     # create pubsub
@@ -80,7 +82,6 @@ if [ "${teardown}" != "True" ]; then
     # gcloud pubsub topics create "${bq_topic}"
     gcloud pubsub topics create "${topic_alerts}"
     gcloud pubsub subscriptions create "${topic_alerts}-reservoir" --topic "${topic_alerts}"
-    gcloud pubsub subscriptions create "${avro_topic}-reservoir" --topic "${avro_topic}"
 
     # Set IAM policies on resources
     user="allUsers"
@@ -107,7 +108,6 @@ else
         # gcloud pubsub topics delete "${bq_topic}"
         gcloud pubsub topics delete "${topic_alerts}"
         gcloud pubsub subscriptions delete "${topic_alerts}-reservoir"
-        gcloud pubsub subscriptions delete "${avro_topic}-reservoir"
     fi
 fi
 
