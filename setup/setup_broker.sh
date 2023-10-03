@@ -66,7 +66,7 @@ fi
 #--- Create VM instances
 echo
 echo "Configuring VMs..."
-./create_vms.sh "${broker_bucket}" "${testid}" "${teardown}" "${survey}" "${zone}"
+./create_vms.sh "${broker_bucket}" "${testid}" "${teardown}" "${survey}" "${region}" "${zone}"
 
 #--- Create BQ, PS, GCS resources
 if [ "${teardown}" != "True" ]; then

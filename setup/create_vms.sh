@@ -5,7 +5,8 @@ broker_bucket=$1
 testid="${2:-test}"
 teardown="${3:-False}"
 survey="${4:-ztf}"
-zone="${5:-us-central1-a}"
+region="${5:-us-central1}"
+zone="${6:-us-central1-a}"
 
 #--- GCP resources used in this script
 consumerVM="${survey}-consumer"
@@ -14,21 +15,27 @@ consumerVMsched="${survey}-consumer-schedule"
 if [ "${testid}" != "False" ]; then
     consumerVM="${consumerVM}-${testid}"
 fi
+consumerIP="${consumerVM}"  # gcp resource name of the consumer's static ip address
 
 #--- Teardown resources
 if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources
     if [ "${testid}" != "False" ]; then
         gcloud compute instances delete "${consumerVM}" --zone="${zone}"
+        gcloud compute addresses delete "${consumerIP}" --region="${region}"
     fi
 
 #--- Create resources
 else
 #--- Consumer VM
+    # create a static ip address so that it can be whitelisted by the survey
+    gcloud compute addresses create "${consumerIP}" --region="${region}"
+    # create the vm
     installscript="gs://${broker_bucket}/consumer/vm_install.sh"
     gcloud compute instances create "${consumerVM}" \
         --resource-policies="${consumerVMsched}" \
         --zone "${zone}" \
+        --address="${consumerIP}" \
         --machine-type "e2-standard-2" \
         --image-family "debian-11" \
         --image-project "debian-cloud" \
