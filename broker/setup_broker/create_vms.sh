@@ -31,6 +31,7 @@ if [ "$teardown" = "True" ]; then
     # ensure that we do not teardown production resources
     if [ "$testid" != "False" ]; then
         gcloud compute instances delete "$consumerVM" "$nconductVM" --zone="$zone"
+        gcloud compute addresses delete "${consumerIP}" --region="${region}"
     fi
 
 #--- Create resources
