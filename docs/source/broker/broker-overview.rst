@@ -43,6 +43,10 @@ The reason for the "_" is that the naming rules of some GCP resources prohibit t
 Cloud Storage bucket names must be unique across GCP, so the project ID is prepended
 (before `survey`; not shown below).
 
+A `use_authentication` switch has been added to the consumer VM which determines whether it creates
+an authenticated or unauthenticated connection to the Kafka broker. This is implemented as an
+environment variable on the VM which determines the behavior of its vm_startup.sh script.
+
 1. **Consumer** (Kafka -> Pub/Sub)
 
    -  Compute Engine VM [`consumer`]

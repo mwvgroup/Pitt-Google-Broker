@@ -2,8 +2,8 @@
 # Configure and Start the Kafka -> Pub/Sub connector
 
 brokerdir=/home/broker
+# if using an authenticated connection, the keytab file must already exist in the workingdir
 workingdir="${brokerdir}/consumer"
-# mkdir -p ${workingdir} # keytab auth file must already exist in this dir
 
 #--- Get project and instance metadata
 # for info on working with metadata, see here
@@ -14,6 +14,7 @@ PROJECT_ID=$(curl "${baseurl}/project/project-id" -H "${H}")
 zone=$(curl "${baseurl}/instance/zone" -H "${H}")
 PS_TOPIC_FORCE=$(curl "${baseurl}/instance/attributes/PS_TOPIC_FORCE" -H "${H}")
 KAFKA_TOPIC_FORCE=$(curl "${baseurl}/instance/attributes/KAFKA_TOPIC_FORCE" -H "${H}")
+USE_AUTHENTICATION=$(curl "${baseurl}/instance/attributes/USE_AUTHENTICATION" -H "${H}")
 # parse the survey name and testid from the VM name
 consumerVM=$(curl "${baseurl}/instance/name" -H "${H}")
 survey=$(echo "$consumerVM" | awk -F "-" '{print $1}')
@@ -31,12 +32,23 @@ if [ "$testid" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
     PS_TOPIC_DEFAULT="${PS_TOPIC_DEFAULT}-${testid}"
 fi
-# default Kafka topic
+
+#--- Download config files from GCS
+# remove all files
+rm -r "${brokerdir}"
+# download fresh files
+mkdir "${brokerdir}"
+cd ${brokerdir}
+gsutil -m cp -r "gs://${broker_bucket}/consumer" .
+gsutil -m cp -r "gs://${broker_bucket}/schema_maps" .
+# wait. otherwise the script may continue before all files are downloaded, with adverse behavior.
+sleep 30s
+cd ${workingdir}
+
+#--- Set the topic names to the "FORCE" metadata attributes if exist, else defaults
 kafka_topic_syntax=$(cat "${brokerdir}/schema_maps/${survey}.yaml" | yq ".TOPIC_SYNTAX")
 yyyymmdd=$(date -u '+%Y%m%d')
 KAFKA_TOPIC_DEFAULT="${kafka_topic_syntax/yyyymmdd/${yyyymmdd}}"
-
-#--- Set the topic names to the "FORCE" metadata attributes if exist, else defaults
 KAFKA_TOPIC="${KAFKA_TOPIC_FORCE:-${KAFKA_TOPIC_DEFAULT}}"
 PS_TOPIC="${PS_TOPIC_FORCE:-${PS_TOPIC_DEFAULT}}"
 # set VM metadata, just for clarity and easy viewing
@@ -48,16 +60,6 @@ gcloud compute instances add-metadata "$consumerVM" --zone "$zone" \
 fout_run="${workingdir}/run-connector.out"
 fout_topics="${workingdir}/list.topics"
 
-#--- Download config files from GCS (just grab the whole bucket)
-cd ${brokerdir}
-# remove all consumer files except the keytab
-find ${workingdir} -type f -not -name 'pitt-reader.user.keytab' -delete
-# download fresh files
-gsutil -m cp -r "gs://${broker_bucket}/consumer" .
-gsutil -m cp -r "gs://${broker_bucket}/schema_maps" .
-
-cd ${workingdir}
-
 #--- Set the connector's configs (project and topics)
 fconfig=ps-connector.properties
 sed -i "s/PROJECT_ID/${PROJECT_ID}/g" ${fconfig}
@@ -68,21 +70,33 @@ sed -i "s/KAFKA_TOPIC/${KAFKA_TOPIC}/g" ${fconfig}
 alerts_flowing=false
 while [ "${alerts_flowing}" = false ]
 do
-    # get list of live topics and dump to file
-    {
-        /bin/kafka-topics \
-            --bootstrap-server public2.alerts.ztf.uw.edu:9094 \
-            --list \
-            --command-config ${workingdir}/admin.properties \
-            > $fout_topics
-    } || {
-        true
-    }
+    # get list of topics and dump to file
     # /bin/kafka-topics works, but exits with:
         # TGT renewal thread has been interrupted and will exit.
         # (org.apache.kafka.common.security.kerberos.KerberosLogin)""
     # which kills the while loop. no working suggestions found.
     # passing the error with `|| true`
+    if [ "${USE_AUTHENTICATION}" = true ]
+    then
+        {
+            /bin/kafka-topics \
+                --bootstrap-server public2.alerts.ztf.uw.edu:9094 \
+                --list \
+                --command-config ${workingdir}/admin.properties \
+                > ${fout_topics}
+        } || {
+            true
+        }
+    else
+        {
+            /bin/kafka-topics \
+                --bootstrap-server public.alerts.ztf.uw.edu:9092 \
+                --list \
+                > ${fout_topics}
+        } || {
+            true
+        }
+    fi
 
     # check if our topic is in the list
     if grep -Fq "${KAFKA_TOPIC}" $fout_topics
@@ -94,7 +108,15 @@ do
 done
 
 #--- Start the Kafka -> Pub/Sub connector, save stdout and stderr to file
-/bin/connect-standalone \
-    ${workingdir}/psconnect-worker.properties \
-    ${workingdir}/ps-connector.properties \
-    &>> ${fout_run}
+if [ "${USE_AUTHENTICATION}" = true ]
+then
+    /bin/connect-standalone \
+        ${workingdir}/psconnect-worker-authenticated.properties \
+        ${workingdir}/ps-connector.properties \
+        &>> ${fout_run}
+else
+    /bin/connect-standalone \
+        ${workingdir}/psconnect-worker-unauthenticated.properties \
+        ${workingdir}/ps-connector.properties \
+        &>> ${fout_run}
+fi

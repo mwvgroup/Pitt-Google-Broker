@@ -11,7 +11,8 @@ survey="${3:-ztf}"
 # 'ztf' or 'decat'
 schema_version="${4:-3.3}"
 versiontag=v$(echo "${schema_version}" | tr . _)  # 3.3 -> v3_3
-region="${5:-us-central1}"
+use_authentication="${5:-false}"  # whether the consumer VM should use an authenticated connection
+region="${6:-us-central1}"
 zone="${region}-a"  # just use zone "a" instead of adding another script arg
 
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT # get the environment variable
@@ -81,7 +82,7 @@ fi
 #--- Create VM instances
 echo
 echo "Configuring VMs..."
-./create_vms.sh "$broker_bucket" "$testid" "$teardown" "$survey" "$region" "$zone"
+./create_vms.sh "${broker_bucket}" "${testid}" "${teardown}" "${survey}" "${region}" "${zone}" "${use_authentication}"
 
 
 #--- Create the cron jobs that check the VM status
