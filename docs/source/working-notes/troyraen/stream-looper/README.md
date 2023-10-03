@@ -108,10 +108,6 @@ looper.run_looper()
 Log in to the stream-looper VM and run the looper in a screen:
 
 ```bash
-gcloud compute ssh "${vmname}"
-
-screen -S elasticc
-
 # Note:
 # to detach from the screen, use: "Ctrl+a" then "d"
 # to reattach to the screen, use: `screen -r elasticc`
@@ -119,6 +115,14 @@ screen -S elasticc
 # Note:
 # reset the following variables using values at the top of this README:
 # bucketdir, workingdir
+```
+
+### Incoming alerts
+
+```bash
+gcloud compute ssh "${vmname}"
+
+screen -S elasticc
 
 cd "${workingdir}"
 
@@ -134,4 +138,75 @@ topic = "elasticc-loop"
 project_id = "avid-heading-329016"
 
 StreamLooper(topic, subscrip, project_id).run_looper()
+```
+
+### Outgoing classifications
+
+```bash
+gcloud compute ssh "${vmname}"
+
+screen -S classifications
+
+cd "${workingdir}"
+
+fname=brokerClassification.avsc
+curl -L -o $fname \
+   "https://raw.githubusercontent.com/LSSTDESC/elasticc/main/alert_schema/elasticc.v0_9_1.${fname}"
+
+pip3 install fastavro
+
+ipython
+```
+
+```python
+import io
+import fastavro
+from datetime import datetime, timedelta, timezone
+from google.cloud import pubsub_v1
+from random import random
+from time import sleep
+
+
+client = pubsub_v1.PublisherClient()
+topic_name = "classifications-loop"
+project_id = "avid-heading-329016"
+topic_path = f"projects/{project_id}/topics/{topic_name}"
+schema_out = fastavro.schema.load_schema("brokerClassification.avsc")
+
+
+while True:
+    # mocking some attributes as done in broker_utils.testing.Mock
+    # (don't want to install broker-utils just for this)
+    now = datetime.now(timezone.utc)
+
+    msg = {
+        "alertId": int(random() * 1e10),
+        "diaSourceId": int(random() * 1e6),
+        # create int POSIX timestamps in milliseconds
+        "elasticcPublishTimestamp": int(now.timestamp() * 1e3),
+        "brokerIngestTimestamp": int((now + timedelta(seconds=0.345678)).timestamp() * 1e3),
+        "brokerName": "Pitt-Google Broker",
+        "brokerVersion": "v0.6",
+        "classifierName": "SuperNNova_v1.3",
+        "classifierParams": "",
+        "classifications": [{"classId": 111, "probability": random(),}],
+    }
+
+    # avro serialize the dictionary
+    fout = io.BytesIO()
+    fastavro.schemaless_writer(fout, schema_out, msg)
+    fout.seek(0)
+    avro = fout.getvalue()
+
+    # read in to make sure we got it right
+    # from io import BytesIO
+    # with BytesIO(avro) as fin:
+    #    class_dict = fastavro.schemaless_reader(fin, schema_out)
+    # print(class_dict)
+
+    # publish
+    future = client.publish(topic_path, avro)
+    future.result()  # blocks until published. raises an exception if publish fails
+
+    sleep(1)
 ```
