@@ -3,9 +3,7 @@
 
 brokerdir="/home/broker"
 workingdir="${brokerdir}/consumer"
-# the keytab file required for authorization must already exist in the workingdir.
-# make it immutable, then delete everything else so we can start fresh.
-chattr +i "${workingdir}/pitt-reader.user.keytab"
+# delete everything so we can start fresh
 rm -rf "${brokerdir}"
 cd "${workingdir}" || exit
 
@@ -74,9 +72,8 @@ do
     # get list of live topics and dump to file
     {
         /bin/kafka-topics \
-            --bootstrap-server "public2.alerts.ztf.uw.edu:9094" \
+            --bootstrap-server "public.alerts.ztf.uw.edu:9092" \
             --list \
-            --command-config "${workingdir}/admin.properties" \
             &>> "${fout_topics}"
     } || {
         true
