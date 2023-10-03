@@ -64,7 +64,11 @@ def run(msg: dict, context) -> None:
     snn_dict = _classify_with_snn(alert_lite)
 
     # announce to pubsub
-    gcp_utils.publish_pubsub(ps_topic, {**alert_lite, "SuperNNova": snn_dict}, attrs=attrs)
+    gcp_utils.publish_pubsub(
+        ps_topic,
+        message={**alert_lite, "SuperNNova": snn_dict},
+        attrs={**attrs, "supernnova_class": str(snn_dict["predicted_class"])},
+    )
 
     # store in bigquery
     errors = gcp_utils.insert_rows_bigquery(
