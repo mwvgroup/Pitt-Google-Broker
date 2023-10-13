@@ -14,7 +14,6 @@ formats: []
 # Set the version of Python and requirements required to build the docs
 python:
   version: 3.7
-  system_packages: true
   install:
     - requirements: docs/requirements.txt
     - method: setuptools
