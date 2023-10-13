@@ -40,7 +40,7 @@ fi
 rm -rf "${brokerdir}"
 
 # create broker and consumer directories
-mkdir -p "${brokerdir}"
+mkdir "${brokerdir}"
 
 #--- Download fresh config files from the bucket
 gsutil -m cp -r "gs://${broker_bucket}/consumer" "${brokerdir}"
