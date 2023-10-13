@@ -2,14 +2,11 @@
 # Configure and Start the Kafka -> Pub/Sub connector
 
 brokerdir="/home/broker"
-workingdir="${brokerdir}/consumer"
-# delete everything so we can start fresh
-rm -rf "${brokerdir}"
-cd "${workingdir}" || exit
+consumerdir="${brokerdir}/consumer"
 
 #--- Files this script will write
-fout_run="${workingdir}/run-connector.out"
-fout_topics="${workingdir}/list.topics"
+fout_run="${consumerdir}/run-connector.out"
+fout_topics="${consumerdir}/list.topics"
 
 #--- Get project and instance metadata
 # for info on working with metadata, see here
@@ -39,6 +36,12 @@ if [ "$testid" != "False" ]; then
     PS_TOPIC_DEFAULT="${PS_TOPIC_DEFAULT}-${testid}"
 fi
 
+# delete everything so we can start fresh
+rm -rf "${brokerdir}"
+
+# create broker and consumer directories
+mkdir "${brokerdir}"
+
 #--- Download fresh config files from the bucket
 gsutil -m cp -r "gs://${broker_bucket}/consumer" "${brokerdir}"
 gsutil -m cp -r "gs://${broker_bucket}/schema_maps" "${brokerdir}"
@@ -51,16 +54,16 @@ KAFKA_TOPIC="${KAFKA_TOPIC_FORCE:-${KAFKA_TOPIC_DEFAULT}}"
 PS_TOPIC="${PS_TOPIC_FORCE:-${PS_TOPIC_DEFAULT}}"
 # set VM metadata, just for clarity and easy viewing
 gcloud compute instances add-metadata "${consumerVM}" --zone "${zone}" \
-    --metadata "CURRENT_PS_TOPIC=${PS_TOPIC},CURRENT_KAFKA_TOPIC=${KAFKA_TOPIC}"
+    --metadata "^:^CURRENT_PS_TOPIC=${PS_TOPIC}:CURRENT_KAFKA_TOPIC=${KAFKA_TOPIC}"
 
 #--- Set the connector's configs (project and topics)
-fconfig="ps-connector.properties"
+fconfig="${consumerdir}/ps-connector.properties"
 sed -i "s/PROJECT_ID/${PROJECT_ID}/g" "${fconfig}"
 sed -i "s/PS_TOPIC/${PS_TOPIC}/g" "${fconfig}"
 sed -i "s/KAFKA_TOPIC/${KAFKA_TOPIC}/g" "${fconfig}"
 
 #--- Set the Kafka offset
-fconfig="psconnect-worker.properties"
+fconfig="${consumerdir}/psconnect-worker.properties"
 OFFSET_RESET_DEFAULT="latest"
 OFFSET_RESET="${OFFSET_RESET_FORCE:-${OFFSET_RESET_DEFAULT}}"
 sed -i "s/<OFFSET_RESET>/${OFFSET_RESET}/g" "${fconfig}"
@@ -95,6 +98,6 @@ done
 
 #--- Start the Kafka -> Pub/Sub connector, save stdout and stderr to file
 /bin/connect-standalone \
-    "${workingdir}/psconnect-worker.properties" \
-    "${workingdir}/ps-connector.properties" \
+    "${consumerdir}/psconnect-worker.properties" \
+    "${consumerdir}/ps-connector.properties" \
     &>> "${fout_run}"
