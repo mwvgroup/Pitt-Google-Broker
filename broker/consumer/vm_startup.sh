@@ -41,7 +41,6 @@ rm -rf "${brokerdir}"
 
 # create broker and consumer directories
 mkdir -p "${consumerdir}"
-cd "${consumerdir}" || exit
 
 #--- Download fresh config files from the bucket
 gsutil -m cp -r "gs://${broker_bucket}/consumer" "${brokerdir}"
@@ -58,13 +57,13 @@ gcloud compute instances add-metadata "${consumerVM}" --zone "${zone}" \
     --metadata ^:^CURRENT_PS_TOPIC=${PS_TOPIC}:CURRENT_KAFKA_TOPIC=${KAFKA_TOPIC}
 
 #--- Set the connector's configs (project and topics)
-fconfig="ps-connector.properties"
+fconfig="/home/broker/consumer/ps-connector.properties"
 sed -i "s/PROJECT_ID/${PROJECT_ID}/g" "${fconfig}"
 sed -i "s/PS_TOPIC/${PS_TOPIC}/g" "${fconfig}"
 sed -i "s/KAFKA_TOPIC/${KAFKA_TOPIC}/g" "${fconfig}"
 
 #--- Set the Kafka offset
-fconfig="psconnect-worker.properties"
+fconfig="/home/broker/consumer/psconnect-worker.properties"
 OFFSET_RESET_DEFAULT="latest"
 OFFSET_RESET="${OFFSET_RESET_FORCE:-${OFFSET_RESET_DEFAULT}}"
 sed -i "s/<OFFSET_RESET>/${OFFSET_RESET}/g" "${fconfig}"
