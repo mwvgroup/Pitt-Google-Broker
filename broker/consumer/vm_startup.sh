@@ -54,7 +54,7 @@ KAFKA_TOPIC="${KAFKA_TOPIC_FORCE:-${KAFKA_TOPIC_DEFAULT}}"
 PS_TOPIC="${PS_TOPIC_FORCE:-${PS_TOPIC_DEFAULT}}"
 # set VM metadata, just for clarity and easy viewing
 gcloud compute instances add-metadata "${consumerVM}" --zone "${zone}" \
-    --metadata ^:^CURRENT_PS_TOPIC=${PS_TOPIC}:CURRENT_KAFKA_TOPIC=${KAFKA_TOPIC}
+    --metadata "^:^CURRENT_PS_TOPIC=${PS_TOPIC}:CURRENT_KAFKA_TOPIC=${KAFKA_TOPIC}"
 
 #--- Set the connector's configs (project and topics)
 fconfig="/home/broker/consumer/ps-connector.properties"
