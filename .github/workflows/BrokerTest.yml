@@ -1,0 +1,66 @@
+name: Test Package
+
+on:
+  workflow_dispatch:
+  workflow_call:
+  push:
+
+env:
+  PYTHON_VERSION: 3.11
+
+jobs:
+  discover:
+    name: Discover Microservices
+    runs-on: ubuntu-latest
+
+    outputs:
+      matrix: ${{ steps.find_tests.outputs.matrix }}
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Find testable apps
+        id: find_tests
+        run: |
+          # Find application directories containing a 'tests' subdirectory nd format the result as JSON
+          test_dirs=$(find broker/cloud_functions -type d -name "tests" -exec dirname {} \; | jq -R . | jq -s . | tr -d '\n')
+          echo "found $test_dirs"
+          echo "matrix={\"app_dir\":$test_dirs}" >> $GITHUB_OUTPUT
+
+  test:
+    name: Test Microservices
+    runs-on: ubuntu-latest
+    needs: [ discover ]
+
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.discover.outputs.matrix) }}
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          pip install coverage
+          pip install -r ${{ matrix.app_dir }}/requirements.txt
+
+      - name: Test ${{ matrix.app_dir }} app
+        run: coverage run -m unittest discover  ${{ matrix.app_dir }}
+
+  report-status:
+    name: Report Test Status
+    if: always()
+    needs: [ test ]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check build status
+        if: ${{ contains(needs.*.result, 'failure') }}
+        run: exit 1
