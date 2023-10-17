@@ -1,4 +1,4 @@
-name: Test
+name: Test Broker
 
 on:
   workflow_dispatch:
