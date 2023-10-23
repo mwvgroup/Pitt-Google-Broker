@@ -87,12 +87,23 @@ do
     # which kills the while loop. no working suggestions found.
     # passing the error with `|| true`
 
+    
+    IFS=', ' read -r -a KAFKA_TOPIC_ARRAY <<< "$KAFKA_TOPIC"
+    KAFKA_TOPIC_PRESENT=()
+
     # check if our topic is in the list
-    if grep -Fq "${KAFKA_TOPIC}" "${fout_topics}"
-    then
-        alerts_flowing="true"  # start consuming
+    for topic in "${KAFKA_TOPIC_ARRAY[@]}"; 
+    do
+        if grep -Fq "${topic}" "${fout_topics}"
+        then
+            KAFKA_TOPIC_PRESENT+=("True")
+        fi
+    done
+    
+    if [ ${#KAFKA_TOPIC_PRESENT[@]} -eq ${#KAFKA_TOPIC_ARRAY[@]} ]; then
+        alerts_flowing="true"
     else
-        sleep 60s  # sleep 1 min, then try again
+        sleep 60s
     fi
 done
 
