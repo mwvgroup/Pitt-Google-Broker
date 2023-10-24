@@ -104,7 +104,7 @@ do
 
     # set "alerts_flowing" to "true" if the length of the arrays are equal
     if [ ${#kafka_topic_present[@]} -eq ${#KAFKA_TOPIC_ARRAY[@]} ]; then
-        alerts_flowing="true"
+        alerts_flowing="true" # start consuming
     else
         sleep 60s # sleep 1 min, then try again
     fi
