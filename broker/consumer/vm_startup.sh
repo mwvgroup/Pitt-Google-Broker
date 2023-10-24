@@ -46,12 +46,12 @@ mkdir "${brokerdir}"
 gsutil -m cp -r "gs://${broker_bucket}/consumer" "${brokerdir}"
 gsutil -m cp -r "gs://${broker_bucket}/schema_maps" "${brokerdir}"
 
-#--- Set default Kafka topic
-KAFKA_TOPIC_DEFAULT="elasticc-2022fall"
-
 #--- Set the topic names to the "FORCE" metadata attributes if exist, else defaults
+KAFKA_TOPIC_DEFAULT="elasticc-2022fall" # set default Kafka topic
 KAFKA_TOPIC="${KAFKA_TOPIC_FORCE:-${KAFKA_TOPIC_DEFAULT}}"
 PS_TOPIC="${PS_TOPIC_FORCE:-${PS_TOPIC_DEFAULT}}"
+# append the Kafka topic name(s) into an array by using a comma as the delimiter
+IFS=',' read -r -a KAFKA_TOPIC_ARRAY <<< "$KAFKA_TOPIC"
 # set VM metadata, just for clarity and easy viewing
 gcloud compute instances add-metadata "${consumerVM}" --zone "${zone}" \
     --metadata "^:^CURRENT_PS_TOPIC=${PS_TOPIC}:CURRENT_KAFKA_TOPIC=${KAFKA_TOPIC}"
@@ -87,23 +87,26 @@ do
     # which kills the while loop. no working suggestions found.
     # passing the error with `|| true`
 
-    
-    IFS=', ' read -r -a KAFKA_TOPIC_ARRAY <<< "$KAFKA_TOPIC"
-    KAFKA_TOPIC_PRESENT=()
-
-    # check if our topic is in the list
+    # check if the elements of KAFKA_TOPIC_ARRAY exist in the specified file.
+    # append the value "true" to kafka_topic_present if the topic exists.
+    # NOTE: "alerts_flowing" will retain the value "false" until the length
+    # of the two arrays are equal (i.e., all topics are live)
+    # for ongoing discussions on this topic, see
+    # https://github.com/mwvgroup/Pitt-Google-Broker/issues/212
+    kafka_topic_present=()
     for topic in "${KAFKA_TOPIC_ARRAY[@]}"; 
     do
         if grep -Fq "${topic}" "${fout_topics}"
         then
-            KAFKA_TOPIC_PRESENT+=("True")
+            kafka_topic_present+=("true")
         fi
     done
-    
-    if [ ${#KAFKA_TOPIC_PRESENT[@]} -eq ${#KAFKA_TOPIC_ARRAY[@]} ]; then
+
+    # set "alerts_flowing" to "true" if the length of the arrays are equal
+    if [ ${#kafka_topic_present[@]} -eq ${#KAFKA_TOPIC_ARRAY[@]} ]; then
         alerts_flowing="true"
     else
-        sleep 60s
+        sleep 60s # sleep 1 min, then try again
     fi
 done
 
