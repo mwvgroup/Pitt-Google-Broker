@@ -34,7 +34,7 @@ else # Deploy the Cloud Functions
 
     gcloud functions deploy "${lite_CF_name}" \
         --entry-point "${lite_entry_point}" \
-        --runtime python37 \
+        --runtime python312 \
         --trigger-topic "${lite_trigger_topic}" \
         --set-env-vars TESTID="${testid}",SURVEY="${survey}",VERSIONTAG="${versiontag}"
 fi

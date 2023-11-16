@@ -35,7 +35,7 @@ else # Deploy the Cloud Functions
 
     gcloud functions deploy "$tag_CF_name" \
         --entry-point "$tag_entry_point" \
-        --runtime python37 \
+        --runtime python312 \
         --memory "$memory" \
         --trigger-topic "$tag_trigger_topic" \
         --set-env-vars TESTID="${testid}",SURVEY="${survey}",VERSIONTAG="${versiontag}"
