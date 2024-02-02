@@ -142,6 +142,8 @@ def _resources(service, survey='ztf', testid='test', versiontag="v3_3"):
 
     if service == 'GCS':
         buckets = {  # '<bucket-name>': ['<file-name to upload>',]
+            # the avro bucket f'{PROJECT_ID}-{survey}_alerts_{versiontag}'
+            # is managed in broker/cloud_functions/ps_to_gcs/deploy.sh
             f'{PROJECT_ID}-{survey}-broker_files': [],
             f'{PROJECT_ID}-{survey}-testing_bucket':
                 ['ztf_3.3_validschema_1154446891615015011.avro'],
