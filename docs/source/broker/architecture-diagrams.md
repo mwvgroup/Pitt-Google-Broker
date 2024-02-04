@@ -1,6 +1,6 @@
 # Architecture Diagrams
 
-## Current
+## 2022 (now outdated)
 
 ![Current Architecture](architecture-current.svg)
 
