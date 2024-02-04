@@ -1,14 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-"""The ``avro_schemas.load`` module loads and returns Avro schemas.
+"""
+The ``avro_schemas.load`` module loads and returns Avro schemas.
 
-
-REGISTERED_SCHEMAS = [
-    "elasticc.v0_9.alert.avsc",
-    "elasticc.v0_9.brokerClassification.avsc",
-    "elasticc.v0_9_1.alert.avsc",
-    "elasticc.v0_9_1.brokerClassification.avsc",
-]
+To view a list of registered schema names, use: ``avro_schemas.load.REGISTERED_SCHEMAS``
 """
 
 from importlib.resources import path as rpath
