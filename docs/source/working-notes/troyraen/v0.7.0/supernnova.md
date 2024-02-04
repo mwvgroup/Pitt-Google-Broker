@@ -221,9 +221,13 @@ gcloud functions deploy "$classify_snn_CF_name" \
     --trigger-topic "$classify_snn_trigger_topic" \
     --set-env-vars TESTID="$testid",SURVEY="$survey"
 ```
+
 This errors out with:
-```ERROR: (gcloud.functions.deploy) OperationError: code=3, message=Build failed: Build error details not available.Please check the logs at https://console.cloud.google.com/cloud-build/builds;region=us-central1/d782dfbb-285d-44aa-a164-040e48660089?project=591409139500. Please visit https://cloud.google.com/functions/docs/troubleshooting#build for in-depth troubleshooting documentation for build related errors.
+
 ```
+ERROR: (gcloud.functions.deploy) OperationError: code=3, message=Build failed: Build error details not available.Please check the logs at https://console.cloud.google.com/cloud-build/builds;region=us-central1/d782dfbb-285d-44aa-a164-040e48660089?project=591409139500. Please visit https://cloud.google.com/functions/docs/troubleshooting#build for in-depth troubleshooting documentation for build related errors.
+```
+
 I cannot find any more specific info in the logs or at the provided links.
 The step that it fails on is called "uploading_python_pkg_layer".
 

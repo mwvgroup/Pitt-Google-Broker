@@ -31,9 +31,9 @@ class AlertPaths:
                 Either the path to a directory containing alerts or one of the
                 following strings.
                 "ALERT_DIR" or "alert_dir": The path will be obtained from the
-                    environment variable ALERT_DIR.
+                environment variable ALERT_DIR.
                 "ztf" or "elasticc": The path will be obtained from the environment
-                    variable given by ``f"ALERT_DIR_{alert_dir.upper()}"``
+                variable given by ``f"ALERT_DIR_{alert_dir.upper()}"``
         """
         if alert_dir in ["ALERT_DIR", "alert_dir"]:
             self.alert_dir = Path(os.getenv("ALERT_DIR"))
