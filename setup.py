@@ -50,10 +50,9 @@ setup(
     url='https://github.com/mwvgroup/Pitt-Google-Broker',
     author='Troy Raen',
     author_email='troy.raen@pitt.edu',
-    packages=find_packages(
-        where="broker",
-        include=["broker_utils/broker_utils"],  # alternatively: `exclude=['additional*']`
-    ),  # Required
+
+    packages=find_packages(),  # Required
+
     # For an analysis of "install_requires" vs pip's requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=requirements,
