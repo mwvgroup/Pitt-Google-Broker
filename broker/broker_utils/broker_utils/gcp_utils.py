@@ -355,16 +355,19 @@ def query_bigquery(
             Optional job config to send with the query.
 
     Example query:
-        ``
+
+    .. code-block:: python
+
         query = (
             f'SELECT * '
             f'FROM `{dataset_project_id}.{dataset}.{table}` '
             f'WHERE objectId={objectId} '
         )
-        ``
 
     Examples of working with the query_job:
-        ``
+
+    .. code-block:: python
+
         # Cast it to a DataFrame:
         query_job.to_dataframe()
 
@@ -372,7 +375,6 @@ def query_bigquery(
         for r, row in enumerate(query_job):
             # row values can be accessed by field name or index
             print(f"objectId={row[0]}, candid={row['candid']}")
-        ``
     """
     if project_id is None:
         project_id = project_id_default

@@ -22,8 +22,8 @@ Uptime Check Schedules
 
 .. note::
 
-	The following setup is cumbersome and has the further disadvantage that it has
-    to be scheduled separately from the VMs. Fixing it is part of 
+    The following setup is cumbersome and has the further disadvantage that it has
+    to be scheduled separately from the VMs. Fixing it is part of
     `#109 <https://github.com/mwvgroup/Pitt-Google-Broker/issues/109>`__.
 
 The Cloud Function ``check_cue_response`` checks whether instances are running or
@@ -60,6 +60,7 @@ To update the existing policy, or create a new one, see:
     <https://cloud.google.com/monitoring/alerts/using-alerting-api>`__
 -   `Managing notification channels
     <https://cloud.google.com/monitoring/support/notification-options>`__
+
 Where to look if there's a problem
 ----------------------------------
 
