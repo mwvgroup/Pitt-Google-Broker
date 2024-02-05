@@ -1,4 +1,6 @@
-# Rename resources
+# docs/source/working-notes/troyraen/v0.4.0/rename-resources.md
+
+## Rename resources
 
 __Table of Contents__
 - [Names](#names)
@@ -7,7 +9,7 @@ __Table of Contents__
 
 ---
 
-## Names
+### Names
 <!-- fs -->
 The following resources were renamed to prepend an arbitrary survey name (note there can also be a testid appended to all names, but it is not shown here). The survey name is defined as a keyword when setting up the broker instance.
 
@@ -42,7 +44,7 @@ The following resources were renamed to prepend an arbitrary survey name (note t
 <!-- fe -->
 ---
 
-## Test the changes
+### Test the changes
 <!-- fs -->
 Dashboard snapshots:
 - [Live](https://console.cloud.google.com/monitoring/dashboards/builder/broker-instance-ztf-testsurveyname)
@@ -142,7 +144,7 @@ teardown="True"
 <!-- fe Test the changes -->
 ---
 
-## Update ZTF production broker
+### Update ZTF production broker
 <!-- fs -->
 These changes will happen seamlessly when this branch is merged to master and the broker is fully redeployed.
 However, the buckets for `alert_avros` and `sncosmo` already have data in them, so let's move it to buckets with the new names and update the relevant parts of the production broker.

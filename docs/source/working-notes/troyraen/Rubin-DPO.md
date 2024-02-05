@@ -1,12 +1,14 @@
-# Rubin DPO
+# docs/source/working-notes/troyraen/Rubin-DPO.md
 
-## TAP
+## Rubin DPO
+
+### TAP
 
 - [PyVO](https://pyvo.readthedocs.io/en/latest/index.html)
 - [get TAP service. source code for DP0 notebook](https://github.com/lsst-sqre/rubin-jupyter-lab/blob/master/rubin_jupyter_utils/lab/notebook/catalog.py)
 - [DP0 notebook 6: Comparing_Object_and_Truth_Tables](https://data.lsst.cloud/nb/user/troyraen/lab/tree/notebooks/tutorial-notebooks/06_Comparing_Object_and_Truth_Tables.ipynb)
 - [DP0 notebook 2: Intermediate_TAP_Query](https://data.lsst.cloud/nb/user/troyraen/lab/tree/notebooks/tutorial-notebooks/02_Intermediate_TAP_Query.ipynb)
-- [RSP API aspect](https://data.lsst.cloud/api-aspect) 
+- [RSP API aspect](https://data.lsst.cloud/api-aspect)
 
 Much of this code is taken from the DP0 notebooks.
 

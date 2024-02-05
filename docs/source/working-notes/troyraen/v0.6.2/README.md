@@ -1,4 +1,6 @@
-# v0.6.2: Issue \#68
+# docs/source/working-notes/troyraen/v0.6.2/README.md
+
+## v0.6.2: Issue \#68
 
 [\#68](https://github.com/mwvgroup/Pitt-Google-Broker/issues/68)
 

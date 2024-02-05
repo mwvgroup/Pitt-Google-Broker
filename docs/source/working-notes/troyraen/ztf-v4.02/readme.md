@@ -1,6 +1,8 @@
-# Update to ZTF Avro Schema v4.02
+# docs/source/working-notes/troyraen/ztf-v4.02/readme.md
 
-## Download the schema files
+## Update to ZTF Avro Schema v4.02
+
+### Download the schema files
 
 ```bash
 baseurl="https://raw.githubusercontent.com/ZwickyTransientFacility/ztf-avro-alert/master/schema/"
@@ -19,7 +21,7 @@ for schema in ${schemas[@]}; do
 done
 ```
 
-## Load schema
+### Load schema
 
 ```python
 import fastavro
@@ -27,7 +29,7 @@ import fastavro
 schema = fastavro.schema.load_schema("schema/ztf.alert.alert.avsc")
 ```
 
-## Create the BigQuery schema file and then create the table
+### Create the BigQuery schema file and then create the table
 
 ```python
 import numpy as np
@@ -111,7 +113,7 @@ bq show --schema --format=prettyjson \
 bq mk --table ardent-cycling-243415:ztf.alerts_v4_02 ${schema_file}
 ```
 
-## Create the bucket
+### Create the bucket
 
 ```bash
 # copied from broker/cloud_functions/ps_to_gcs/deploy.sh
@@ -129,7 +131,7 @@ gcloud storage buckets add-iam-policy-binding "gs://${avro_bucket}" \
     --role="roles/storage.objectViewer"
 ```
 
-## Update VERSIONTAG for all cloud functions
+### Update VERSIONTAG for all cloud functions
 
 ```bash
 survey=ztf

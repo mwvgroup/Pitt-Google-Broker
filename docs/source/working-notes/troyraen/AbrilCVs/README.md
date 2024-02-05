@@ -1,4 +1,6 @@
-# AbrilCVs: CV Catalog from Abril 2020
+# docs/source/working-notes/troyraen/AbrilCVs/README.md
+
+## AbrilCVs: CV Catalog from Abril 2020
 
 - [Abril 2020](https://ui.adsabs.harvard.edu/abs/2020MNRAS.492L..40A/abstract)
 - [CV catalog on CDS](https://cdsarc.cds.unistra.fr/viz-bin/cat?J/MNRAS/492/L40) (downloaded to this dir)
@@ -20,7 +22,7 @@
     - Periods of hours. could you predict the magnitude based on different periods, and then check whether alert is consistent? or are the uncertainties too big? mags, period.
 
 
-## Catalog
+### Catalog
 
 ```python
 import os
@@ -78,7 +80,7 @@ abrildf = pd.read_fwf(fcat, names=names, header=None, index=None)
 
 ```
 
-## Calculate HEALPix indexes of CV catalog and use to xmatch
+### Calculate HEALPix indexes of CV catalog and use to xmatch
 
 Calculate indexes
 
@@ -149,7 +151,7 @@ stop = timeit.default_timer()
 print('Time: ', stop - start)
 ```
 
-## Try TNS CVs
+### Try TNS CVs
 
 ```python
 # get positions of TNS CVs
@@ -177,7 +179,7 @@ for _, cv in abrildf.iterrows():
             matches[alert['objectId']] = (alert, cv)
 ```
 
-## Try some ASAS-SN data
+### Try some ASAS-SN data
 
 ```python
 # load asassn
@@ -194,7 +196,7 @@ for _, cv in abrildf.iterrows():
 ```
 
 
-## Test Cloud Run module
+### Test Cloud Run module
 
 ```python
 from broker_utils import gcp_utils

@@ -1,4 +1,6 @@
-# Ingest ZTF Archive
+# docs/source/working-notes/troyraen/ingest-ztf-archive/README.md
+
+## Ingest ZTF Archive
 
 The [ZTF archive](https://ztf.uw.edu/alerts/public) was ingested into the "ztf_alerts_v*" buckets and tables in early 2023.
 The following files contain the working notes and code that were used:
@@ -12,7 +14,7 @@ A cleaned-up version of the code that can be used in the future is at:
 - [ingest_tarballs.py](ingest_tarballs.py)
 - [setup.sh](setup.sh)
 
-## Instructions
+### Instructions
 
 1. Setup a VM to use for the ingestion ([setup.sh](setup.sh))
 2. Setup other GCP resources like buckets and tables if needed ([setup.sh](setup.sh))

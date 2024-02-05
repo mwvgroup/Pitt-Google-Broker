@@ -1,4 +1,6 @@
-# Pipeline Performance at approx. LSST rates - Sept 23, 2021
+# docs/source/working-notes/troyraen/performance-figures/dissertation/README.md/lsst-rates/README.md
+
+## Pipeline Performance at approx. LSST rates - Sept 23, 2021
 
 - [Overview](#overview)
 - [Incoming alert info](#incoming-alert-info)
@@ -6,7 +8,7 @@
 - [Cloud Function execution](#cloud-function-execution)
 - [Billing](#billing)
 
-## Overview
+### Overview
 
 On Sept 23, incoming alert rates were very high for the first ~10 minutes, close to expected LSST-scale.
 Here I (Troy) document some aspects of how the pipeline performed.
@@ -25,7 +27,7 @@ Takeaways:
 - The Cloud Functions that store to BigQuery (*BigQuery* and *SuperNNova*) experience a large number of timeouts (which then get retried) when the incoming rate is high. I assume we are hitting a rate limit for streaming inserts, but I haven't checked. Update 11/30/2021: This was probably due to the fact that we make a `get_table` request with every streaming insert, and there is a limit of 100 "API requests per second per user per method" (does not apply to streaming inserts). This relevant streaming insert limit is 1 GB per second per project, and this shouldn't have been more than about 23 MB/second. Can't check the logs anymore because they're only stored for 30 days in GCP by default, and we haven't changed the defaults or exported logs. ([BigQuery quotas](https://cloud.google.com/bigquery/quotas))
 - The combination of many simultaneous Cloud Function instances and their large execution times results in high costs (>6x normal ZTF).
 
-## Incoming alert info
+### Incoming alert info
 
 - `kafka_timestamp` gets applied at IPAC.
 - There is no timestamp applied at ZADS (to my knowledge). The best info about ZADS rates comes from their Grafana dashboard.
@@ -43,7 +45,7 @@ ZADS dashboard during the dump and shortly after.
 
 For reference. ZADS dashboard at the end of the dump (starting at 01:10) for the next few hours.
 
-## Component processing times
+### Component processing times
 
 __Takeaways:__
 
@@ -130,7 +132,7 @@ def plot_proct():
         plt.close(fig)
 ```
 
-## Cloud Function execution
+### Cloud Function execution
 
 Takeaways:
 
@@ -157,7 +159,7 @@ __Figures__
 
 *SuperNNova*
 
-## Billing
+### Billing
 
 Takeaways:
 

@@ -1,6 +1,8 @@
-# SuperNNova - build, deploy, test the Cloud Function
+# docs/source/working-notes/troyraen/SuperNNova/snn_build_cloud_fnc.md
 
-## Test the Cloud Function pieces locally
+## SuperNNova - build, deploy, test the Cloud Function
+
+### Test the Cloud Function pieces locally
 
 ```bash
 export GCP_PROJECT=$GOOGLE_CLOUD_PROJECT
@@ -26,7 +28,7 @@ snn_msg = gcp_utils.pull_pubsub('test')[0]
 gcp_utils.insert_rows_bigquery(bq_table, [snn_dict])
 ```
 
-## Local, full test
+### Local, full test
 
 ```bash
 conda create -n snn python=3.7
@@ -81,7 +83,7 @@ for r, row in enumerate(snn_queryjob):
 ```
 This works.
 
-## Deploy Cloud Function
+### Deploy Cloud Function
 
 ```bash
 survey="ztf"
@@ -141,7 +143,7 @@ See [here](https://stackoverflow.com/questions/55449313/google-cloud-function-py
 
 Fixed by providing a direct URL in requirements.txt.
 
-## Test changes to broker utils
+### Test changes to broker utils
 
 ```bash
 cd /Users/troyraen/Documents/broker/snn/broker/broker_utils
