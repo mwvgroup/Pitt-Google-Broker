@@ -19,7 +19,7 @@ However, here are some that might be:
 And here's all of them:
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :glob:
    :caption: All Notes
 

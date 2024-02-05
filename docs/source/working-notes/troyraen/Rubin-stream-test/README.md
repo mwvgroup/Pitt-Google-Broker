@@ -24,7 +24,7 @@ For other methods, see [Alternative methods for handling the schema](#alternativ
 
 Below is the code I used to set up the necessary resources in GCP, ingest the Rubin stream, pull messages from the resulting Pub/Sub stream and deserialize the alerts.
 
-# Setup
+## Setup
 
 Clone the repo, checkout the branch (currently `rubin`, but in the future will be merged into `master`), cd into the directory:
 
@@ -88,7 +88,7 @@ gcloud compute instances create "$consumerVM" \
     --tags="$firewallrule"
 ```
 
-# Ingest the Rubin test stream
+## Ingest the Rubin test stream
 
 ### Setup
 
@@ -172,7 +172,7 @@ sudo sed -i "s/KAFKA_TOPIC/${KAFKA_TOPIC}/g" ${fconfig}
 Run the connector:
 
 ```bash
-mydir="/home/troyraen"  # use my dir because don't have permission to write to workingdir
+mydir="/home/troyraen"  ## use my dir because don't have permission to write to workingdir
 fout_run="${mydir}/run-connector.out"
 sudo /bin/connect-standalone \
     ${workingdir}/psconnect-worker.properties \
@@ -180,7 +180,7 @@ sudo /bin/connect-standalone \
     &> ${fout_run}
 ```
 
-# Pull a Pub/Sub message and open it
+## Pull a Pub/Sub message and open it
 
 In the future, we should download schemas from the Confluent Schema Registry and store them.
 Then for each alert, check the schema version in the Confluent Wire header, and load the schema file using `fastavro`.
@@ -233,7 +233,7 @@ for received_message in response.received_messages:
     print(f"alertId: {alertId}, diaSourceId: {diaSourceId}, psFlux: {psFlux}")
 ```
 
-# Alternative methods for handling the schema
+## Alternative methods for handling the schema
 
 ### Download with a `GET` request, and read the alert's schema version from the Confluent Wire header
 
