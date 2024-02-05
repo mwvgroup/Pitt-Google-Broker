@@ -4,6 +4,17 @@ Project Notes
 This directory contains various project documents and notes for use by
 the developers early in the project.
 
+Directory Table of Contents
+----------------------------
+
+.. toctree::
+   :maxdepth: 2
+   :glob:
+   :caption: All Notes
+
+   *
+   */*
+
 External Links and Resources
 ----------------------------
 
@@ -65,14 +76,3 @@ Internal Resources
 
 -  Tutorial to setting up Cloud Pub/Sub:
    `pubsub-tutorial.md <./pubsub-tutorial.md>`__
-
-Directory Table of Contents
-----------------------------
-
-.. toctree::
-   :maxdepth: 1
-   :glob:
-   :caption: All Notes
-
-   *
-   */*
