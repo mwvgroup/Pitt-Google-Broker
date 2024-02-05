@@ -1,3 +1,5 @@
+# docs/source/working-notes/troyraen/performance-figures/performance_figures.md
+
 ## figures exploration
 
 1. query metadata table

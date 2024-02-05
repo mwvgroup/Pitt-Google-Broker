@@ -1,4 +1,6 @@
-# Alert Utils
+# docs/source/working-notes/troyraen/alerts-for-testing/alert-utils.md
+
+## Alert Utils
 
 The live version of this document has been moved into the documentation ([Alerts for Testing](docs/source/broker/alerts-for-testing.rst)).
 We leave the original version below, for reference.
@@ -7,7 +9,7 @@ This file contains various python functions to work with a set of test alerts.
 It relies on our broker-utils library which can be installed using `pip install pgb-broker-utils`.
 (You may want to activate a Conda environment before installing.)
 
-## Setup
+### Setup
 
 ```python
 import os
@@ -35,14 +37,14 @@ def _get_avro_paths(dir):
     return (p for p in dir.glob("*.avro"))
 ```
 
-## Download the set of test alerts
+### Download the set of test alerts
 
 ```python
 # download the files
 gcp_utils.cs_download_file(alert_dir, testing_bucket_id)
 ```
 
-## Load an alert as a dict
+### Load an alert as a dict
 
 Once you load the alert into a dictionary you can use it to test pieces of your function locally.
 
@@ -66,7 +68,7 @@ alert_dict = data_utils.decode_alert(
 )
 ```
 
-## Publish alert to a topic
+### Publish alert to a topic
 
 ```python
 # fill in a topic name
