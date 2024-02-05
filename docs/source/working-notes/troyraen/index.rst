@@ -24,5 +24,7 @@ And here's all of them:
    :caption: All Notes
 
    *
-   */README
-   pr-reviews/*
+   */*
+   */*/*
+   */*/*/*
+   */*/*/*/*

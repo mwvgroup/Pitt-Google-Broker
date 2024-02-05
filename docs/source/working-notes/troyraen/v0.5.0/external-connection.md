@@ -1,9 +1,11 @@
-# external-connection
+# docs/source/working-notes/troyraen/v0.5.0/external-connection.md
+
+## external-connection
 
 Goal: Try to listen to and process one of our Pub/Sub streams as an outside user.
 
 
-## GCP and local setup for external account
+### GCP and local setup for external account
 <!-- fs -->
 Following [initial-setup.md](initial-setup.md)
 ```bash
@@ -49,7 +51,7 @@ python -m pip install -e .
 
 <!-- fe GCP and local setup -->
 
-## Setup IAM permissions on the Pub/Sub topic
+### Setup IAM permissions on the Pub/Sub topic
 <!-- fs -->
 Allow any GCP user to attach a subscription to our topic.
 - https://cloud.google.com/pubsub/docs/access-control#setting_a_policy
@@ -76,7 +78,7 @@ gcloud pubsub topics set-iam-policy $topic_path $fname
 
 <!-- fe IAM permissions -->
 
-## Create subscription and pull
+### Create subscription and pull
 <!-- fs -->
 __Command line:__
 - [Quickstart using the gcloud command-line tool](https://cloud.google.com/pubsub/docs/quickstart-cli)
@@ -119,6 +121,6 @@ smsg = pgbps.pull(subscription, project_id=my_project)  # EXECUTE FROM EXTERNAL 
 ```
 <!-- fe subscription -->
 
-## Setup stream-looper VM and topic
+### Setup stream-looper VM and topic
 
 see [stream-looper.md](stream-looper.md)

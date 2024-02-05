@@ -1,4 +1,6 @@
-# Connect Pitt-Google to the Rubin alert stream testing deployment
+# docs/source/working-notes/troyraen/Rubin-stream-test/README.md
+
+## Connect Pitt-Google to the Rubin alert stream testing deployment
 
 Note: The active copy of this README.md is in broker/consumer/rubin and will be kept up to date as the main LSST alert stream developments. This README.md here is specifically for this test stream.
 
@@ -88,7 +90,7 @@ gcloud compute instances create "$consumerVM" \
 
 # Ingest the Rubin test stream
 
-## Setup
+### Setup
 
 ```bash
 # start the consumer vm and ssh in
@@ -102,9 +104,9 @@ workingdir="${brokerdir}/consumer/rubin"
 # at the very top of this README file.
 ```
 
-## Test the connection
+### Test the connection
 
-### Check available Kafka topics
+#### Check available Kafka topics
 
 ```bash
 /bin/kafka-topics \
@@ -114,7 +116,7 @@ workingdir="${brokerdir}/consumer/rubin"
 # should see output that includes the topic: alerts-simulated
 ```
 
-### Test the topic connection using the Kafka Console Consumer
+#### Test the topic connection using the Kafka Console Consumer
 
 Set Java env variable
 
@@ -147,7 +149,7 @@ sudo /bin/kafka-avro-console-consumer \
 # if successful, you will see a lot of JSON flood the terminal
 ```
 
-## Run the Kafka -> Pub/Sub connector
+### Run the Kafka -> Pub/Sub connector
 
 Setup:
 
@@ -233,7 +235,7 @@ for received_message in response.received_messages:
 
 # Alternative methods for handling the schema
 
-## Download with a `GET` request, and read the alert's schema version from the Confluent Wire header
+### Download with a `GET` request, and read the alert's schema version from the Confluent Wire header
 
 In the future, we should download schemas from the Confluent Schema Registry and store them (assuming we do not use the schema registry directly in the Kafka connector).
 Then for each alert, check the schema version in the Confluent Wire header, and load the schema file using `fastavro`.
@@ -242,7 +244,7 @@ Pub/Sub topics can be configured with an Avro schema attached, but it cannot be 
 We would have to create a new topic for every schema version.
 Therefore, I don't think we should do it this way.
 
-### Download a schema from the Confluent Schema Registry using a `GET` request
+#### Download a schema from the Confluent Schema Registry using a `GET` request
 
 ```bash
 SCHEMA_REGISTRY_BASIC_AUTH_USER_INFO=$KAFKA_USERNAME:$KAFKA_PASSWORD
@@ -256,7 +258,7 @@ curl --silent -X GET -u $SCHEMA_REGISTRY_BASIC_AUTH_USER_INFO $SCHEMA_REGISTRY_U
 curl --silent -X GET -u $SCHEMA_REGISTRY_BASIC_AUTH_USER_INFO $SCHEMA_REGISTRY_URL/schemas/ids/${schema_version} > $fout_rubinschema
 ```
 
-### Read the alert's schema version from the Confluent Wire header
+#### Read the alert's schema version from the Confluent Wire header
 
 The following is copied from
 https://github.com/lsst-dm/alert_stream/blob/main/python/lsst/alert/stream/serialization.py
@@ -286,7 +288,7 @@ header_bytes = alert_bytes[:5]
 schema_version = deserialize_confluent_wire_header(header_bytes)
 ```
 
-## Use the Confluent Schema Registry with the Kafka Connector
+### Use the Confluent Schema Registry with the Kafka Connector
 
 Kafka Connect can use the Confluent Schema Registry directly.
 But schemas are stored under subjects and Kafka Connect is picky about how those

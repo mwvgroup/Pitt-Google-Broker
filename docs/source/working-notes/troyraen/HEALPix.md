@@ -1,4 +1,6 @@
-# HEALPix
+# docs/source/working-notes/troyraen/HEALPix.md
+
+## HEALPix
 
 - [http://healpix.jpl.nasa.gov/](http://healpix.jpl.nasa.gov/)
     - [https://healpix.jpl.nasa.gov/pdf/intro.pdf](https://healpix.jpl.nasa.gov/pdf/intro.pdf)
@@ -7,7 +9,7 @@
 
 - [Splitting the Sky - HTM and HEALPix](https://ui.adsabs.harvard.edu/abs/2001misk.conf..638O/abstract) ([alt link](https://www.researchgate.net/publication/226874931_Splitting_the_sky_-_HTM_and_HEALPix))
 
-## `astropy-healpix`
+### `astropy-healpix`
 
 [docs](https://astropy-healpix.readthedocs.io/en/latest/)
 

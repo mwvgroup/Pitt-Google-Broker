@@ -1,11 +1,14 @@
-# alerts-for-testing: ZTF Alerts for Testing Purposes
+
+# docs/source/working-notes/troyraen/alerts-for-testing/README.md
+
+## alerts-for-testing: ZTF Alerts for Testing Purposes
 
 There are 50 ZTF alert avro files in this directory.
 Here we list the files and document the code originally used to find them and to upload them to a Cloud Storage bucket.
 
 For instructions on downloading and working with these alerts, see [alert-utils.md](alert-utils.md).
 
-## Overview of files in this directory
+### Overview of files in this directory
 
 ```python
 >>> fnames_pass_all  # these 37 pass all science filters, fitters, and classifiers
@@ -63,7 +66,7 @@ For instructions on downloading and working with these alerts, see [alert-utils.
  'ZTF18abbwsvo.1703210606215015045.ztf_20210831_programid1.avro']
 ```
 
-## Code used to retrieve the files
+### Code used to retrieve the files
 
 ```python
 from broker_utils import data_utils, gcp_utils
@@ -128,7 +131,7 @@ for f in fnames_pass_none:
     gcp_utils.cs_download_file(localdir, bucket_id, f)
 ```
 
-## Code used to upload the files to a testing bucket
+### Code used to upload the files to a testing bucket
 
 ```bash
 testing_bucket="${GOOGLE_CLOUD_PROJECT}-ztf-test_alerts"

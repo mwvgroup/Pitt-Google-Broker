@@ -1,3 +1,7 @@
+# docs/source/working-notes/troyraen/SuperNNova/recreate-bq-table.md
+
+## Recreate BigQuery Table
+
 Changed column name pred_class -> predicted_class.
 Want to change name in production instance without losing data.
 
