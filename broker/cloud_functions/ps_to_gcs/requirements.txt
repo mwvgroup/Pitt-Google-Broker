@@ -3,14 +3,14 @@
 # dependencies for a Cloud Function must be specified in a `requirements.txt`
 # file (or packaged with the function) in the same directory as `main.py`
 
-fastavro==1.4.4  # fastavro==1.4.4 is known to work for ztf (see below)
+fastavro
 google-cloud-logging
 google-cloud-storage==1.38.0
 pgb-broker-utils>=0.2.46
 
 # fastavro note:
 #
-# fastavro==1.4.4 is known to work for ztf
+# fastavro==1.4.4 is known to work for the malformed ztf schemas (versions <4.0)
 # fastavro==1.7.3 gives the following schema parsing error:
 #   TypeError: float() argument must be a string or a number, not 'NoneType'
 # no other fastavro versions have been tested

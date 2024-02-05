@@ -2,6 +2,7 @@ colorama
 google-cloud-logging
 h5py
 natsort
+pandas<2  # required by supernnova
 pgb-broker-utils>=0.2.45
 scikit-learn
 seaborn
@@ -10,4 +11,4 @@ tqdm
 # pip install torch doesn't work because cloud fncs don't support GPUs.
 # instead, install cpu version from wheel
 # https://stackoverflow.com/questions/55449313/google-cloud-function-python-3-7-requirements-txt-makes-deploy-fail
-https://download.pytorch.org/whl/cpu/torch-1.9.0%2Bcpu-cp37-cp37m-linux_x86_64.whl
+https://download.pytorch.org/whl/cpu/torch-2.2.0%2Bcpu-cp312-cp312-linux_x86_64.whl#sha256=8258824bec0181e01a086aef5809016116a97626af2dcbf932d4e0b192d9c1b8

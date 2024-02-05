@@ -36,5 +36,5 @@ else # Deploy the Cloud Functions
         --entry-point "${store_bq_entry_point}" \
         --runtime python312 \
         --trigger-topic "${store_bq_trigger_topic}" \
-        --set-env-vars TESTID="${testid}",SURVEY="${survey}",VERSIONTAG="${versiontag}"
+        --set-env-vars TESTID="${testid}",SURVEY="${survey}",VERSIONTAG="${versiontag}",GCP_PROJECT="${GOOGLE_CLOUD_PROJECT}"
 fi

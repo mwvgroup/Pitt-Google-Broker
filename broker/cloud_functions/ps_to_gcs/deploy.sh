@@ -67,5 +67,5 @@ else # Deploy the Cloud Functions
         --runtime python312 \
         --memory "${memory}" \
         --trigger-topic "${ps_to_gcs_trigger_topic}" \
-        --set-env-vars TESTID="${testid}",SURVEY="${survey}",VERSIONTAG="${versiontag}"
+        --set-env-vars TESTID="${testid}",SURVEY="${survey}",VERSIONTAG="${versiontag}",GCP_PROJECT="${PROJECT_ID}"
 fi
