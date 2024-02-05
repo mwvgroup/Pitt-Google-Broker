@@ -5,7 +5,7 @@ Most notes in this directory won't be of interest to anyone else.
 However, here are some that might be:
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Notable Notes
 
    billing/README
