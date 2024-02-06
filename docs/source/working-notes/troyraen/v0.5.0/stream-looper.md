@@ -1,6 +1,8 @@
-# Setup stream-looper VM and topic
+# docs/source/working-notes/troyraen/v0.5.0/stream-looper.md
 
-## Create the Pub/Sub topic and allow public subscriptions
+## Setup stream-looper VM and topic
+
+### Create the Pub/Sub topic and allow public subscriptions
 
 ```bash
 PROJECT=$GOOGLE_CLOUD_PROJECT
@@ -16,7 +18,7 @@ gcloud pubsub topics get-iam-policy $topic_path --format yaml > $fnametmp
 gcloud pubsub topics set-iam-policy $topic_path $fname
 ```
 
-## Create the VM and setup the consumer simulator
+### Create the VM and setup the consumer simulator
 
 ```bash
 vmname="stream-looper"
@@ -39,7 +41,7 @@ gcloud compute instances add-metadata "$vmname" --zone="$zone" --metadata=startu
 # gcloud compute ssh $vmname
 ```
 
-### Set a startup script to run consumer simulator indefinitely
+#### Set a startup script to run consumer simulator indefinitely
 
 Python script to trigger at startup.
 Save the following code to a root-executable file at

@@ -1,4 +1,6 @@
-# Service Accounts
+# docs/source/working-notes/troyraen/service-account.md
+
+## Service Accounts
 
 References:
 
@@ -12,7 +14,7 @@ References:
 - https://cloud.google.com/iam/docs/understanding-roles#predefined
 - https://cloud.google.com/sdk/gcloud/reference/resource-manager -->
 
-## Setup
+### Setup
 
 ```bash
 # Enter your own options:
@@ -30,7 +32,7 @@ ROLE="roles/viewer"
 SERVICE_ACCOUNT="${SERVICE_ACCOUNT_NAME}@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com"
 ```
 
-## Create a service account, assign a role, and download a key file
+### Create a service account, assign a role, and download a key file
 
 If you are accessing a new project (or perhaps deactivated previous settings)
 you'll need to connect `gcloud` to the project via a
@@ -58,7 +60,7 @@ gcloud iam service-accounts keys create "$GOOGLE_APPLICATION_CREDENTIALS" \
     --iam-account="$SERVICE_ACCOUNT"
 ```
 
-## Switch the Service Account your API calls use
+### Switch the Service Account your API calls use
 
 This activates the service account for `gcloud` and `bq` calls:
 

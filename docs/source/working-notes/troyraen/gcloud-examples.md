@@ -1,4 +1,6 @@
-# gcloud Examples<a name="gcloud-examples"></a>
+# docs/source/working-notes/troyraen/gcloud-examples.md
+
+## gcloud Examples<a name="gcloud-examples"></a>
 
 <!-- mdformat-toc start --slug=github --maxlevel=6 --minlevel=1 -->
 
@@ -19,7 +21,7 @@ External reference:
 
 - [Google's `gcloud` CLI reference](https://cloud.google.com/sdk/gcloud/reference)
 
-## Setup<a name="setup"></a>
+### Setup<a name="setup"></a>
 
 The following variables are used in many of the examples on this page.
 Set them to your own preferences.
@@ -45,7 +47,7 @@ export CLOUDSDK_COMPUTE_REGION='us-central1'
 export CLOUDSDK_COMPUTE_ZONE='us-central1-a'
 ```
 
-## BigQuery<a name="bigquery"></a>
+### BigQuery<a name="bigquery"></a>
 
 Create a dataset
 
@@ -58,7 +60,7 @@ bq mk --dataset "${GOOGLE_CLOUD_PROJECT}:dataset_name" \
     --location="${REGION}"
 ```
 
-## Cloud Functions<a name="cloud-functions"></a>
+### Cloud Functions<a name="cloud-functions"></a>
 
 ```bash
 CF_name="my-cloud-function"     # choose a name for your Cloud Function
@@ -76,7 +78,7 @@ gcloud functions deploy "${CF_name}" \
 gcloud functions delete "${CF_name}"
 ```
 
-## Cloud Run<a name="cloud-run"></a>
+### Cloud Run<a name="cloud-run"></a>
 
 - [Instructions to create resources with pubsub trigger](https://cloud.google.com/run/docs/triggering/pubsub-push#command-line)
 
@@ -173,7 +175,7 @@ gcloud pubsub subscriptions create "$SUBSCRIPTION" \
     --ack-deadline="$ACK_DEADLINE"
 ```
 
-## Cloud Storage<a name="cloud-storage"></a>
+### Cloud Storage<a name="cloud-storage"></a>
 
 Download the avro file for a single alert:
 
@@ -185,9 +187,9 @@ local_dir="/<path>/<to>/<local>/<dir>"
 gsutil cp "gs://${bucket}/${filename}" ${local_dir}/.
 ```
 
-## Compute Engine<a name="compute-engine"></a>
+### Compute Engine<a name="compute-engine"></a>
 
-### Compute Engine Schedule<a name="compute-engine-schedule"></a>
+#### Compute Engine Schedule<a name="compute-engine-schedule"></a>
 
 Create a schedule (only needs to be done once)
 [unix-cron format](https://cloud.google.com/scheduler/docs/configuring/cron-job-schedules)
@@ -220,7 +222,7 @@ gcloud compute instances remove-resource-policies "${nconductVM}" \
     --resource-policies="${nconductVMsched}"
 ```
 
-## Pub/Sub<a name="pubsub"></a>
+### Pub/Sub<a name="pubsub"></a>
 
 - [https://cloud.google.com/sdk/gcloud/reference/pubsub](https://cloud.google.com/sdk/gcloud/reference/pubsub)
 
@@ -238,7 +240,7 @@ gcloud pubsub subscriptions create "$SUBSCRIPTION" \
     --topic-project="$TOPIC_PROJECT"
 ```
 
-## Service account<a name="service-account"></a>
+### Service account<a name="service-account"></a>
 
 See also [service-account.md](service-account.md).
 

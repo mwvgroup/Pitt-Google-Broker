@@ -1,6 +1,8 @@
-# ELAsTiCC Challenge
+# docs/source/working-notes/troyraen/elasticc/README.md
 
-## Alert Format
+## ELAsTiCC Challenge
+
+### Alert Format
 
 Reference links:
 

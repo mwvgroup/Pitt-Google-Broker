@@ -1,9 +1,11 @@
-# Create and test process_pubsub_counters.py
+# docs/source/working-notes/troyraen/v0.7.1/process_streams.md
+
+## Create and test process_pubsub_counters.py
 
 - [broker/night_conductor/end_night/process_pubsub_counters.py](../../../broker/night_conductor/end_night/process_pubsub_counters.py)
 
 
-## Make the BigQuery table
+### Make the BigQuery table
 
 ```bash
 cd /Users/troyraen/Documents/broker/repo3/broker/setup_broker
@@ -15,7 +17,7 @@ bq mk --table ${PROJECT_ID}:${dataset}.${table} templates/bq_${survey}_${table}_
 ```
 
 
-## Timestamps exploration
+### Timestamps exploration
 
 ```python
 import time
@@ -37,7 +39,7 @@ fseconds = float(f'{seconds}.{tmpnano}')
 dt = datetime.utcfromtimestamp(fseconds)
 ```
 
-## Test process_pubsub_counters.py on the SuperNNova cloud function
+### Test process_pubsub_counters.py on the SuperNNova cloud function
 
 ```bash
 cd /Users/troyraen/Documents/broker/repo3/broker/night_conductor/end_night/
@@ -79,7 +81,7 @@ gcp_utils.insert_rows_bigquery(collector.bq_table, collector.metadata_dicts_list
 # collector.collect_and_store_all_metadata()
 ```
 
-## Test process_pubsub_counters.py on the full pipeline
+### Test process_pubsub_counters.py on the full pipeline
 
 ```bash
 cd /Users/troyraen/Documents/broker/repo3/broker/night_conductor/end_night/
@@ -121,7 +123,7 @@ collector._join_metadata()  # collector.metadata_df
 collector._load_metadata_to_bigquery()
 ```
 
-## Process last night's ZTF stream
+### Process last night's ZTF stream
 
 In python:
 ```python
@@ -148,7 +150,7 @@ python3 process_pubsub_counters.py --survey=$survey --production --timeout=$t
 # python3 process_pubsub_counters.py --survey=$survey --production --batch_size=$b --single_batch=$sb
 ```
 
-### Streaming
+#### Streaming
 
 ```python
 import process_pubsub_counters as ppc

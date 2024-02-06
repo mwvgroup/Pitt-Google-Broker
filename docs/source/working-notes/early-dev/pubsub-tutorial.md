@@ -1,6 +1,8 @@
-# Pub/Sub Step-by-Step (note: _not_ a tutorial to pub\_sub\_client)
+# docs/source/working-notes/early-dev/pubsub-tutorial.md
 
-## Initial Setup
+## Pub/Sub Step-by-Step (note: _not_ a tutorial to pub\_sub\_client)
+
+### Initial Setup
 
 You'll need to install some additional requirements to use Pub/Sub. The main requirement is the `pubsub_v1` package, installable via
 
@@ -24,17 +26,17 @@ You'll need to activate your APIs/Services and get an authentication JSON file:
 > Note: The service account has an associated "name", of sorts, that follows an email address format. It goes: `SERVICE_ACCOUNT_NAME@PROJECT_ID.iam.gserviceaccount.com`, where you set the SERVICE\_ACCOUNT\_NAME and the PROJECT\_ID is listed in the JSON file. The PROJECT\_ID is not the same as the project number. This email address is also listed in the JSON file as "client\_email".
 
 - Then, make sure the *JSON* bullet option is still selected and click **Create**. This will create a JSON authentication file and download it to your computer.
-- Locate this file, rename it however you see fit, and move it wherever you like, though do take note of this file path. Add a line in your .bash_profile file and restart your terminal session: 
+- Locate this file, rename it however you see fit, and move it wherever you like, though do take note of this file path. Add a line in your .bash_profile file and restart your terminal session:
 
 ``` bash
 export GOOGLE_APPLICATION_CREDENTIALS="FILE_PATH/FILE_NAME.json"
 ```
-	
+
 - To check if this variable was set correctly, type `echo $GOOGLE_APPLICATION_CREDENTIALS` in your terminal to see if the correct file path is displayed. If so, you should be authenticated to use GCP from your current terminal session.
 - You should also see the service account key listed on the *Credentials* page, and there is a trashcan icon on the right in case you need to delete these authentication credentials. *Note: doing so will make the JSON file useless.*
 
-## Topics and Subscriptions
-### Starting a Topic
+### Topics and Subscriptions
+#### Starting a Topic
 
 By python script:
 ``` python
@@ -61,7 +63,7 @@ gcloud pubsub topics create my_topic
 ```
 > Note: It may take a few seconds for the topic to appear on your project's *Topics* page, so be patient.
 
-### Starting a Subscription
+#### Starting a Subscription
 
 By python script:
 ``` python
@@ -92,7 +94,7 @@ You can set the acknowledgment deadline time *#* (in seconds) using the option `
 
 > Note: It may take a few seconds for the subscription to appear on your project's *Subscriptions* page, so be patient.
 
-### Setting Permissions for Local Work
+#### Setting Permissions for Local Work
 
 To publish and retrieve messages from Python scripts on your laptop, the permissions need to be slightly altered on the topic and subscription (I'm still not sure why).
 
@@ -105,13 +107,13 @@ To publish and retrieve messages from Python scripts on your laptop, the permiss
 - Since it inherited ownership, it should appear in a drop-down list below the *Add member* box; selecting the first entry worked for me, but the second may as well, I'm not sure.
 - Select the same "Role > Project > Owner" and click **Save**. You'll notice that under the *inherited* column, the service account will now say **mixed**.
 
-Repeat for the subscriptions you'd like to use, where the only change is in selecting the subscriptions by checkbox from your project's *Subscriptions* page. 
+Repeat for the subscriptions you'd like to use, where the only change is in selecting the subscriptions by checkbox from your project's *Subscriptions* page.
 
-### Publishing and Retrieving Messages
+#### Publishing and Retrieving Messages
 
 Some of the code below is largely taken from [this quickstart guide](https://cloud.google.com/pubsub/docs/quickstart-client-libraries?refresh=1&pli=1#pubsub-quickstart-publish-python), and here is the guide for using [gcloud command-line tool](https://cloud.google.com/pubsub/docs/quickstart-cli?refresh=1).
 
-#### Publishing
+##### Publishing
 
 Via python script, assuming the topic has already been made:
 
@@ -146,7 +148,7 @@ Via GCP Console Commands:
  gcloud pubsub topics publish my-topic --message hello
  ```
 
-#### Retrieve/Pull Messages
+##### Retrieve/Pull Messages
 
 Via python script, assuming the subscription has already been made:
 
@@ -181,12 +183,12 @@ Via GCP Console Commands:
  ```
 The keyword `--limit=#` can be added between `--auto-ack` and `my_sub` to limit the number of messages you pull.
 
-## Ordering Messages
+### Ordering Messages
 Pub/Sub attempts to deliver a message to a subscriber once and in order, but this cannot be guaranteed. A new feature called **message ordering** has been implemented to help resolve this issue, with documentation on [publishing](https://cloud.google.com/pubsub/docs/publisher#using_ordering_keys) and more general info [here](https://cloud.google.com/pubsub/docs/ordering). Unfortunately, this is in beta for a handful of the APIs and in a closed alpha for others, including python (as of 8/6/2020). Updating your install of `google-cloud-pubsub` to the lastest version (8/62020: 1.7.0) will download code that has support for the new keyword, but it will not allow you to use the keyword when publishing. The following instructions are for future reference when these features become available, either in beta or through general availability.
 
 First, enable message ordering for the subscription.
 
-By GCP GUI: 
+By GCP GUI:
 
 - When creating the subscription, select the checkbox to enable message ordering.
 - Edit an existing subscription's settings and check the box to enable message ordering.
