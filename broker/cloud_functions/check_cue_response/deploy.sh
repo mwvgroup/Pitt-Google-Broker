@@ -36,7 +36,7 @@ else # Deploy the Cloud Function
 
     gcloud functions deploy "${check_cue_CF_name}" \
         --entry-point "${check_cue_entry_point}" \
-        --runtime python37 \
+        --runtime python312 \
         --trigger-topic "${check_cue_trigger_topic}" \
         --set-env-vars TESTID="${testid}",SURVEY="${survey}",VERSIONTAG="${versiontag}",ZONE="${zone}"
 fi

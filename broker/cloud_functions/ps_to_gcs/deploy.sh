@@ -64,7 +64,7 @@ else # Deploy the Cloud Functions
 
     gcloud functions deploy "${ps_to_gcs_CF_name}" \
         --entry-point "${ps_to_gcs_entry_point}" \
-        --runtime python37 \
+        --runtime python312 \
         --memory "${memory}" \
         --trigger-topic "${ps_to_gcs_trigger_topic}" \
         --set-env-vars TESTID="${testid}",SURVEY="${survey}",VERSIONTAG="${versiontag}"
