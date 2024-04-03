@@ -51,22 +51,22 @@ apt update
 # see https://docs.confluent.io/platform/current/installation/installing_cp/deb-ubuntu.html
 echo "Installing Confluent Platform..."
 # install the key used to sign packages
-wget -qO - https://packages.confluent.io/deb/7.6/archive.key | sudo apt-key add -
+wget -qO - https://packages.confluent.io/deb/7.4/archive.key | sudo apt-key add -
 # add the repository
-add-apt-repository "deb [arch=amd64] https://packages.confluent.io/deb/7.6 stable main"
+add-apt-repository "deb [arch=amd64] https://packages.confluent.io/deb/7.4 stable main"
 # install
 apt-get update && sudo apt-get install -y confluent-platform
 echo "Done installing Confluent Platform."
 
 #--- Install Kafka -> Pub/Sub connector
-# see https://github.com/GoogleCloudPlatform/pubsub/tree/master/kafka-connector
+# see https://github.com/googleapis/java-pubsub-group-kafka-connector/tree/main
 echo "Installing the Kafka -> Pub/Sub connector"
 plugindir=/usr/local/share/kafka/plugins
-CONNECTOR_RELEASE=v0.5-alpha
+CONNECTOR_RELEASE="1.1.0"
 mkdir -p ${plugindir}
 #- install the connector
 cd ${plugindir}
-wget https://github.com/GoogleCloudPlatform/pubsub/releases/download/${CONNECTOR_RELEASE}/pubsub-kafka-connector.jar
+wget https://repo1.maven.org/maven2/com/google/cloud/pubsub-group-kafka-connector/${CONNECTOR_RELEASE}/pubsub-group-kafka-connector-${CONNECTOR_RELEASE}.jar
 echo "Done installing the Kafka -> Pub/Sub connector"
 
 #--- Set the startup script and shutdown
