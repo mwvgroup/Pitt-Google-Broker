@@ -60,6 +60,22 @@ gcloud compute instances add-metadata "$consumerVM" --zone "$zone" \
 fout_run="${workingdir}/run-connector.out"
 fout_topics="${workingdir}/list.topics"
 
+#--- Specify the Client ID and Secret for client authentication
+if ["$survey" == "lvk"]; then
+    ligo_dir=ligo
+    cd ${ligo_dir}
+    CLIENT_ID=$(gcloud secrets versions access latest --secret=lvk-pitt-google-broker-testing-client-id)
+    CLIENT_SECRET=$(gcloud secrets versions access latest --secret=lvk-pitt-google-broker-testing-client-secret)
+
+    fconfig=admin.properties
+    sed -i "s/CLIENT_ID/${CLIENT_ID}/g" ${fconfig}
+    sed -i "s/CLIENT_SECRET/${CLIENT_SECRET}/g" ${fconfig}
+
+    fconfig=psconnect-worker.properties
+    sed -i "s/CLIENT_ID/${CLIENT_ID}/g" ${fconfig}
+    sed -i "s/CLIENT_SECRET/${CLIENT_SECRET}/g" ${fconfig}
+fi
+
 #--- Set the connector's configs (project and topics)
 fconfig=ps-connector.properties
 sed -i "s/PROJECT_ID/${PROJECT_ID}/g" ${fconfig}
