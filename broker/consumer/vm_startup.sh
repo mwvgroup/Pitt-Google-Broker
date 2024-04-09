@@ -61,7 +61,7 @@ fout_run="${workingdir}/run-connector.out"
 fout_topics="${workingdir}/list.topics"
 
 #--- Specify the Client ID and Secret for client authentication
-if ["$survey" == "lvk"]; then
+if [ "$survey" == "lvk" ]; then
     ligo_dir=ligo
     cd ${ligo_dir}
     CLIENT_ID=$(gcloud secrets versions access latest --secret=lvk-pitt-google-broker-testing-client-id)
