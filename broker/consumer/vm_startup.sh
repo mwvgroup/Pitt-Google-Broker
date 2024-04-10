@@ -80,7 +80,11 @@ if [ "$survey" == "lvk" ]; then
 
 else
     # define ZTF-related parameters
-    bootstrap_server="public2.alerts.ztf.uw.edu:9094"
+    if [ "${USE_AUTHENTICATION}" = true ]; then
+        bootstrap_server="public2.alerts.ztf.uw.edu:9094"
+    else
+        bootstrap_server="public2.alerts.ztf.uw.edu:9092"
+    fi
     surveydir="${workingdir}" 
 fi
 
