@@ -1,22 +1,15 @@
 #! /bin/bash
-# Configure and Start the Kafka -> Pub/Sub connector
+# Installs the software required to run the Kafka Consumer.
+# Assumes a Debian 10 OS.
 
-brokerdir=/home/broker
-# if using an authenticated connection, the keytab file must already exist in the workingdir
-workingdir="${brokerdir}/consumer"
-
-#--- Get project and instance metadata
-# for info on working with metadata, see here
-# https://cloud.google.com/compute/docs/storing-retrieving-metadata
+#--- Get metadata attributes
 baseurl="http://metadata.google.internal/computeMetadata/v1"
 H="Metadata-Flavor: Google"
 PROJECT_ID=$(curl "${baseurl}/project/project-id" -H "${H}")
-zone=$(curl "${baseurl}/instance/zone" -H "${H}")
-PS_TOPIC_FORCE=$(curl "${baseurl}/instance/attributes/PS_TOPIC_FORCE" -H "${H}")
-KAFKA_TOPIC_FORCE=$(curl "${baseurl}/instance/attributes/KAFKA_TOPIC_FORCE" -H "${H}")
-USE_AUTHENTICATION=$(curl "${baseurl}/instance/attributes/USE_AUTHENTICATION" -H "${H}")
-# parse the survey name and testid from the VM name
 consumerVM=$(curl "${baseurl}/instance/name" -H "${H}")
+zone=$(curl "${baseurl}/instance/zone" -H "${H}")
+
+# parse the survey name and testid from the VM name
 survey=$(echo "$consumerVM" | awk -F "-" '{print $1}')
 if [ "$consumerVM" = "${survey}-consumer" ]; then
     testid="False"
@@ -26,97 +19,59 @@ fi
 
 #--- GCP resources used in this script
 broker_bucket="${PROJECT_ID}-${survey}-broker_files"
-PS_TOPIC_DEFAULT="${survey}-alerts_raw"
 # use test resources, if requested
 if [ "$testid" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
-    PS_TOPIC_DEFAULT="${PS_TOPIC_DEFAULT}-${testid}"
 fi
 
-#--- Download config files from GCS
-# remove all files
-rm -r "${brokerdir}"
-# download fresh files
-mkdir "${brokerdir}"
-cd ${brokerdir}
-gsutil -m cp -r "gs://${broker_bucket}/consumer" .
-gsutil -m cp -r "gs://${broker_bucket}/schema_maps" .
-# wait. otherwise the script may continue before all files are downloaded, with adverse behavior.
-sleep 30s
-cd ${workingdir}
+# krb5.conf goes in a special place. put it there now.
+gsutil cp "gs://${broker_bucket}/consumer/krb5.conf" /etc/krb5.conf
 
-#--- Set the topic names to the "FORCE" metadata attributes if exist, else defaults
-kafka_topic_syntax=$(cat "${brokerdir}/schema_maps/${survey}.yaml" | yq ".TOPIC_SYNTAX")
-yyyymmdd=$(date -u '+%Y%m%d')
-KAFKA_TOPIC_DEFAULT="${kafka_topic_syntax/yyyymmdd/${yyyymmdd}}"
-KAFKA_TOPIC="${KAFKA_TOPIC_FORCE:-${KAFKA_TOPIC_DEFAULT}}"
-PS_TOPIC="${PS_TOPIC_FORCE:-${PS_TOPIC_DEFAULT}}"
-# set VM metadata, just for clarity and easy viewing
+#--- Install general utils
+apt-get update
+apt-get install -y wget screen software-properties-common snapd
+# software-properties-common installs add-apt-repository
+# install yq (requires snap)
+snap install core
+snap install yq
+
+#--- Install Java and the dev kit
+# see https://www.digitalocean.com/community/tutorials/how-to-install-java-with-apt-on-debian-10
+apt update
+echo "Installing Java..."
+apt install -y default-jre
+apt install -y default-jdk
+echo 'JAVA_HOME="/usr/lib/jvm/java-11-openjdk-amd64/bin/java"' >> /etc/environment
+source /etc/environment
+echo $JAVA_HOME
+echo "Done installing Java."
+apt update
+
+#--- Install Confluent Platform (includes Kafka)
+# see https://docs.confluent.io/platform/current/installation/installing_cp/deb-ubuntu.html
+echo "Installing Confluent Platform..."
+# install the key used to sign packages
+wget -qO - https://packages.confluent.io/deb/6.0/archive.key | sudo apt-key add -
+# add the repository
+add-apt-repository "deb [arch=amd64] https://packages.confluent.io/deb/6.0 stable main"
+# install
+apt-get update && sudo apt-get install -y confluent-platform
+echo "Done installing Confluent Platform."
+
+#--- Install Kafka -> Pub/Sub connector
+# see https://github.com/GoogleCloudPlatform/pubsub/tree/master/kafka-connector
+echo "Installing the Kafka -> Pub/Sub connector"
+plugindir=/usr/local/share/kafka/plugins
+CONNECTOR_RELEASE=v0.5-alpha
+mkdir -p ${plugindir}
+#- install the connector
+cd ${plugindir}
+wget https://github.com/GoogleCloudPlatform/pubsub/releases/download/${CONNECTOR_RELEASE}/pubsub-kafka-connector.jar
+echo "Done installing the Kafka -> Pub/Sub connector"
+
+#--- Set the startup script and shutdown
+startupscript="gs://${broker_bucket}/consumer/vm_startup.sh"
 gcloud compute instances add-metadata "$consumerVM" --zone "$zone" \
-    --metadata="PS_TOPIC=${PS_TOPIC},KAFKA_TOPIC=${KAFKA_TOPIC}"
-
-
-#--- Files this script will write
-fout_run="${workingdir}/run-connector.out"
-fout_topics="${workingdir}/list.topics"
-
-#--- Set the connector's configs (project and topics)
-fconfig=ps-connector.properties
-sed -i "s/PROJECT_ID/${PROJECT_ID}/g" ${fconfig}
-sed -i "s/PS_TOPIC/${PS_TOPIC}/g" ${fconfig}
-sed -i "s/KAFKA_TOPIC/${KAFKA_TOPIC}/g" ${fconfig}
-
-#--- Check until alerts start streaming into the topic
-alerts_flowing=false
-while [ "${alerts_flowing}" = false ]
-do
-    # get list of topics and dump to file
-    # /bin/kafka-topics works, but exits with:
-        # TGT renewal thread has been interrupted and will exit.
-        # (org.apache.kafka.common.security.kerberos.KerberosLogin)""
-    # which kills the while loop. no working suggestions found.
-    # passing the error with `|| true`
-    if [ "${USE_AUTHENTICATION}" = true ]
-    then
-        {
-            /bin/kafka-topics \
-                --bootstrap-server public2.alerts.ztf.uw.edu:9094 \
-                --list \
-                --command-config ${workingdir}/admin.properties \
-                > ${fout_topics}
-        } || {
-            true
-        }
-    else
-        {
-            /bin/kafka-topics \
-                --bootstrap-server public.alerts.ztf.uw.edu:9092 \
-                --list \
-                > ${fout_topics}
-        } || {
-            true
-        }
-    fi
-
-    # check if our topic is in the list
-    if grep -Fq "${KAFKA_TOPIC}" $fout_topics
-    then
-        alerts_flowing=true  # start consuming
-    else
-        sleep 60s  # sleep 1 min, then try again
-    fi
-done
-
-#--- Start the Kafka -> Pub/Sub connector, save stdout and stderr to file
-if [ "${USE_AUTHENTICATION}" = true ]
-then
-    /bin/connect-standalone \
-        ${workingdir}/psconnect-worker-authenticated.properties \
-        ${workingdir}/ps-connector.properties \
-        &>> ${fout_run}
-else
-    /bin/connect-standalone \
-        ${workingdir}/psconnect-worker-unauthenticated.properties \
-        ${workingdir}/ps-connector.properties \
-        &>> ${fout_run}
-fi
+    --metadata startup-script-url="$startupscript"
+echo "vm_install.sh is complete. Shutting down."
+shutdown -h now

@@ -60,34 +60,6 @@ gcloud compute instances add-metadata "$consumerVM" --zone "$zone" \
 fout_run="${workingdir}/run-connector.out"
 fout_topics="${workingdir}/list.topics"
 
-#--- Set the connector's configs (client ID and client secret) for LIGO/Virgo/KAGRA (LVK)
-if [ "$survey" == "lvk" ]; then
-    # define LVK-related parameters
-    bootstrap_server="kafka.gcn.nasa.gov:9092"
-    surveydir="${workingdir}/lvk"
-    CLIENT_ID=$(gcloud secrets versions access latest --secret=lvk-pitt-google-broker-testing-client-id)
-    CLIENT_SECRET=$(gcloud secrets versions access latest --secret=lvk-pitt-google-broker-testing-client-secret)
-    
-    cd ${surveydir} || exit
-
-    fconfig=admin.properties
-    sed -i "s/CLIENT_ID/${CLIENT_ID}/g" ${fconfig}
-    sed -i "s/CLIENT_SECRET/${CLIENT_SECRET}/g" ${fconfig}
-
-    fconfig=psconnect-worker-authenticated.properties
-    sed -i "s/CLIENT_ID/${CLIENT_ID}/g" ${fconfig}
-    sed -i "s/CLIENT_SECRET/${CLIENT_SECRET}/g" ${fconfig}
-
-else
-    # define ZTF-related parameters
-    if [ "${USE_AUTHENTICATION}" = true ]; then
-        bootstrap_server="public2.alerts.ztf.uw.edu:9094"
-    else
-        bootstrap_server="public2.alerts.ztf.uw.edu:9092"
-    fi
-    surveydir="${workingdir}" 
-fi
-
 #--- Set the connector's configs (project and topics)
 fconfig=ps-connector.properties
 sed -i "s/PROJECT_ID/${PROJECT_ID}/g" ${fconfig}
@@ -108,9 +80,9 @@ do
     then
         {
             /bin/kafka-topics \
-                --bootstrap-server ${bootstrap_server} \
+                --bootstrap-server public2.alerts.ztf.uw.edu:9094 \
                 --list \
-                --command-config ${surveydir}/admin.properties \
+                --command-config ${workingdir}/admin.properties \
                 > ${fout_topics}
         } || {
             true
@@ -118,7 +90,7 @@ do
     else
         {
             /bin/kafka-topics \
-                --bootstrap-server ${bootstrap_server} \
+                --bootstrap-server public.alerts.ztf.uw.edu:9092 \
                 --list \
                 > ${fout_topics}
         } || {
@@ -139,12 +111,12 @@ done
 if [ "${USE_AUTHENTICATION}" = true ]
 then
     /bin/connect-standalone \
-        ${surveydir}/psconnect-worker-authenticated.properties \
-        ${surveydir}/ps-connector.properties \
+        ${workingdir}/psconnect-worker-authenticated.properties \
+        ${workingdir}/ps-connector.properties \
         &>> ${fout_run}
 else
     /bin/connect-standalone \
-        ${surveydir}/psconnect-worker-unauthenticated.properties \
-        ${surveydir}/ps-connector.properties \
+        ${workingdir}/psconnect-worker-unauthenticated.properties \
+        ${workingdir}/ps-connector.properties \
         &>> ${fout_run}
 fi
