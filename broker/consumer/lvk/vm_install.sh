@@ -24,9 +24,6 @@ if [ "$testid" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
 fi
 
-# krb5.conf goes in a special place. put it there now.
-gsutil cp "gs://${broker_bucket}/consumer/krb5.conf" /etc/krb5.conf
-
 #--- Install general utils
 apt-get update
 apt-get install -y wget screen software-properties-common snapd
@@ -43,7 +40,7 @@ apt install -y default-jre
 apt install -y default-jdk
 echo 'JAVA_HOME="/usr/lib/jvm/java-11-openjdk-amd64/bin/java"' >> /etc/environment
 source /etc/environment
-echo $JAVA_HOME
+echo "$JAVA_HOME"
 echo "Done installing Java."
 apt update
 
@@ -65,7 +62,7 @@ plugindir=/usr/local/share/kafka/plugins
 CONNECTOR_RELEASE="1.1.0"
 mkdir -p ${plugindir}
 #- install the connector
-cd ${plugindir}
+cd ${plugindir} || exit
 wget https://repo1.maven.org/maven2/com/google/cloud/pubsub-group-kafka-connector/${CONNECTOR_RELEASE}/pubsub-group-kafka-connector-${CONNECTOR_RELEASE}.jar
 echo "Done installing the Kafka -> Pub/Sub connector"
 

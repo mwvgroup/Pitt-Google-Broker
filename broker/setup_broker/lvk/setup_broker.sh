@@ -60,8 +60,8 @@ if [ "${teardown}" != "True" ]; then
     gcloud pubsub topics add-iam-policy-binding "${topic_alerts}" --member="${user}" --role="${roleid}"
     user="542312691208-compute@developer.gserviceaccount.com"
     roleid="roles/secretmanager.secretAccessor"
-    gcloud secrets add-iam-policy-binding ${client_id} --member="serviceAccount:${user}" --role="${roleid}"
-    gcloud secrets add-iam-policy-binding ${client_secret} --member="serviceAccount:${user}" --role="${roleid}"
+    gcloud secrets add-iam-policy-binding "${client_id}" --member="serviceAccount:${user}" --role="${roleid}"
+    gcloud secrets add-iam-policy-binding "${client_secret}" --member="serviceAccount:${user}" --role="${roleid}"
 
 else
     # ensure that we do not teardown production resources

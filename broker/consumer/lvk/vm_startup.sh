@@ -2,7 +2,6 @@
 # Configure and Start the Kafka -> Pub/Sub connector
 
 brokerdir=/home/broker
-# if using an authenticated connection, the keytab file must already exist in the workingdir
 workingdir="${brokerdir}/consumer"
 
 #--- Get project and instance metadata
@@ -37,7 +36,7 @@ fi
 rm -r "${brokerdir}"
 # download fresh files
 mkdir "${brokerdir}"
-cd ${brokerdir}
+cd ${brokerdir} || exit
 gsutil -m cp -r "gs://${broker_bucket}/consumer" .
 gsutil -m cp -r "gs://${broker_bucket}/schema_maps" .
 # wait. otherwise the script may continue before all files are downloaded, with adverse behavior.
@@ -55,11 +54,12 @@ gcloud compute instances add-metadata "$consumerVM" --zone "$zone" \
 fout_run="${workingdir}/run-connector.out"
 fout_topics="${workingdir}/list.topics"
 
-#--- Set the connector's configs (client ID, client secret, project, and topics) for LIGO/Virgo/KAGRA (LVK)
+#--- Set the connector's configs (client ID, client secret, project, and topics)
 # define LVK-related parameters
 surveydir="${workingdir}/lvk"
-CLIENT_ID=$(gcloud secrets versions access latest --secret=lvk-pitt-google-broker-testing-client-id)
-CLIENT_SECRET=$(gcloud secrets versions access latest --secret=lvk-pitt-google-broker-testing-client-secret)
+LVK_SECRET="${survey}-${PROJECT_ID}"
+CLIENT_ID=$(gcloud secrets versions access latest --secret=${LVK_SECRET}-client-id)
+CLIENT_SECRET=$(gcloud secrets versions access latest --secret=${LVK_SECRET}-client-secret)
 
 cd ${surveydir} || exit
 
