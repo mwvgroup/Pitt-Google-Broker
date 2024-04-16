@@ -15,7 +15,6 @@ zone="${6:-us-central1-a}"
 
 #--- GCP resources used in this script
 consumerVM="${survey}-consumer"
-consumerVMsched="${consumerVM}-schedule"
 # use test resources, if requested
 if [ "$testid" != "False" ]; then
     consumerVM="${consumerVM}-${testid}"
@@ -42,18 +41,11 @@ else
     startupscript="startup-script-url=gs://${broker_bucket}/consumer/${survey}/vm_install.sh"
     shutdownscript="shutdown-script-url=gs://${broker_bucket}/consumer/${survey}/vm_shutdown.sh"
     gcloud compute instances create "$consumerVM" \
-        --resource-policies="${consumerVMsched}" \
         --zone="$zone" \
         --address="$consumerIP" \
         --machine-type="$machinetype" \
         --scopes=cloud-platform \
         --metadata="${googlelogging},${startupscript},${shutdownscript}" \
         --tags=ztfport # for the firewall rule to open the port
-
-#--- Disable the schedules for testing instances
-    if [ "$testid" != "False" ]; then
-        gcloud compute instances remove-resource-policies "${consumerVM}" \
-            --resource-policies="${consumerVMsched}"
-    fi
 
 fi
