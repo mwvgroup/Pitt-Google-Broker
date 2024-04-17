@@ -57,9 +57,10 @@ fout_topics="${workingdir}/list.topics"
 #--- Set the connector's configs (client ID, client secret, project, and topics)
 # define LVK-related parameters
 surveydir="${workingdir}/lvk"
-LVK_SECRET="${survey}-${PROJECT_ID}"
-CLIENT_ID=$(gcloud secrets versions access latest --secret=${LVK_SECRET}-client-id)
-CLIENT_SECRET=$(gcloud secrets versions access latest --secret=${LVK_SECRET}-client-secret)
+client_id="${survey}-${PROJECT_ID}-client-id"
+client_secret="${survey}-${PROJECT_ID}-client-secret"
+CLIENT_ID=$(gcloud secrets versions access latest --secret="${client_id}")
+CLIENT_SECRET=$(gcloud secrets versions access latest --secret="${client_secret}")
 
 cd ${surveydir} || exit
 
