@@ -59,6 +59,7 @@ Select one of the following options to add a secret version. Note that adding a 
 discouraged by Google Cloud, see 
 [add a secret version documentation](https://cloud.google.com/secret-manager/docs/add-secret-version#add-secret-version)
 for details.
+
 ```bash
 # add a secret version from the contents of a file on disk
 gcloud secrets versions add "${client_id}" --data-file="/path/to/file.txt"

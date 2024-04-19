@@ -24,6 +24,7 @@ gcloud compute instances start ${consumerVM} --zone ${zone}
 ```
 
 To stop stop the consumer VM:
+
 ```bash
 survey="lvk"
 testid="mytest"
