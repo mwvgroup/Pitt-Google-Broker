@@ -9,8 +9,8 @@ teardown="${2:-False}"
 survey="${3:-ztf}"
 # name of the survey this broker instance will ingest
 # 'ztf' or 'decat'
-schema_version="${4:-3.3}"
-versiontag=v$(echo "${schema_version}" | tr . _)  # 3.3 -> v3_3
+schema_version="${4:-4.02}"
+versiontag=v$(echo "${schema_version}" | tr . _)  # 4.02 -> v4_02
 use_authentication="${5:-false}"  # whether the consumer VM should use an authenticated connection
 region="${6:-us-central1}"
 zone="${region}-a"  # just use zone "a" instead of adding another script arg

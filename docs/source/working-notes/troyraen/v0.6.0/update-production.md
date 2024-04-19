@@ -1,4 +1,6 @@
-# Update the ZTF production broker to current
+# docs/source/working-notes/troyraen/v0.6.0/update-production.md
+
+## Update the ZTF production broker to current
 
 Functionality of current production broker should be the same as current repo code,
 but some of the resource names (e.g., pubsub) have not yet been updated to the new syntax rules.
@@ -14,7 +16,7 @@ Doing that now.
     - [x]  bigquery (dataset and table names do not change), check that alerts made it into each table.
     - [x]  cloud function ps_to_gcs will be updated with a new name and to use broker_utils
 
-## run setup_broker.sh
+### run setup_broker.sh
 
 Run the setup script:
 ```bash
@@ -43,7 +45,7 @@ broker_bucket="${PROJECT_ID}-${survey}-broker_files"
 ./create_vms.sh "$broker_bucket" "$testid" "$teardown" "$survey" 2>&1 | tee $fout
 ```
 
-## push some alerts through
+### push some alerts through
 
 Start the broker without the consumer
 ```bash
@@ -75,7 +77,7 @@ cue=END
 gcloud pubsub topics publish "$topic" --message="$cue"
 ```
 
-## pull the alerts and make sure they are as expected
+### pull the alerts and make sure they are as expected
 
 ```python
 from google.cloud import storage

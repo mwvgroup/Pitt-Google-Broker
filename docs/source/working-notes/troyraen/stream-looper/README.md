@@ -1,6 +1,8 @@
-# Streaming Stream Looper
+# docs/source/working-notes/troyraen/stream-looper/README.md
 
-## VM Setup
+## Streaming Stream Looper
+
+### VM Setup
 
 1. Define configs
 
@@ -74,7 +76,7 @@
        --machine-type "${vmtype}"
    ```
 
-## ZTF Stream
+### ZTF Stream
 
 Set a startup script to execute the python file in a background thread:
 
@@ -103,7 +105,7 @@ looper = StreamLooper(TOPIC_NAME, SUBSCRIPTION_NAME)
 looper.run_looper()
 ```
 
-## ELASTICC Stream
+### ELASTICC Stream
 
 Log in to the stream-looper VM and run the looper in a screen:
 
@@ -117,7 +119,7 @@ Log in to the stream-looper VM and run the looper in a screen:
 # bucketdir, workingdir
 ```
 
-### Incoming alerts
+#### Incoming alerts
 
 ```bash
 gcloud compute ssh "${vmname}"
@@ -140,7 +142,7 @@ project_id = "avid-heading-329016"
 StreamLooper(topic, subscrip, project_id).run_looper()
 ```
 
-### Outgoing classifications
+#### Outgoing classifications
 
 ```bash
 gcloud compute ssh "${vmname}"

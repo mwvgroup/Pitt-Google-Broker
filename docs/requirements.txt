@@ -1,22 +1,3 @@
-# # pgb-utils
-# apache_beam[gcp]
-# aplpy
-# astropy==3.2.1
-# astropy-healpix==0.6
-# beautifulsoup4==4.8
-# # google-auth
-# # google-api-core
-# # google-apitools
-# google-cloud-bigquery
-# google-cloud-logging
-# google-cloud-pubsub
-# google-cloud-storage
-# matplotlib
-# numpy
-# pandas
-# tabulate
-# typing
-
 # Needed for building docs
 docutils<0.17  # render lists properly
 myst-parser
@@ -24,3 +5,23 @@ sphinx
 sphinx-copybutton
 sphinx_autodoc_typehints
 sphinx_rtd_theme
+
+# Needed to build docs for broker_utils
+# It would be better not to duplicate this but it's is an easy way to get RTD to build,
+# and broker_utils really needs to be removed from this repo anyway (#158).
+# ---- Below here copied from broker/broker_utils/requirements.txt ----
+# If you have trouble with astropy, jinja2, MarkupSafe, and/or soft_unicode
+# Try using a Conda environment with Python 3.7 e.g.,
+# $ conda create -n pgb python=3.7
+astropy
+fastavro
+# google-api-core
+google-cloud-bigquery
+google-cloud-logging
+google-cloud-storage>=1.38
+google-cloud-pubsub
+numpy
+pandas
+PyYAML>=5.3
+six>=1.15  # bigquery requires
+typing

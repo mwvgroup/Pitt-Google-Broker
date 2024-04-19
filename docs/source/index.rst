@@ -10,11 +10,6 @@ The Pitt-Google Broker is a cloud-based alert distribution service designed to p
 
 The Pitt-Google Broker runs on the `Google Cloud Platform <https://cloud.google.com/>`_ (GCP) and is currently focused on processing and serving alerts from the `Zwicky Transient Facility <https://www.ztf.caltech.edu/>`_ (ZTF), and extending broker capabilities using ZTF, the LSST Alert Simulator, and the DECam Alliance for Transients (DECAT) stream.
 
-.. .. toctree::
-..    :hidden:
-..
-..    Overview<self>
-
 .. toctree::
    :hidden:
    :maxdepth: 1
@@ -50,13 +45,3 @@ The Pitt-Google Broker runs on the `Google Cloud Platform <https://cloud.google.
 
    working-notes/early-dev/README
    working-notes/troyraen/index
-
-For the current broker-utils API reference, see the `update_broker_utils branch <https://pitt-broker.readthedocs.io/en/u-tjr-update_broker_utils/api/broker-utils/avro-schemas.html>`__.
-
-..
-.. Indices and tables
-.. ==================
-..
-.. * :ref:`genindex`
-.. * :ref:`modindex`
-.. * :ref:`search`

@@ -1,14 +1,16 @@
-# Implementing SuperNNova Classifier
+# docs/source/working-notes/troyraen/v0.7.0/supernnova.md
+
+## Implementing SuperNNova Classifier
 
 SuperNNova Links:
 - [docs](https://supernnova.readthedocs.io/en/latest/index.html)
 - [github](https://github.com/supernnova/SuperNNova)
-- [arXiv paper](https://arxiv.org/pdf/1901.06384.pdf)  
+- [arXiv paper](https://arxiv.org/pdf/1901.06384.pdf)
 
 The following is mostly code to develop and test and Cloud Function.
 This uses a pre-trained model provided by the SuperNNova team.
 
-## Preliminary exploration
+### Preliminary exploration
 
 Following [run_onthefly.py](https://github.com/supernnova/SuperNNova/blob/master/run_onthefly.py)
 
@@ -92,7 +94,7 @@ def reformat_to_df(pred_probs, ids=None):
 ```
 
 
-## Test the Cloud Function pieces locally
+### Test the Cloud Function pieces locally
 
 ```bash
 export GCP_PROJECT=$GOOGLE_CLOUD_PROJECT
@@ -118,7 +120,7 @@ snn_msg = gcp_utils.pull_pubsub('test')[0]
 gcp_utils.insert_rows_bigquery(bq_table, [snn_dict])
 ```
 
-### Classify known Ia
+#### Classify known Ia
 
 The docs indicate that "usually" class0 indicates a Ia and class1 indicates non-Ia,
 but this will depend on how the model was trained.
@@ -150,7 +152,7 @@ snn_dict
  'pred_class': 1}
 ```
 
-## Local, full test
+### Local, full test
 
 ```bash
 conda create -n snn python=3.7
@@ -205,7 +207,7 @@ for r, row in enumerate(snn_queryjob):
 ```
 This works.
 
-## Deploy Cloud Function
+### Deploy Cloud Function
 
 ```bash
 survey="ztf"
@@ -221,9 +223,13 @@ gcloud functions deploy "$classify_snn_CF_name" \
     --trigger-topic "$classify_snn_trigger_topic" \
     --set-env-vars TESTID="$testid",SURVEY="$survey"
 ```
+
 This errors out with:
-```ERROR: (gcloud.functions.deploy) OperationError: code=3, message=Build failed: Build error details not available.Please check the logs at https://console.cloud.google.com/cloud-build/builds;region=us-central1/d782dfbb-285d-44aa-a164-040e48660089?project=591409139500. Please visit https://cloud.google.com/functions/docs/troubleshooting#build for in-depth troubleshooting documentation for build related errors.
+
 ```
+ERROR: (gcloud.functions.deploy) OperationError: code=3, message=Build failed: Build error details not available.Please check the logs at https://console.cloud.google.com/cloud-build/builds;region=us-central1/d782dfbb-285d-44aa-a164-040e48660089?project=591409139500. Please visit https://cloud.google.com/functions/docs/troubleshooting#build for in-depth troubleshooting documentation for build related errors.
+```
+
 I cannot find any more specific info in the logs or at the provided links.
 The step that it fails on is called "uploading_python_pkg_layer".
 

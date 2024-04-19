@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 """The ``math`` module contains mathematical transforms for survey data."""
+
 from typing import Tuple
 
 import numpy as np

@@ -1,4 +1,6 @@
-# Performance Figures
+# docs/source/working-notes/troyraen/performance-figures/README.md
+
+## Performance Figures
 
 Using figures.py in this directory:
 
@@ -77,7 +79,7 @@ for c in cols:
 
 <img src="figures/SuperNNova-ztf-20210914.png" alt=""/>
 
-## figures_OG
+### figures_OG
 
 ```python
 import figures_OG as figs
@@ -119,7 +121,7 @@ mplot._plot_incoming_rate_hist(ax, bin_per=bin_per, compare_cols=compare_cols)
 plt.show(block=False)
 ```
 
-## JOIN tables
+### JOIN tables
 
 ```python
 metacols = [
