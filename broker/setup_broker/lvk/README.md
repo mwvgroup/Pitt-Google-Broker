@@ -1,4 +1,4 @@
-# Connect Pitt-Google to the LIGO/Virgo/KAGRA (LVK) alert stream
+# Connect Pitt-Google to the LIGO/Virgo/KAGRA (LVK) Gravitational Wave Alert Stream
 
 April 2024 - Author: Christopher Hernandez
 
@@ -9,22 +9,20 @@ April 2024 - Author: Christopher Hernandez
 - [Delete broker instance](#delete-broker-instance)
 
 ## Overview
-Gravitational-wave transients detected by the LIGO, Virgo, and KAGRA network are distributed publicly as 
+Gravitational-wave transients detected by the LIGO, Virgo, and KAGRA network are distributed publicly as
 machine-readable alerts through 
 [General Coordinates Network (GCN) Notices](https://gcn.nasa.gov/docs/notices#gcn-notices).
 Here are some links which were used as a reference to set this up:
 
 - [Start streaming GCN Notices quick start quide](https://gcn.nasa.gov/quickstart)
 - [Kafka Client Setup using Java](https://gcn.nasa.gov/docs/client#java)
-- [Alert schemas](https://emfollow.docs.ligo.org/userguide/content.html#kafka-notice-gcn-scimma)
 
-Below is the code I used to set up the necessary resources in GCP and ingest the LVK alert stream.
+Below is the code I used to set up the necessary resources in GCP to ingest the LVK alert stream.
 
 ## Setup
-
 The following assumes that you have:
-- Completed the [GCN Notices quick start guide](https://gcn.nasa.gov/quickstart) and identified your client credentials.
-This includes a client ID and client secret
+- Completed the [GCN Notices quick start guide](https://gcn.nasa.gov/quickstart) and identified your client 
+credentials. This includes a client ID and client secret
 - Set the environment variables `GOOGLE_CLOUD_PROJECT` and `GOOGLE_APPLICATION_CREDENTIALS` to appropriate values for
 your GCP project and service account credentials
 - Authenticated the service account to make `gcloud` calls through the project
@@ -56,8 +54,8 @@ gcloud secrets create "${client_secret}" \
     --replication-policy="automatic"
 ```
 
-Select one of the following options to add a secret version. Adding a version directly on the command line is 
-discouraged, see 
+Select one of the following options to add a secret version. Note that adding a version directly on the command line is
+discouraged by Google Cloud, see 
 [add a secret version documentation](https://cloud.google.com/secret-manager/docs/add-secret-version#add-secret-version)
 for details.
 ```bash
@@ -89,10 +87,10 @@ region="us-central1"
 ./setup_broker.sh "${testid}" "${teardown}" "${survey}" "${region}"
 ```
 This will create all of the necessary GCP resources. Allow the consumer VM to finish its installation process. Once
-complete, the VM will shut down automatically. You can check the status of the VM in the 
+complete, the VM will shut down automatically. You can check the status of the VM in the
 [Google Cloud Console](https://console.cloud.google.com/compute).
 
-## Ingest the LVK alert stream
+## Start the Consumer VM to ingest the LVK alert stream
 ```bash
 zone="${region}-a"
 consumerVM="${survey}-consumer-${testid}"
