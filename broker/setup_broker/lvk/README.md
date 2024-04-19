@@ -48,6 +48,7 @@ client_id="${survey}-${PROJECT_ID}-client-id"
 client_secret="${survey}-${PROJECT_ID}-client-secret"
 
 # create secret(s)
+
 gcloud secrets create "${client_id}" \
     --replication-policy="automatic"
 gcloud secrets create "${client_secret}" \
@@ -88,7 +89,8 @@ region="us-central1"
 ```
 This will create all of the necessary GCP resources. Allow the consumer VM to finish its installation process. Once
 complete, the VM will shut down automatically. You can check the status of the VM in the
-[Google Cloud Console](https://console.cloud.google.com/compute).
+[Google Cloud Console](https://console.cloud.google.com/compute). 
+This entire process should take less than 10 minutes.
 
 ## Start the Consumer VM to ingest the LVK alert stream
 ```bash
