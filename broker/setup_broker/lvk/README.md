@@ -79,7 +79,9 @@ Clone the repo and cd into the directory:
 git clone https://github.com/mwvgroup/Pitt-Google-Broker.git
 cd Pitt-Google-Broker/broker/setup_broker/lvk
 ```
+
 Initialize parameters and call the deployment script:
+
 ```bash
 testid="mytest"
 teardown="False"
@@ -88,12 +90,14 @@ region="us-central1"
 
 ./setup_broker.sh "${testid}" "${teardown}" "${survey}" "${region}"
 ```
+
 This will create all of the necessary GCP resources. Allow the consumer VM to finish its installation process. Once
 complete, the VM will shut down automatically. You can check the status of the VM in the
 [Google Cloud Console](https://console.cloud.google.com/compute). 
 This entire process should take less than 10 minutes.
 
 ## Start the Consumer VM to ingest the LVK alert stream
+
 ```bash
 zone="${region}-a"
 consumerVM="${survey}-consumer-${testid}"
@@ -111,12 +115,14 @@ gcloud compute instances start "${consumerVM}" --zone ${zone}
 ```
 
 You can also stop the VM by executing:
+
 ```bash
 gcloud compute instances stop "${consumerVM}" --zone="${zone}"
 ```
 
 ## Delete broker instance
 Similar to [deploy broker instance](#deploy-broker-instance). Initialize parameters and call the deployment script:
+
 ```bash
 testid="mytest"
 teardown="True"
