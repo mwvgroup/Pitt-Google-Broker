@@ -2,7 +2,6 @@
 
 See `broker/setup_broker/lvk/README.md` for setup instructions.
 
-
 To start the consumer VM:
 
 ```bash

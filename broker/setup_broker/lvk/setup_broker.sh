@@ -35,8 +35,6 @@ fi
 #--- GCP resources used directly in this script
 broker_bucket="${PROJECT_ID}-${survey}-broker_files"
 topic_alerts="${survey}-alerts"
-client_id="${survey}-${PROJECT_ID}-client-id"
-client_secret="${survey}-${PROJECT_ID}-client-secret"
 # use test resources, if requested
 if [ "$testid" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
