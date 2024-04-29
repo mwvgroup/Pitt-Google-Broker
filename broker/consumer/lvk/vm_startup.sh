@@ -61,7 +61,7 @@ client_secret="${survey}-${PROJECT_ID}-client-secret"
 CLIENT_ID=$(gcloud secrets versions access latest --secret="${client_id}")
 CLIENT_SECRET=$(gcloud secrets versions access latest --secret="${client_secret}")
 
-cd ${workingdir} || exit
+cd "${workingdir}" || exit
 
 fconfig=admin.properties
 sed -i "s/CLIENT_ID/${CLIENT_ID}/g" ${fconfig}
@@ -84,11 +84,11 @@ do
     /bin/kafka-topics \
         --bootstrap-server kafka.gcn.nasa.gov:9092 \
         --list \
-        --command-config ${workingdir}/admin.properties \
-        > ${fout_topics}
+        --command-config "${workingdir}/admin.properties" \
+        > "${fout_topics}"
 
     # check if our topic is in the list
-    if grep -Fq "${KAFKA_TOPIC}" $fout_topics
+    if grep -Fq "${KAFKA_TOPIC}" "${fout_topics}"
     then
         alerts_flowing=true  # start consuming
     else
@@ -98,6 +98,6 @@ done
 
 #--- Start the Kafka -> Pub/Sub connector, save stdout and stderr to file
 /bin/connect-standalone \
-    ${workingdir}/psconnect-worker-authenticated.properties \
-    ${workingdir}/ps-connector.properties \
-    &>> ${fout_run}
+    "${workingdir}/psconnect-worker-authenticated.properties" \
+    "${workingdir}/ps-connector.properties" \
+    &>> "${fout_run}"
