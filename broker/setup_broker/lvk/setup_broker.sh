@@ -69,4 +69,4 @@ fi
 #--- Create VM instances
 echo
 echo "Configuring VMs..."
-./create_vms.sh "${broker_bucket}" "${testid}" "${teardown}" "${survey}" "${region}" "${zone}"
+./create_vms.sh "${broker_bucket}" "${testid}" "${teardown}" "${survey}" "${zone}"

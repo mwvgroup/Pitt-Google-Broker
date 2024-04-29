@@ -10,8 +10,7 @@ testid="${2:-test}"
 teardown="${3:-False}" # "True" tearsdown/deletes resources, else setup
 survey="${4:-ztf}"
 # name of the survey this broker instance will ingest
-region="${5:-us-central1}"
-zone="${6:-us-central1-a}"
+zone="${5:-us-central1-a}"
 
 #--- GCP resources used in this script
 consumerVM="${survey}-consumer"
