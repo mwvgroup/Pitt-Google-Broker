@@ -2,7 +2,6 @@
 # Configure and Start the Kafka -> Pub/Sub connector
 
 brokerdir=/home/broker
-workingdir="${brokerdir}/consumer"
 
 #--- Get project and instance metadata
 # for info on working with metadata, see here
@@ -51,18 +50,18 @@ gcloud compute instances add-metadata "$consumerVM" --zone "$zone" \
     --metadata="PS_TOPIC=${PS_TOPIC},KAFKA_TOPIC=${KAFKA_TOPIC}"
 
 #--- Files this script will write
+workingdir="${brokerdir}/consumer/${survey}"
 fout_run="${workingdir}/run-connector.out"
 fout_topics="${workingdir}/list.topics"
 
 #--- Set the connector's configs (client ID, client secret, project, and topics)
 # define LVK-related parameters
-surveydir="${workingdir}/lvk"
 client_id="${survey}-${PROJECT_ID}-client-id"
 client_secret="${survey}-${PROJECT_ID}-client-secret"
 CLIENT_ID=$(gcloud secrets versions access latest --secret="${client_id}")
 CLIENT_SECRET=$(gcloud secrets versions access latest --secret="${client_secret}")
 
-cd ${surveydir} || exit
+cd ${workingdir} || exit
 
 fconfig=admin.properties
 sed -i "s/CLIENT_ID/${CLIENT_ID}/g" ${fconfig}
@@ -85,7 +84,7 @@ do
     /bin/kafka-topics \
         --bootstrap-server kafka.gcn.nasa.gov:9092 \
         --list \
-        --command-config ${surveydir}/admin.properties \
+        --command-config ${workingdir}/admin.properties \
         > ${fout_topics}
 
     # check if our topic is in the list
@@ -99,6 +98,6 @@ done
 
 #--- Start the Kafka -> Pub/Sub connector, save stdout and stderr to file
 /bin/connect-standalone \
-    ${surveydir}/psconnect-worker-authenticated.properties \
-    ${surveydir}/ps-connector.properties \
+    ${workingdir}/psconnect-worker-authenticated.properties \
+    ${workingdir}/ps-connector.properties \
     &>> ${fout_run}

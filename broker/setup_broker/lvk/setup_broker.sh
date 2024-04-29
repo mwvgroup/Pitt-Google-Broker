@@ -58,10 +58,6 @@ if [ "${teardown}" != "True" ]; then
     user="allUsers"
     roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/userPublic"
     gcloud pubsub topics add-iam-policy-binding "${topic_alerts}" --member="${user}" --role="${roleid}"
-    user="542312691208-compute@developer.gserviceaccount.com"
-    roleid="roles/secretmanager.secretAccessor"
-    gcloud secrets add-iam-policy-binding "${client_id}" --member="serviceAccount:${user}" --role="${roleid}"
-    gcloud secrets add-iam-policy-binding "${client_secret}" --member="serviceAccount:${user}" --role="${roleid}"
 
 else
     # ensure that we do not teardown production resources
@@ -76,17 +72,3 @@ fi
 echo
 echo "Configuring VMs..."
 ./create_vms.sh "${broker_bucket}" "${testid}" "${teardown}" "${survey}" "${region}" "${zone}"
-
-if [ "$teardown" != "True" ]; then
-
-#--- Create a firewall rule to open the port used by Kafka/ZTF
-# on any instance with the flag --tags=ztfport
-    echo
-    echo "Configuring LVK/Kafka firewall rule..."
-    gcloud compute firewall-rules create 'lvkport' \
-        --allow=tcp:9094 \
-        --description="Allow incoming traffic on TCP port 9094" \
-        --direction=INGRESS \
-        --enable-logging
-
-fi

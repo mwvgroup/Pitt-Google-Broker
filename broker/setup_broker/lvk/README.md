@@ -72,6 +72,15 @@ echo -n "enter the client secret provided by GCN" | \
     gcloud secrets versions add "${client_secret}" --data-file=-
 ```
 
+Access the [IAM & Admin page](https://console.cloud.google.com/iam-admin) and grant the default compute service account the role of `Secret Manager Secret Accessor`
+
+```bash
+user="[enter compute service account prefix]@developer.gserviceaccount.com"
+roleid="roles/secretmanager.secretAccessor"
+gcloud secrets add-iam-policy-binding "${client_id}" --member="serviceAccount:${user}" --role="${roleid}"
+gcloud secrets add-iam-policy-binding "${client_secret}" --member="serviceAccount:${user}" --role="${roleid}"
+```
+
 ## Deploy broker instance
 Clone the repo and cd into the directory:
 
