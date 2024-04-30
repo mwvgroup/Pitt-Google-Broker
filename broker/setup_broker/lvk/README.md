@@ -23,7 +23,9 @@ Below is the code I used to set up the necessary resources in GCP to ingest the 
 ## Setup
 
 The following assumes that you have:
-- Completed the [GCN Notices quick start guide](https://gcn.nasa.gov/quickstart) and identified your client credentials. This includes a client ID and client secret
+
+- Completed the [GCN Notices quick start guide](https://gcn.nasa.gov/quickstart) and identified your client
+credentials. This includes a client ID and client secret
 - Set the environment variables `GOOGLE_CLOUD_PROJECT` and `GOOGLE_APPLICATION_CREDENTIALS` to appropriate values for
 your GCP project and service account credentials
 - Authenticated the service account to make `gcloud` calls through the project
