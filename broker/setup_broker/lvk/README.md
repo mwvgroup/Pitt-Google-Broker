@@ -9,6 +9,7 @@ April 2024 - Author: Christopher Hernandez
 - [Delete broker instance](#delete-broker-instance)
 
 ## Overview
+
 Gravitational-wave transients detected by the LIGO, Virgo, and KAGRA network are distributed publicly as
 machine-readable alerts through
 [General Coordinates Network (GCN) Notices](https://gcn.nasa.gov/docs/notices#gcn-notices).
@@ -20,9 +21,9 @@ Here are some links which were used as a reference to set this up:
 Below is the code I used to set up the necessary resources in GCP to ingest the LVK alert stream.
 
 ## Setup
+
 The following assumes that you have:
-- Completed the [GCN Notices quick start guide](https://gcn.nasa.gov/quickstart) and identified your client
-credentials. This includes a client ID and client secret
+- Completed the [GCN Notices quick start guide](https://gcn.nasa.gov/quickstart) and identified your client credentials. This includes a client ID and client secret
 - Set the environment variables `GOOGLE_CLOUD_PROJECT` and `GOOGLE_APPLICATION_CREDENTIALS` to appropriate values for
 your GCP project and service account credentials
 - Authenticated the service account to make `gcloud` calls through the project
@@ -82,6 +83,7 @@ gcloud secrets add-iam-policy-binding "${client_secret}" --member="serviceAccoun
 ```
 
 ## Deploy broker instance
+
 Clone the repo and cd into the directory:
 
 ```bash
@@ -130,6 +132,7 @@ gcloud compute instances stop "${consumerVM}" --zone="${zone}"
 ```
 
 ## Delete broker instance
+
 Similar to [deploy broker instance](#deploy-broker-instance). Initialize parameters and call the deployment script:
 
 ```bash
