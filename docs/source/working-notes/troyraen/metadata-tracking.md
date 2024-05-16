@@ -1,11 +1,13 @@
-# Metadata Tracking System
+# docs/source/working-notes/troyraen/metadata-tracking.md
 
-## todo
+## Metadata Tracking System
+
+### todo
 
 - [ ]  candid should be stored as an int, but currently using string f"{message_id}_unknown" for `alerts` stream messages that can't be matched to a candid.
 
 
-## Testing pieces
+### Testing pieces
 
 ```bash
 export GCP_PROJECT=$GOOGLE_CLOUD_PROJECT
@@ -30,7 +32,7 @@ main.attach_file_metadata(blob, alert, context)
 ```
 
 
-## Broker Testing Instance
+### Broker Testing Instance
 Create/delete a broker testing instance
 ```bash
 # get the code

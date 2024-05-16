@@ -1,4 +1,6 @@
-# Train a SuperNNova Model
+# docs/source/working-notes/troyraen/v0.7.0/supernnova_train_a_model.md
+
+## Train a SuperNNova Model
 
 Links
 - [github.com/supernnova/SuperNNova](https://github.com/supernnova/SuperNNova)
@@ -13,7 +15,7 @@ Links
     - random forest from salt2 fits
     - bayesian RNN
 
-## setup
+### setup
 folowing the two quickstarts in readthedocs:
 ```bash
 gcloud compute instances start troy
@@ -34,7 +36,7 @@ pip install supernnova
 ipython
 ```
 
-## train and validate a model using the test set
+### train and validate a model using the test set
 ```bash
 gcloud compute instances start troy
 gcloud compute ssh troy

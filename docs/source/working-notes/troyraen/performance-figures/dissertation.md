@@ -1,4 +1,6 @@
-# Performance figures for disseration
+# docs/source/working-notes/troyraen/performance-figures/dissertation.md
+
+## Performance figures for disseration
 
 Setup
 

@@ -1,6 +1,8 @@
-# update_broker_utils
+# docs/source/working-notes/troyraen/branch-tests/update_broker_utils.md
 
-## Setup
+## update_broker_utils
+
+### Setup
 
 ```bash
 survey=ztf
@@ -12,7 +14,7 @@ project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
 survey, testid = "ztf", "brokerutils"
 ```
 
-## Deploy instance
+### Deploy instance
 
 ```bash
 cd broker/setup_broker
@@ -20,7 +22,7 @@ teardown=False
 ./setup_broker.sh "$testid" "$teardown" "$survey"
 ```
 
-## Publish test alerts
+### Publish test alerts
 
 Following [Alerts for Testing](https://pitt-broker.readthedocs.io/en/develop/broker/alerts-for-testing.html).
 
@@ -111,7 +113,7 @@ gcloud compute instances add-metadata "$vm_name" \
 gcloud compute instances start "$vm_name"
 ```
 
-## Query test results
+### Query test results
 
 According to the [README](https://pitt-broker.readthedocs.io/en/develop/working-notes/troyraen/alerts-for-testing/README.html) included with the test alerts, we expect:
 
@@ -158,7 +160,7 @@ for dataset, tables in datasets.items():
 
 ```
 
-## broker-utils not installing on night-conductor
+### broker-utils not installing on night-conductor
 
 Solution: use a Conda environment with Python 3.7
 

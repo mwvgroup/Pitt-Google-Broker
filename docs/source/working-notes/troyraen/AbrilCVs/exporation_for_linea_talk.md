@@ -1,4 +1,6 @@
-# Exploration for LIneA talk - Dec 2, 2021
+# docs/source/working-notes/troyraen/AbrilCVs/exporation_for_linea_talk.md
+
+## Exploration for LIneA talk - Dec 2, 2021
 
 ```python
 from matplotlib import pyplot as plt

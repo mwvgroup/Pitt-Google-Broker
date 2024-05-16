@@ -1,3 +1,5 @@
-# CV catalog
+# docs/source/working-notes/troyraen/AbrilCVs/ASAS-SN/README.md
 
-Downloaded from [ASAS-SN Variable Stars Database](https://asas-sn.osu.edu/variables) 
+## CV catalog
+
+Downloaded from [ASAS-SN Variable Stars Database](https://asas-sn.osu.edu/variables)
