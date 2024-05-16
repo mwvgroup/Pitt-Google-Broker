@@ -8,7 +8,7 @@ testid="${2:-test}"
 #   "False" uses production resources
 #   any other string will be appended to the names of all resources
 teardown="${3:-False}" # "True" tearsdown/deletes resources, else setup
-survey="${4:-ztf}"
+survey="${4:-lvk}"
 # name of the survey this broker instance will ingest
 zone="${5:-us-central1-a}"
 
