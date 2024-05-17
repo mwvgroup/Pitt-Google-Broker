@@ -36,5 +36,5 @@ else # Deploy the Cloud Functions
         --entry-point "${lite_entry_point}" \
         --runtime python312 \
         --trigger-topic "${lite_trigger_topic}" \
-        --set-env-vars TESTID="${testid}",SURVEY="${survey}",VERSIONTAG="${versiontag}"
+        --set-env-vars TESTID="${testid}",SURVEY="${survey}",VERSIONTAG="${versiontag}",GCP_PROJECT="${GOOGLE_CLOUD_PROJECT}"
 fi
