@@ -39,8 +39,9 @@ echo "Installing Java..."
 apt install -y default-jre
 apt install -y default-jdk
 echo 'JAVA_HOME="/usr/lib/jvm/java-11-openjdk-amd64/bin/java"' >> /etc/environment
+# shellcheck source=/dev/null
 source /etc/environment
-echo $JAVA_HOME
+echo "$JAVA_HOME"
 echo "Done installing Java."
 apt update
 
@@ -62,7 +63,7 @@ plugindir=/usr/local/share/kafka/plugins
 CONNECTOR_RELEASE=v0.5-alpha
 mkdir -p ${plugindir}
 #- install the connector
-cd ${plugindir}
+cd ${plugindir} || exit
 wget https://github.com/GoogleCloudPlatform/pubsub/releases/download/${CONNECTOR_RELEASE}/pubsub-kafka-connector.jar
 echo "Done installing the Kafka -> Pub/Sub connector"
 

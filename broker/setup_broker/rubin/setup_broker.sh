@@ -24,7 +24,7 @@ echo "teardown = ${teardown}"
 echo
 echo "Continue?  [y/(n)]: "
 
-read continue_with_setup
+read -r continue_with_setup
 continue_with_setup="${continue_with_setup:-n}"
 if [ "$continue_with_setup" != "y" ]; then
     echo "Exiting setup."
