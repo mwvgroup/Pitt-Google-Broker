@@ -35,11 +35,13 @@ fi
 #--- GCP resources used directly in this script
 broker_bucket="${PROJECT_ID}-${survey}-broker_files"
 topic_alerts="${survey}-alerts"
+pubsub_subscription="${topic_alerts}"
 # use test resources, if requested
 # (there must be a better way to do this)
 if [ "$testid" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
     topic_alerts="${topic_alerts}-${testid}"
+    pubsub_subscription="${pubsub_subscription}-${testid}"
 fi
 
 
@@ -53,6 +55,7 @@ if [ "${teardown}" != "True" ]; then
     # create pubsub
     echo "Configuring Pub/Sub resources..."
     gcloud pubsub topics create "${topic_alerts}"
+    gcloud pubsub subscriptions create "${pubsub_subscription}" --topic="${topic_alerts}"
 
     # Set IAM policies on resources
     user="allUsers"
@@ -65,6 +68,7 @@ else
         o="GSUtil:parallel_process_count=1" # disable multiprocessing for Macs
         gsutil -m -o "${o}" rm -r "gs://${broker_bucket}"
         gcloud pubsub topics delete "${topic_alerts}"
+        gcloud pubsub subscriptions delete "${pubsub_subscription}"
     fi
 fi
 
