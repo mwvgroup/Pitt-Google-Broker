@@ -53,21 +53,17 @@ workingdir="${brokerdir}/consumer/${survey}"
 fout_run="${workingdir}/run-connector.out"
 fout_topics="${workingdir}/list.topics"
 
-#--- Set the connector's configs (Kafka username and password, project, and topics)
+#--- Set the connector's configs (Kafka password, project, and topic)
 # define Rubin-related parameters
-#kafka_username="${survey}-${PROJECT_ID}-kafka-username"
 kafka_password="${survey}-${PROJECT_ID}-kafka-password"
-#KAFKA_USERNAME=$(gcloud secrets versions access latest --secret="${kafka_username}")
 KAFKA_PASSWORD=$(gcloud secrets versions access latest --secret="${kafka_password}")
 
 cd "${workingdir}" || exit
 
 fconfig=admin.properties
-#sed -i "s/KAFKA_USERNAME/${KAFKA_USERNAME}/g" ${fconfig}
 sed -i "s/KAFKA_PASSWORD/${KAFKA_PASSWORD}/g" ${fconfig}
 
 fconfig=psconnect-worker.properties
-#sed -i "s/KAFKA_USERNAME/${KAFKA_USERNAME}/g" ${fconfig}
 sed -i "s/KAFKA_PASSWORD/${KAFKA_PASSWORD}/g" ${fconfig}
 
 fconfig=ps-connector.properties
