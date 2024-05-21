@@ -89,5 +89,3 @@ fi
 echo
 echo "Configuring VMs..."
 ./create_vms.sh "${broker_bucket}" "${testid}" "${teardown}" "${survey}" "${zone}" "${firewallrule}"
-
-
