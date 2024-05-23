@@ -12,8 +12,8 @@ May 2024 - Author: Christopher Hernández
 During the first week of May 2024, a broker integration exercise was held and focused on the topic of connectivity.
 This document outlines my procedure in connecting to the test stream.
 
-For this exercise, the same credentials as the IDF integration exercise were used. Credential information was emailed to me 
-by Troy Raen, and the credential value (e.g., `kafka_password`) was stored as a
+For this exercise, the same credentials as the IDF integration exercise were used. Credential information was emailed
+to me by Troy Raen, and the credential value (e.g., `kafka_password`) was stored as a
 [secret](https://cloud.google.com/secret-manager/docs/overview#secret) using Google Cloud's
 [Secret Manager](https://cloud.google.com/secret-manager/docs/overview).
 
@@ -54,7 +54,7 @@ gcloud secrets create "${kafka_password}" \
 ```
 
 Select one of the following options to add a secret version. Note that adding a version directly on the command line is
-discouraged by Google Cloud, see 
+discouraged by Google Cloud, see
 [add a secret version documentation](https://cloud.google.com/secret-manager/docs/add-secret-version#add-secret-version)
 for details.
 
