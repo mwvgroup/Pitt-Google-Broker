@@ -38,7 +38,7 @@ You may want to
 or
 [set up a GCP project from scratch](https://pitt-broker.readthedocs.io/en/latest/broker/run-a-broker-instance/initial-setup.html#setup-local-environment).
 
-Create secrets for your access credential:
+Create a secret for your access credential:
 
 ```bash
 # define parameters
