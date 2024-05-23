@@ -14,7 +14,7 @@ This document outlines my procedure in connecting to the test stream.
 
 For this exercise, the same credentials as the IDF integration exercise were used. Credential information was emailed to me 
 by Troy Raen, and the credential value (e.g., `kafka_password`) was stored as a
-[secret](https://cloud.google.com/secret-manager/docs/overview#secret) using Google Cloud's 
+[secret](https://cloud.google.com/secret-manager/docs/overview#secret) using Google Cloud's
 [Secret Manager](https://cloud.google.com/secret-manager/docs/overview).
 
 Details on the number of alerts in this exercise from a conversation with Brianna Smart:
@@ -24,12 +24,13 @@ Details on the number of alerts in this exercise from a conversation with Briann
 ## Setup
 
 This section assumes that you have:
+
 - Set the environment variables `GOOGLE_CLOUD_PROJECT` and `GOOGLE_APPLICATION_CREDENTIALS` to appropriate values for
 your GCP project and service account credentials
 - Authenticated the service account to make `gcloud` calls through the project
 - Enabled the [Secret Manager API](https://cloud.google.com/secret-manager/docs/configuring-secret-manager#enable_api)
 in your Google Cloud Project
-- Granted the default compute service account the role of `Secret Manager Secret Accessor` in the 
+- Granted the default compute service account the role of `Secret Manager Secret Accessor` in the
 [IAM & Admin page](https://console.cloud.google.com/iam-admin)
 
 You may want to
@@ -53,7 +54,9 @@ gcloud secrets create "${kafka_password}" \
 ```
 
 Select one of the following options to add a secret version. Note that adding a version directly on the command line is
-discouraged by Google Cloud, see [add a secret version documentation](https://cloud.google.com/secret-manager/docs/add-secret-version#add-secret-version) for details.
+discouraged by Google Cloud, see 
+[add a secret version documentation](https://cloud.google.com/secret-manager/docs/add-secret-version#add-secret-version)
+for details.
 
 ```bash
 # add a secret version from the contents of a file on disk
@@ -88,8 +91,9 @@ Execute the `setup_broker.sh` script:
 ```bash
 ./setup_broker.sh "${testid}" "${teardown}" "${survey}" "${region}"
 ```
-This will create all of the necessary GCP resources. Allow the consumer VM to finish its installation process. Once 
-complete, the VM will shut down automatically. You can check the status of the VM in the 
+
+This will create all of the necessary GCP resources. Allow the consumer VM to finish its installation process. Once
+complete, the VM will shut down automatically. You can check the status of the VM in the
 [Google Cloud Console](https://console.cloud.google.com/compute). This entire process should take less than 10 minutes.
 
 ## Ingest the Rubin test stream
