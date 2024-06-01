@@ -50,7 +50,7 @@ def semantic_compression(alert_dict, schema_map) -> dict:
         "filter": source[schema_map["filter"]],
     }
 
-    access_prev = alert_dict[schema_map["prvSources"]]
+    access_prev = alert_dict.get(schema_map["prvSources"], {})
 
     prev_sources = []
 
