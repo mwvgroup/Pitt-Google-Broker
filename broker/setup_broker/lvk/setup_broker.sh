@@ -34,10 +34,14 @@ fi
 
 #--- GCP resources used directly in this script
 broker_bucket="${PROJECT_ID}-${survey}-broker_files"
+bq_dataset="${survey}"
 topic_alerts="${survey}-alerts"
+table="alerts"
+schema="bq_${survey}_${table}_schema.json"
 # use test resources, if requested
 if [ "$testid" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
+    bq_dataset="${bq_dataset}_${testid}"
     topic_alerts="${topic_alerts}-${testid}"
 fi
 
@@ -47,6 +51,17 @@ if [ "${teardown}" != "True" ]; then
     echo "Creating broker_bucket and uploading files..."
     gsutil mb -b on -l "${region}" "gs://${broker_bucket}"
     ./upload_broker_bucket.sh "${broker_bucket}"
+
+    # create BigQuery dataset and table
+    echo "Creating BigQuery dataset and table..."
+    bq --location="${region}" mk \
+    --dataset \
+    ${PROJECT_ID}:${survey}
+
+    bq mk \
+    --table \
+    ${PROJECT_ID}:${survey}.${table} \
+    ${schema}
 
     # create pubsub
     echo "Configuring Pub/Sub resources..."
