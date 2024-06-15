@@ -62,7 +62,7 @@ class TempAlertFile(SpooledTemporaryFile):
     def rollover(self) -> None:
         """Move contents of the spooled file from memory onto disk"""
 
-        log.warning(f'Alert size exceeded max memory size: {self._max_size}')
+        logger.log_text(f'Alert size exceeded max memory size: {self._max_size}')
         super().rollover()
 
     @property
