@@ -85,3 +85,15 @@ fi
 echo
 echo "Configuring VMs..."
 ./create_vms.sh "${broker_bucket}" "${testid}" "${teardown}" "${survey}" "${zone}"
+
+#--- Deploy Cloud Functions
+echo
+echo "Configuring Cloud Functions..."
+cd .. && cd .. && cd cloud_functions || exit
+
+cd lvk && cd store_BigQuery || exit
+./deploy.sh "$testid" "$teardown" "$survey"
+
+#--- return to setup_broker directory
+cd .. && cd .. || exit
+cd .. && cd setup_broker || exit
