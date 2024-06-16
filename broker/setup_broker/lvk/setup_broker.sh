@@ -56,12 +56,12 @@ if [ "${teardown}" != "True" ]; then
     echo "Creating BigQuery dataset and table..."
     bq --location="${region}" mk \
     --dataset \
-    ${PROJECT_ID}:${survey}
+    "${PROJECT_ID}":"${survey}"
 
     bq mk \
     --table \
-    ${PROJECT_ID}:${survey}.${table} \
-    ${schema}
+    "${PROJECT_ID}":"${survey}"."${table}" \
+    "${schema}"
 
     # create pubsub
     echo "Configuring Pub/Sub resources..."
