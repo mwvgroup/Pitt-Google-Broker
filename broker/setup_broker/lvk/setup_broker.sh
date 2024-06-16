@@ -8,7 +8,9 @@ teardown="${2:-False}"
 # "True" tearsdown/deletes resources, else setup
 survey="${3:-lvk}"
 # name of the survey this broker instance will ingest
-region="${4:-us-central1}"
+schema_version="${4:-O4}"
+versiontag="v${schema_version}" # O4 -> vO4
+region="${5:-us-central1}"
 zone="${region}-a"  # just use zone "a" instead of adding another script arg
 
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT # get the environment variable
@@ -36,7 +38,7 @@ fi
 broker_bucket="${PROJECT_ID}-${survey}-broker_files"
 bq_dataset="${survey}"
 topic_alerts="${survey}-alerts"
-table="alerts"
+table="alerts_${versiontag}"
 schema="bq_${survey}_${table}_schema.json"
 # use test resources, if requested
 if [ "$testid" != "False" ]; then
