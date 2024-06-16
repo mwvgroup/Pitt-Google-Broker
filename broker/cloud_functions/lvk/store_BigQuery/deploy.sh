@@ -9,6 +9,7 @@ teardown="${2:-False}"
 # "True" tearsdown/deletes resources, else setup
 survey="${3:-lvk}"
 # name of the survey this broker instance will ingest
+versiontag="${4:-O4}"
 
 #--- GCP resources used in this script
 store_bq_trigger_topic="${survey}-alerts"
@@ -35,5 +36,5 @@ else # Deploy the Cloud Functions
         --entry-point "${store_bq_entry_point}" \
         --runtime python312 \
         --trigger-topic "${store_bq_trigger_topic}" \
-        --set-env-vars TESTID="${testid}",SURVEY="${survey}",GCP_PROJECT="${GOOGLE_CLOUD_PROJECT}"
+        --set-env-vars TESTID="${testid}",SURVEY="${survey}",VERSIONTAG="${versiontag}",GCP_PROJECT="${GOOGLE_CLOUD_PROJECT}"
 fi
