@@ -40,11 +40,13 @@ bq_dataset="${survey}"
 topic_alerts="${survey}-alerts"
 table="alerts_${versiontag}"
 schema="bq_${survey}_${table}_schema.json"
+topic_bigquery="${survey}-BigQuery"
 # use test resources, if requested
 if [ "$testid" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
     bq_dataset="${bq_dataset}_${testid}"
     topic_alerts="${topic_alerts}-${testid}"
+    topic_bigquery="${survey}-BigQuery-${testid}"
 fi
 
 #--- Create (or delete) GCS, Pub/Sub resources
@@ -58,16 +60,17 @@ if [ "${teardown}" != "True" ]; then
     echo "Creating BigQuery dataset and table..."
     bq --location="${region}" mk \
     --dataset \
-    "${PROJECT_ID}":"${survey}"
+    "${PROJECT_ID}":"${bq_dataset}"
 
     bq mk \
     --table \
-    "${PROJECT_ID}":"${survey}"."${table}" \
+    "${PROJECT_ID}":"${bq_dataset}"."${table}" \
     "${schema}"
 
     # create pubsub
     echo "Configuring Pub/Sub resources..."
     gcloud pubsub topics create "${topic_alerts}"
+    gcloud pubsub topics create "${topic_bigquery}"
 
     # Set IAM policies on resources
     user="allUsers"
@@ -80,6 +83,8 @@ else
         o="GSUtil:parallel_process_count=1" # disable multiprocessing for Macs
         gsutil -m -o "${o}" rm -r "gs://${broker_bucket}"
         gcloud pubsub topics delete "${topic_alerts}"
+        gcloud pubsub topics delete "${topic_bigquery}"
+        bq rm -r -f -d "${PROJECT_ID}":"${bq_dataset}"
     fi
 fi
 
@@ -91,10 +96,12 @@ echo "Configuring VMs..."
 #--- Deploy Cloud Functions
 echo
 echo "Configuring Cloud Functions..."
-cd .. && cd .. && cd cloud_functions || exit
+cd .. && cd .. || exit
+cd cloud_functions && cd lvk|| exit
 
-cd lvk && cd store_BigQuery || exit
-./deploy.sh "$testid" "$teardown" "$survey"
+#--- BigQuery storage cloud function
+cd store_BigQuery || exit
+./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
 
 #--- return to setup_broker directory
 cd .. && cd .. || exit
