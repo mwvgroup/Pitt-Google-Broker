@@ -18,10 +18,19 @@
       "type": "STRING"
     },
     {
-        "description": "url to GraceDB",
-        "mode": "REQUIRED",
-        "name": "urls",
-        "type": "STRING"
+      "description": "url to GraceDB",
+      "fields": [
+        {
+          "description": "",
+          "mode": "REQUIRED",
+          "name": "gracedb",
+          "type": "STRING"
+        }
+      ],
+      "mode": "REQUIRED",
+      "name": "urls",
+      "type": "RECORD"
+      
     },
     {
       "description": "Event information",
@@ -42,11 +51,11 @@
           "description": "true if trials factor × FAR < 1/month for CBC events, otherwise false | true if trials factor × FAR < 1/year for burst events, otherwise false",
           "mode": "REQUIRED",
           "name": "significant",
-          "type": "STRING"
+          "type": "BOOLEAN"
         },
         {
           "description": "List of detectors, e.g. ['H1', 'L1','V1'] whose data have been used by the online pipeline that has produced the preferred event for that particular superevent",
-          "mode": "REQUIRED",
+          "mode": "REPEATED",
           "name": "instruments",
           "type": "STRING"
         },
@@ -78,7 +87,7 @@
           "description": "time interval for which the signal is detected (above noise)",
           "mode": "NULLABLE",
           "name": "duration",
-          "type": "FLOAT"
+          "type": "TIMESTAMP"
         },
         {
           "description": "estimation of the frequency of the signal's main component",
@@ -136,7 +145,7 @@
             {
               "description": "Probability that the source is Terrestrial (i.e, noise)",
               "mode": "REQUIRED",
-              "name": "Noise",
+              "name": "Terrestrial",
               "type": "FLOAT"
             }
           ],
