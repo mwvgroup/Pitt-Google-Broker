@@ -30,7 +30,6 @@
       "mode": "REQUIRED",
       "name": "urls",
       "type": "RECORD"
-      
     },
     {
       "description": "Event information",
