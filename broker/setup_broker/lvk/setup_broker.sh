@@ -97,7 +97,7 @@ echo "Configuring VMs..."
 echo
 echo "Configuring Cloud Functions..."
 cd .. && cd .. || exit
-cd cloud_functions && cd lvk|| exit
+cd cloud_functions && cd lvk || exit
 
 #--- BigQuery storage cloud function
 cd store_BigQuery || exit
