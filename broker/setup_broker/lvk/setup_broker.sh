@@ -8,8 +8,8 @@ teardown="${2:-False}"
 # "True" tearsdown/deletes resources, else setup
 survey="${3:-lvk}"
 # name of the survey this broker instance will ingest
-schema_version="${4:-O4}"
-versiontag="v${schema_version}" # O4 -> vO4
+observation_run="${4:-4}"
+versiontag="O${observation_run}" # 4 -> O4
 region="${5:-us-central1}"
 zone="${region}-a"  # just use zone "a" instead of adding another script arg
 
