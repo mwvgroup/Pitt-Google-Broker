@@ -2,4 +2,5 @@ SURVEY: lvk
 SURVEY_SCHEMA: https://emfollow.docs.ligo.org/userguide/content.html#kafka-notice-gcn-scimma
 objectId: superevent_id
 source: event
+type: alert_type
 url: urls
