@@ -79,7 +79,8 @@ def publish_pubsub(alert_dict: dict, table_dicts: Dict[str, Optional[dict]]):
     # collect attributes
     attrs = {
         schema_map["objectId"]: str(alert_dict[schema_map["objectId"]]),
-        schema_map["graceDb"]: str(alert_dict[schema_map["graceDb"]]),
+        schema_map["url"]: str(alert_dict[schema_map["url"]]),
+        schema_map["type"]: str(alert_dict[schema_map["type"]]),
     }
     for d in table_dicts:
         attrs.update(d)
