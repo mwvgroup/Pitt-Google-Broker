@@ -58,6 +58,9 @@ if [ "${teardown}" != "True" ]; then
 
     # create BigQuery dataset and table
     echo "Creating BigQuery dataset and table..."
+
+    cd templates || exit
+    
     bq --location="${region}" mk \
     --dataset \
     "${PROJECT_ID}":"${bq_dataset}"
@@ -66,6 +69,8 @@ if [ "${teardown}" != "True" ]; then
     --table \
     "${PROJECT_ID}":"${bq_dataset}"."${table}" \
     "${schema}"
+
+    cd .. || exit
 
     # create pubsub
     echo "Configuring Pub/Sub resources..."
