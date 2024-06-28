@@ -36,7 +36,7 @@ else # Deploy the Cloud Functions
     gcloud functions deploy "${classify_snn_CF_name}" \
         --entry-point "${classify_snn_entry_point}" \
         --memory "${memory}" \
-        --runtime python37 \
+        --runtime python312 \
         --trigger-topic "${classify_snn_trigger_topic}" \
-        --set-env-vars TESTID="${testid}",SURVEY="${survey}",VERSIONTAG="${versiontag}"
+        --set-env-vars TESTID="${testid}",SURVEY="${survey}",VERSIONTAG="${versiontag}",GCP_PROJECT="${GOOGLE_CLOUD_PROJECT}"
 fi
