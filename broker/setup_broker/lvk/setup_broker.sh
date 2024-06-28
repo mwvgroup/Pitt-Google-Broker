@@ -39,7 +39,7 @@ broker_bucket="${PROJECT_ID}-${survey}-broker_files"
 bq_dataset="${survey}"
 topic_alerts="${survey}-alerts"
 table="alerts_${versiontag}"
-schema="bq_${survey}_${table}_schema.json"
+schema_path="templates/bq_${survey}_${table}_schema.json"
 topic_bigquery="${survey}-BigQuery"
 # use test resources, if requested
 if [ "$testid" != "False" ]; then
@@ -68,7 +68,7 @@ if [ "${teardown}" != "True" ]; then
     bq mk \
     --table \
     "${PROJECT_ID}":"${bq_dataset}"."${table}" \
-    "${schema}"
+    "${schema_path}"
 
     cd .. || exit
 
