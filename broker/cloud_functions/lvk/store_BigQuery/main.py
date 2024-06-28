@@ -83,7 +83,8 @@ def publish_pubsub(alert_dict: dict, table_dicts: Dict[str, Optional[dict]]):
         schema_map["type"]: str(alert_dict[schema_map["type"]]),
     }
     for d in table_dicts:
-        attrs.update(d)
+        for k, v in d.items():
+            attrs[k] = str(v) if v is not None else ""
 
     # set empty message body; everything is in the attributes
     msg = b""
