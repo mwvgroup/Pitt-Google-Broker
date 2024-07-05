@@ -79,7 +79,6 @@ Module Documentation
 """
 
 import argparse
-import json
 import os
 import shlex
 import subprocess
@@ -154,7 +153,7 @@ def _resources(service, survey='lvk', testid='test', versiontag="O4"):
         return topics
 
 
-def _do_not_delete_production_resources(survey='lvk', testid='test', teardown=True):
+def _do_not_delete_production_resources(testid='test', teardown=True):
     """ If the user is requesting to delete resources used in production,
     throw an error.
 
@@ -217,7 +216,7 @@ def setup_bigquery(survey='lvk', testid='test', teardown=False, versiontag="O4",
     New datasets include:
       ``{survey}``
     """
-    _do_not_delete_production_resources(survey=survey, testid=testid, teardown=teardown)
+    _do_not_delete_production_resources(testid=testid, teardown=teardown)
 
     (datasets, table_data) = _resources('BQ', survey=survey, testid=testid, versiontag=versiontag)
     bigquery_client = bigquery.Client(location=region)
@@ -276,7 +275,7 @@ def setup_buckets(survey='lvk', testid='test', teardown=False, versiontag="O4", 
                           some resource names.
         region (str): GCP region of the bucket.
     """
-    _do_not_delete_production_resources(survey=survey, testid=testid, teardown=teardown)
+    _do_not_delete_production_resources(testid=testid, teardown=teardown)
 
     buckets = _resources('GCS', survey=survey, testid=testid, versiontag=versiontag)
     storage_client = storage.Client()
@@ -325,7 +324,7 @@ def setup_pubsub(survey='lvk', testid='test', teardown=False) -> None:
                                 appended to the resource names.)
         teardown (bool): if True, delete resources rather than setting them up
     """
-    _do_not_delete_production_resources(survey=survey, testid=testid, teardown=teardown)
+    _do_not_delete_production_resources(testid=testid, teardown=teardown)
 
     topics = _resources('PS', survey=survey, testid=testid)
     publisher = pubsub_v1.PublisherClient()
@@ -388,7 +387,7 @@ def auto_setup(
                           and tries not to ask again.
 
     """
-    _do_not_delete_production_resources(survey=survey, testid=testid, teardown=teardown)
+    _do_not_delete_production_resources(testid=testid, teardown=teardown)
     if not confirmed:
         _confirm_options(survey, testid, teardown)
 
