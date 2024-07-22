@@ -49,8 +49,8 @@ client = storage.Client()
 bucket = client.get_bucket(client.bucket(bucket_name, user_project=PROJECT_ID))
 
 # By default, spool data in memory to avoid IO unless data is too big
-# LSST alerts are anticipated at 80 kB, so 150 kB should be plenty
-max_alert_packet_size = 150000
+# LSST alerts are anticipated at 80 kB, so 1000 kB should be plenty
+max_alert_packet_size = 1_000_000
 
 
 class TempAlertFile(SpooledTemporaryFile):
