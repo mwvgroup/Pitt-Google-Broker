@@ -38,18 +38,29 @@ fi
 broker_bucket="${PROJECT_ID}-${survey}-broker_files"
 bq_dataset="${survey}"
 topic_alerts="${survey}-alerts"
+topic_storeBigQuery="${survey}-BigQuery"
 
 # use test resources, if requested
 if [ "$testid" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
     bq_dataset="${bq_dataset}_${testid}"
     topic_alerts="${topic_alerts}-${testid}"
+    topic_storeBigQuery="${topic_storeBigQuery}-${testid}"
 fi
 
-#--- Create (or delete) GCS, Pub/Sub resources
+alerts_table="alerts_${versiontag}"
+
+#--- Create (or delete) BigQuery, GCS, Pub/Sub resources
 echo
 echo "Configuring BigQuery, GCS, Pub/Sub resources..."
 if [ "${teardown}" != "True" ]; then
+    # create bigquery dataset and table
+    bq --location="${region}" mk --dataset "${bq_dataset}"
+
+    cd templates || exit
+    bq mk --table "${PROJECT_ID}:${bq_dataset}.${alerts_table}" "bq_${survey}_${alerts_table}_schema.json"
+    cd .. || exit
+
     # create broker bucket and upload files
     echo "Creating broker_bucket and uploading files..."
     gsutil mb -b on -l "${region}" "gs://${broker_bucket}"
@@ -58,16 +69,19 @@ if [ "${teardown}" != "True" ]; then
     # create pubsub
     echo "Configuring Pub/Sub resources..."
     gcloud pubsub topics create "${topic_alerts}"
+    gcloud pubsub topics create "${topic_storeBigQuery}"
 
     # Set IAM policies on resources
     user="allUsers"
     roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/userPublic"
     gcloud pubsub topics add-iam-policy-binding "${topic_alerts}" --member="${user}" --role="${roleid}"
+    gcloud pubsub topics add-iam-policy-binding "${topic_storeBigQuery}" --member="${user}" --role="${roleid}"
 
 else
     # ensure that we do not teardown production resources
     if [ "${testid}" != "False" ]; then
         o="GSUtil:parallel_process_count=1" # disable multiprocessing for Macs
+        bq rm -r -f "${PROJECT_ID}:${bq_dataset}"
         gsutil -m -o "${o}" rm -r "gs://${broker_bucket}"
         gcloud pubsub topics delete "${topic_alerts}"
 
