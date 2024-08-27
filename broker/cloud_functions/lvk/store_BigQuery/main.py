@@ -24,7 +24,9 @@ MODULE_NAME = f"alerts_{VERSIONTAG}"
 TABLE = pittgoogle.Table.from_cloud(MODULE_NAME, survey=SURVEY, testid=TESTID)
 TOPIC = pittgoogle.Topic.from_cloud("BigQuery", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID)
 
-def run(event: dict, context: functions_v1.context.Context) -> None:
+# 'context' is an unused argument in the function below that is required
+# see https://cloud.google.com/functions/1stgendocs/writing/write-event-driven-functions#background-functions
+def run(event: dict, context: functions_v1.context.Context) -> None: # noqa: ARG001
     """Send alert data to various BigQuery tables.
 
     Args:
@@ -41,7 +43,7 @@ def run(event: dict, context: functions_v1.context.Context) -> None:
     # create a PubsubMessage-like object with the existing event dictionary
     pubsub_message = pubsub_v1.types.PubsubMessage(
         data=decoded_data,
-        attributes=event.get(["attributes"], {})
+        attributes=event.get("attributes", {})
     )
 
     # unpack the alert
@@ -68,7 +70,7 @@ def insert_rows_alerts(alert: pittgoogle.alert.Alert):
 
     return table_dict
 
-def _create_outgoing_alert(alert: pittgoogle.alert.Alert, table_dict: dict) -> pittgoogle.Alert:
+def _create_outgoing_alert(alert: pittgoogle.alert.Alert, table_dict: dict) -> pittgoogle.alert.Alert:
 
     attrs = {
         "alert_table": table_dict['alerts_table'],
