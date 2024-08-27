@@ -3,9 +3,9 @@
 
 """This module stores alert data in BigQuery tables."""
 
+import base64
 import os
 import pittgoogle
-import base64
 from google.cloud import functions_v1, pubsub_v1, logging
 
 PROJECT_ID = os.getenv("GCP_PROJECT")
