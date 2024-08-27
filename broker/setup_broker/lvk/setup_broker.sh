@@ -37,33 +37,39 @@ fi
 #--- GCP resources used directly in this script
 broker_bucket="${PROJECT_ID}-${survey}-broker_files"
 bq_dataset="${survey}"
+topic_alerts="${survey}-alerts"
 
 # use test resources, if requested
 if [ "$testid" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
     bq_dataset="${bq_dataset}_${testid}"
+    topic_alerts="${topic_alerts}-${testid}"
 fi
 
 #--- Create (or delete) GCS, Pub/Sub resources
 echo
 echo "Configuring BigQuery, GCS, Pub/Sub resources..."
-if [ "$testid" != "False" ]; then
-    if [ "$teardown" = "True" ]; then
-        # delete testing resources
-        python3 setup_gcp.py --survey="$survey" --testid="$testid" --teardown --confirmed --versiontag="${versiontag}"
-    else
-        # setup testing resources
-        python3 setup_gcp.py --survey="$survey" --testid="$testid" --confirmed --region="${region}" --versiontag="${versiontag}"
-    fi
-else
-    # setup production resources
-    python3 setup_gcp.py --survey="$survey" --production --confirmed --region="${region}"
-fi
+if [ "${teardown}" != "True" ]; then
+    # create broker bucket and upload files
+    echo "Creating broker_bucket and uploading files..."
+    gsutil mb -b on -l "${region}" "gs://${broker_bucket}"
+    ./upload_broker_bucket.sh "${broker_bucket}"
 
-#--- finish setting up buckets and dataset
-if [ "$teardown" != "True" ]; then
-    ./upload_broker_bucket.sh "$broker_bucket"
-fi
+    # create pubsub
+    echo "Configuring Pub/Sub resources..."
+    gcloud pubsub topics create "${topic_alerts}"
+
+    # Set IAM policies on resources
+    user="allUsers"
+    roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/userPublic"
+    gcloud pubsub topics add-iam-policy-binding "${topic_alerts}" --member="${user}" --role="${roleid}"
+
+else
+    # ensure that we do not teardown production resources
+    if [ "${testid}" != "False" ]; then
+        o="GSUtil:parallel_process_count=1" # disable multiprocessing for Macs
+        gsutil -m -o "${o}" rm -r "gs://${broker_bucket}"
+        gcloud pubsub topics delete "${topic_alerts}"
 
 #--- Create VM instances
 echo
