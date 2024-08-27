@@ -84,6 +84,8 @@ else
         bq rm -r -f "${PROJECT_ID}:${bq_dataset}"
         gsutil -m -o "${o}" rm -r "gs://${broker_bucket}"
         gcloud pubsub topics delete "${topic_alerts}"
+    fi
+fi
 
 #--- Create VM instances
 echo
