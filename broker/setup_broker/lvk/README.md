@@ -142,7 +142,8 @@ Similar to [deploy broker instance](#deploy-broker-instance). Initialize paramet
 testid="mytest"
 teardown="True"
 survey="lvk"
+observation_run="4"
 region="us-central1"
 
-./setup_broker.sh "${testid}" "${teardown}" "${survey}" "${region}"
+./setup_broker.sh "${testid}" "${teardown}" "${survey}" "${observation_run}" "${region}"
 ```
