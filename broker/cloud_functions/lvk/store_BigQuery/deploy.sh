@@ -31,10 +31,12 @@ else # Deploy the Cloud Functions
 #--- BigQuery storage cloud function
     echo "Deploying Cloud Function: ${store_bq_CF_name}"
     store_bq_entry_point="run"
+    memory=512MB
 
     gcloud functions deploy "${store_bq_CF_name}" \
         --entry-point "${store_bq_entry_point}" \
         --runtime python312 \
+        --memory "${memory}" \
         --trigger-topic "${store_bq_trigger_topic}" \
         --set-env-vars TESTID="${testid}",SURVEY="${survey}",VERSIONTAG="${versiontag}",GCP_PROJECT="${GOOGLE_CLOUD_PROJECT}"
 fi
