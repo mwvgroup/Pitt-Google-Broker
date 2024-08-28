@@ -26,7 +26,7 @@ TOPIC = pittgoogle.Topic.from_cloud("BigQuery", survey=SURVEY, testid=TESTID, pr
 
 # 'context' is an unused argument in the function below that is required
 # see https://cloud.google.com/functions/1stgendocs/writing/write-event-driven-functions#background-functions
-def run(event: dict, context: functions_v1.context.Context) -> None: # noqa: ARG001
+def run(event: dict, _context: functions_v1.context.Context) -> None:
     """Send alert data to various BigQuery tables.
 
     Args:
