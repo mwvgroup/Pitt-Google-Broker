@@ -30,7 +30,7 @@ def run(event: dict, _context: functions_v1.context.Context) -> None:
     """Send alert data to various BigQuery tables.
 
     Args:
-        msg: Pub/Sub message data and attributes.
+        event: Pub/Sub message data and attributes.
             `data` field contains the message data in a base64-encoded string.
             `attributes` field contains the message's custom attributes in a dict.
 
@@ -71,14 +71,19 @@ def insert_rows_alerts(alert: pittgoogle.alert.Alert):
     return table_dict
 
 def _create_outgoing_alert(alert: pittgoogle.alert.Alert, table_dict: dict) -> pittgoogle.alert.Alert:
-
+    """Create an announcement of the table storage operation to Pub/Sub."""
+    # collect attributes
     attrs = {
         "alert_table": table_dict['alerts_table'],
         "type": alert.dict['alert_type']
     }
-    
+
+    # set empty message body; everything is in the attributes
+    msg = b""
+
+    # create outgoing alert
     alert_out = pittgoogle.Alert.from_dict(
-        payload=alert.dict, attributes=attrs, schema_name="default_schema"
+        payload=msg, attributes=attrs, schema_name="default_schema"
     )
     
     return alert_out
