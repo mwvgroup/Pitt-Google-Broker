@@ -38,14 +38,14 @@ fi
 broker_bucket="${PROJECT_ID}-${survey}-broker_files"
 bq_dataset="${survey}"
 topic_alerts="${survey}-alerts"
-topic_storeBigQuery="${survey}-BigQuery"
+topic_storebigquery="${survey}-BigQuery"
 
 # use test resources, if requested
 if [ "$testid" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
     bq_dataset="${bq_dataset}_${testid}"
     topic_alerts="${topic_alerts}-${testid}"
-    topic_storeBigQuery="${topic_storeBigQuery}-${testid}"
+    topic_storebigquery="${topic_storebigquery}-${testid}"
 fi
 
 alerts_table="alerts_${versiontag}"
@@ -69,13 +69,13 @@ if [ "${teardown}" != "True" ]; then
     # create pubsub
     echo "Configuring Pub/Sub resources..."
     gcloud pubsub topics create "${topic_alerts}"
-    gcloud pubsub topics create "${topic_storeBigQuery}"
+    gcloud pubsub topics create "${topic_storebigquery}"
 
     # Set IAM policies on resources
     user="allUsers"
     roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/userPublic"
     gcloud pubsub topics add-iam-policy-binding "${topic_alerts}" --member="${user}" --role="${roleid}"
-    gcloud pubsub topics add-iam-policy-binding "${topic_storeBigQuery}" --member="${user}" --role="${roleid}"
+    gcloud pubsub topics add-iam-policy-binding "${topic_storebigquery}" --member="${user}" --role="${roleid}"
 
 else
     # ensure that we do not teardown production resources
