@@ -79,7 +79,7 @@ def _create_outgoing_alert(alert: pittgoogle.alert.Alert, table_dict: dict) -> p
     }
 
     # set empty message body; everything is in the attributes
-    msg = b""
+    msg = {}
 
     # create outgoing alert
     alert_out = pittgoogle.Alert.from_dict(
