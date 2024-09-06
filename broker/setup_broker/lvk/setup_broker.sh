@@ -8,8 +8,8 @@ teardown="${2:-False}"
 # "True" tearsdown/deletes resources, else setup
 survey="${3:-lvk}"
 # name of the survey this broker instance will ingest
-observation_run="${4:-4}"
-versiontag="O${observation_run}" # 4 -> O4
+schema_version="${4:-O4}"
+versiontag="v${observation_run}" # O4 -> vO4
 region="${5:-us-central1}"
 zone="${region}-a"  # just use zone "a" instead of adding another script arg
 
@@ -38,7 +38,7 @@ fi
 broker_bucket="${PROJECT_ID}-${survey}-broker_files"
 bq_dataset="${survey}"
 topic_alerts="${survey}-alerts"
-topic_storebigquery="${survey}-BigQuery"
+topic_storebigquery="${survey}-bigquery"
 
 # use test resources, if requested
 if [ "$testid" != "False" ]; then
@@ -81,9 +81,10 @@ else
     # ensure that we do not teardown production resources
     if [ "${testid}" != "False" ]; then
         o="GSUtil:parallel_process_count=1" # disable multiprocessing for Macs
-        bq rm -r -f "${PROJECT_ID}:${bq_dataset}"
         gsutil -m -o "${o}" rm -r "gs://${broker_bucket}"
+        bq rm -r -f "${PROJECT_ID}:${bq_dataset}"
         gcloud pubsub topics delete "${topic_alerts}"
+        gcloud pubsub topics delete "${topic_storebigquery}"
     fi
 fi
 

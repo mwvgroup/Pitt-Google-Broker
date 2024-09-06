@@ -19,13 +19,9 @@ logging_client = logging.Client()
 logger = logging_client.logger(log_name)
 
 # GCP resources used in this module
-pittgoogle_project = pittgoogle.ProjectIds().pittgoogle
-MODULE_NAME = f"alerts_{VERSIONTAG}"
-TABLE = pittgoogle.Table.from_cloud(MODULE_NAME, survey=SURVEY, testid=TESTID)
+TABLE = pittgoogle.Table.from_cloud(f"alerts_{VERSIONTAG}", survey=SURVEY, testid=TESTID)
 TOPIC = pittgoogle.Topic.from_cloud("BigQuery", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID)
 
-# 'context' is an unused argument in the function below that is required
-# see https://cloud.google.com/functions/1stgendocs/writing/write-event-driven-functions#background-functions
 def run(event: dict, _context: functions_v1.context.Context) -> None:
     """Send alert data to various BigQuery tables.
 
@@ -35,6 +31,9 @@ def run(event: dict, _context: functions_v1.context.Context) -> None:
             `attributes` field contains the message's custom attributes in a dict.
 
         context: Metadata describing the Cloud Function's trigging event.
+
+    'context' is an unused argument in the function that is required
+    see https://cloud.google.com/functions/1stgendocs/writing/write-event-driven-functions#background-functions
     """
     
     # decode the base64-encoded message data
@@ -65,7 +64,7 @@ def insert_rows_alerts(alert: pittgoogle.alert.Alert):
         table_dict = {"alerts_table": f"{TABLE.id}"}
     else:
         msg = f"Error inserting to alerts table: {errors}"
-        logger.log_text(msg, severity="DEBUG")
+        logger.log_text(msg, severity="WARNING")
         table_dict = {"alerts_table": None}
 
     return table_dict
@@ -74,8 +73,10 @@ def _create_outgoing_alert(alert: pittgoogle.alert.Alert, table_dict: dict) -> p
     """Create an announcement of the table storage operation to Pub/Sub."""
     # collect attributes
     attrs = {
-        "alert_table": table_dict['alerts_table'],
-        "type": alert.dict['alert_type']
+        **alert.attributes,
+        "alerts_table": table_dict['alerts_table'],
+        "alert_type": alert.dict['alert_type'],
+        "superevent_id": alert.dict['superevent_id'],
     }
 
     # set empty message body; everything is in the attributes
