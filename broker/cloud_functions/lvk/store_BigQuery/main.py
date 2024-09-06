@@ -20,7 +20,7 @@ logger = logging_client.logger(log_name)
 
 # GCP resources used in this module
 TABLE = pittgoogle.Table.from_cloud(f"alerts_{VERSIONTAG}", survey=SURVEY, testid=TESTID)
-TOPIC = pittgoogle.Topic.from_cloud("BigQuery", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID)
+TOPIC = pittgoogle.Topic.from_cloud("bigquery", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID)
 
 def run(event: dict, _context: functions_v1.context.Context) -> None:
     """Send alert data to various BigQuery tables.
