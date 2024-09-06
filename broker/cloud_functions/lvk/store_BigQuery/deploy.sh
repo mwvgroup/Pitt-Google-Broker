@@ -9,7 +9,7 @@ teardown="${2:-False}"
 # "True" tearsdown/deletes resources, else setup
 survey="${3:-lvk}"
 # name of the survey this broker instance will ingest
-versiontag="${4:-O4}"
+versiontag="${4:-vO4}"
 
 #--- GCP resources used in this script
 store_bq_trigger_topic="${survey}-alerts"
