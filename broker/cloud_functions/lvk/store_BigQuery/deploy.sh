@@ -13,7 +13,7 @@ versiontag="${4:-vO4}"
 
 #--- GCP resources used in this script
 store_bq_trigger_topic="${survey}-alerts"
-store_bq_CF_name="${survey}-store_in_BigQuery"
+store_bq_CF_name="${survey}-store_in_bigquery"
 
 # use test resources, if requested
 if [ "${testid}" != "False" ]; then
