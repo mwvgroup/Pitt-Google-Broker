@@ -145,5 +145,5 @@ survey="lvk"
 schema_version="O4"
 region="us-central1"
 
-./setup_broker.sh "${testid}" "${teardown}" "${survey}" "${observation_run}" "${region}"
+./setup_broker.sh "${testid}" "${teardown}" "${survey}" "${schema_version}" "${region}"
 ```
