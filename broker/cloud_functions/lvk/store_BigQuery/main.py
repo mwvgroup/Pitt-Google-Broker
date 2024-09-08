@@ -22,6 +22,7 @@ logger = logging_client.logger(log_name)
 TABLE = pittgoogle.Table.from_cloud(f"alerts_{VERSIONTAG}", survey=SURVEY, testid=TESTID)
 TOPIC = pittgoogle.Topic.from_cloud("bigquery", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID)
 
+
 def run(event: dict, _context: functions_v1.context.Context) -> None:
     """Send alert data to various BigQuery tables.
 
@@ -35,24 +36,24 @@ def run(event: dict, _context: functions_v1.context.Context) -> None:
     'context' is an unused argument in the function that is required
     see https://cloud.google.com/functions/1stgendocs/writing/write-event-driven-functions#background-functions
     """
-    
+
     # decode the base64-encoded message data
     decoded_data = base64.b64decode(event["data"])
 
     # create a PubsubMessage-like object with the existing event dictionary
     pubsub_message = pubsub_v1.types.PubsubMessage(
-        data=decoded_data,
-        attributes=event.get("attributes", {})
+        data=decoded_data, attributes=event.get("attributes", {})
     )
 
     # unpack the alert
-    alert = pittgoogle.Alert.from_msg(msg=pubsub_message,schema_name="default_schema")
-    
+    alert = pittgoogle.Alert.from_msg(msg=pubsub_message, schema_name="default_schema")
+
     # send the alert to BigQuery table
     alert_table = insert_rows_alerts(alert)
-    
+
     # announce what's been done
     TOPIC.publish(_create_outgoing_alert(alert, alert_table))
+
 
 def insert_rows_alerts(alert: pittgoogle.alert.Alert):
     """Insert rows into the `alerts` table via the streaming API."""
@@ -69,14 +70,17 @@ def insert_rows_alerts(alert: pittgoogle.alert.Alert):
 
     return table_dict
 
-def _create_outgoing_alert(alert: pittgoogle.alert.Alert, table_dict: dict) -> pittgoogle.alert.Alert:
+
+def _create_outgoing_alert(
+    alert: pittgoogle.alert.Alert, table_dict: dict
+) -> pittgoogle.alert.Alert:
     """Create an announcement of the table storage operation to Pub/Sub."""
     # collect attributes
     attrs = {
         **alert.attributes,
-        "alerts_table": table_dict['alerts_table'],
-        "alert_type": alert.dict['alert_type'],
-        "superevent_id": alert.dict['superevent_id'],
+        "alerts_table": table_dict["alerts_table"],
+        "alert_type": alert.dict["alert_type"],
+        "superevent_id": alert.dict["superevent_id"],
     }
 
     # set empty message body; everything is in the attributes
@@ -86,5 +90,5 @@ def _create_outgoing_alert(alert: pittgoogle.alert.Alert, table_dict: dict) -> p
     alert_out = pittgoogle.Alert.from_dict(
         payload=msg, attributes=attrs, schema_name="default_schema"
     )
-    
+
     return alert_out
