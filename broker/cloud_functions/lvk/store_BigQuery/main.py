@@ -11,7 +11,6 @@ from google.cloud import functions_v1, pubsub_v1, logging
 PROJECT_ID = os.getenv("GCP_PROJECT")
 SURVEY = os.getenv("SURVEY")
 TESTID = os.getenv("TESTID")
-VERSIONTAG = os.getenv("VERSIONTAG")
 
 # connect to the cloud logger
 log_name = "store-bigquery-cloudfnc"  # same log for all broker instances
@@ -19,7 +18,7 @@ logging_client = logging.Client()
 logger = logging_client.logger(log_name)
 
 # GCP resources used in this module
-TABLE = pittgoogle.Table.from_cloud(f"alerts_{VERSIONTAG}", survey=SURVEY, testid=TESTID)
+TABLE = pittgoogle.Table.from_cloud("alerts", survey=SURVEY, testid=TESTID)
 TOPIC = pittgoogle.Topic.from_cloud("bigquery", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID)
 
 

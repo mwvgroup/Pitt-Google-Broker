@@ -1,16 +1,14 @@
 #! /bin/bash
 # Create and configure GCP resources needed to run the nightly broker.
 
-testid="${1:-test}"
 # "False" uses production resources
 # any other string will be appended to the names of all resources
-teardown="${2:-False}"
+testid="${1:-test}"
 # "True" tearsdown/deletes resources, else setup
-survey="${3:-lvk}"
+teardown="${2:-False}"
 # name of the survey this broker instance will ingest
-schema_version="${4:-O4}"
-versiontag="v${schema_version}" # O4 -> vO4
-region="${5:-us-central1}"
+survey="${3:-lvk}"
+region="${4:-us-central1}"
 zone="${region}-a"  # just use zone "a" instead of adding another script arg
 
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT # get the environment variable
@@ -48,7 +46,7 @@ if [ "$testid" != "False" ]; then
     topic_storebigquery="${topic_storebigquery}-${testid}"
 fi
 
-alerts_table="alerts_${versiontag}"
+alerts_table="alerts"
 
 #--- Create (or delete) BigQuery, GCS, Pub/Sub resources
 echo
@@ -101,7 +99,7 @@ cd cloud_functions && cd lvk || exit
 
 #--- BigQuery storage cloud function
 cd store_BigQuery || exit
-./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
+./deploy.sh "$testid" "$teardown" "$survey"
 
 #--- return to setup_broker directory
 cd .. && cd .. || exit

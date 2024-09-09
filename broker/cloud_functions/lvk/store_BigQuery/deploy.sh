@@ -2,14 +2,13 @@
 # Deploys or deletes broker Cloud Function
 # This script will not delete Cloud Functions that are in production
 
-testid="${1:-test}"
 # "False" uses production resources
 # any other string will be appended to the names of all resources
-teardown="${2:-False}"
+testid="${1:-test}"
 # "True" tearsdown/deletes resources, else setup
-survey="${3:-lvk}"
+teardown="${2:-False}"
 # name of the survey this broker instance will ingest
-versiontag="${4:-vO4}"
+survey="${3:-lvk}"
 
 #--- GCP resources used in this script
 store_bq_trigger_topic="${survey}-alerts"
@@ -38,5 +37,5 @@ else # Deploy the Cloud Functions
         --runtime python312 \
         --memory "${memory}" \
         --trigger-topic "${store_bq_trigger_topic}" \
-        --set-env-vars TESTID="${testid}",SURVEY="${survey}",VERSIONTAG="${versiontag}",GCP_PROJECT="${GOOGLE_CLOUD_PROJECT}"
+        --set-env-vars TESTID="${testid}",SURVEY="${survey}",GCP_PROJECT="${GOOGLE_CLOUD_PROJECT}"
 fi

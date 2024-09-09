@@ -99,10 +99,9 @@ Initialize parameters and call the deployment script:
 testid="mytest"
 teardown="False"
 survey="lvk"
-schema_version="O4"
 region="us-central1"
 
-./setup_broker.sh "${testid}" "${teardown}" "${survey}" "${schema_version}" "${region}"
+./setup_broker.sh "${testid}" "${teardown}" "${survey}" "${region}"
 ```
 
 This will create all of the necessary GCP resources. Allow the consumer VM to finish its installation process. Once
@@ -142,8 +141,7 @@ Similar to [deploy broker instance](#deploy-broker-instance). Initialize paramet
 testid="mytest"
 teardown="True"
 survey="lvk"
-schema_version="O4"
 region="us-central1"
 
-./setup_broker.sh "${testid}" "${teardown}" "${survey}" "${schema_version}" "${region}"
+./setup_broker.sh "${testid}" "${teardown}" "${survey}" "${region}"
 ```
