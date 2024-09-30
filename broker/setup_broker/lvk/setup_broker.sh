@@ -8,7 +8,9 @@ testid="${1:-test}"
 teardown="${2:-False}"
 # name of the survey this broker instance will ingest
 survey="${3:-lvk}"
-region="${4:-us-central1}"
+schema_version="${4:-1.0}"
+versiontag=v$(echo "${schema_version}" | tr . _) # 1.0 -> v1_0
+region="${5:-us-central1}"
 zone="${region}-a"  # just use zone "a" instead of adding another script arg
 
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT # get the environment variable
@@ -46,7 +48,7 @@ if [ "$testid" != "False" ]; then
     topic_storebigquery="${topic_storebigquery}-${testid}"
 fi
 
-alerts_table="alerts"
+alerts_table="alerts_${versiontag}"
 
 #--- Create (or delete) BigQuery, GCS, Pub/Sub resources
 echo

@@ -1,0 +1,208 @@
+[
+  {
+    "description": "The type of alert.",
+    "mode": "REQUIRED",
+    "name": "alert_type",
+    "type": "STRING"
+  },
+  {
+    "description": "The time this notice was created in ISO 8601 format.",
+    "mode": "REQUIRED",
+    "name": "time_created",
+    "type": "TIMESTAMP"
+  },
+  {
+    "description": "The GraceDB superevent ID.",
+    "mode": "REQUIRED",
+    "name": "superevent_id",
+    "type": "STRING"
+  },
+  {
+    "description": "URLs relevant to the event, if any.",
+    "mode": "REQUIRED",
+    "name": "urls",
+    "type": "STRING"
+  },
+  {
+    "description": "Event information",
+    "fields": [
+      {
+        "description": "Time of the event in ISO 8601 format.",
+        "mode": "REQUIRED",
+        "name": "time",
+        "type": "TIMESTAMP"
+      },
+      {
+        "description": "False alarm rate of the event in Hz.",
+        "mode": "REQUIRED",
+        "name": "far",
+        "type": "FLOAT"
+      },
+      {
+        "description": "True for significant alerts.",
+        "mode": "REQUIRED",
+        "name": "significant",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Instruments that participated in the observation as an array.",
+        "mode": "REPEATED",
+        "name": "instruments",
+        "type": "STRING"
+      },
+      {
+        "description": "A skymap in a multi-order FITS format as a Base64-encoded string.",
+        "mode": "REQUIRED",
+        "name": "skymap",
+        "type": "STRING"
+      },
+      {
+        "description": "The type of search that uploaded the event.",
+        "mode": "REQUIRED",
+        "name": "search",
+        "type": "STRING"
+      },
+      {
+        "description": "The data analysis working group that uploaded the event.",
+        "mode": "REQUIRED",
+        "name": "group",
+        "type": "STRING"
+      },
+      {
+        "description": "The data analysis pipeline that uploaded the event.",
+        "mode": "REQUIRED",
+        "name": "pipeline",
+        "type": "STRING"
+      },
+      {
+        "description": "The duration of the burst in seconds. Only present if group=Burst.",
+        "mode": "NULLABLE",
+        "name": "duration",
+        "type": "TIMESTAMP"
+      },
+      {
+        "description": "The central frequency of the burst. Only present if group=Burst.",
+        "mode": "NULLABLE",
+        "name": "central_frequency",
+        "type": "INTEGER"
+      },
+      {
+        "description": "The probabilities that the source has various properties, assuming that the source is astrophysical.",
+        "fields": [
+          {
+            "description": "Probability that at least one of the compact objects was a neutron star",
+            "mode": "REQUIRED",
+            "name": "HasNS",
+            "type": "FLOAT"
+          },
+          {
+            "description": "Probability that the system ejected a non-zero amount of neutron star matter",
+            "mode": "REQUIRED",
+            "name": "HasRemnant",
+            "type": "FLOAT"
+          },
+          {
+            "description": "Probability that at least one of the compact objects has mass in the range 3-5 solar masses",
+            "mode": "REQUIRED",
+            "name": "HasMassGap",
+            "type": "FLOAT"
+          }
+        ],
+        "mode": "REQUIRED",
+        "name": "properties",
+        "type": "RECORD"
+      },
+      {
+        "description": "The probabilities that the event is of terrestrial origin or originates from various astrophysical categories. Only present if group=CBC.",
+        "fields": [
+          {
+            "description": "Probability that the source is a BNS",
+            "mode": "REQUIRED",
+            "name": "BNS",
+            "type": "FLOAT"
+          },
+          {
+            "description": "Probability that the source is a NSBH",
+            "mode": "REQUIRED",
+            "name": "NSBH",
+            "type": "FLOAT"
+          },
+          {
+            "description": "Probability that the source is a BBH",
+            "mode": "REQUIRED",
+            "name": "BBH",
+            "type": "FLOAT"
+          },
+          {
+            "description": "Probability that the source is Terrestrial (i.e, noise)",
+            "mode": "REQUIRED",
+            "name": "Terrestrial",
+            "type": "FLOAT"
+          }
+        ],
+        "mode": "REQUIRED",
+        "name": "classification",
+        "type": "RECORD"
+      }
+  ],
+  "mode": "NULLABLE",
+  "name": "event",
+  "type": "RECORD"
+  },
+  {
+    "description": "External coincidence",
+    "fields": [
+      {
+        "description": "The GCN notice ID of the coincident external event.",
+        "mode": "REQUIRED",
+        "name": "gcn_notice_id",
+        "type": "INTEGER"
+      },
+      {
+        "description": "The VO identifier associated with the external VOEvent.",
+        "mode": "REQUIRED",
+        "name": "ivorn",
+        "type": "STRING"
+      },
+      {
+        "description": "The observatory reporting the coincident external event.",
+        "mode": "REQUIRED",
+        "name": "observatory",
+        "type": "STRING"
+      },
+      {
+        "description": "The search reporting the coincident external event.",
+        "mode": "REQUIRED",
+        "name": "search",
+        "type": "STRING"
+      },
+      {
+        "description": "The difference in time, in seconds, between the external coincident event and the gravitational-wave event.",
+        "mode": "REQUIRED",
+        "name": "time_difference",
+        "type": "FLOAT"
+      },
+      {
+        "description": "The joint time coincidence FAR in units of Hz, if available.",
+        "mode": "REQUIRED",
+        "name": "time_coincidence_far",
+        "type": "FLOAT"
+      },
+      {
+        "description": "The joint time and sky position coincidence FAR in units of Hz, if available.",
+        "mode": "REQUIRED",
+        "name": "time_sky_position_coincidence_far",
+        "type": "FLOAT"
+      },
+      {
+        "description": "A skymap in a multi-order FITS format produced by combining the GW skymap and the external coincidence skymap.",
+        "mode": "REQUIRED",
+        "name": "combined_skymap",
+        "type": "STRING"
+      }
+  ],
+    "mode": "NULLABLE",
+    "name": "external_coinc",
+    "type": "RECORD"
+  }
+]
