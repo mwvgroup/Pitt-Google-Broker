@@ -89,13 +89,13 @@
           "type": "TIMESTAMP"
         },
         {
-          "description": "estimation of the frequency of the signal's main component",
+          "description": "estimation of the frequency of the signal's main component [Hz]",
           "mode": "NULLABLE",
           "name": "central_frequency",
           "type": "INTEGER"
         },
         {
-          "description": "Probability, under the assumption that the source is not noise, that at least one of the compact objects was a neutron star, that the system ejected a non-zero amount of neutron star matter, and that at least one of the compact objects has mass in the range 3-5 solar masses, respectively",
+          "description": "Probabilities, under the assumption that the source is not noise, regarding the physical characteristics of the event's progenitor and possible remnants.",
           "fields": [
             {
               "description": "Probability that at least one of the compact objects was a neutron star",

@@ -55,9 +55,8 @@ if [ "${teardown}" != "True" ]; then
     # create bigquery dataset and table
     bq --location="${region}" mk --dataset "${bq_dataset}"
 
-    cd templates || exit
-    bq mk --table "${PROJECT_ID}:${bq_dataset}.${alerts_table}" "bq_${survey}_${alerts_table}_schema.json"
-    cd .. || exit
+    cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${alerts_table}" "bq_${survey}_${alerts_table}_schema.json" || exit 5
+    cd .. || exit 5
 
     # create broker bucket and upload files
     echo "Creating broker_bucket and uploading files..."
@@ -94,13 +93,10 @@ echo "Configuring VMs..."
 #--- Deploy Cloud Functions
 echo
 echo "Configuring Cloud Functions..."
-cd .. && cd .. || exit
-cd cloud_functions && cd lvk || exit
+cd .. && cd .. && cd cloud_functions && cd lvk || exit 5
 
 #--- BigQuery storage cloud function
-cd store_BigQuery || exit
-./deploy.sh "$testid" "$teardown" "$survey"
+cd store_BigQuery && ./deploy.sh "$testid" "$teardown" "$survey" || exit 5
 
-#--- return to setup_broker directory
-cd .. && cd .. || exit
-cd .. && cd setup_broker || exit
+#--- return to setup_broker/lvk directory
+cd .. && cd .. && cd .. && cd setup_broker && cd lvk || exit 5
