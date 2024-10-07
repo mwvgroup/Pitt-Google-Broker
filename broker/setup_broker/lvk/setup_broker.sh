@@ -22,6 +22,7 @@ echo
 echo "GOOGLE_CLOUD_PROJECT = ${PROJECT_ID}"
 echo "survey = ${survey}"
 echo "testid = ${testid}"
+echo "schema_version = ${schema_version}"
 echo "teardown = ${teardown}"
 echo
 echo "Continue?  [y/(n)]: "
@@ -98,7 +99,7 @@ echo "Configuring Cloud Functions..."
 cd .. && cd .. && cd cloud_functions && cd lvk || exit 5
 
 #--- BigQuery storage cloud function
-cd store_BigQuery && ./deploy.sh "$testid" "$teardown" "$survey" || exit 5
+cd store_BigQuery && ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"|| exit 5
 
 #--- return to setup_broker/lvk directory
 cd .. && cd .. && cd .. && cd setup_broker && cd lvk || exit 5

@@ -19,9 +19,18 @@
   },
   {
     "description": "URLs relevant to the event, if any.",
+    "fields": [
+      {
+        "description": "",
+        "mode": "REQUIRED",
+        "name": "gracedb",
+        "type": "STRING"
+      }
+    ],
     "mode": "REQUIRED",
     "name": "urls",
-    "type": "STRING"
+    "type": "RECORD"
+
   },
   {
     "description": "Event information",

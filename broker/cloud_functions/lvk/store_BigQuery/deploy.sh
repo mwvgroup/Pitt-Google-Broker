@@ -9,6 +9,8 @@ testid="${1:-test}"
 teardown="${2:-False}"
 # name of the survey this broker instance will ingest
 survey="${3:-lvk}"
+# schema version
+versiontag="${4:-v1_0}"
 
 #--- GCP resources used in this script
 store_bq_trigger_topic="${survey}-alerts"
@@ -37,5 +39,5 @@ else # Deploy the Cloud Functions
         --runtime python312 \
         --memory "${memory}" \
         --trigger-topic "${store_bq_trigger_topic}" \
-        --set-env-vars TESTID="${testid}",SURVEY="${survey}",GCP_PROJECT="${GOOGLE_CLOUD_PROJECT}"
+        --set-env-vars TESTID="${testid}",SURVEY="${survey}",GCP_PROJECT="${GOOGLE_CLOUD_PROJECT}",VERSIONTAG="${versiontag}"
 fi
