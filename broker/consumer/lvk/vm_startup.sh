@@ -60,21 +60,22 @@ client_id="${survey}-${PROJECT_ID}-client-id"
 client_secret="${survey}-${PROJECT_ID}-client-secret"
 CLIENT_ID=$(gcloud secrets versions access latest --secret="${client_id}")
 CLIENT_SECRET=$(gcloud secrets versions access latest --secret="${client_secret}")
+group_id="pittgooglebroker"
+# use test resources, if requested
+if [ "$testid" != "False" ]; then
+    group_id="${group_id}-${testid}"
+fi
 
 cd "${workingdir}" || exit
 
 fconfig=admin.properties
-sed -i "s/CLIENT_ID/${CLIENT_ID}/g" ${fconfig}
-sed -i "s/CLIENT_SECRET/${CLIENT_SECRET}/g" ${fconfig}
+sed -i "s/CLIENT_ID/${CLIENT_ID}/g" ${fconfig} && sed -i "s/CLIENT_SECRET/${CLIENT_SECRET}/g" ${fconfig}
 
 fconfig=psconnect-worker-authenticated.properties
-sed -i "s/CLIENT_ID/${CLIENT_ID}/g" ${fconfig}
-sed -i "s/CLIENT_SECRET/${CLIENT_SECRET}/g" ${fconfig}
+sed -i "s/CLIENT_ID/${CLIENT_ID}/g" ${fconfig} && sed -i "s/CLIENT_SECRET/${CLIENT_SECRET}/g" ${fconfig} && sed -i "s/GROUP_ID/${group_id}/g" ${fconfig}
 
 fconfig=ps-connector.properties
-sed -i "s/PROJECT_ID/${PROJECT_ID}/g" ${fconfig}
-sed -i "s/PS_TOPIC/${PS_TOPIC}/g" ${fconfig}
-sed -i "s/KAFKA_TOPIC/${KAFKA_TOPIC}/g" ${fconfig}
+sed -i "s/PROJECT_ID/${PROJECT_ID}/g" ${fconfig} && sed -i "s/PS_TOPIC/${PS_TOPIC}/g" ${fconfig} && sed -i "s/KAFKA_TOPIC/${KAFKA_TOPIC}/g" ${fconfig}
 
 #--- Check until alerts start streaming into the topic
 alerts_flowing=false
