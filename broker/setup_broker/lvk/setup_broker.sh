@@ -60,6 +60,7 @@ if [ "${teardown}" != "True" ]; then
 
     cd templates || exit 5
     bq mk --table "${PROJECT_ID}:${bq_dataset}.${alerts_table}" "bq_${survey}_${alerts_table}_schema.json" || exit 5
+    bq update --description "Alert data from LIGO/Virgo/KAGRA. This table is an archive of the lvk-alerts Pub/Sub stream. It has the same schema as the original alert bytes, including nested and repeated fields." "${PROJECT_ID}:${bq_dataset}.${alerts_table}"
     cd .. || exit 5
 
     # create broker bucket and upload files
