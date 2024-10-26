@@ -1,14 +1,16 @@
 #! /bin/bash
 # Create and configure GCP resources needed to run the nightly broker.
 
-testid="${1:-test}"
 # "False" uses production resources
 # any other string will be appended to the names of all resources
-teardown="${2:-False}"
+testid="${1:-test}"
 # "True" tearsdown/deletes resources, else setup
-survey="${3:-rubin}"
+teardown="${2:-False}"
 # name of the survey this broker instance will ingest
-region="${4:-us-central1}"
+survey="${3:-lsst}"
+schema_version="${4:-7.1}"
+versiontag=v$(echo "${schema_version}" | tr . _) # 7.1 -> v7_1
+region="${5:-us-central1}"
 zone="${region}-a"  # just use zone "a" instead of adding another script arg
 
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT # get the environment variable
@@ -20,6 +22,7 @@ echo
 echo "GOOGLE_CLOUD_PROJECT = ${PROJECT_ID}"
 echo "survey = ${survey}"
 echo "testid = ${testid}"
+echo "schema_version = ${schema_version}"
 echo "teardown = ${teardown}"
 echo
 echo "Continue?  [y/(n)]: "
@@ -34,28 +37,55 @@ fi
 
 #--- GCP resources used directly in this script
 broker_bucket="${PROJECT_ID}-${survey}-broker_files"
-topic_alerts="${survey}-alerts"
-pubsub_subscription="${topic_alerts}"
+bq_dataset="${survey}"
+topic_alerts="${survey}-alerts_raw"
+pubsub_subscription="${topic_alerts}" # draft, remove before merging PR
+subscription_storebigquery="${survey}-bigquery"
+
 # use test resources, if requested
-# (there must be a better way to do this)
 if [ "$testid" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
+    bq_dataset="${bq_dataset}_${testid}"
     topic_alerts="${topic_alerts}-${testid}"
-    pubsub_subscription="${pubsub_subscription}-${testid}"
+    pubsub_subscription="${pubsub_subscription}-${testid}" # draft, remove before merging PR
+    subscription_storebigquery="${subscription_storebigquery}-${testid}"
 fi
 
+alerts_table="alerts_${versiontag}"
 
-#--- Create (or delete) GCS, Pub/Sub resources
+#--- Create (or delete) BigQuery, GCS, Pub/Sub resources
+echo
+echo "Configuring BigQuery, GCS, Pub/Sub resources..."
 if [ "${teardown}" != "True" ]; then
+    # create bigquery dataset and table
+    bq --location="${region}" mk --dataset "${bq_dataset}"
+
+    cd templates || exit 5
+    bq mk --table "${PROJECT_ID}:${bq_dataset}.${alerts_table}" "bq_${survey}_${alerts_table}_schema.json" || exit 5
+    bq update --description "Alert data from LSST. This table is an archive of the lsst-alerts Pub/Sub stream. It has the same schema as the original alert bytes, including nested and repeated fields." "${PROJECT_ID}:${bq_dataset}.${alerts_table}"
+    cd .. || exit 5
+
     # create broker bucket and upload files
     echo "Creating broker_bucket and uploading files..."
     gsutil mb -b on -l "${region}" "gs://${broker_bucket}"
     ./upload_broker_bucket.sh "${broker_bucket}"
 
+    #--- Create a firewall rule to open the port used by Kafka/Rubin LSST
+    # on any instance with the flag --tags=tcpport9094
+    echo
+    echo "Configuring Rubin/Kafka firewall rule..."
+    firewallrule="tcpport9094"
+    gcloud compute firewall-rules create "${firewallrule}" \
+        --allow=tcp:9094 \
+        --description="Allow incoming traffic on TCP port 9094" \
+        --direction=INGRESS \
+        --enable-logging
+
     # create pubsub
     echo "Configuring Pub/Sub resources..."
     gcloud pubsub topics create "${topic_alerts}"
     gcloud pubsub subscriptions create "${pubsub_subscription}" --topic="${topic_alerts}"
+    gcloud pubsub subscriptions create "${subscription_storebigquery}" --topic="${topic_alerts}" --bigquery-table="${PROJECT_ID}:${bq_dataset}.${alerts_table}" --use_table_schema=true
 
     # Set IAM policies on resources
     user="allUsers"
@@ -67,22 +97,11 @@ else
     if [ "${testid}" != "False" ]; then
         o="GSUtil:parallel_process_count=1" # disable multiprocessing for Macs
         gsutil -m -o "${o}" rm -r "gs://${broker_bucket}"
+        bq rm -r -f "${PROJECT_ID}:${bq_dataset}"
         gcloud pubsub topics delete "${topic_alerts}"
         gcloud pubsub subscriptions delete "${pubsub_subscription}"
+        gcloud pubsub subscriptions delete "${subscription_storebigquery}"
     fi
-fi
-
-if [ "$teardown" != "True" ]; then
-    #--- Create a firewall rule to open the port used by Kafka/Rubin
-    # on any instance with the flag --tags=tcpport9094
-    echo
-    echo "Configuring Rubin/Kafka firewall rule..."
-    firewallrule="tcpport9094"
-    gcloud compute firewall-rules create "${firewallrule}" \
-        --allow=tcp:9094 \
-        --description="Allow incoming traffic on TCP port 9094" \
-        --direction=INGRESS \
-        --enable-logging
 fi
 
 #--- Create VM instances
