@@ -85,7 +85,7 @@ if [ "${teardown}" != "True" ]; then
     echo "Configuring Pub/Sub resources..."
     gcloud pubsub topics create "${topic_alerts}"
     gcloud pubsub subscriptions create "${pubsub_subscription}" --topic="${topic_alerts}"
-    gcloud pubsub subscriptions create "${subscription_storebigquery}" --topic="${topic_alerts}" --bigquery-table="${PROJECT_ID}:${bq_dataset}.${alerts_table}" --use_table_schema=true
+    gcloud pubsub subscriptions create "${subscription_storebigquery}" --topic="${topic_alerts}" --bigquery-table="${PROJECT_ID}:${bq_dataset}.${alerts_table}" --use-table-schema
 
     # Set IAM policies on resources
     user="allUsers"
