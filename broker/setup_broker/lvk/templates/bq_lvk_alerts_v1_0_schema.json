@@ -87,7 +87,7 @@
         "description": "The duration of the burst in seconds. Only present if group=Burst.",
         "mode": "NULLABLE",
         "name": "duration",
-        "type": "TIMESTAMP"
+        "type": "FLOAT"
       },
       {
         "description": "The central frequency of the burst. Only present if group=Burst.",

@@ -1,5 +1,5 @@
 #! /bin/bash
-# Create and configure GCP resources needed to run the nightly broker.
+# Create and configure GCP resources needed to run the broker.
 
 # "False" uses production resources
 # any other string will be appended to the names of all resources
@@ -39,14 +39,19 @@ fi
 broker_bucket="${PROJECT_ID}-${survey}-broker_files"
 bq_dataset="${survey}"
 topic_alerts="${survey}-alerts"
-topic_storebigquery="${survey}-bigquery"
+topic_deadletter="${survey}-deadletter"
+subscription_storebigquery="${survey}-bigquery"
+subscription_deadletter="${survey}-deadletter"
 
 # use test resources, if requested
 if [ "$testid" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
     bq_dataset="${bq_dataset}_${testid}"
     topic_alerts="${topic_alerts}-${testid}"
-    topic_storebigquery="${topic_storebigquery}-${testid}"
+    topic_deadletter="${topic_deadletter}-${testid}"
+    subscription_storebigquery="${subscription_storebigquery}-${testid}"
+    subscription_deadletter="${subscription_deadletter}-${testid}"
+
 fi
 
 alerts_table="alerts_${versiontag}"
@@ -71,13 +76,14 @@ if [ "${teardown}" != "True" ]; then
     # create pubsub
     echo "Configuring Pub/Sub resources..."
     gcloud pubsub topics create "${topic_alerts}"
-    gcloud pubsub topics create "${topic_storebigquery}"
+    gcloud pubsub topics create "${topic_deadletter}"
+    gcloud pubsub subscriptions create "${subscription_storebigquery}" --topic="${topic_alerts}" --bigquery-table="${PROJECT_ID}:${bq_dataset}.${alerts_table}" --use-table-schema --drop-unknown-fields --dead-letter-topic="${topic_deadletter}" --max-delivery-attempts=5 --dead-letter-topic-project=$PROJECT_ID
+    gcloud pubsub subscriptions create "${subscription_deadletter}" --topic="${topic_deadletter}"
 
-    # Set IAM policies on resources
+    # set IAM policies on resources
     user="allUsers"
     roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/userPublic"
     gcloud pubsub topics add-iam-policy-binding "${topic_alerts}" --member="${user}" --role="${roleid}"
-    gcloud pubsub topics add-iam-policy-binding "${topic_storebigquery}" --member="${user}" --role="${roleid}"
 
 else
     # ensure that we do not teardown production resources
@@ -86,7 +92,7 @@ else
         gsutil -m -o "${o}" rm -r "gs://${broker_bucket}"
         bq rm -r -f "${PROJECT_ID}:${bq_dataset}"
         gcloud pubsub topics delete "${topic_alerts}"
-        gcloud pubsub topics delete "${topic_storebigquery}"
+        gcloud pubsub subscriptions delete "${subscription_storebigquery}"
     fi
 fi
 
@@ -94,14 +100,3 @@ fi
 echo
 echo "Configuring VMs..."
 ./create_vms.sh "${broker_bucket}" "${testid}" "${teardown}" "${survey}" "${zone}"
-
-#--- Deploy Cloud Functions
-echo
-echo "Configuring Cloud Functions..."
-cd .. && cd .. && cd cloud_functions && cd lvk || exit 5
-
-#--- BigQuery storage cloud function
-cd store_BigQuery && ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag" || exit 5
-
-#--- return to setup_broker/lvk directory
-cd .. && cd .. && cd .. && cd setup_broker && cd lvk || exit 5
