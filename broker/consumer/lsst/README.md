@@ -12,7 +12,7 @@ zone="us-central1-a"
 
 # Set the VM metadata
 KAFKA_TOPIC="alerts-simulated"
-PS_TOPIC="${survey}-alerts-${testid}"
+PS_TOPIC="${survey}-alerts_raw-${testid}"
 gcloud compute instances add-metadata "${consumerVM}" --zone "${zone}" \
     --metadata="PS_TOPIC_FORCE=${PS_TOPIC},KAFKA_TOPIC_FORCE=${KAFKA_TOPIC}"
 
