@@ -43,5 +43,4 @@ else
         --scopes=cloud-platform \
         --metadata="${googlelogging},${startupscript},${shutdownscript}" \
         --tags="${firewallrule}"
-
 fi
