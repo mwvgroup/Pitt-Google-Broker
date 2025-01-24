@@ -91,7 +91,9 @@ else
         gsutil -m -o "${o}" rm -r "gs://${broker_bucket}"
         bq rm -r -f "${PROJECT_ID}:${bq_dataset}"
         gcloud pubsub topics delete "${topic_alerts}"
+        gcloud pubsub topics delete "${topic_deadletter}"
         gcloud pubsub subscriptions delete "${subscription_storebigquery}"
+        gcloud pubsub subscriptions delete "${subscription_deadletter}"
     fi
 fi
 
