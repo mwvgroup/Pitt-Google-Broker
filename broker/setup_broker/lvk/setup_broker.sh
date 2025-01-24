@@ -51,7 +51,6 @@ if [ "$testid" != "False" ]; then
     topic_deadletter="${topic_deadletter}-${testid}"
     subscription_storebigquery="${subscription_storebigquery}-${testid}"
     subscription_deadletter="${subscription_deadletter}-${testid}"
-
 fi
 
 alerts_table="alerts_${versiontag}"
