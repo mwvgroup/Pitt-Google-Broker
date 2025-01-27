@@ -39,7 +39,8 @@ fi
 broker_bucket="${PROJECT_ID}-${survey}-broker_files"
 bq_dataset="${survey}"
 topic_alerts="${survey}-alerts_raw"
-pubsub_subscription="${topic_alerts}" # draft, remove before merging PR
+topic_deadletter="${survey}-deadletter"
+subscription_deadletter="${survey}-deadletter"
 subscription_storebigquery="${survey}-bigquery"
 
 # use test resources, if requested
@@ -47,7 +48,8 @@ if [ "$testid" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
     bq_dataset="${bq_dataset}_${testid}"
     topic_alerts="${topic_alerts}-${testid}"
-    pubsub_subscription="${pubsub_subscription}-${testid}" # draft, remove before merging PR
+    topic_deadletter="${topic_deadletter}-${testid}"
+    subscription_deadletter="${subscription_deadletter}-${testid}"
     subscription_storebigquery="${subscription_storebigquery}-${testid}"
 fi
 
@@ -84,8 +86,16 @@ if [ "${teardown}" != "True" ]; then
     # create pubsub
     echo "Configuring Pub/Sub resources..."
     gcloud pubsub topics create "${topic_alerts}"
-    gcloud pubsub subscriptions create "${pubsub_subscription}" --topic="${topic_alerts}"
-    gcloud pubsub subscriptions create "${subscription_storebigquery}" --topic="${topic_alerts}" --bigquery-table="${PROJECT_ID}:${bq_dataset}.${alerts_table}" --use-table-schema
+    gcloud pubsub topics create "${topic_deadletter}"
+    gcloud pubsub subscriptions create "${subscription_deadletter}" --topic="${topic_deadletter}"
+    gcloud pubsub subscriptions create "${subscription_storebigquery}" \
+        --topic="${topic_alerts}" \
+        --bigquery-table="${PROJECT_ID}:${bq_dataset}.${alerts_table}" \
+        --use-table-schema \
+        --drop-unknown-fields \
+        --dead-letter-topic="${topic_deadletter}" \
+        --max-delivery-attempts=5 \
+        --dead-letter-topic-project="${PROJECT_ID}"
 
     # Set IAM policies on resources
     user="allUsers"
@@ -99,8 +109,9 @@ else
         gsutil -m -o "${o}" rm -r "gs://${broker_bucket}"
         bq rm -r -f "${PROJECT_ID}:${bq_dataset}"
         gcloud pubsub topics delete "${topic_alerts}"
-        gcloud pubsub subscriptions delete "${pubsub_subscription}"
+        gcloud pubsub topics delete "${topic_deadletter}"
         gcloud pubsub subscriptions delete "${subscription_storebigquery}"
+        gcloud pubsub subscriptions delete "${subscription_deadletter}"
     fi
 fi
 
