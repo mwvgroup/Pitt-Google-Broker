@@ -39,6 +39,7 @@ fi
 #--- GCP resources used directly in this script
 broker_bucket="${PROJECT_ID}-${survey}-broker_files"
 bq_dataset="${survey}"
+topic_alerts="${survey}-alerts"
 topic_deadletter="${survey}-deadletter"
 subscription_deadletter="${survey}-deadletter"
 subscription_storebigquery="${survey}-bigquery"
@@ -48,6 +49,7 @@ subscription_storebigquery="${survey}-bigquery"
 if [ "$testid" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
     bq_dataset="${bq_dataset}_${testid}"
+    topic_alerts="${topic_alerts}-${testid}"
     topic_deadletter="${topic_deadletter}-${testid}"
     subscription_storebigquery="${subscription_storebigquery}-${testid}"
     subscription_deadletter="${subscription_deadletter}-${testid}"
