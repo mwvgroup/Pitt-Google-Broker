@@ -39,13 +39,21 @@ fi
 #--- GCP resources used directly in this script
 broker_bucket="${PROJECT_ID}-${survey}-broker_files"
 bq_dataset="${survey}"
+topic_deadletter="${survey}-deadletter"
+subscription_deadletter="${survey}-deadletter"
+subscription_storebigquery="${survey}-bigquery"
+
 # use test resources, if requested
 # (there must be a better way to do this)
 if [ "$testid" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
     bq_dataset="${bq_dataset}_${testid}"
+    topic_deadletter="${topic_deadletter}-${testid}"
+    subscription_storebigquery="${subscription_storebigquery}-${testid}"
+    subscription_deadletter="${subscription_deadletter}-${testid}"
 fi
 
+alerts_table="alerts_${versiontag}"
 
 #--- Create (or delete) BigQuery, GCS, Pub/Sub resources
 echo
@@ -54,13 +62,36 @@ if [ "$testid" != "False" ]; then
     if [ "$teardown" = "True" ]; then
         # delete testing resources
         python3 setup_gcp.py --survey="$survey" --testid="$testid" --teardown --confirmed --versiontag="${versiontag}"
+        gcloud pubsub topics delete "${topic_deadletter}"
+        gcloud pubsub subscriptions delete "${subscription_deadletter}"
+        gcloud pubsub subscriptions delete "${subscription_storebigquery}"
     else
         # setup testing resources
         python3 setup_gcp.py --survey="$survey" --testid="$testid" --confirmed --region="${region}" --versiontag="${versiontag}"
+        gcloud pubsub topics create "${topic_deadletter}"
+        gcloud pubsub subscriptions create "${subscription_deadletter}" --topic="${topic_deadletter}"
+        gcloud pubsub subscriptions create "${subscription_storebigquery}" \
+            --topic="${topic_alerts}" \
+            --bigquery-table="${PROJECT_ID}:${bq_dataset}.${alerts_table}" \
+            --use-table-schema \
+            --drop-unknown-fields \
+            --dead-letter-topic="${topic_deadletter}" \
+            --max-delivery-attempts=5 \
+            --dead-letter-topic-project="${PROJECT_ID}"
     fi
 else
     # setup production resources
     python3 setup_gcp.py --survey="$survey" --production --confirmed --region="${region}"
+    gcloud pubsub topics create "${topic_deadletter}"
+    gcloud pubsub subscriptions create "${subscription_deadletter}" --topic="${topic_deadletter}"
+    gcloud pubsub subscriptions create "${subscription_storebigquery}" \
+        --topic="${topic_alerts}" \
+        --bigquery-table="${PROJECT_ID}:${bq_dataset}.${alerts_table}" \
+        --use-table-schema \
+        --drop-unknown-fields \
+        --dead-letter-topic="${topic_deadletter}" \
+        --max-delivery-attempts=5 \
+        --dead-letter-topic-project="${PROJECT_ID}"
 fi
 
 
@@ -125,10 +156,6 @@ cd .. && cd lite || exit
 #--- Pub/Sub -> Cloud Storage Avro cloud function
 cd .. && cd ps_to_gcs || exit
 ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag" "$region"
-
-#--- BigQuery storage cloud function
-cd .. && cd store_BigQuery || exit
-./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
 
 #--- tag alerts cloud function
 cd .. && cd tag || exit
