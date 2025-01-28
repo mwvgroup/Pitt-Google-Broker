@@ -1,6 +1,6 @@
 # Connect Pitt-Google to the LIGO/Virgo/KAGRA (LVK) Gravitational Wave Alert Stream
 
-April 2024 - Author: Christopher Hernandez
+Updated January 2025 - Author: Christopher Hernández
 
 - [Overview](#overview)
 - [Setup](#setup)
@@ -37,8 +37,10 @@ You may want to
 or
 [set up a GCP project from scratch](https://pitt-broker.readthedocs.io/en/latest/broker/run-a-broker-instance/initial-setup.html#setup-local-environment).
 
-[Create secrets](https://cloud.google.com/secret-manager/docs/creating-and-accessing-secrets#create) for your client ID
-and client secret
+
+### Use GCP's Secret Manager
+[Secret Manager](https://cloud.google.com/secret-manager/docs/overview) is a service that allows users to manage and store sensitive data. Use the following code snippet to [create secrets](https://cloud.google.com/secret-manager/docs/creating-and-accessing-secrets#create) for your client ID
+and client secret. This information will be used to deploy a broker instance with your client credentials.
 
 ```bash
 # define parameters
@@ -50,7 +52,6 @@ client_id="${survey}-${PROJECT_ID}-client-id"
 client_secret="${survey}-${PROJECT_ID}-client-secret"
 
 # create secret(s)
-
 gcloud secrets create "${client_id}" \
     --replication-policy="automatic"
 gcloud secrets create "${client_secret}" \
@@ -84,6 +85,10 @@ gcloud secrets add-iam-policy-binding "${client_id}" --member="serviceAccount:${
 gcloud secrets add-iam-policy-binding "${client_secret}" --member="serviceAccount:${user}" --role="${roleid}"
 ```
 
+### BigQuery subscriptions
+Our broker uses [BigQuery subscriptions](https://cloud.google.com/pubsub/docs/bigquery) to write alert data directly to a BigQuery table.
+Messages receieved by BigQuery subscriptions that fail to write data to BigQuery are negatively acknowledged and re-sent. If the messages fail enough times (default number of attempts = 5), then the message is subsequently moved to a [dead letter topic](https://cloud.google.com/pubsub/docs/handling-failures#dead_letter_topic). A subscription to this dead letter topic is automatically made, allowing the user to identify which messages failed to write data to BigQuery and why the write operation failed.
+
 ## Deploy broker instance
 
 Clone the repo and cd into the directory:
@@ -109,6 +114,8 @@ This will create all of the necessary GCP resources. Allow the consumer VM to fi
 complete, the VM will shut down automatically. You can check the status of the VM in the
 [Google Cloud Console](https://console.cloud.google.com/compute).
 This entire process should take less than 10 minutes.
+
+
 
 ## Start the Consumer VM to ingest the LVK alert stream
 
