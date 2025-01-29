@@ -36,66 +36,98 @@ if [ "$continue_with_setup" != "y" ]; then
     exit
 fi
 
-#--- GCP resources used directly in this script
-broker_bucket="${PROJECT_ID}-${survey}-broker_files"
-bq_dataset="${survey}"
-topic_alerts="${survey}-alerts"
-topic_deadletter="${survey}-deadletter"
-subscription_deadletter="${survey}-deadletter"
-subscription_storebigquery="${survey}-bigquery"
+# function used to define GCP resources; appends testid if needed
+define_GCP_resources() {
+    local base_name="$1"
+    local testid_suffix=""
 
-# use test resources, if requested
-# (there must be a better way to do this)
-if [ "$testid" != "False" ]; then
-    broker_bucket="${broker_bucket}-${testid}"
-    bq_dataset="${bq_dataset}_${testid}"
-    topic_alerts="${topic_alerts}-${testid}"
-    topic_deadletter="${topic_deadletter}-${testid}"
-    subscription_storebigquery="${subscription_storebigquery}-${testid}"
-    subscription_deadletter="${subscription_deadletter}-${testid}"
-fi
+    if [ "$testid" != "False" ]; then
+        if [ "$base_name" = "$survey" ]; then
+            testid_suffix="_${testid}"  # complies with BigQuery naming conventions
+        else
+            testid_suffix="-${testid}"
+        fi
+    fi
+
+    echo "${base_name}${testid_suffix}"
+}
+
+#--- GCP resources used directly in this script
+broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
+bq_dataset=$(define_GCP_resources "${survey}")
+topic_alerts=$(define_GCP_resources "${survey}-alerts")
+# topics and subscriptions involved in writing DIASource data to BigQuery
+topic_diasource=$(define_GCP_resources "${survey}-diasource")
+subscription_diasource="${topic_diasource}" # BigQuery subscription
+topic_diasource_deadletter=$(define_GCP_resources "${survey}-diasource-deadletter")
+subscription_diasource_deadletter="${topic_diasource_deadletter}"
+# topics and subscriptions involved in writing alert data to BigQuery
+topic_alert_data=$(define_GCP_resources "${survey}-alert-data") # needs a better name
+subscription_alert_data="${topic_alert_data}" # BigQuery subscription
+topic_alert_data_deadletter=$(define_GCP_resources "${survey}-alert-data-deadletter")
+subscription_alert_data_deadletter="${topic_alert_data_deadletter}"
 
 alerts_table="alerts_${versiontag}"
+diasource_table="DIASource"
+
+# function used to create (or delete) GCP resources
+manage_resources() {
+    local mode="$1"  # setup or teardown
+    local environment_type="production"
+
+    if [ "$testid" != "False" ]; then
+        environment_type="testing"
+    fi
+
+    if [ "$mode" = "setup" ]; then
+        # setup resources
+        python3 setup_gcp.py --survey="$survey" --testid="$testid" --confirmed --region="${region}" --versiontag="${versiontag}"
+        gcloud pubsub topics create "${topic_diasource}"
+        gcloud pubsub topics create "${topic_diasource_deadletter}"
+        gcloud pubsub topics create "${topic_alert_data}"
+        gcloud pubsub topics create "${topic_alert_data_deadletter}"
+        gcloud pubsub subscriptions create "${subscription_diasource_deadletter}" --topic="${topic_diasource_deadletter}"
+        gcloud pubsub subscriptions create "${subscription_alert_data_deadletter}" --topic="${topic_alert_data_deadletter}"
+        gcloud pubsub subscriptions create "${subscription_alert_data}" \
+            --topic="${topic_alert_data}" \
+            --bigquery-table="${PROJECT_ID}:${bq_dataset}.${alerts_table}" \
+            --use-table-schema \
+            --drop-unknown-fields \
+            --dead-letter-topic="${topic_alert_data_deadletter}" \
+            --max-delivery-attempts=5 \
+            --dead-letter-topic-project="${PROJECT_ID}"
+        gcloud pubsub subscriptions create "${subscription_diasource}" \
+            --topic="${topic_diasource}" \
+            --bigquery-table="${PROJECT_ID}:${bq_dataset}.${diasource_table}" \
+            --use-table-schema \
+            --drop-unknown-fields \
+            --dead-letter-topic="${topic_diasource_deadletter}" \
+            --max-delivery-attempts=5 \
+            --dead-letter-topic-project="${PROJECT_ID}"
+    else
+        if [ "$environment_type" = "testing"]; then
+            # delete testing resources
+            python3 setup_gcp.py --survey="$survey" --testid="$testid" --teardown --confirmed --versiontag="${versiontag}"
+            gcloud pubsub topics delete "${topic_diasource}"
+            gcloud pubsub topics delete "${topic_diasource_deadletter}"
+            gcloud pubsub topics delete "${topic_alert_data}"
+            gcloud pubsub topics delete "${topic_alert_data_deadletter}"
+            gcloud pubsub subscriptions delete "${subscription_diasource}"
+            gcloud pubsub subscriptions delete "${subscription_diasource_deadletter}"
+            gcloud pubsub subscriptions delete "${subscription_alert_data}"
+            gcloud pubsub subscriptions delete "${subscription_alert_data_deadletter}"
+        fi
+    fi
+}
 
 #--- Create (or delete) BigQuery, GCS, Pub/Sub resources
 echo
 echo "Configuring BigQuery, GCS, Pub/Sub resources..."
-if [ "$testid" != "False" ]; then
-    if [ "$teardown" = "True" ]; then
-        # delete testing resources
-        python3 setup_gcp.py --survey="$survey" --testid="$testid" --teardown --confirmed --versiontag="${versiontag}"
-        gcloud pubsub topics delete "${topic_deadletter}"
-        gcloud pubsub subscriptions delete "${subscription_deadletter}"
-        gcloud pubsub subscriptions delete "${subscription_storebigquery}"
-    else
-        # setup testing resources
-        python3 setup_gcp.py --survey="$survey" --testid="$testid" --confirmed --region="${region}" --versiontag="${versiontag}"
-        gcloud pubsub topics create "${topic_deadletter}"
-        gcloud pubsub subscriptions create "${subscription_deadletter}" --topic="${topic_deadletter}"
-        gcloud pubsub subscriptions create "${subscription_storebigquery}" \
-            --topic="${topic_alerts}" \
-            --bigquery-table="${PROJECT_ID}:${bq_dataset}.${alerts_table}" \
-            --use-table-schema \
-            --drop-unknown-fields \
-            --dead-letter-topic="${topic_deadletter}" \
-            --max-delivery-attempts=5 \
-            --dead-letter-topic-project="${PROJECT_ID}"
-    fi
+if [ "$teardown" = "True" ]; then
+    manage_resources "teardown"
 else
-    # setup production resources
-    python3 setup_gcp.py --survey="$survey" --production --confirmed --region="${region}"
-    gcloud pubsub topics create "${topic_deadletter}"
-    gcloud pubsub subscriptions create "${subscription_deadletter}" --topic="${topic_deadletter}"
-    gcloud pubsub subscriptions create "${subscription_storebigquery}" \
-        --topic="${topic_alerts}" \
-        --bigquery-table="${PROJECT_ID}:${bq_dataset}.${alerts_table}" \
-        --use-table-schema \
-        --drop-unknown-fields \
-        --dead-letter-topic="${topic_deadletter}" \
-        --max-delivery-attempts=5 \
-        --dead-letter-topic-project="${PROJECT_ID}"
+    manage_resources "setup"
 fi
-
 
 #--- finish setting up buckets and dataset
 if [ "$teardown" != "True" ]; then
