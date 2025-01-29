@@ -105,7 +105,7 @@ manage_resources() {
             --max-delivery-attempts=5 \
             --dead-letter-topic-project="${PROJECT_ID}"
     else
-        if [ "$environment_type" = "testing"]; then
+        if [ "$environment_type" = "testing" ]; then
             # delete testing resources
             python3 setup_gcp.py --survey="$survey" --testid="$testid" --teardown --confirmed --versiontag="${versiontag}"
             gcloud pubsub topics delete "${topic_diasource}"
