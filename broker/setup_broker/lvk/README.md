@@ -39,7 +39,10 @@ or
 
 
 ### Use GCP's Secret Manager
-[Secret Manager](https://cloud.google.com/secret-manager/docs/overview) is a service that allows users to manage and store sensitive data. Use the following code snippet to [create secrets](https://cloud.google.com/secret-manager/docs/creating-and-accessing-secrets#create) for your client ID
+
+[Secret Manager](https://cloud.google.com/secret-manager/docs/overview) is a service that allows users to manage and
+store sensitive data. Use the following code snippet to
+[create secrets](https://cloud.google.com/secret-manager/docs/creating-and-accessing-secrets#create) for your client ID
 and client secret. This information will be used to deploy a broker instance with your client credentials.
 
 ```bash
@@ -86,8 +89,13 @@ gcloud secrets add-iam-policy-binding "${client_secret}" --member="serviceAccoun
 ```
 
 ### BigQuery subscriptions
-Our broker uses [BigQuery subscriptions](https://cloud.google.com/pubsub/docs/bigquery) to write alert data directly to a BigQuery table.
-Messages receieved by BigQuery subscriptions that fail to write data to BigQuery are negatively acknowledged and re-sent. If the messages fail enough times (default number of attempts = 5), then the message is subsequently moved to a [dead letter topic](https://cloud.google.com/pubsub/docs/handling-failures#dead_letter_topic). A subscription to this dead letter topic is automatically made, allowing the user to identify which messages failed to write data to BigQuery and why the write operation failed.
+
+Our broker uses [BigQuery subscriptions](https://cloud.google.com/pubsub/docs/bigquery) to write alert data directly to
+a BigQuery table. Messages receieved by BigQuery subscriptions that fail to write data to BigQuery are negatively
+acknowledged and re-sent. If the messages fail enough times (default number of attempts = 5), then the message is
+subsequently moved to a [dead letter topic](https://cloud.google.com/pubsub/docs/handling-failures#dead_letter_topic).
+A subscription to this dead letter topic is automatically made, allowing the user to identify which messages failed to
+write data to BigQuery and why the write operation failed.
 
 ## Deploy broker instance
 
