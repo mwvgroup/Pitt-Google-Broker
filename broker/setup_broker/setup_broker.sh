@@ -87,6 +87,9 @@ manage_resources() {
         gcloud pubsub topics create "${topic_alert_data_deadletter}"
         gcloud pubsub subscriptions create "${subscription_diasource_deadletter}" --topic="${topic_diasource_deadletter}"
         gcloud pubsub subscriptions create "${subscription_alert_data_deadletter}" --topic="${topic_alert_data_deadletter}"
+        # in order to create BigQuery subscriptions, ensure that the following service account:
+        # service-<project number>@gcp-sa-pubsub.iam.gserviceaccount.com" has the
+        # bigquery.dataEditor role for each table
         gcloud pubsub subscriptions create "${subscription_alert_data}" \
             --topic="${topic_alert_data}" \
             --bigquery-table="${PROJECT_ID}:${bq_dataset}.${alerts_table}" \
@@ -166,7 +169,6 @@ if [ "$teardown" != "True" ]; then
         --description="Allow incoming traffic on TCP port 9094" \
         --direction=INGRESS \
         --enable-logging
-
 fi
 
 #--- Deploy Cloud Functions
@@ -189,6 +191,10 @@ cd .. && cd lite || exit
 #--- Pub/Sub -> Cloud Storage Avro cloud function
 cd .. && cd ps_to_gcs || exit
 ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag" "$region"
+
+#--- BigQuery storage cloud function
+cd .. && cd store_BigQuery || exit
+./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
 
 #--- tag alerts cloud function
 cd .. && cd tag || exit
