@@ -42,7 +42,7 @@ Create a secret for your access credential:
 
 ```bash
 # define parameters
-survey="rubin"
+survey="lsst"
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT
 
 # define secret names
@@ -74,7 +74,7 @@ Clone the repo and cd into the directory:
 
 ```bash
 git clone https://github.com/mwvgroup/Pitt-Google-Broker.git
-cd Pitt-Google-Broker/broker/setup_broker/rubin
+cd Pitt-Google-Broker/broker/setup_broker/lsst
 ```
 
 Define the variables used below.
@@ -82,7 +82,7 @@ Define the variables used below.
 ```bash
 testid="enter testid value"
 teardown="False"
-survey="rubin"
+survey="lsst"
 region="us-central1"
 ```
 
@@ -123,7 +123,7 @@ Initialize parameters and call the deployment script:
 ```bash
 testid="mytest"
 teardown="True"
-survey="rubin"
+survey="lsst"
 region="us-central1"
 
 ./setup_broker.sh "${testid}" "${teardown}" "${survey}" "${region}"
