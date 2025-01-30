@@ -37,7 +37,6 @@ You may want to
 or
 [set up a GCP project from scratch](https://pitt-broker.readthedocs.io/en/latest/broker/run-a-broker-instance/initial-setup.html#setup-local-environment).
 
-
 ### Use GCP's Secret Manager
 
 [Secret Manager](https://cloud.google.com/secret-manager/docs/overview) is a service that allows users to manage and
