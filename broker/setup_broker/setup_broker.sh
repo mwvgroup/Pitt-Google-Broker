@@ -55,7 +55,6 @@ define_GCP_resources() {
 #--- GCP resources used directly in this script
 broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
 bq_dataset=$(define_GCP_resources "${survey}")
-topic_alerts=$(define_GCP_resources "${survey}-alerts")
 # topics and subscriptions involved in writing DIASource data to BigQuery
 topic_diasource=$(define_GCP_resources "${survey}-diasource")
 subscription_diasource="${topic_diasource}" # BigQuery subscription
