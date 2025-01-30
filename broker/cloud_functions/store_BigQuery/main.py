@@ -52,32 +52,56 @@ def run(event: dict, _context: functions_v1.context.Context) -> None:
     # unpack the alert
     alert = pittgoogle.Alert.from_msg(msg=pubsub_message, schema_name="ztf")
 
-    # send the alert to BigQuery table
-    alert_table = insert_rows_alerts(alert)
-
-    # announce what's been done
-    ALERT_DATA_TOPIC.publish(_create_outgoing_alert(alert, alert_table))
-    DIASOURCE_TOPIC.publish(_create_outgoing_alert(alert, alert_table))
+    # transform the data and publish it to Pub/Sub
+    ALERT_DATA_TOPIC.publish(_drop_cutouts(alert))
+    DIASOURCE_TOPIC.publish(_extract_ztf_source(alert))
 
 
-def _create_outgoing_alert(
-    alert: pittgoogle.alert.Alert, table_dict: dict
-) -> pittgoogle.alert.Alert:
-    """Create an announcement of the table storage operation to Pub/Sub."""
+def _drop_cutouts(alert: pittgoogle.alert.Alert) -> pittgoogle.alert.Alert:
+    """Removes cutouts from alerts."""
     # collect attributes
-    attrs = {
-        **alert.attributes,
-        "alerts_table": table_dict["alerts_table"],
-        "alert_type": alert.dict["alert_type"],
-        "superevent_id": alert.dict["superevent_id"],
-    }
+    attrs = {**alert.attributes}
 
-    # set empty message body; everything is in the attributes
-    msg = {}
+    # define message
+    msg = alert.dict
+
+    # define and remove cutouts from message
+    cutouts = ["cutoutTemplate", "cutoutScience", "cutoutDifference"]
+    for key in cutouts:
+        msg.pop(key, None)
 
     # create outgoing alert
-    alert_out = pittgoogle.Alert.from_dict(
-        payload=msg, attributes=attrs, schema_name="default_schema"
-    )
+    alert_out = pittgoogle.Alert.from_dict(payload=msg, attributes=attrs)
 
     return alert_out
+
+
+def _extract_ztf_source(alert: pittgoogle.alert.Alert) -> pittgoogle.alert.Alert:
+    # collect attributes
+    attrs = {**alert.attributes}
+
+    # get candidate
+    alert_dict = alert.dict
+    candidate = alert_dict["candidate"]
+
+    # candid is repeated, drop the one nested here
+    dup_cols = ["candid"]
+    for key in dup_cols:
+        candidate.pop(key, None)
+
+    # get info for provenance
+    metakeys = ["schemavsn", "publisher", "objectId", "candid"]
+    metadict = {key: alert.dict[key] for key in metakeys if key in alert.dict}
+
+    # get string of previous candidates' candid, comma-separated
+    if alert_dict["prv_candidates"] is not None:
+        prv_candids = ",".join(
+            str(pc["candid"]) for pc in alert_dict["prv_candidates"] if pc["candid"] is not None
+        )
+    else:
+        prv_candids = None
+
+    # package it up and return
+    source_dict = {**metadict, **candidate, "prv_candidates_candids": prv_candids}
+    diasource_alert = pittgoogle.Alert.from_dict(payload=source_dict, attributes=attrs)
+    return diasource_alert
