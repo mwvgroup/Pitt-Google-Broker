@@ -6,7 +6,7 @@ testid="${1:-test}"
 # any other string will be appended to the names of all resources
 teardown="${2:-False}"
 # "True" tearsdown/deletes resources, else setup
-survey="${3:-rubin}"
+survey="${3:-lsst}"
 # name of the survey this broker instance will ingest
 region="${4:-us-central1}"
 zone="${region}-a"  # just use zone "a" instead of adding another script arg
@@ -32,44 +32,70 @@ if [ "$continue_with_setup" != "y" ]; then
     exit
 fi
 
-#--- GCP resources used directly in this script
-broker_bucket="${PROJECT_ID}-${survey}-broker_files"
-topic_alerts="${survey}-alerts"
-pubsub_subscription="${topic_alerts}"
-# use test resources, if requested
-# (there must be a better way to do this)
-if [ "$testid" != "False" ]; then
-    broker_bucket="${broker_bucket}-${testid}"
-    topic_alerts="${topic_alerts}-${testid}"
-    pubsub_subscription="${pubsub_subscription}-${testid}"
-fi
+# function used to define GCP resources; appends testid if needed
+define_GCP_resources() {
+    local base_name="$1"
+    local testid_suffix=""
 
-
-#--- Create (or delete) GCS, Pub/Sub resources
-if [ "${teardown}" != "True" ]; then
-    # create broker bucket and upload files
-    echo "Creating broker_bucket and uploading files..."
-    gsutil mb -b on -l "${region}" "gs://${broker_bucket}"
-    ./upload_broker_bucket.sh "${broker_bucket}"
-
-    # create pubsub
-    echo "Configuring Pub/Sub resources..."
-    gcloud pubsub topics create "${topic_alerts}"
-    gcloud pubsub subscriptions create "${pubsub_subscription}" --topic="${topic_alerts}"
-
-    # Set IAM policies on resources
-    user="allUsers"
-    roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/userPublic"
-    gcloud pubsub topics add-iam-policy-binding "${topic_alerts}" --member="${user}" --role="${roleid}"
-
-else
-    # ensure that we do not teardown production resources
-    if [ "${testid}" != "False" ]; then
-        o="GSUtil:parallel_process_count=1" # disable multiprocessing for Macs
-        gsutil -m -o "${o}" rm -r "gs://${broker_bucket}"
-        gcloud pubsub topics delete "${topic_alerts}"
-        gcloud pubsub subscriptions delete "${pubsub_subscription}"
+    if [ "$testid" != "False" ]; then
+        if [ "$base_name" = "$survey" ]; then
+            testid_suffix="_${testid}"  # complies with BigQuery naming conventions
+        else
+            testid_suffix="-${testid}"
+        fi
     fi
+
+    echo "${base_name}${testid_suffix}"
+}
+
+#--- GCP resources used directly in this script
+broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
+topic_alerts=$(define_GCP_resources "${survey}-alerts")
+pubsub_subscription=$(define_GCP_resources "${topic_alerts}")
+
+# function used to create (or delete) GCP resources
+manage_resources() {
+    local mode="$1"  # setup or teardown
+    local environment_type="production"
+
+    if [ "$testid" != "False" ]; then
+        environment_type="testing"
+    fi
+
+    if [ "$mode" = "setup" ]; then
+        # setup resources
+        echo
+        echo "Creating broker_bucket and uploading files..."
+        gsutil mb -b on -l "${region}" "gs://${broker_bucket}"
+        ./upload_broker_bucket.sh "${broker_bucket}"
+
+        # create Pub/Sub
+        echo
+        echo "Configuring Pub/Sub resources..."
+        gcloud pubsub topics create "${topic_alerts}"
+        gcloud pubsub subscriptions create "${pubsub_subscription}" --topic="${topic_alerts}"
+
+        # set IAM policies on resources
+        user="allUsers"
+        roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/userPublic"
+        gcloud pubsub topics add-iam-policy-binding "${topic_alerts}" --member="${user}" --role="${roleid}"
+    else
+        if [ "$environment_type" = "testing" ]; then
+            o="GSUtil:parallel_process_count=1" # disable multiprocessing for Macs
+            gsutil -m -o "${o}" rm -r "gs://${broker_bucket}"
+            gcloud pubsub topics delete "${topic_alerts}"
+            gcloud pubsub subscriptions delete "${pubsub_subscription}"
+        fi
+    fi
+}
+
+#--- Create (or delete) BigQuery, GCS, Pub/Sub resources
+echo
+echo "Configuring BigQuery, GCS, Pub/Sub resources..."
+if [ "$teardown" = "True" ]; then
+    manage_resources "teardown"
+else
+    manage_resources "setup"
 fi
 
 if [ "$teardown" != "True" ]; then
