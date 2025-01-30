@@ -2,30 +2,35 @@
 # Deploys or deletes broker Cloud Functions
 # This script will not delete Cloud Functions that are in production
 
-testid="${1:-test}"
 # "False" uses production resources
 # any other string will be appended to the names of all resources
-teardown="${2:-False}"
+testid="${1:-test}"
 # "True" tearsdown/deletes resources, else setup
-survey="${3:-lsst}"
+teardown="${2:-False}"
 # name of the survey this broker instance will ingest
-versiontag="${4:-v3_3}"
+survey="${3:-lsst}"
+# schema version
+versiontag="${4:-v7_3}"
 region="${5:-us-central1}"
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT # get the environment variable
 
-#--- GCP resources used in this script
-avro_bucket="${PROJECT_ID}-${survey}_alerts_${versiontag}"
-avro_topic="projects/${PROJECT_ID}/topics/${survey}-alert_avros"
-ps_to_gcs_trigger_topic="${survey}-alerts_raw"
-ps_to_gcs_CF_name="${survey}-upload_bytes_to_bucket"
+# function used to define GCP resources; appends testid if needed
+define_GCP_resources() {
+    local base_name="$1"
+    local testid_suffix=""
 
-# use test resources, if requested
-if [ "${testid}" != "False" ]; then
-    avro_bucket="${avro_bucket}-${testid}"
-    avro_topic="${avro_topic}-${testid}"
-    ps_to_gcs_trigger_topic="${ps_to_gcs_trigger_topic}-${testid}"
-    ps_to_gcs_CF_name="${ps_to_gcs_CF_name}-${testid}"
-fi
+    if [ "$testid" != "False" ]; then
+        testid_suffix="-${testid}"
+    fi
+
+    echo "${base_name}${testid_suffix}"
+}
+
+#--- GCP resources used in this script
+avro_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}_alerts_${versiontag}")
+avro_topic=$(define_GCP_resources "projects/${PROJECT_ID}/topics/${survey}-alert_avros")
+ps_to_gcs_trigger_topic=$(define_GCP_resources "${survey}-alerts_raw")
+ps_to_gcs_CF_name=$(define_GCP_resources "${survey}-upload_bytes_to_bucket")
 
 if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources
