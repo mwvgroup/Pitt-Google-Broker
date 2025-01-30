@@ -122,8 +122,6 @@ complete, the VM will shut down automatically. You can check the status of the V
 [Google Cloud Console](https://console.cloud.google.com/compute).
 This entire process should take less than 10 minutes.
 
-
-
 ## Start the Consumer VM to ingest the LVK alert stream
 
 ```bash
