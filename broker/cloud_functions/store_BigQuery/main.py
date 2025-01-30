@@ -83,11 +83,8 @@ def _extract_ztf_source(alert: pittgoogle.alert.Alert) -> pittgoogle.alert.Alert
     # get candidate
     alert_dict = alert.dict
     candidate = alert_dict["candidate"]
-
-    # candid is repeated, drop the one nested here
-    dup_cols = ["candid"]
-    for key in dup_cols:
-        candidate.pop(key, None)
+    dup_cols = ["candid"]  # candid is repeated, drop the one nested here
+    cand = {key: candidate[key] for key in candidate.keys() if key not in dup_cols}
 
     # get info for provenance
     metakeys = ["schemavsn", "publisher", "objectId", "candid"]
@@ -102,6 +99,6 @@ def _extract_ztf_source(alert: pittgoogle.alert.Alert) -> pittgoogle.alert.Alert
         prv_candids = None
 
     # package it up and return
-    source_dict = {**metadict, **candidate, "prv_candidates_candids": prv_candids}
+    source_dict = {**metadict, **cand, "prv_candidates_candids": prv_candids}
     diasource_alert = pittgoogle.Alert.from_dict(payload=source_dict, attributes=attrs)
     return diasource_alert
