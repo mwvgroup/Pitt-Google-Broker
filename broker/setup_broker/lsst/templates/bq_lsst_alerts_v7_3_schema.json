@@ -117,6 +117,12 @@
             "type": "BOOLEAN"
           },
           {
+            "description": "Source was detected as significantly negative.",
+            "mode": "NULLABLE",
+            "name": "is_negative",
+            "type": "BOOLEAN"
+          },
+          {
             "description": "Flux in a 12 pixel radius aperture on the difference image.",
             "mode": "REQUIRED",
             "name": "apFlux",
@@ -699,7 +705,7 @@
             "type": "BOOLEAN"
           },
           {
-            "description": "A measure of extendedness, Computed using a combination of available moments and model fluxes or from a likelihood ratio of point/trailed source models (exact algorithm TBD). extendedness = 1 implies a high degree of confidence that the source is extended. extendedness = 0 implies a high degree of confidence that the source is point-like.",
+            "description": "A measure of extendedness, computed by comparing an object's moment-based traced radius to the PSF moments. extendedness = 1 implies a high degree of confidence that the source is extended. extendedness = 0 implies a high degree of confidence that the source is point-like.",
             "mode": "NULLABLE",
             "name": "extendedness",
             "type": "FLOAT"
@@ -715,6 +721,12 @@
             "mode": "NULLABLE",
             "name": "band",
             "type": "STRING"
+          },
+          {
+            "description":"Attempted to fit a dipole model to this source.",
+            "mode": "NULLABLE",
+            "name": "dipoleFitAttempted",
+            "type": "BOOLEAN"
           },
           {
             "description": "General pixel flags failure; set if anything went wrong when setting pixels flags from this footprint's mask. This implies that some pixelFlags for this source may be incorrectly set to False.",
@@ -1523,7 +1535,7 @@
             "type": "BOOLEAN"
           },
           {
-            "description": "A measure of extendedness, Computed using a combination of available moments and model fluxes or from a likelihood ratio of point/trailed source models (exact algorithm TBD). extendedness = 1 implies a high degree of confidence that the source is extended. extendedness = 0 implies a high degree of confidence that the source is point-like.",
+            "description": "A measure of extendedness, computed by comparing an object's moment-based traced radius to the PSF moments. extendedness = 1 implies a high degree of confidence that the source is extended. extendedness = 0 implies a high degree of confidence that the source is point-like.",
             "mode": "NULLABLE",
             "name": "extendedness",
             "type": "FLOAT"
@@ -1669,13 +1681,13 @@
             "type": "FLOAT"
           },
           {
-            "description": "Right ascension coordinate of the position of the object at time radecMjdTai.",
+            "description": "Right ascension coordinate of the position of the DiaObject at time radecMjdTai.",
             "mode": "REQUIRED",
             "name": "ra",
             "type": "FLOAT"
           },
           {
-            "description": "Declination coordinate of the position of the object at time radecMjdTai.",
+            "description": "Declination coordinate of the position of the DiaObject at time radecMjdTai.",
             "mode": "REQUIRED",
             "name": "dec",
             "type": "FLOAT"
