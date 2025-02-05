@@ -52,7 +52,7 @@ define_GCP_resources() {
 }
 
 #--- GCP resources used directly in this script
-broker_bucket=#$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
+broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
 bq_dataset=$(define_GCP_resources "${survey}")
 topic_alerts_raw=$(define_GCP_resources "${survey}-alerts_raw")
 topic_alerts=$(define_GCP_resources "${survey}-alerts")
@@ -155,8 +155,13 @@ echo "Configuring VMs..."
 #--- Deploy Cloud Functions
 echo
 echo "Configuring Cloud Functions..."
-cd .. && cd cloud_functions || exit
+cd .. && cd .. || exit
+cd cloud_functions && cd lsst || exit
 
 #--- BigQuery storage cloud function
 cd store_BigQuery || exit
 ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
+
+#--- return to setup_broker directory
+cd .. && cd .. || exit
+cd .. && cd setup_broker || exit
