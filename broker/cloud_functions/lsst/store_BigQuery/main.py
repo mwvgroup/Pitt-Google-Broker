@@ -65,7 +65,6 @@ def run(event: dict, _context: functions_v1.context.Context) -> None:
 
     # create alert object
     alert_dict = fastavro.schemaless_reader(content_bytes, latest_schema)
-    # alert = pittgoogle.Alert.from_dict(msg=alert_dict, schema_name="lsst")
     alert = pittgoogle.Alert.from_dict(payload=alert_dict, attributes=attrs)
 
     # transform the data and publish it to Pub/Sub
