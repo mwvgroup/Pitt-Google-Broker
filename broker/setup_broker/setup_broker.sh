@@ -55,11 +55,6 @@ define_GCP_resources() {
 #--- GCP resources used directly in this script
 broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
 bq_dataset=$(define_GCP_resources "${survey}")
-# topics and subscriptions involved in writing DIASource data to BigQuery
-topic_diasource=$(define_GCP_resources "${survey}-diasource")
-subscription_diasource="${topic_diasource}" # BigQuery subscription
-topic_diasource_deadletter=$(define_GCP_resources "${survey}-diasource-deadletter")
-subscription_diasource_deadletter="${topic_diasource_deadletter}"
 # topics and subscriptions involved in writing alert data to BigQuery
 topic_alert_data=$(define_GCP_resources "${survey}-alert-data") # needs a better name
 subscription_alert_data="${topic_alert_data}" # BigQuery subscription
@@ -67,7 +62,6 @@ topic_alert_data_deadletter=$(define_GCP_resources "${survey}-alert-data-deadlet
 subscription_alert_data_deadletter="${topic_alert_data_deadletter}"
 
 alerts_table="alerts_${versiontag}"
-diasource_table="DIASource"
 
 # function used to create (or delete) GCP resources
 manage_resources() {
@@ -81,11 +75,8 @@ manage_resources() {
     if [ "$mode" = "setup" ]; then
         # setup resources
         python3 setup_gcp.py --survey="$survey" --testid="$testid" --confirmed --region="${region}" --versiontag="${versiontag}"
-        gcloud pubsub topics create "${topic_diasource}"
-        gcloud pubsub topics create "${topic_diasource_deadletter}"
         gcloud pubsub topics create "${topic_alert_data}"
         gcloud pubsub topics create "${topic_alert_data_deadletter}"
-        gcloud pubsub subscriptions create "${subscription_diasource_deadletter}" --topic="${topic_diasource_deadletter}"
         gcloud pubsub subscriptions create "${subscription_alert_data_deadletter}" --topic="${topic_alert_data_deadletter}"
         # in order to create BigQuery subscriptions, ensure that the following service account:
         # service-<project number>@gcp-sa-pubsub.iam.gserviceaccount.com" has the
@@ -98,24 +89,12 @@ manage_resources() {
             --dead-letter-topic="${topic_alert_data_deadletter}" \
             --max-delivery-attempts=5 \
             --dead-letter-topic-project="${PROJECT_ID}"
-        gcloud pubsub subscriptions create "${subscription_diasource}" \
-            --topic="${topic_diasource}" \
-            --bigquery-table="${PROJECT_ID}:${bq_dataset}.${diasource_table}" \
-            --use-table-schema \
-            --drop-unknown-fields \
-            --dead-letter-topic="${topic_diasource_deadletter}" \
-            --max-delivery-attempts=5 \
-            --dead-letter-topic-project="${PROJECT_ID}"
     else
         if [ "$environment_type" = "testing" ]; then
             # delete testing resources
             python3 setup_gcp.py --survey="$survey" --testid="$testid" --teardown --confirmed --versiontag="${versiontag}"
-            gcloud pubsub topics delete "${topic_diasource}"
-            gcloud pubsub topics delete "${topic_diasource_deadletter}"
             gcloud pubsub topics delete "${topic_alert_data}"
             gcloud pubsub topics delete "${topic_alert_data_deadletter}"
-            gcloud pubsub subscriptions delete "${subscription_diasource}"
-            gcloud pubsub subscriptions delete "${subscription_diasource_deadletter}"
             gcloud pubsub subscriptions delete "${subscription_alert_data}"
             gcloud pubsub subscriptions delete "${subscription_alert_data_deadletter}"
         fi

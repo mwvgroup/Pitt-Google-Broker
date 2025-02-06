@@ -22,9 +22,6 @@ logger = logging_client.logger(log_name)
 ALERT_DATA_TOPIC = pittgoogle.Topic.from_cloud(
     "alert-data", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
 )
-DIASOURCE_TOPIC = pittgoogle.Topic.from_cloud(
-    "diasource", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
-)
 
 
 def run(event: dict, _context: functions_v1.context.Context) -> None:
@@ -54,7 +51,6 @@ def run(event: dict, _context: functions_v1.context.Context) -> None:
 
     # transform the data and publish it to Pub/Sub
     ALERT_DATA_TOPIC.publish(_drop_cutouts(alert))
-    DIASOURCE_TOPIC.publish(_extract_ztf_source(alert))
 
 
 def _drop_cutouts(alert: pittgoogle.alert.Alert) -> pittgoogle.alert.Alert:
@@ -74,31 +70,3 @@ def _drop_cutouts(alert: pittgoogle.alert.Alert) -> pittgoogle.alert.Alert:
     alert_out = pittgoogle.Alert.from_dict(payload=msg, attributes=attrs)
 
     return alert_out
-
-
-def _extract_ztf_source(alert: pittgoogle.alert.Alert) -> pittgoogle.alert.Alert:
-    # collect attributes
-    attrs = {**alert.attributes}
-
-    # get candidate
-    alert_dict = alert.dict
-    candidate = alert_dict["candidate"]
-    dup_cols = ["candid"]  # candid is repeated, drop the one nested here
-    cand = {key: candidate[key] for key in candidate.keys() if key not in dup_cols}
-
-    # get info for provenance
-    metakeys = ["schemavsn", "publisher", "objectId", "candid"]
-    metadict = {key: alert.dict[key] for key in metakeys if key in alert.dict}
-
-    # get string of previous candidates' candid, comma-separated
-    if alert_dict["prv_candidates"] is not None:
-        prv_candids = ",".join(
-            str(pc["candid"]) for pc in alert_dict["prv_candidates"] if pc["candid"] is not None
-        )
-    else:
-        prv_candids = None
-
-    # package it up and return
-    source_dict = {**metadict, **cand, "prv_candidates_candids": prv_candids}
-    diasource_alert = pittgoogle.Alert.from_dict(payload=source_dict, attributes=attrs)
-    return diasource_alert
