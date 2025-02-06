@@ -20,7 +20,7 @@ logger = logging_client.logger(log_name)
 
 # GCP resources used in this module
 ALERT_DATA_TOPIC = pittgoogle.Topic.from_cloud(
-    "alert-data", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
+    "alert-bigquery-import", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
 )
 
 
