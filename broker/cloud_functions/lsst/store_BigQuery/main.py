@@ -4,14 +4,14 @@
 """This module publishes alert data to a Pub/Sub topic."""
 
 import base64
-import fastavro
 import io
 import json
 import os
-import pittgoogle
 import struct
+import fastavro
+import pittgoogle
 from confluent_kafka.schema_registry import SchemaRegistryClient
-from google.cloud import functions_v1, pubsub_v1, logging
+from google.cloud import functions_v1, logging
 
 PROJECT_ID = os.getenv("GCP_PROJECT")
 SURVEY = os.getenv("SURVEY")
