@@ -57,10 +57,10 @@ bq_dataset=$(define_GCP_resources "${survey}")
 topic_alerts_raw=$(define_GCP_resources "${survey}-alerts_raw")
 topic_alerts=$(define_GCP_resources "${survey}-alerts")
 # topics and subscriptions involved in writing alert data to BigQuery
-topic_alert_data=$(define_GCP_resources "${survey}-alert-data") # needs a better name
-subscription_alert_data="${topic_alert_data}" # BigQuery subscription
-topic_alert_data_deadletter=$(define_GCP_resources "${survey}-alert-data-deadletter")
-subscription_alert_data_deadletter="${topic_alert_data_deadletter}"
+topic_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import")
+subscription_bigquery_import="${topic_bigquery_import}" # BigQuery subscription
+deadletter_topic_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import-deadletter")
+deadletter_subscription_bigquery_import="${deadletter_topic_bigquery_import}"
 
 alerts_table="alerts_${versiontag}"
 
@@ -102,18 +102,18 @@ manage_resources() {
         # create Pub/Sub
         gcloud pubsub topics create "${topic_alerts_raw}"
         gcloud pubsub topics create "${topic_alerts}"
-        gcloud pubsub topics create "${topic_alert_data}"
-        gcloud pubsub topics create "${topic_alert_data_deadletter}"
-        gcloud pubsub subscriptions create "${subscription_alert_data_deadletter}" --topic="${topic_alert_data_deadletter}"
+        gcloud pubsub topics create "${topic_bigquery_import}"
+        gcloud pubsub topics create "${deadletter_topic_bigquery_import}"
+        gcloud pubsub subscriptions create "${deadletter_subscription_bigquery_import}" --topic="${deadletter_topic_bigquery_import}"
         # in order to create BigQuery subscriptions, ensure that the following service account:
         # service-<project number>@gcp-sa-pubsub.iam.gserviceaccount.com" has the
         # bigquery.dataEditor role for each table
-        gcloud pubsub subscriptions create "${subscription_alert_data}" \
-            --topic="${topic_alert_data}" \
+        gcloud pubsub subscriptions create "${subscription_bigquery_import}" \
+            --topic="${topic_bigquery_import}" \
             --bigquery-table="${PROJECT_ID}:${bq_dataset}.${alerts_table}" \
             --use-table-schema \
             --drop-unknown-fields \
-            --dead-letter-topic="${topic_alert_data_deadletter}" \
+            --dead-letter-topic="${deadletter_topic_bigquery_import}" \
             --max-delivery-attempts=5 \
             --dead-letter-topic-project="${PROJECT_ID}"
 
@@ -130,10 +130,10 @@ manage_resources() {
             bq rm -r -f "${PROJECT_ID}:${bq_dataset}"
             gcloud pubsub topics delete "${topic_alerts_raw}"
             gcloud pubsub topics delete "${topic_alerts}"
-            gcloud pubsub topics delete "${topic_alert_data}"
-            gcloud pubsub topics delete "${topic_alert_data_deadletter}"
-            gcloud pubsub subscriptions delete "${subscription_alert_data_deadletter}"
-            gcloud pubsub subscriptions delete "${subscription_alert_data}"
+            gcloud pubsub topics delete "${topic_bigquery_import}"
+            gcloud pubsub topics delete "${deadletter_topic_bigquery_import}"
+            gcloud pubsub subscriptions delete "${deadletter_subscription_bigquery_import}"
+            gcloud pubsub subscriptions delete "${subscription_bigquery_import}"
         fi
     fi
 }
