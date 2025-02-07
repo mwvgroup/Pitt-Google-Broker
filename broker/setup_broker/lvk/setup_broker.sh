@@ -56,7 +56,7 @@ bq_dataset=$(define_GCP_resources "${survey}")
 # topics and subscriptions involved in writing alert data to BigQuery
 topic_alerts=$(define_GCP_resources "${survey}-alerts")
 subscription_alert_data=$(define_GCP_resources "${survey}-alert-bigquery-import") # BigQuery subscription
-topic_alert_data_deadletter=$(define_GCP_resources "${subscription_alert_data}-deadletter")
+topic_alert_data_deadletter=$(define_GCP_resources "${survey}-alert-bigquery-import-deadletter")
 subscription_alert_data_deadletter="${topic_alert_data_deadletter}"
 
 alerts_table="alerts_${versiontag}"
@@ -72,6 +72,8 @@ manage_resources() {
 
     if [ "$mode" = "setup" ]; then
         # create BigQuery dataset and table
+        echo
+        echo "Creating BigQuery dataset and table..."
         bq --location="${region}" mk --dataset "${bq_dataset}"
 
         cd templates || exit 5
