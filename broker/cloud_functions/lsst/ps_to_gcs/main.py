@@ -6,20 +6,19 @@ fixing the schema first, if necessary.
 """
 
 import base64
+import io
+import json
 import os
 import pickle
+import struct
 import re
+import fastavro
+import pittgoogle
+from confluent_kafka.schema_registry import SchemaRegistryClient
 from pathlib import Path
 from tempfile import SpooledTemporaryFile
-
-import fastavro
-from google.cloud import logging
-from google.cloud import storage
+from google.cloud import functions_v1, logging, storage
 from google.cloud.exceptions import PreconditionFailed
-
-from broker_utils import gcp_utils
-from broker_utils.schema_maps import load_schema_map
-from broker_utils.types import AlertFilename, AlertIds
 from exceptions import SchemaParsingError
 
 
@@ -27,13 +26,6 @@ PROJECT_ID = os.getenv("GCP_PROJECT")
 TESTID = os.getenv("TESTID")
 SURVEY = os.getenv("SURVEY")
 VERSIONTAG = os.getenv("VERSIONTAG")
-
-schema_dir_name = "schema_maps"
-schema_file_name = f"{SURVEY}.yaml"
-path_to_local_schema_yaml = (
-    Path(__file__).resolve().parent / f"{schema_dir_name}/{schema_file_name}"
-)
-schema_map = load_schema_map(SURVEY, TESTID, schema=path_to_local_schema_yaml)
 
 # connect to the cloud logger
 logging_client = logging.Client()
@@ -49,6 +41,9 @@ if TESTID != "False":
 
 client = storage.Client()
 bucket = client.get_bucket(client.bucket(bucket_name, user_project=PROJECT_ID))
+
+# define a binary data structure for packing and unpacking bytes
+_ConfluentWireFormatHeader = struct.Struct(">bi")
 
 # By default, spool data in memory to avoid IO unless data is too big
 # LSST alerts are anticipated at 80 kB, so 1000 kB should be plenty
@@ -80,7 +75,7 @@ class TempAlertFile(SpooledTemporaryFile):
         return self._file.seekable
 
 
-def run(msg, context) -> None:
+def run(event: dict, context: functions_v1.context.Context) -> None:
     """Entry point for the Cloud Function
 
     For args descriptions, see:
@@ -99,30 +94,45 @@ def run(msg, context) -> None:
                 `resource`: the resource that emitted the event.
     """
     try:
-        upload_bytes_to_bucket(msg, context)
+        upload_bytes_to_bucket(event, context)
     # this is raised by blob.upload_from_file if the object already exists in the bucket
     except PreconditionFailed:
         # we'll simply return, and the duplicate alert will go no further in our pipeline
         return
 
 
-def upload_bytes_to_bucket(msg, context) -> None:
+def upload_bytes_to_bucket(event: dict, context: functions_v1.context.Context) -> None:
     """Uploads the msg data bytes to a GCP storage bucket. Prior to storage,
     corrects the schema header to be compliant with BigQuery's strict
     validation standards if the alert is from a survey version with an
     associated pickle file in the valid_schemas directory.
     """
 
-    data = base64.b64decode(msg["data"])  # alert packet, bytes
-    attributes = msg["attributes"]
-    # Get the survey name and version
-    # survey = guess_schema_survey(data)
+    data = base64.b64decode(event["data"])  # alert packet, bytes
+    attrs = event.get("attributes", {})
+
+    # unpack the alert
+    alert_bytes = data
+    header_bytes = alert_bytes[:5]
+
+    # deserialize the alert
+    schema_id = deserialize_confluent_wire_header(header_bytes)
+
+    # get and load schema
+    sr_client = SchemaRegistryClient({"url": "https://usdf-alert-schemas-dev.slac.stanford.edu"})
+    schema = sr_client.get_schema(schema_id=schema_id)
+    latest_schema = json.loads(schema.schema_str)
+    content_bytes = io.BytesIO(alert_bytes[5:])
+
+    # create alert object
+    alert_dict = fastavro.schemaless_reader(content_bytes, latest_schema)
+    # alert = pittgoogle.Alert.from_dict(payload=alert_dict, attributes=attrs)
 
     with TempAlertFile(max_size=max_alert_packet_size, mode="w+b") as temp_file:
         temp_file.write(data)
         temp_file.seek(0)
 
-        alert = extract_alert_dict(temp_file)
+        alert = [alert_dict]
         temp_file.seek(0)
         alert_ids = AlertIds(schema_map, alert_dict=alert[0])
 
@@ -130,12 +140,12 @@ def upload_bytes_to_bucket(msg, context) -> None:
             {
                 "objectId": alert_ids.objectId,
                 "sourceId": alert_ids.sourceId,
-                "topic": attributes.get("kafka.topic", "no_topic"),
+                "topic": attrs.get("kafka.topic", "no_topic"),
                 "format": "avro",
             }
         ).name
 
-        if SURVEY == "ztf":
+        if SURVEY == "lsst":
             fix_schema(temp_file, alert, data, filename)
         temp_file.seek(0)
 
@@ -159,6 +169,23 @@ def upload_bytes_to_bucket(msg, context) -> None:
         )
 
 
+def deserialize_confluent_wire_header(raw):
+    """Parses the byte prefix for Confluent Wire Format-style Kafka messages.
+    Parameters
+    ----------
+    raw : `bytes`
+        The 5-byte encoded message prefix.
+    Returns
+    -------
+    schema_version : `int`
+        A version number which indicates the Confluent Schema Registry ID
+        number of the Avro schema used to encode the message that follows this
+        header.
+    """
+    _, version = _ConfluentWireFormatHeader.unpack(raw)
+    return version
+
+
 def create_file_metadata(alert, context, alert_ids):
     """Return key/value pairs to be attached to the file as metadata."""
     metadata = {"file_origin_message_id": context.event_id}
@@ -167,14 +194,6 @@ def create_file_metadata(alert, context, alert_ids):
     metadata["ra"] = alert[0][schema_map["source"]]["ra"]
     metadata["dec"] = alert[0][schema_map["source"]]["dec"]
     return metadata
-
-
-def extract_alert_dict(temp_file):
-    """Extracts and returns the alert data as a dict wrapped in a list."""
-    # load the file and get the data with fastavro
-    temp_file.seek(0)
-    alert = [r for r in fastavro.reader(temp_file)]
-    return alert
 
 
 def fix_schema(temp_file, alert, data, filename):
@@ -204,10 +223,10 @@ def fix_schema(temp_file, alert, data, filename):
 
 
 def guess_schema_version(alert_bytes: bytes) -> str:
-    """Retrieve the ZTF schema version
+    """Retrieve the LSST schema version
 
     Args:
-        alert_bytes: An alert from ZTF or LSST
+        alert_bytes: An alert from LSST
 
     Returns:
         The schema version

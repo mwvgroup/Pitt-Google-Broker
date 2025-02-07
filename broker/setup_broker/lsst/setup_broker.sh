@@ -1,14 +1,16 @@
 #! /bin/bash
 # Create and configure GCP resources needed to run the nightly broker.
 
-testid="${1:-test}"
 # "False" uses production resources
 # any other string will be appended to the names of all resources
-teardown="${2:-False}"
+testid="${1:-test}"
 # "True" tearsdown/deletes resources, else setup
-survey="${3:-lsst}"
+teardown="${2:-False}"
 # name of the survey this broker instance will ingest
-region="${4:-us-central1}"
+survey="${3:-lsst}"
+schema_version="${4:-7.3}"
+versiontag=v$(echo "${schema_version}" | tr . _) # 7.3 -> v7_3
+region="${5:-us-central1}"
 zone="${region}-a"  # just use zone "a" instead of adding another script arg
 
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT # get the environment variable
@@ -20,6 +22,7 @@ echo
 echo "GOOGLE_CLOUD_PROJECT = ${PROJECT_ID}"
 echo "survey = ${survey}"
 echo "testid = ${testid}"
+echo "schema_version = ${schema_version}"
 echo "teardown = ${teardown}"
 echo
 echo "Continue?  [y/(n)]: "
@@ -50,8 +53,12 @@ define_GCP_resources() {
 
 #--- GCP resources used directly in this script
 broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
+bq_dataset=$(define_GCP_resources "${survey}")
+topic_alerts_raw=$(define_GCP_resources "${survey}-alerts_raw")
+subscription_alerts_raw=$(define_GCP_resources "${survey}-alerts_raw-counter")
 topic_alerts=$(define_GCP_resources "${survey}-alerts")
-pubsub_subscription=$(define_GCP_resources "${topic_alerts}")
+subscription_alerts=$(define_GCP_resources "${survey}-alerts-counter")
+subscription_reservoir=$(define_GCP_resources "${survey}-alerts-reservoir")
 
 # function used to create (or delete) GCP resources
 manage_resources() {
@@ -63,17 +70,30 @@ manage_resources() {
     fi
 
     if [ "$mode" = "setup" ]; then
-        # setup resources
+        # create broker bucket and upload files
         echo
         echo "Creating broker_bucket and uploading files..."
         gsutil mb -b on -l "${region}" "gs://${broker_bucket}"
         ./upload_broker_bucket.sh "${broker_bucket}"
 
-        # create Pub/Sub
+        # create a firewall rule to open the port used by Kafka/Rubin LSST
+        # on any instance with the flag --tags=tcpport9094
         echo
+        echo "Configuring Rubin/Kafka firewall rule..."
+        firewallrule="tcpport9094"
+        gcloud compute firewall-rules create "${firewallrule}" \
+            --allow=tcp:9094 \
+            --description="Allow incoming traffic on TCP port 9094" \
+            --direction=INGRESS \
+            --enable-logging
+
+        # create Pub/Sub
         echo "Configuring Pub/Sub resources..."
+        gcloud pubsub topics create "${topic_alerts_raw}"
         gcloud pubsub topics create "${topic_alerts}"
-        gcloud pubsub subscriptions create "${pubsub_subscription}" --topic="${topic_alerts}"
+        gcloud pubsub subscriptions create "${subscription_alerts_raw}" --topic="${topic_alerts_raw}"
+        gcloud pubsub subscriptions create "${subscription_alerts}" --topic="${topic_alerts}"
+        gcloud pubsub subscriptions create "${subscription_reservoir}" --topic="${topic_alerts}"
 
         # set IAM policies on resources
         user="allUsers"
@@ -83,8 +103,11 @@ manage_resources() {
         if [ "$environment_type" = "testing" ]; then
             o="GSUtil:parallel_process_count=1" # disable multiprocessing for Macs
             gsutil -m -o "${o}" rm -r "gs://${broker_bucket}"
+            gcloud pubsub topics delete "${topic_alerts_raw}"
             gcloud pubsub topics delete "${topic_alerts}"
-            gcloud pubsub subscriptions delete "${pubsub_subscription}"
+            gcloud pubsub subscriptions delete "${subscription_alerts_raw}"
+            gcloud pubsub subscriptions delete "${subscription_alerts}"
+            gcloud pubsub subscriptions delete "${subscription_reservoir}"
         fi
     fi
 }
@@ -98,20 +121,21 @@ else
     manage_resources "setup"
 fi
 
-if [ "$teardown" != "True" ]; then
-    #--- Create a firewall rule to open the port used by Kafka/Rubin
-    # on any instance with the flag --tags=tcpport9094
-    echo
-    echo "Configuring Rubin/Kafka firewall rule..."
-    firewallrule="tcpport9094"
-    gcloud compute firewall-rules create "${firewallrule}" \
-        --allow=tcp:9094 \
-        --description="Allow incoming traffic on TCP port 9094" \
-        --direction=INGRESS \
-        --enable-logging
-fi
-
 #--- Create VM instances
 echo
 echo "Configuring VMs..."
 ./create_vm.sh "${broker_bucket}" "${testid}" "${teardown}" "${survey}" "${zone}" "${firewallrule}"
+
+#--- Deploy Cloud Functions
+echo
+echo "Configuring Cloud Functions..."
+cd .. && cd .. || exit
+cd cloud_functions && cd lsst || exit
+
+#--- Pub/Sub -> Cloud Storage Avro cloud function
+cd ps_to_gcs || exit
+./deploy.sh "$testid" "$teardown" "$survey" "$versiontag" "$region"
+
+#--- return to setup_broker directory
+cd .. && cd .. || exit
+cd .. && cd setup_broker || exit
