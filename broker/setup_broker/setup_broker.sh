@@ -56,7 +56,7 @@ define_GCP_resources() {
 broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
 bq_dataset=$(define_GCP_resources "${survey}")
 # topics and subscriptions involved in writing alert data to BigQuery
-topic_alert_data=$(define_GCP_resources "${survey}-alert-bigquery-import") # needs a better name
+topic_alert_data=$(define_GCP_resources "${survey}-alert-bigquery-import")
 subscription_alert_data="${topic_alert_data}" # BigQuery subscription
 topic_alert_data_deadletter=$(define_GCP_resources "${survey}-alert-data-deadletter")
 subscription_alert_data_deadletter="${topic_alert_data_deadletter}"

@@ -164,7 +164,6 @@ def _resources(service, survey="ztf", testid="test", versiontag="v3_3"):
             f"{survey}-alerts_raw": [
                 f"{survey}-alerts_raw-counter",
             ],
-            f"{survey}-BigQuery": [f"{survey}-BigQuery-counter"],
             f"{survey}-alert_avros": [f"{survey}-alert_avros-counter"],
             f"{survey}-alerts": [
                 f"{survey}-alerts-counter",
