@@ -23,7 +23,7 @@ fi
 
 #--- GCP resources used in this script
 broker_bucket="${PROJECT_ID}-${survey}-broker_files"
-PS_TOPIC_DEFAULT="${survey}-alerts"
+PS_TOPIC_DEFAULT="${survey}-alerts_raw"
 # use test resources, if requested
 if [ "$testid" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
@@ -57,6 +57,11 @@ fout_topics="${workingdir}/list.topics"
 # define Rubin-related parameters
 kafka_password="${survey}-${PROJECT_ID}-kafka-password"
 KAFKA_PASSWORD=$(gcloud secrets versions access latest --secret="${kafka_password}")
+group_id="pittgoogle-idfint-kafka-pubsub-connector"
+# use test resources, if requested
+if [ "$testid" != "False" ]; then
+    group_id="${group_id}-${testid}"
+fi
 
 cd "${workingdir}" || exit
 
@@ -64,7 +69,7 @@ fconfig=admin.properties
 sed -i "s/KAFKA_PASSWORD/${KAFKA_PASSWORD}/g" ${fconfig}
 
 fconfig=psconnect-worker.properties
-sed -i "s/KAFKA_PASSWORD/${KAFKA_PASSWORD}/g" ${fconfig}
+sed -i "s/KAFKA_PASSWORD/${KAFKA_PASSWORD}/g" ${fconfig} && sed -i "s/GROUP_ID/${group_id}/g" ${fconfig}
 
 fconfig=ps-connector.properties
 sed -i "s/PROJECT_ID/${PROJECT_ID}/g" ${fconfig}
