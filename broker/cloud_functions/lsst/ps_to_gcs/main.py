@@ -34,13 +34,14 @@ logger = logging_client.logger(log_name)
 
 # GCP resources used in this module
 bucket_name = f"{PROJECT_ID}-{SURVEY}_alerts_{VERSIONTAG}"  # store the Avro files
-ps_topic = f"{SURVEY}-alerts"
 if TESTID != "False":
     bucket_name = f"{bucket_name}-{TESTID}"
-    ps_topic = f"{ps_topic}-{TESTID}"
 
 client = storage.Client()
 bucket = client.get_bucket(client.bucket(bucket_name, user_project=PROJECT_ID))
+ALERTS_TOPIC = pittgoogle.Topic.from_cloud(
+    "alerts", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
+)
 
 # define a binary data structure for packing and unpacking bytes
 _ConfluentWireFormatHeader = struct.Struct(">bi")
@@ -102,55 +103,45 @@ def run(event: dict, context: functions_v1.context.Context) -> None:
 
 
 def upload_bytes_to_bucket(event: dict, context: functions_v1.context.Context) -> None:
-    """Uploads the msg data bytes to a GCP storage bucket. Prior to storage,
-    corrects the schema header to be compliant with BigQuery's strict
-    validation standards if the alert is from a survey version with an
-    associated pickle file in the valid_schemas directory.
-    """
+    """Uploads the msg data bytes to a GCP storage bucket."""
 
     data = base64.b64decode(event["data"])  # alert packet, bytes
     attrs = event.get("attributes", {})
-
-    # unpack the alert
-    alert_bytes = data
-    header_bytes = alert_bytes[:5]
-
-    # deserialize the alert
-    schema_id = deserialize_confluent_wire_header(header_bytes)
-
-    # get and load schema
-    sr_client = SchemaRegistryClient({"url": "https://usdf-alert-schemas-dev.slac.stanford.edu"})
-    schema = sr_client.get_schema(schema_id=schema_id)
-    latest_schema = json.loads(schema.schema_str)
-    content_bytes = io.BytesIO(alert_bytes[5:])
-
-    # create alert object
-    alert_dict = fastavro.schemaless_reader(content_bytes, latest_schema)
-    # alert = pittgoogle.Alert.from_dict(payload=alert_dict, attributes=attrs)
 
     with TempAlertFile(max_size=max_alert_packet_size, mode="w+b") as temp_file:
         temp_file.write(data)
         temp_file.seek(0)
 
-        alert = [alert_dict]
-        temp_file.seek(0)
-        alert_ids = AlertIds(schema_map, alert_dict=alert[0])
+        # unpack the alert and read schema ID
+        alert_bytes = temp_file.read()
+        header_bytes = alert_bytes[:5]
+        schema_id = deserialize_confluent_wire_header(header_bytes)
 
-        filename = AlertFilename(
+        # get and load schema
+        sr_client = SchemaRegistryClient(
+            {"url": "https://usdf-alert-schemas-dev.slac.stanford.edu"}
+        )
+        schema = sr_client.get_schema(schema_id=schema_id)
+        latest_schema = json.loads(schema.schema_str)
+        content_bytes = io.BytesIO(alert_bytes[5:])
+
+        # deserialize the alert and create Alert object
+        alert_dict = fastavro.schemaless_reader(content_bytes, latest_schema)
+        temp_file.seek(0)  # necessary?
+
+        filename = generate_alert_filename(
             {
-                "objectId": alert_ids.objectId,
-                "sourceId": alert_ids.sourceId,
+                "objectId": alert_dict["diaObject"]["diaObjectId"],
+                "sourceId": alert_dict["diaSource"]["diaSourceId"],
                 "topic": attrs.get("kafka.topic", "no_topic"),
                 "format": "avro",
             }
-        ).name
+        )
 
-        if SURVEY == "lsst":
-            fix_schema(temp_file, alert, data, filename)
-        temp_file.seek(0)
+        alert = pittgoogle.alert.Alert.from_dict(alert_dict)
 
         blob = bucket.blob(filename)
-        blob.metadata = create_file_metadata(alert, context, alert_ids)
+        blob.metadata = create_file_metadata(alert_dict, context)
 
         # raise a PreconditionFailed exception if filename already exists in the bucket using "if_generation_match=0"
         # let it raise. the main function will catch it and then drop the message.
@@ -158,15 +149,7 @@ def upload_bytes_to_bucket(event: dict, context: functions_v1.context.Context) -
 
         # Cloud Storage says this is not a duplicate, so now we publish the broker's main "alerts" stream
         temp_file.seek(0)
-        gcp_utils.publish_pubsub(
-            ps_topic,
-            temp_file.read(),
-            attrs={
-                str(alert_ids.id_keys.objectId): str(alert_ids.objectId),
-                str(alert_ids.id_keys.sourceId): str(alert_ids.sourceId),
-                **attributes,
-            },
-        )
+        ALERTS_TOPIC.publish(_create_outgoing_alert(alert))
 
 
 def deserialize_confluent_wire_header(raw):
@@ -186,68 +169,48 @@ def deserialize_confluent_wire_header(raw):
     return version
 
 
-def create_file_metadata(alert, context, alert_ids):
+def generate_alert_filename(aname: dict) -> str:
+    """
+    Generate the filename of an alert stored to a Cloud Storage bucket.
+
+    Args:
+        aname:
+            Components to create the filename. Required key/value pairs are those needed to create a parsed filename.
+            Extra keys are ignored.
+
+    Returns:
+        str: The formatted filename as "{topic}/{objectId}/{sourceId}.{format}".
+    """
+    topic = aname.get("topic", "no_topic")
+    object_id = aname.get("objectId")
+    source_id = aname.get("sourceId")
+    file_format = aname.get("format", "avro")
+
+    return f"{topic}/{object_id}/{source_id}.{file_format}"
+
+
+def create_file_metadata(alert_dict, context):
     """Return key/value pairs to be attached to the file as metadata."""
     metadata = {"file_origin_message_id": context.event_id}
-    metadata[alert_ids.id_keys.objectId] = alert_ids.objectId
-    metadata[alert_ids.id_keys.sourceId] = alert_ids.sourceId
-    metadata["ra"] = alert[0][schema_map["source"]]["ra"]
-    metadata["dec"] = alert[0][schema_map["source"]]["dec"]
+    metadata["diaObjectId"] = alert_dict["diaObject"]["diaObjectId"]
+    metadata["diaSourceId"] = alert_dict["diaSource"]["diaSourceId"]
+    metadata["ra"] = alert_dict["diaSource"]["ra"]
+    metadata["dec"] = alert_dict["diaSource"]["dec"]
     return metadata
 
 
-def fix_schema(temp_file, alert, data, filename):
-    """Rewrites the temp_file with a corrected schema header
-        so that it is valid for upload to BigQuery.
+def _create_outgoing_alert(alert: pittgoogle.alert.Alert) -> pittgoogle.alert.Alert:
+    """Create an announcement of the table storage operation to Pub/Sub."""
+    # collect attributes
+    attrs = {
+        "objectId": str(alert["diaObject"]["diaObjectId"]),
+        "sourceId": str(alert["diaSource"]["diaSourceId"]),
+        **alert.attributes,
+    }
 
-    Args:
-        temp_file: Temporary file containing the alert.
-    """
-    version = guess_schema_version(data)
+    msg = alert.dict
 
-    # get the corrected schema if it exists, else return
-    try:
-        fpkl = f"valid_schemas/{SURVEY}_v{version}.pkl"
-        inpath = Path(__file__).resolve().parent / fpkl
-        with inpath.open("rb") as infile:
-            valid_schema = pickle.load(infile)
+    # create outgoing alert
+    alert_out = pittgoogle.Alert.from_dict(payload=msg, attributes=attrs, schema_name="ztf")
 
-    except FileNotFoundError:
-        return
-
-    # write the corrected file
-    temp_file.seek(0)
-    fastavro.writer(temp_file, valid_schema, alert)
-    temp_file.truncate()  # removes leftover data
-    temp_file.seek(0)
-
-
-def guess_schema_version(alert_bytes: bytes) -> str:
-    """Retrieve the LSST schema version
-
-    Args:
-        alert_bytes: An alert from LSST
-
-    Returns:
-        The schema version
-    """
-
-    version_regex_pattern = b'("version":\s")([0-9]*\.[0-9]*)(")'
-    version_match = re.search(version_regex_pattern, alert_bytes)
-    if version_match is None:
-        err_msg = f"Could not guess schema version for alert {alert_bytes}"
-        logger.log_text(err_msg, severity="ERROR")
-        raise SchemaParsingError(err_msg)
-
-    return version_match.group(2).decode()
-
-
-# mock data and run the module
-if __name__ == "__main__":
-    from broker_utils.testing import Mock
-
-    mock = Mock(schema_map=schema_map, drop_cutouts=False, serialize="avro")
-    args = mock.cfinput
-    run(args.msg, args.context)
-
-    print(mock.my_test_alert.ids)
+    return alert_out
