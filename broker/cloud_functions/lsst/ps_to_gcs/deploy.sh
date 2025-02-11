@@ -37,7 +37,6 @@ if [ "${teardown}" = "True" ]; then
     if [ "${testid}" != "False" ]; then
         gsutil rm -r "gs://${avro_bucket}"
         gcloud pubsub topics delete "${avro_topic}"
-        gcloud pubsub topics delete "${ps_to_gcs_trigger_topic}"
         gcloud functions delete "${ps_to_gcs_CF_name}"
     fi
 

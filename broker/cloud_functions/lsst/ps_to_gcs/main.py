@@ -9,17 +9,13 @@ import base64
 import io
 import json
 import os
-import pickle
 import struct
-import re
 import fastavro
 import pittgoogle
 from confluent_kafka.schema_registry import SchemaRegistryClient
-from pathlib import Path
 from tempfile import SpooledTemporaryFile
 from google.cloud import functions_v1, logging, storage
 from google.cloud.exceptions import PreconditionFailed
-from exceptions import SchemaParsingError
 
 
 PROJECT_ID = os.getenv("GCP_PROJECT")
@@ -123,12 +119,12 @@ def upload_bytes_to_bucket(event: dict, context: functions_v1.context.Context) -
         )
         schema = sr_client.get_schema(schema_id=schema_id)
         latest_schema = json.loads(schema.schema_str)
+        schema_version = latest_schema["namespace"]
         content_bytes = io.BytesIO(alert_bytes[5:])
 
         # deserialize the alert and create Alert object
         alert_dict = fastavro.schemaless_reader(content_bytes, latest_schema)
         temp_file.seek(0)  # necessary?
-
         filename = generate_alert_filename(
             {
                 "objectId": alert_dict["diaObject"]["diaObjectId"],
@@ -138,7 +134,7 @@ def upload_bytes_to_bucket(event: dict, context: functions_v1.context.Context) -
             }
         )
 
-        alert = pittgoogle.alert.Alert.from_dict(alert_dict)
+        alert = pittgoogle.alert.Alert.from_dict(payload=alert_dict, attributes=attrs)
 
         blob = bucket.blob(filename)
         blob.metadata = create_file_metadata(alert_dict, context)
@@ -149,7 +145,7 @@ def upload_bytes_to_bucket(event: dict, context: functions_v1.context.Context) -
 
         # Cloud Storage says this is not a duplicate, so now we publish the broker's main "alerts" stream
         temp_file.seek(0)
-        ALERTS_TOPIC.publish(_create_outgoing_alert(alert))
+        ALERTS_TOPIC.publish(_create_outgoing_alert(alert, schema_version))
 
 
 def deserialize_confluent_wire_header(raw):
@@ -189,7 +185,7 @@ def generate_alert_filename(aname: dict) -> str:
     return f"{topic}/{object_id}/{source_id}.{file_format}"
 
 
-def create_file_metadata(alert_dict, context):
+def create_file_metadata(alert_dict: dict, context):
     """Return key/value pairs to be attached to the file as metadata."""
     metadata = {"file_origin_message_id": context.event_id}
     metadata["diaObjectId"] = alert_dict["diaObject"]["diaObjectId"]
@@ -199,18 +195,21 @@ def create_file_metadata(alert_dict, context):
     return metadata
 
 
-def _create_outgoing_alert(alert: pittgoogle.alert.Alert) -> pittgoogle.alert.Alert:
-    """Create an announcement of the table storage operation to Pub/Sub."""
+def _create_outgoing_alert(
+    alert: pittgoogle.alert.Alert, schema_version: str
+) -> pittgoogle.alert.Alert:
+    """Publish the original alert message with attributes attached."""
+    msg = alert.dict
+
     # collect attributes
     attrs = {
-        "objectId": str(alert["diaObject"]["diaObjectId"]),
-        "sourceId": str(alert["diaSource"]["diaSourceId"]),
+        "objectId": str(msg["diaObject"]["diaObjectId"]),
+        "sourceId": str(msg["diaSource"]["diaSourceId"]),
+        "schema_version": schema_version,
         **alert.attributes,
     }
 
-    msg = alert.dict
-
     # create outgoing alert
-    alert_out = pittgoogle.Alert.from_dict(payload=msg, attributes=attrs, schema_name="ztf")
+    alert_out = pittgoogle.Alert.from_dict(payload=msg, attributes=attrs)
 
     return alert_out

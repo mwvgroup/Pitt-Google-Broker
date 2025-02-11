@@ -7,5 +7,6 @@ confluent-kafka>=2.6.0
 fastavro
 google-cloud-functions
 google-cloud-logging
+google-cloud-storage
 httpx # used by confluent-kafka
 pittgoogle-client>=0.3.11
