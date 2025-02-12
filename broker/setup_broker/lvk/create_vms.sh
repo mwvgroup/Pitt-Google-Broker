@@ -30,7 +30,7 @@ if [ "$teardown" = "True" ]; then
 else
 #--- Consumer VM
     # create VM
-    machinetype=e2-standard-2
+    machinetype="e2-custom-1-5632"
     # metadata
     googlelogging="google-logging-enabled=true"
     startupscript="startup-script-url=gs://${broker_bucket}/consumer/${survey}/vm_install.sh"
@@ -40,5 +40,4 @@ else
         --machine-type="$machinetype" \
         --scopes=cloud-platform \
         --metadata="${googlelogging},${startupscript},${shutdownscript}"
-
 fi

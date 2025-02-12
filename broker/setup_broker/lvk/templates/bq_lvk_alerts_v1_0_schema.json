@@ -60,12 +60,6 @@
         "type": "STRING"
       },
       {
-        "description": "A skymap in a multi-order FITS format as a Base64-encoded string.",
-        "mode": "NULLABLE",
-        "name": "skymap",
-        "type": "STRING"
-      },
-      {
         "description": "The type of search that uploaded the event.",
         "mode": "REQUIRED",
         "name": "search",
@@ -202,12 +196,6 @@
         "mode": "NULLABLE",
         "name": "time_sky_position_coincidence_far",
         "type": "FLOAT"
-      },
-      {
-        "description": "A skymap in a multi-order FITS format produced by combining the GW skymap and the external coincidence skymap.",
-        "mode": "NULLABLE",
-        "name": "combined_skymap",
-        "type": "STRING"
       }
   ],
     "mode": "NULLABLE",
