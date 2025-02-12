@@ -56,6 +56,7 @@ bq_dataset=$(define_GCP_resources "${survey}")
 # topics and subscriptions involved in writing alert data to BigQuery
 topic_alerts=$(define_GCP_resources "${survey}-alerts")
 subscription_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import") # BigQuery subscription
+subscription_alerts_reservoir=$(define_GCP_resources "${survey}-alerts-reservoir")
 deadletter_topic_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import-deadletter")
 deadletter_subscription_bigquery_import="${deadletter_topic_bigquery_import}"
 
@@ -78,7 +79,7 @@ manage_resources() {
 
         cd templates || exit 5
         bq mk --table "${PROJECT_ID}:${bq_dataset}.${alerts_table}" "bq_${survey}_${alerts_table}_schema.json" || exit 5
-        bq update --description "Alert data from LIGO/Virgo/KAGRA. This table is an archive of the lvk-alerts Pub/Sub stream. It has the same schema as the original alert bytes, including nested and repeated fields." "${PROJECT_ID}:${bq_dataset}.${alerts_table}"
+        bq update --description "Alert data from LIGO/Virgo/KAGRA. This table is an archive of the lvk-alerts Pub/Sub stream. It has the same schema (excluding skymaps) as the original alert bytes, including nested and repeated fields." "${PROJECT_ID}:${bq_dataset}.${alerts_table}"
         cd .. || exit 5
 
         # create broker bucket and upload files
@@ -93,6 +94,7 @@ manage_resources() {
         gcloud pubsub topics create "${topic_alerts}"
         gcloud pubsub topics create "${deadletter_topic_bigquery_import}"
         gcloud pubsub subscriptions create "${deadletter_subscription_bigquery_import}" --topic="${deadletter_topic_bigquery_import}"
+        gcloud pubsub subscriptions create "${subscription_alerts_reservoir}" --topic="${topic_alerts}"
         # in order to create BigQuery subscriptions, ensure that the following service account:
         # service-<project number>@gcp-sa-pubsub.iam.gserviceaccount.com" has the
         # bigquery.dataEditor role for each table
@@ -117,6 +119,7 @@ manage_resources() {
             gsutil -m -o "${o}" rm -r "gs://${broker_bucket}"
             bq rm -r -f "${PROJECT_ID}:${bq_dataset}"
             gcloud pubsub topics delete "${topic_alerts}"
+            gcloud pubsub subscriptions delete "${subscription_alerts_reservoir}"
             gcloud pubsub topics delete "${deadletter_topic_bigquery_import}"
             gcloud pubsub subscriptions delete "${deadletter_subscription_bigquery_import}"
             gcloud pubsub subscriptions delete "${subscription_bigquery_import}"
