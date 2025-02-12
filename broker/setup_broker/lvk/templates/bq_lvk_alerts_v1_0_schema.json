@@ -95,19 +95,19 @@
           {
             "description": "Probability that at least one of the compact objects was a neutron star",
             "mode": "NULLABLE",
-            "name": "hasns",
+            "name": "HasNS",
             "type": "FLOAT"
           },
           {
             "description": "Probability that the system ejected a non-zero amount of neutron star matter",
             "mode": "NULLABLE",
-            "name": "hasremnant",
+            "name": "HasRemnant",
             "type": "FLOAT"
           },
           {
             "description": "Probability that at least one of the compact objects has mass in the range 3-5 solar masses",
             "mode": "NULLABLE",
-            "name": "hasmassgap",
+            "name": "HasMassGap",
             "type": "FLOAT"
           }
         ],
@@ -121,25 +121,25 @@
           {
             "description": "Probability that the source is a BNS",
             "mode": "NULLABLE",
-            "name": "bns",
+            "name": "BNS",
             "type": "FLOAT"
           },
           {
             "description": "Probability that the source is a NSBH",
             "mode": "NULLABLE",
-            "name": "nsbh",
+            "name": "NSBH",
             "type": "FLOAT"
           },
           {
             "description": "Probability that the source is a BBH",
             "mode": "NULLABLE",
-            "name": "bbh",
+            "name": "BBH",
             "type": "FLOAT"
           },
           {
             "description": "Probability that the source is Terrestrial (i.e, noise)",
             "mode": "NULLABLE",
-            "name": "terrestrial",
+            "name": "Terrestrial",
             "type": "FLOAT"
           }
         ],
