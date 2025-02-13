@@ -29,12 +29,7 @@ log_name = "ps-to-gcs-cloudfnc"
 logger = logging_client.logger(log_name)
 
 # GCP resources used in this module
-bucket_name = f"{PROJECT_ID}-{SURVEY}_alerts_{VERSIONTAG}"  # store the Avro files
-if TESTID != "False":
-    bucket_name = f"{bucket_name}-{TESTID}"
-
 client = storage.Client()
-bucket = client.get_bucket(client.bucket(bucket_name, user_project=PROJECT_ID))
 ALERTS_TOPIC = pittgoogle.Topic.from_cloud(
     "alerts", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
 )
@@ -119,12 +114,11 @@ def upload_bytes_to_bucket(event: dict, context: functions_v1.context.Context) -
         )
         schema = sr_client.get_schema(schema_id=schema_id)
         latest_schema = json.loads(schema.schema_str)
-        schema_version = latest_schema["namespace"]
+        schema_version = latest_schema["namespace"].split(".")[1]
         content_bytes = io.BytesIO(alert_bytes[5:])
 
         # deserialize the alert and create Alert object
         alert_dict = fastavro.schemaless_reader(content_bytes, latest_schema)
-        temp_file.seek(0)  # necessary?
         filename = generate_alert_filename(
             {
                 "objectId": alert_dict["diaObject"]["diaObjectId"],
@@ -136,6 +130,11 @@ def upload_bytes_to_bucket(event: dict, context: functions_v1.context.Context) -
 
         alert = pittgoogle.alert.Alert.from_dict(payload=alert_dict, attributes=attrs)
 
+        bucket_name = f"{PROJECT_ID}-{SURVEY}_alerts_{schema_version}"  # store the Avro files
+        if TESTID != "False":
+            bucket_name = f"{bucket_name}-{TESTID}"
+
+        bucket = client.get_bucket(client.bucket(bucket_name, user_project=PROJECT_ID))
         blob = bucket.blob(filename)
         blob.metadata = create_file_metadata(alert_dict, context)
 
@@ -162,6 +161,7 @@ def deserialize_confluent_wire_header(raw):
         header.
     """
     _, version = _ConfluentWireFormatHeader.unpack(raw)
+
     return version
 
 
@@ -199,7 +199,17 @@ def _create_outgoing_alert(
     alert: pittgoogle.alert.Alert, schema_version: str
 ) -> pittgoogle.alert.Alert:
     """Publish the original alert message with attributes attached."""
-    msg = alert.dict
+
+    def process_dict(d):
+        """Recursively encode byte fields to base64 strings."""
+        if isinstance(d, dict):
+            return {k: process_dict(v) for k, v in d.items()}
+        if isinstance(d, bytes):
+            return base64.b64encode(d).decode("utf-8")
+        return d
+
+    # convert bytes in `dict` to base64 strings
+    msg = process_dict(alert.dict)
 
     # collect attributes
     attrs = {
