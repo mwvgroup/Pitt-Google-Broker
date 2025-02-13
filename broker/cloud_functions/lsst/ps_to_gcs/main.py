@@ -74,7 +74,7 @@ def run(event: dict, context: functions_v1.context.Context) -> None:
     https://cloud.google.com/functions/docs/writing/background#function_parameters
 
     Args:
-        msg: Pub/Sub message data and attributes.
+        event: Pub/Sub message data and attributes.
             `data` field contains the message data in a base64-encoded string.
             `attributes` field contains the message's custom attributes in a dict.
 
@@ -119,6 +119,7 @@ def upload_bytes_to_bucket(event: dict, context: functions_v1.context.Context) -
 
         # deserialize the alert and create Alert object
         alert_dict = fastavro.schemaless_reader(content_bytes, latest_schema)
+        temp_file.seek(0)
         filename = generate_alert_filename(
             {
                 "objectId": alert_dict["diaObject"]["diaObjectId"],
@@ -130,7 +131,9 @@ def upload_bytes_to_bucket(event: dict, context: functions_v1.context.Context) -
 
         alert = pittgoogle.alert.Alert.from_dict(payload=alert_dict, attributes=attrs)
 
-        bucket_name = f"{PROJECT_ID}-{SURVEY}_alerts_{schema_version}"  # store the Avro files
+        # specify bucket and store the Avro file
+        # alerts in topic may contain multiple schema versions
+        bucket_name = f"{PROJECT_ID}-{SURVEY}_alerts_{schema_version}"
         if TESTID != "False":
             bucket_name = f"{bucket_name}-{TESTID}"
 
