@@ -55,11 +55,14 @@ define_GCP_resources() {
 broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
 bq_dataset=$(define_GCP_resources "${survey}")
 topic_alerts_raw=$(define_GCP_resources "${survey}-alerts_raw")
+subscription_alerts_raw=$(define_GCP_resources "${survey}-alerts_raw-counter")
 topic_alerts=$(define_GCP_resources "${survey}-alerts")
+subscription_alerts=$(define_GCP_resources "${survey}-alerts-counter")
+subscription_reservoir=$(define_GCP_resources "${survey}-alerts-reservoir")
 # topics and subscriptions involved in writing alert data to BigQuery
-topic_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import")
+topic_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import-${versiontag}")
 subscription_bigquery_import="${topic_bigquery_import}" # BigQuery subscription
-deadletter_topic_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import-deadletter")
+deadletter_topic_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import-deadletter-${versiontag}")
 deadletter_subscription_bigquery_import="${deadletter_topic_bigquery_import}"
 
 alerts_table="alerts_${versiontag}"
@@ -104,6 +107,9 @@ manage_resources() {
         gcloud pubsub topics create "${topic_alerts}"
         gcloud pubsub topics create "${topic_bigquery_import}"
         gcloud pubsub topics create "${deadletter_topic_bigquery_import}"
+        gcloud pubsub subscriptions create "${subscription_alerts_raw}" --topic="${topic_alerts_raw}"
+        gcloud pubsub subscriptions create "${subscription_alerts}" --topic="${topic_alerts}"
+        gcloud pubsub subscriptions create "${subscription_reservoir}" --topic="${topic_alerts}"
         gcloud pubsub subscriptions create "${deadletter_subscription_bigquery_import}" --topic="${deadletter_topic_bigquery_import}"
         # in order to create BigQuery subscriptions, ensure that the following service account:
         # service-<project number>@gcp-sa-pubsub.iam.gserviceaccount.com" has the
@@ -115,7 +121,8 @@ manage_resources() {
             --drop-unknown-fields \
             --dead-letter-topic="${deadletter_topic_bigquery_import}" \
             --max-delivery-attempts=5 \
-            --dead-letter-topic-project="${PROJECT_ID}"
+            --dead-letter-topic-project="${PROJECT_ID}" \
+            --message-filter='attributes.schema_version = "'"${versiontag}"'"'
 
         # set IAM policies on resources
         user="allUsers"
@@ -132,6 +139,9 @@ manage_resources() {
             gcloud pubsub topics delete "${topic_alerts}"
             gcloud pubsub topics delete "${topic_bigquery_import}"
             gcloud pubsub topics delete "${deadletter_topic_bigquery_import}"
+            gcloud pubsub subscriptions delete "${subscription_alerts_raw}"
+            gcloud pubsub subscriptions delete "${subscription_alerts}"
+            gcloud pubsub subscriptions delete "${subscription_reservoir}"
             gcloud pubsub subscriptions delete "${deadletter_subscription_bigquery_import}"
             gcloud pubsub subscriptions delete "${subscription_bigquery_import}"
         fi
