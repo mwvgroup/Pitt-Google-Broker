@@ -93,11 +93,13 @@ manage_resources() {
             --max-delivery-attempts=5 \
             --dead-letter-topic-project="${PROJECT_ID}"
         # assign required permissions to the Pub/Sub service account
+        # this allows dead-lettered messages to be forwarded from the BigQuery subscription to the dead letter topic
+        # and it allows dead-lettered messages to be published to the dead letter topic.
         PUBSUB_SERVICE_ACCOUNT="service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com"
         gcloud pubsub topics add-iam-policy-binding "${deadletter_topic_bigquery_import}" \
             --member="serviceAccount:$PUBSUB_SERVICE_ACCOUNT"\
             --role="roles/pubsub.publisher"
-        gcloud pubsub subscriptions add-iam-policy-binding "${deadletter_subscription_bigquery_import}" \
+        gcloud pubsub subscriptions add-iam-policy-binding "${subscription_bigquery_import}" \
             --member="serviceAccount:$PUBSUB_SERVICE_ACCOUNT"\
             --role="roles/pubsub.subscriber"
     else
