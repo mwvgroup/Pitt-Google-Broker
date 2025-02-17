@@ -19,8 +19,8 @@ logging_client = logging.Client()
 logger = logging_client.logger(log_name)
 
 # GCP resources used in this module
-ALERT_DATA_TOPIC = pittgoogle.Topic.from_cloud(
-    "alert-bigquery-import", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
+TOPIC_BIGQUERY_IMPORT = pittgoogle.Topic.from_cloud(
+    "bigquery-import", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
 )
 
 
@@ -50,7 +50,7 @@ def run(event: dict, _context: functions_v1.context.Context) -> None:
     alert = pittgoogle.Alert.from_msg(msg=pubsub_message, schema_name="ztf")
 
     # transform the data and publish it to Pub/Sub
-    ALERT_DATA_TOPIC.publish(_drop_cutouts(alert))
+    TOPIC_BIGQUERY_IMPORT.publish(_drop_cutouts(alert))
 
 
 def _drop_cutouts(alert: pittgoogle.alert.Alert) -> pittgoogle.alert.Alert:
