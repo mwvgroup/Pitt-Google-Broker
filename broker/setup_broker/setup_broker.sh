@@ -14,8 +14,9 @@ versiontag=v$(echo "${schema_version}" | tr . _)  # 4.02 -> v4_02
 use_authentication="${5:-false}"  # whether the consumer VM should use an authenticated connection
 region="${6:-us-central1}"
 zone="${region}-a"  # just use zone "a" instead of adding another script arg
-
-PROJECT_ID=$GOOGLE_CLOUD_PROJECT # get the environment variable
+# get environment variables
+PROJECT_ID=$GOOGLE_CLOUD_PROJECT
+PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format="value(projectNumber)")
 
 #--- Make the user confirm the settings
 echo
@@ -91,6 +92,14 @@ manage_resources() {
             --dead-letter-topic="${deadletter_topic_bigquery_import}" \
             --max-delivery-attempts=5 \
             --dead-letter-topic-project="${PROJECT_ID}"
+        # assign required permissions to the Pub/Sub service account
+        PUBSUB_SERVICE_ACCOUNT="service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com"
+        gcloud pubsub topics add-iam-policy-binding ${deadletter_topic_bigquery_import} \
+            --member="serviceAccount:$PUBSUB_SERVICE_ACCOUNT"\
+            --role="roles/pubsub.publisher"
+        gcloud pubsub subscriptions add-iam-policy-binding ${deadletter_subscription_bigquery_import} \
+            --member="serviceAccount:$PUBSUB_SERVICE_ACCOUNT"\
+            --role="roles/pubsub.subscriber"
     else
         if [ "$environment_type" = "testing" ]; then
             # delete testing resources
