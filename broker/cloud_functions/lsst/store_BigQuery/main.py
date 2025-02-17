@@ -88,6 +88,28 @@ def deserialize_confluent_wire_header(raw):
     return version
 
 
+def _create_outgoing_alert(
+    alert: pittgoogle.alert.Alert, schema_version: str
+) -> pittgoogle.alert.Alert:
+    """Publish the original alert message with attributes attached."""
+
+    # drop cutouts
+    msg = _drop_cutouts(alert.dict)
+
+    # collect attributes
+    attrs = {
+        "objectId": str(msg["diaObject"]["diaObjectId"]),
+        "sourceId": str(msg["diaSource"]["diaSourceId"]),
+        "schema_version": schema_version,
+        **alert.attributes,
+    }
+
+    # create outgoing alert
+    alert_out = pittgoogle.Alert.from_dict(payload=msg, attributes=attrs)
+
+    return alert_out
+
+
 def _drop_cutouts(alert: pittgoogle.alert.Alert) -> pittgoogle.alert.Alert:
     """Removes cutouts from alerts."""
     # collect attributes
