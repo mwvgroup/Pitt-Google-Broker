@@ -94,10 +94,10 @@ manage_resources() {
             --dead-letter-topic-project="${PROJECT_ID}"
         # assign required permissions to the Pub/Sub service account
         PUBSUB_SERVICE_ACCOUNT="service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com"
-        gcloud pubsub topics add-iam-policy-binding ${deadletter_topic_bigquery_import} \
+        gcloud pubsub topics add-iam-policy-binding "${deadletter_topic_bigquery_import}" \
             --member="serviceAccount:$PUBSUB_SERVICE_ACCOUNT"\
             --role="roles/pubsub.publisher"
-        gcloud pubsub subscriptions add-iam-policy-binding ${deadletter_subscription_bigquery_import} \
+        gcloud pubsub subscriptions add-iam-policy-binding "${deadletter_subscription_bigquery_import}" \
             --member="serviceAccount:$PUBSUB_SERVICE_ACCOUNT"\
             --role="roles/pubsub.subscriber"
     else
