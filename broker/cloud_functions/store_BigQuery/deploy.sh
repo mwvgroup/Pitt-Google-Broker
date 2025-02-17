@@ -38,7 +38,7 @@ else # Deploy the Cloud Functions
 #--- BigQuery storage cloud function
     echo "Deploying Cloud Function: ${store_bq_CF_name}"
     store_bq_entry_point="run"
-    memory=512MB
+    memory=256MB
 
     gcloud functions deploy "${store_bq_CF_name}" \
         --entry-point "${store_bq_entry_point}" \
