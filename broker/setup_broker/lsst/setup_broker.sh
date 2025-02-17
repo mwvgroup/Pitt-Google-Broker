@@ -123,12 +123,20 @@ manage_resources() {
             --max-delivery-attempts=5 \
             --dead-letter-topic-project="${PROJECT_ID}" \
             --message-filter='attributes.schema_version = "'"${versiontag}"'"'
-
         # set IAM policies on resources
         user="allUsers"
         roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/userPublic"
         gcloud pubsub topics add-iam-policy-binding "${topic_alerts_raw}" --member="${user}" --role="${roleid}"
         gcloud pubsub topics add-iam-policy-binding "${topic_alerts}" --member="${user}" --role="${roleid}"
+        # this allows dead-lettered messages to be forwarded from the BigQuery subscription to the dead letter topic
+        # and it allows dead-lettered messages to be published to the dead letter topic.
+        PUBSUB_SERVICE_ACCOUNT="service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com"
+        gcloud pubsub topics add-iam-policy-binding "${deadletter_topic_bigquery_import}" \
+            --member="serviceAccount:$PUBSUB_SERVICE_ACCOUNT"\
+            --role="roles/pubsub.publisher"
+        gcloud pubsub subscriptions add-iam-policy-binding "${subscription_bigquery_import}" \
+            --member="serviceAccount:$PUBSUB_SERVICE_ACCOUNT"\
+            --role="roles/pubsub.subscriber"
     else
         if [ "$environment_type" = "testing" ]; then
             # delete testing resources
@@ -144,6 +152,12 @@ manage_resources() {
             gcloud pubsub subscriptions delete "${subscription_reservoir}"
             gcloud pubsub subscriptions delete "${deadletter_subscription_bigquery_import}"
             gcloud pubsub subscriptions delete "${subscription_bigquery_import}"
+        else
+            echo 'ERROR: No testid supplied.'
+            echo 'To avoid accidents, this script will not delete production resources.'
+            echo 'If that is your intention, you must delete them manually.'
+            echo 'Otherwise, please supply a testid.'
+            exit 1
         fi
     fi
 }
