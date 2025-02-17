@@ -107,6 +107,12 @@ manage_resources() {
             gcloud pubsub subscriptions delete "${subscription_alerts_raw}"
             gcloud pubsub subscriptions delete "${subscription_alerts}"
             gcloud pubsub subscriptions delete "${subscription_reservoir}"
+        else
+            echo 'ERROR: No testid supplied.'
+            echo 'To avoid accidents, this script will not delete production resources.'
+            echo 'If that is your intention, you must delete them manually.'
+            echo 'Otherwise, please supply a testid.'
+            exit 1
         fi
     fi
 }

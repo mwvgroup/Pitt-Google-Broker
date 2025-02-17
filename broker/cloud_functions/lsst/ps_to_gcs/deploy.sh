@@ -29,6 +29,7 @@ define_GCP_resources() {
 #--- GCP resources used in this script
 avro_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}_alerts_${versiontag}")
 avro_topic=$(define_GCP_resources "projects/${PROJECT_ID}/topics/${survey}-alert_avros")
+avro_subscription=$(define_GCP_resources "${survey}-alert_avros-counter")
 ps_to_gcs_trigger_topic=$(define_GCP_resources "${survey}-alerts_raw")
 ps_to_gcs_CF_name=$(define_GCP_resources "${survey}-upload_bytes_to_bucket")
 
@@ -37,6 +38,7 @@ if [ "${teardown}" = "True" ]; then
     if [ "${testid}" != "False" ]; then
         gsutil rm -r "gs://${avro_bucket}"
         gcloud pubsub topics delete "${avro_topic}"
+        gcloud pubsub subscriptions delete "${avro_subscription}"
         gcloud functions delete "${ps_to_gcs_CF_name}"
     fi
 
@@ -60,6 +62,8 @@ else # Deploy the Cloud Functions
         -e "$trigger_event" \
         -f "$format" \
         "gs://${avro_bucket}"
+    gcloud pubsub subscriptions create "${avro_subscription}" --topic="${avro_topic}"
+
 
 #--- Pub/Sub -> Cloud Storage Avro cloud function
     echo "Deploying Cloud Function: ${ps_to_gcs_CF_name}"

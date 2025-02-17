@@ -13,26 +13,41 @@ import struct
 import fastavro
 import pittgoogle
 from confluent_kafka.schema_registry import SchemaRegistryClient
-from tempfile import SpooledTemporaryFile
-from google.cloud import functions_v1, logging, storage
+from google.cloud import functions_v1, logging, storage, pubsub_v1
 from google.cloud.exceptions import PreconditionFailed
-
+from typing import Optional
 
 PROJECT_ID = os.getenv("GCP_PROJECT")
 TESTID = os.getenv("TESTID")
 SURVEY = os.getenv("SURVEY")
 VERSIONTAG = os.getenv("VERSIONTAG")
 
-# connect to the cloud logger
+# connect to the cloud logger and publisher
 logging_client = logging.Client()
 log_name = "ps-to-gcs-cloudfnc"
 logger = logging_client.logger(log_name)
+publisher = pubsub_v1.PublisherClient()
 
 # GCP resources used in this module
 client = storage.Client()
+available_schemas = {
+    "7.1": "v7_1",
+    "7.2": "v7_2",
+    "7.3": "v7_3",
+}
 ALERTS_TOPIC = pittgoogle.Topic.from_cloud(
     "alerts", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
 )
+BUCKETS = {}
+
+# alerts are stored in GCS buckets based on their schema version; alerts in topic may contain multiple schema versions.
+# to avoid making the get_bucket call for each alert, we'll cache the buckets and assign the correct bucket dynamically
+# based on the alert's schema version
+for versiontag in available_schemas.values():
+    bucket_name = f"{PROJECT_ID}-{SURVEY}_alerts_{versiontag}"
+    if TESTID != "False":
+        bucket_name = f"{bucket_name}-{TESTID}"
+    BUCKETS[versiontag] = client.get_bucket(client.bucket(bucket_name, user_project=PROJECT_ID))
 
 # define a binary data structure for packing and unpacking bytes
 _ConfluentWireFormatHeader = struct.Struct(">bi")
@@ -40,31 +55,6 @@ _ConfluentWireFormatHeader = struct.Struct(">bi")
 # By default, spool data in memory to avoid IO unless data is too big
 # LSST alerts are anticipated at 80 kB, so 1000 kB should be plenty
 max_alert_packet_size = 1_000_000
-
-
-class TempAlertFile(SpooledTemporaryFile):
-    """Subclass of SpooledTemporaryFile that is tied into the log
-
-    Log warning is issued when file rolls over onto disk.
-    """
-
-    def rollover(self) -> None:
-        """Move contents of the spooled file from memory onto disk"""
-        msg = f"Alert size exceeded max memory size: {self._max_size}"
-        logger.log_text(msg, severity="WARNING")
-        super().rollover()
-
-    @property
-    def readable(self):
-        return self._file.readable
-
-    @property
-    def writable(self):
-        return self._file.writable
-
-    @property
-    def seekable(self):  # necessary so that fastavro can write to the file
-        return self._file.seekable
 
 
 def run(event: dict, context: functions_v1.context.Context) -> None:
@@ -96,58 +86,49 @@ def run(event: dict, context: functions_v1.context.Context) -> None:
 def upload_bytes_to_bucket(event: dict, context: functions_v1.context.Context) -> None:
     """Uploads the msg data bytes to a GCP storage bucket."""
 
-    data = base64.b64decode(event["data"])  # alert packet, bytes
-    attrs = event.get("attributes", {})
+    alert_bytes = base64.b64decode(event["data"])  # alert packet, bytes
+    attributes = event.get("attributes", {})
 
-    with TempAlertFile(max_size=max_alert_packet_size, mode="w+b") as temp_file:
-        temp_file.write(data)
-        temp_file.seek(0)
+    # unpack the alert and read schema ID
+    header_bytes = alert_bytes[:5]
+    schema_id = deserialize_confluent_wire_header(header_bytes)
 
-        # unpack the alert and read schema ID
-        alert_bytes = temp_file.read()
-        header_bytes = alert_bytes[:5]
-        schema_id = deserialize_confluent_wire_header(header_bytes)
+    # get and load schema
+    sr_client = SchemaRegistryClient({"url": "https://usdf-alert-schemas-dev.slac.stanford.edu"})
+    schema = sr_client.get_schema(schema_id=schema_id)
+    latest_schema = json.loads(schema.schema_str)
+    schema_version = latest_schema["namespace"].split(".")[1]
+    content_bytes = io.BytesIO(alert_bytes[5:])
 
-        # get and load schema
-        sr_client = SchemaRegistryClient(
-            {"url": "https://usdf-alert-schemas-dev.slac.stanford.edu"}
-        )
-        schema = sr_client.get_schema(schema_id=schema_id)
-        latest_schema = json.loads(schema.schema_str)
-        schema_version = latest_schema["namespace"].split(".")[1]
-        content_bytes = io.BytesIO(alert_bytes[5:])
+    # deserialize the alert and create Alert object
+    alert_dict = fastavro.schemaless_reader(content_bytes, latest_schema)
+    filename = generate_alert_filename(
+        {
+            "objectId": alert_dict["diaObject"]["diaObjectId"],
+            "sourceId": alert_dict["diaSource"]["diaSourceId"],
+            "topic": attributes.get("kafka.topic", "no_topic"),
+            "format": "avro",
+        }
+    )
 
-        # deserialize the alert and create Alert object
-        alert_dict = fastavro.schemaless_reader(content_bytes, latest_schema)
-        temp_file.seek(0)
-        filename = generate_alert_filename(
-            {
-                "objectId": alert_dict["diaObject"]["diaObjectId"],
-                "sourceId": alert_dict["diaSource"]["diaSourceId"],
-                "topic": attrs.get("kafka.topic", "no_topic"),
-                "format": "avro",
-            }
-        )
+    # get bucket based on the alert's schema version and store the Avro file
+    bucket = BUCKETS.get(schema_version)
+    blob = bucket.blob(filename)
+    blob.metadata = create_file_metadata(alert_dict, context)
 
-        alert = pittgoogle.alert.Alert.from_dict(payload=alert_dict, attributes=attrs)
+    # raise a PreconditionFailed exception if filename already exists in the bucket using "if_generation_match=0"
+    # let it raise. the main function will catch it and then drop the message.
+    blob.upload_from_file(io.BytesIO(alert_bytes), if_generation_match=0)
 
-        # specify bucket and store the Avro file
-        # alerts in topic may contain multiple schema versions
-        bucket_name = f"{PROJECT_ID}-{SURVEY}_alerts_{schema_version}"
-        if TESTID != "False":
-            bucket_name = f"{bucket_name}-{TESTID}"
-
-        bucket = client.get_bucket(client.bucket(bucket_name, user_project=PROJECT_ID))
-        blob = bucket.blob(filename)
-        blob.metadata = create_file_metadata(alert_dict, context)
-
-        # raise a PreconditionFailed exception if filename already exists in the bucket using "if_generation_match=0"
-        # let it raise. the main function will catch it and then drop the message.
-        blob.upload_from_file(temp_file, if_generation_match=0)
-
-        # Cloud Storage says this is not a duplicate, so now we publish the broker's main "alerts" stream
-        temp_file.seek(0)
-        ALERTS_TOPIC.publish(_create_outgoing_alert(alert, schema_version))
+    # Cloud Storage says this is not a duplicate, so now we publish the broker's main "alerts" stream
+    return _create_outgoing_alert(
+        topic_name=ALERTS_TOPIC.name,
+        message=alert_bytes,
+        schema_version=schema_version,
+        project_id=PROJECT_ID,
+        attributes=attributes,
+        publisher=publisher,
+    )
 
 
 def deserialize_confluent_wire_header(raw):
@@ -199,30 +180,22 @@ def create_file_metadata(alert_dict: dict, context):
 
 
 def _create_outgoing_alert(
-    alert: pittgoogle.alert.Alert, schema_version: str
-) -> pittgoogle.alert.Alert:
-    """Publish the original alert message with attributes attached."""
+    topic_name: str,
+    message: bytes,
+    schema_version: str,
+    project_id: Optional[str] = None,
+    attributes: Optional[dict] = None,
+    publisher: Optional[pubsub_v1.PublisherClient] = None,
+) -> str:
+    """Publish messages to a Pub/Sub topic."""
 
-    def process_dict(d):
-        """Recursively encode byte fields to base64 strings."""
-        if isinstance(d, dict):
-            return {k: process_dict(v) for k, v in d.items()}
-        if isinstance(d, bytes):
-            return base64.b64encode(d).decode("utf-8")
-        return d
+    # enforce bytes type for message
+    if not isinstance(message, bytes):
+        raise TypeError("`message` must be bytes or a dict.")
 
-    # convert bytes in `dict` to base64 strings
-    msg = process_dict(alert.dict)
+    attrs = {"schema_version": schema_version, **attributes}
 
-    # collect attributes
-    attrs = {
-        "objectId": str(msg["diaObject"]["diaObjectId"]),
-        "sourceId": str(msg["diaSource"]["diaSourceId"]),
-        "schema_version": schema_version,
-        **alert.attributes,
-    }
+    topic_path = publisher.topic_path(project_id, topic_name)
+    future = publisher.publish(topic_path, data=message, **attrs)
 
-    # create outgoing alert
-    alert_out = pittgoogle.Alert.from_dict(payload=msg, attributes=attrs)
-
-    return alert_out
+    return future.result()
