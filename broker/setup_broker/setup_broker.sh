@@ -75,6 +75,8 @@ manage_resources() {
     if [ "$mode" = "setup" ]; then
         # setup resources
         python3 setup_gcp.py --survey="$survey" --testid="$testid" --confirmed --region="${region}" --versiontag="${versiontag}"
+        # the following resources are not created/deleted by setup_gcp.py
+        # will eventually migrate away from using setup_gcp.py altogether
         gcloud pubsub topics create "${topic_bigquery_import}"
         gcloud pubsub topics create "${deadletter_topic_bigquery_import}"
         gcloud pubsub subscriptions create "${deadletter_subscription_bigquery_import}" --topic="${deadletter_topic_bigquery_import}"
@@ -97,6 +99,12 @@ manage_resources() {
             gcloud pubsub topics delete "${deadletter_topic_bigquery_import}"
             gcloud pubsub subscriptions delete "${deadletter_subscription_bigquery_import}"
             gcloud pubsub subscriptions delete "${subscription_bigquery_import}"
+        else
+            echo 'ERROR: No testid supplied.'
+            echo 'To avoid accidents, this script will not delete production resources.'
+            echo 'If that is your intention, you must delete them manually.'
+            echo 'Otherwise, please supply a testid.'
+            exit 1
         fi
     fi
 }
