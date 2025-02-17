@@ -60,12 +60,6 @@
         "type": "STRING"
       },
       {
-        "description": "A skymap in a multi-order FITS format as a Base64-encoded string.",
-        "mode": "NULLABLE",
-        "name": "skymap",
-        "type": "STRING"
-      },
-      {
         "description": "The type of search that uploaded the event.",
         "mode": "REQUIRED",
         "name": "search",
@@ -87,7 +81,7 @@
         "description": "The duration of the burst in seconds. Only present if group=Burst.",
         "mode": "NULLABLE",
         "name": "duration",
-        "type": "TIMESTAMP"
+        "type": "FLOAT"
       },
       {
         "description": "The central frequency of the burst. Only present if group=Burst.",
@@ -101,19 +95,19 @@
           {
             "description": "Probability that at least one of the compact objects was a neutron star",
             "mode": "NULLABLE",
-            "name": "hasns",
+            "name": "HasNS",
             "type": "FLOAT"
           },
           {
             "description": "Probability that the system ejected a non-zero amount of neutron star matter",
             "mode": "NULLABLE",
-            "name": "hasremnant",
+            "name": "HasRemnant",
             "type": "FLOAT"
           },
           {
             "description": "Probability that at least one of the compact objects has mass in the range 3-5 solar masses",
             "mode": "NULLABLE",
-            "name": "hasmassgap",
+            "name": "HasMassGap",
             "type": "FLOAT"
           }
         ],
@@ -127,25 +121,25 @@
           {
             "description": "Probability that the source is a BNS",
             "mode": "NULLABLE",
-            "name": "bns",
+            "name": "BNS",
             "type": "FLOAT"
           },
           {
             "description": "Probability that the source is a NSBH",
             "mode": "NULLABLE",
-            "name": "nsbh",
+            "name": "NSBH",
             "type": "FLOAT"
           },
           {
             "description": "Probability that the source is a BBH",
             "mode": "NULLABLE",
-            "name": "bbh",
+            "name": "BBH",
             "type": "FLOAT"
           },
           {
             "description": "Probability that the source is Terrestrial (i.e, noise)",
             "mode": "NULLABLE",
-            "name": "terrestrial",
+            "name": "Terrestrial",
             "type": "FLOAT"
           }
         ],
@@ -202,12 +196,6 @@
         "mode": "NULLABLE",
         "name": "time_sky_position_coincidence_far",
         "type": "FLOAT"
-      },
-      {
-        "description": "A skymap in a multi-order FITS format produced by combining the GW skymap and the external coincidence skymap.",
-        "mode": "NULLABLE",
-        "name": "combined_skymap",
-        "type": "STRING"
       }
   ],
     "mode": "NULLABLE",
