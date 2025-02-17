@@ -81,7 +81,7 @@ def run(event: dict, context: functions_v1.context.Context) -> None:
         upload_bytes_to_bucket(event, context)
     # this is raised by blob.upload_from_file if the object already exists in the bucket
     except PreconditionFailed:
-        # we'll simply return, and the duplicate alert will go no further in our pipeline
+        # we'll simply pass, and the duplicate alert will go no further in our pipeline
         pass
 
 
