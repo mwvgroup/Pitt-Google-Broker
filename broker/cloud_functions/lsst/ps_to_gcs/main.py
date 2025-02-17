@@ -10,12 +10,14 @@ import io
 import json
 import os
 import struct
+from typing import Optional
+
 import fastavro
 import pittgoogle
 from confluent_kafka.schema_registry import SchemaRegistryClient
 from google.cloud import functions_v1, logging, storage, pubsub_v1
 from google.cloud.exceptions import PreconditionFailed
-from typing import Optional
+
 
 PROJECT_ID = os.getenv("GCP_PROJECT")
 TESTID = os.getenv("TESTID")
@@ -80,7 +82,7 @@ def run(event: dict, context: functions_v1.context.Context) -> None:
     # this is raised by blob.upload_from_file if the object already exists in the bucket
     except PreconditionFailed:
         # we'll simply return, and the duplicate alert will go no further in our pipeline
-        return
+        pass
 
 
 def upload_bytes_to_bucket(event: dict, context: functions_v1.context.Context) -> None:
@@ -121,13 +123,11 @@ def upload_bytes_to_bucket(event: dict, context: functions_v1.context.Context) -
     blob.upload_from_file(io.BytesIO(alert_bytes), if_generation_match=0)
 
     # Cloud Storage says this is not a duplicate, so now we publish the broker's main "alerts" stream
-    return _create_outgoing_alert(
+    return publish_outgoing_alert(
         topic_name=ALERTS_TOPIC.name,
         message=alert_bytes,
         schema_version=schema_version,
-        project_id=PROJECT_ID,
         attributes=attributes,
-        publisher=publisher,
     )
 
 
@@ -179,13 +179,8 @@ def create_file_metadata(alert_dict: dict, context):
     return metadata
 
 
-def _create_outgoing_alert(
-    topic_name: str,
-    message: bytes,
-    schema_version: str,
-    project_id: Optional[str] = None,
-    attributes: Optional[dict] = None,
-    publisher: Optional[pubsub_v1.PublisherClient] = None,
+def publish_outgoing_alert(
+    topic_name: str, message: bytes, schema_version: str, attributes: Optional[dict] = None
 ) -> str:
     """Publish messages to a Pub/Sub topic."""
 
@@ -195,7 +190,7 @@ def _create_outgoing_alert(
 
     attrs = {"schema_version": schema_version, **attributes}
 
-    topic_path = publisher.topic_path(project_id, topic_name)
+    topic_path = publisher.topic_path(PROJECT_ID, topic_name)
     future = publisher.publish(topic_path, data=message, **attrs)
 
     return future.result()
