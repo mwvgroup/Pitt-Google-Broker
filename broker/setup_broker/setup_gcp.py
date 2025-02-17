@@ -127,18 +127,6 @@ def _resources(service, survey="ztf", testid="test", versiontag="v3_3"):
             datasets = dtmp
         return (datasets, table_data)
 
-    if service == "dashboard":
-        # get resources not named elsewhere in this function
-        dataflow = [f"{survey}-bq-sink", f"{survey}-value-added"]
-        instances = [f"{survey}-night-conductor", f"{survey}-consumer"]
-        all = dataflow + instances
-
-        if testid is not False:
-            atmp = [f"{a}-{testid}" for a in all]
-            all = atmp
-
-        return all
-
     if service == "GCS":
         buckets = {  # '<bucket-name>': ['<file-name to upload>',]
             # the avro bucket f'{PROJECT_ID}-{survey}_alerts_{versiontag}'
@@ -298,119 +286,6 @@ def setup_bigquery(
                         print(f"{out}")  # should be a success message
 
 
-def setup_dashboard(survey="ztf", testid="test", teardown=False) -> None:
-    """Create a monitoring dashboard for the broker instance.
-
-    See: https://cloud.google.com/blog/products/management-tools/cloud-monitoring-dashboards-using-an-api
-
-    Args:
-        survey (str): which astronomical survey the broker instance will
-                      connect to. Controls the names of resources and the
-                      behavior of functions that rely on schemas.
-        testid (False or str): False: Use production resources.
-                                str: Use test resources. (This string is
-                                appended to the resource names.)
-        teardown (bool): if True, delete resources rather than setting them up
-    """
-    # dashboard ID will be the last part of the "name" field of the json file
-    dashboard_id = f"broker-instance-{survey}-{testid}"
-    dashboard_url = (
-        f"https://console.cloud.google.com/monitoring/dashboards/builder/{dashboard_id}"
-    )
-
-    if not teardown:
-        # create json config file
-        jpath = _setup_dashboard_json(survey=survey, testid=testid)
-
-        # if the dashboard already exists, delete it so we can make a new one
-        gdescribe = f"gcloud monitoring dashboards describe {dashboard_id}"
-        try:
-            dboard = subprocess.check_output(shlex.split(gdescribe), stderr=subprocess.DEVNULL)
-        except:
-            pass
-        else:
-            gdelete = f"gcloud monitoring dashboards delete projects/{PROJECT_ID}/dashboards/{dashboard_id} --quiet"
-            __ = subprocess.check_output(shlex.split(gdelete))
-
-        # create the dashboard
-        gboard = f"gcloud monitoring dashboards create --config-from-file={jpath}"
-        __ = subprocess.check_output(shlex.split(gboard))
-
-        # tell the user where to view it
-        print("\nA monitoring dashboard has been created for you!\nView it at:")
-        print(f"{dashboard_url}\n")
-
-        # clean up the json file
-        os.remove(jpath)
-
-    else:  # delete the dashboard
-        gdelete = (
-            f"gcloud monitoring dashboards delete projects/{PROJECT_ID}/dashboards/{dashboard_id}"
-        )
-        __ = subprocess.check_output(shlex.split(gdelete))
-
-
-def _setup_dashboard_json(survey="ztf", testid="test"):
-    """Create a new dashboard config json file from a template."""
-
-    ftemplate = "templates/dashboard.json"
-    # open the template config file
-    with open(ftemplate, "r") as f:
-        dstring = json.dumps(json.load(f))
-
-    # change the resource names
-    rnames = _setup_dashboard_resource_names(survey=survey, testid=testid)
-    # {'old-name': 'new-name'}
-    for k, v in rnames.items():
-        dstring = dstring.replace(k, v)
-
-    # write the new config file
-    if testid != False:
-        fname = f"templates/dashboard-{survey}-{testid}.json"
-    else:
-        fname = f"templates/dashboard-{survey}-production.json"
-    with open(fname, "w") as f:
-        json.dump(json.loads(dstring), f, indent=2)
-
-    return fname
-
-
-def _setup_dashboard_resource_names(survey="ztf", testid="test"):
-    """Get dict mapping resources {'old-name': 'new-name',} which will be used
-    to do a find-and-replace in the dashboard's json config file.
-    Relies heavily on lists and dicts being ordered (requires Python>=3.7).
-    """
-    # PS
-    psold = _resources("PS", survey="ztf", testid=False)
-    psnew = _resources("PS", survey=survey, testid=testid)
-    # get topic names
-    pstopics = {old: new for old, new in zip(psold.keys(), psnew.keys())}
-    # --- Fix some problems: (yes, this is messy)
-    # 1) The `alerts_pure` topic/subscription name gets mixed up. fix it
-    pspure = {f"-{testid}_pure": f"_pure-{testid}"}
-    # 2) Subscription names are topic names with a suffix appended.
-    # The topic name gets a testid appended,
-    # then we need to swap the testid with the suffix
-    # Current dashboard only uses "counter" subscriptions
-    pssubs = {f"-{testid}-counter": f"-counter-{testid}"}
-
-    # VMs and Dataflow jobs
-    oold = _resources("dashboard", survey="ztf", testid=False)
-    onew = _resources("dashboard", survey=survey, testid=testid)
-    othernames = {old: new for old, new in zip(oold, onew)}
-
-    # add the survey and testid, merge the dicts, and return
-    resource_maps = {
-        "surveyname": f"{survey}",
-        "testid": f"{testid}",
-        **pstopics,
-        **pspure,
-        **pssubs,
-        **othernames,
-    }
-    return resource_maps
-
-
 def setup_buckets(
     survey="ztf", testid="test", teardown=False, versiontag="v3_3", region="us-central1"
 ) -> None:
@@ -557,7 +432,6 @@ def auto_setup(
         survey=survey, testid=testid, teardown=teardown, versiontag=versiontag, region=region
     )
     setup_pubsub(survey=survey, testid=testid, teardown=teardown)
-    setup_dashboard(survey=survey, testid=testid, teardown=teardown)
 
 
 if __name__ == "__main__":
