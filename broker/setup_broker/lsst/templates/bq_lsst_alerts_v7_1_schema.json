@@ -550,7 +550,7 @@
           },
           {
             "description": "Chi^2 statistic of the model fit.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "dipoleChi2",
             "type": "FLOAT"
           },
