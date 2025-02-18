@@ -118,7 +118,7 @@
           },
           {
             "description": "Flux in a 12 pixel radius aperture on the difference image.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "apFlux",
             "type": "FLOAT"
           },
@@ -478,37 +478,37 @@
           },
           {
             "description": "Covariance of dipoleMeanFlux and dipoleAngle.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "dipoleMeanFlux_dipoleAngle_Cov",
             "type": "FLOAT"
           },
           {
             "description": "Covariance of dipoleFluxDiff and dipoleRa.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "dipoleFluxDiff_dipoleRa_Cov",
             "type": "FLOAT"
           },
           {
             "description": "Covariance of dipoleFluxDiff and dipoleDec.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "dipoleFluxDiff_dipoleDec_Cov",
             "type": "FLOAT"
           },
           {
             "description": "Covariance of dipoleFluxDiff and dipoleLength.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "dipoleFluxDiff_dipoleLength_Cov",
             "type": "FLOAT"
           },
           {
             "description": "Covariance of dipoleFluxDiff and dipoleAngle.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "dipoleFluxDiff_dipoleAngle_Cov",
             "type": "FLOAT"
           },
           {
             "description": "Covariance of dipoleRa and dipoleDec.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "dipoleRa_dipoleDec_Cov",
             "type": "FLOAT"
           },
@@ -550,7 +550,7 @@
           },
           {
             "description": "Chi^2 statistic of the model fit.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "dipoleChi2",
             "type": "FLOAT"
           },
@@ -748,85 +748,85 @@
           },
           {
             "description": "Some of the source footprint is outside usable exposure region (masked EDGE or NO_DATA, or centroid off image).",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "pixelFlags_edge",
             "type": "BOOLEAN"
           },
           {
             "description": "Interpolated pixel in the DiaSource footprint.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "pixelFlags_interpolated",
             "type": "BOOLEAN"
           },
           {
             "description": "Interpolated pixel in the 3x3 region around the centroid.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "pixelFlags_interpolatedCenter",
             "type": "BOOLEAN"
           },
           {
             "description": "DiaSource center is off image.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "pixelFlags_offimage",
             "type": "BOOLEAN"
           },
           {
             "description": "Saturated pixel in the DiaSource footprint.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "pixelFlags_saturated",
             "type": "BOOLEAN"
           },
           {
             "description": "Saturated pixel in the 3x3 region around the centroid.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "pixelFlags_saturatedCenter",
             "type": "BOOLEAN"
           },
           {
             "description": "DiaSource's footprint includes suspect pixels.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "pixelFlags_suspect",
             "type": "BOOLEAN"
           },
           {
             "description": "Suspect pixel in the 3x3 region around the centroid.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "pixelFlags_suspectCenter",
             "type": "BOOLEAN"
           },
           {
             "description": "Streak in the DiaSource footprint.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "pixelFlags_streak",
             "type": "BOOLEAN"
           },
           {
             "description": "Streak in the 3x3 region around the centroid.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "pixelFlags_streakCenter",
             "type": "BOOLEAN"
           },
           {
             "description": "Injection in the DiaSource footprint.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "pixelFlags_injected",
             "type": "BOOLEAN"
           },
           {
             "description": "Injection in the 3x3 region around the centroid.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "pixelFlags_injectedCenter",
             "type": "BOOLEAN"
           },
           {
             "description": "Template injection in the DiaSource footprint.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "pixelFlags_injected_template",
             "type": "BOOLEAN"
           },
           {
             "description": "Template injection in the 3x3 region around the centroid.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "pixelFlags_injected_templateCenter",
             "type": "BOOLEAN"
           }
@@ -948,7 +948,7 @@
           },
           {
             "description": "Flux in a 12 pixel radius aperture on the difference image.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "apFlux",
             "type": "FLOAT"
           },
@@ -1308,37 +1308,37 @@
           },
           {
             "description": "Covariance of dipoleMeanFlux and dipoleAngle.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "dipoleMeanFlux_dipoleAngle_Cov",
             "type": "FLOAT"
           },
           {
             "description": "Covariance of dipoleFluxDiff and dipoleRa.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "dipoleFluxDiff_dipoleRa_Cov",
             "type": "FLOAT"
           },
           {
             "description": "Covariance of dipoleFluxDiff and dipoleDec.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "dipoleFluxDiff_dipoleDec_Cov",
             "type": "FLOAT"
           },
           {
             "description": "Covariance of dipoleFluxDiff and dipoleLength.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "dipoleFluxDiff_dipoleLength_Cov",
             "type": "FLOAT"
           },
           {
             "description": "Covariance of dipoleFluxDiff and dipoleAngle.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "dipoleFluxDiff_dipoleAngle_Cov",
             "type": "FLOAT"
           },
           {
             "description": "Covariance of dipoleRa and dipoleDec.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "dipoleRa_dipoleDec_Cov",
             "type": "FLOAT"
           },
@@ -1380,7 +1380,7 @@
           },
           {
             "description": "Chi^2 statistic of the model fit.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "dipoleChi2",
             "type": "FLOAT"
           },
@@ -1572,85 +1572,85 @@
           },
           {
             "description": "Some of the source footprint is outside usable exposure region (masked EDGE or NO_DATA, or centroid off image).",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "pixelFlags_edge",
             "type": "BOOLEAN"
           },
           {
             "description": "Interpolated pixel in the DiaSource footprint.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "pixelFlags_interpolated",
             "type": "BOOLEAN"
           },
           {
             "description": "Interpolated pixel in the 3x3 region around the centroid.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "pixelFlags_interpolatedCenter",
             "type": "BOOLEAN"
           },
           {
             "description": "DiaSource center is off image.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "pixelFlags_offimage",
             "type": "BOOLEAN"
           },
           {
             "description": "Saturated pixel in the DiaSource footprint.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "pixelFlags_saturated",
             "type": "BOOLEAN"
           },
           {
             "description": "Saturated pixel in the 3x3 region around the centroid.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "pixelFlags_saturatedCenter",
             "type": "BOOLEAN"
           },
           {
             "description": "DiaSource's footprint includes suspect pixels.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "pixelFlags_suspect",
             "type": "BOOLEAN"
           },
           {
             "description": "Suspect pixel in the 3x3 region around the centroid.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "pixelFlags_suspectCenter",
             "type": "BOOLEAN"
           },
           {
             "description": "Streak in the DiaSource footprint.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "pixelFlags_streak",
             "type": "BOOLEAN"
           },
           {
             "description": "Streak in the 3x3 region around the centroid.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "pixelFlags_streakCenter",
             "type": "BOOLEAN"
           },
           {
             "description": "Injection in the DiaSource footprint.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "pixelFlags_injected",
             "type": "BOOLEAN"
           },
           {
             "description": "Injection in the 3x3 region around the centroid.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "pixelFlags_injectedCenter",
             "type": "BOOLEAN"
           },
           {
             "description": "Template injection in the DiaSource footprint.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "pixelFlags_injected_template",
             "type": "BOOLEAN"
           },
           {
             "description": "Template injection in the 3x3 region around the centroid.",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "pixelFlags_injected_templateCenter",
             "type": "BOOLEAN"
           }
@@ -2318,7 +2318,7 @@
           },
           {
             "description": "Best fit absolute magnitude (u band).",
-            "mode": "REQUIRED",
+            "mode": "NULLABLE",
             "name": "u_H",
             "type": "FLOAT"
           },
