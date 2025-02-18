@@ -60,8 +60,8 @@ topic_alerts=$(define_GCP_resources "${survey}-alerts")
 subscription_alerts=$(define_GCP_resources "${survey}-alerts-counter")
 subscription_reservoir=$(define_GCP_resources "${survey}-alerts-reservoir")
 # topics and subscriptions involved in writing alert data to BigQuery
-topic_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import-${versiontag}")
-subscription_bigquery_import="${topic_bigquery_import}" # BigQuery subscription
+topic_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import")
+subscription_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import-${versiontag}") # BigQuery subscription
 deadletter_topic_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import-deadletter-${versiontag}")
 deadletter_subscription_bigquery_import="${deadletter_topic_bigquery_import}"
 

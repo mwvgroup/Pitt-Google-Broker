@@ -6,6 +6,7 @@
 import base64
 import io
 import json
+import math
 import os
 import struct
 import fastavro
@@ -24,8 +25,8 @@ logging_client = logging.Client()
 logger = logging_client.logger(log_name)
 
 # GCP resources used in this module
-ALERT_DATA_TOPIC = pittgoogle.Topic.from_cloud(
-    "alert-data", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
+TOPIC_BIGQUERY_IMPORT = pittgoogle.Topic.from_cloud(
+    "bigquery-import", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
 )
 
 # define a binary data structure for packing and unpacking bytes
@@ -61,6 +62,7 @@ def run(event: dict, _context: functions_v1.context.Context) -> None:
     sr_client = SchemaRegistryClient({"url": "https://usdf-alert-schemas-dev.slac.stanford.edu"})
     schema = sr_client.get_schema(schema_id=schema_id)
     latest_schema = json.loads(schema.schema_str)
+    schema_version = latest_schema["namespace"].split(".")[1]
     content_bytes = io.BytesIO(alert_bytes[5:])
 
     # create alert object
@@ -68,7 +70,7 @@ def run(event: dict, _context: functions_v1.context.Context) -> None:
     alert = pittgoogle.Alert.from_dict(payload=alert_dict, attributes=attrs)
 
     # transform the data and publish it to Pub/Sub
-    ALERT_DATA_TOPIC.publish(_drop_cutouts(alert))
+    TOPIC_BIGQUERY_IMPORT.publish(_create_outgoing_alert(alert, schema_version=schema_version))
 
 
 def deserialize_confluent_wire_header(raw):
@@ -93,19 +95,26 @@ def _create_outgoing_alert(
 ) -> pittgoogle.alert.Alert:
     """Publish the original alert message with attributes attached."""
 
-    # drop cutouts
-    msg = _drop_cutouts(alert.dict)
+    def transform_nan(alert_dict):
+        """Recursively replace NaN values with None in a dictionary."""
+        if isinstance(alert_dict, dict):
+            return {k: transform_nan(v) for k, v in alert_dict.items()}
+        elif isinstance(alert_dict, list):
+            return [transform_nan(v) for v in alert_dict]
+        elif isinstance(alert_dict, float) and math.isnan(alert_dict):
+            return None  # Convert NaN to None
+        return alert_dict
 
-    # collect attributes
-    attrs = {
-        "objectId": str(msg["diaObject"]["diaObjectId"]),
-        "sourceId": str(msg["diaSource"]["diaSourceId"]),
-        "schema_version": schema_version,
-        **alert.attributes,
-    }
+    # drop cutouts
+    msg = _drop_cutouts(alert)
+
+    # replace NaN values with None
+    alert_dict = transform_nan(msg.dict)
 
     # create outgoing alert
-    alert_out = pittgoogle.Alert.from_dict(payload=msg, attributes=attrs)
+    alert_out = pittgoogle.Alert.from_dict(
+        payload=alert_dict, attributes={"schema_version": schema_version, **alert.attributes}
+    )
 
     return alert_out
 
