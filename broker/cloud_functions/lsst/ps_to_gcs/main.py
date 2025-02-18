@@ -126,8 +126,12 @@ def upload_bytes_to_bucket(event: dict, context: functions_v1.context.Context) -
     return publish_outgoing_alert(
         topic_name=ALERTS_TOPIC.name,
         message=alert_bytes,
-        schema_version=schema_version,
-        attributes=attributes,
+        attributes={
+            "objectId": str(alert_dict["diaObject"]["diaObjectId"]),
+            "sourceId": str(alert_dict["diaSource"]["diaSourceId"]),
+            "schema_version": schema_version,
+            **attributes,
+        },
     )
 
 
@@ -180,7 +184,7 @@ def create_file_metadata(alert_dict: dict, context):
 
 
 def publish_outgoing_alert(
-    topic_name: str, message: bytes, schema_version: str, attributes: Optional[dict] = None
+    topic_name: str, message: bytes, attributes: Optional[dict] = None
 ) -> str:
     """Publish messages to a Pub/Sub topic."""
 
@@ -188,9 +192,7 @@ def publish_outgoing_alert(
     if not isinstance(message, bytes):
         raise TypeError("`message` must be bytes or a dict.")
 
-    attrs = {"schema_version": schema_version, **attributes}
-
     topic_path = publisher.topic_path(PROJECT_ID, topic_name)
-    future = publisher.publish(topic_path, data=message, **attrs)
+    future = publisher.publish(topic_path, data=message, **attributes)
 
     return future.result()
