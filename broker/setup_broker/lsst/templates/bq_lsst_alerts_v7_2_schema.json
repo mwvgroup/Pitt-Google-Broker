@@ -252,7 +252,7 @@
             "description": "Right ascension coordinate of centroid for trailed source model.",
             "mode": "NULLABLE",
             "name": "trailRa",
-            "type": "INTEGER"
+            "type": "FLOAT"
           },
           {
             "description": "Uncertainty of trailRa.",
@@ -1082,7 +1082,7 @@
             "description": "Right ascension coordinate of centroid for trailed source model.",
             "mode": "NULLABLE",
             "name": "trailRa",
-            "type": "INTEGER"
+            "type": "FLOAT"
           },
           {
             "description": "Uncertainty of trailRa.",
@@ -1655,7 +1655,7 @@
             "type": "BOOLEAN"
           }
         ],
-        "mode": "REQUIRED",
+        "mode": "REPEATED",
         "name": "prvDiaSources",
         "type": "RECORD"
       },
@@ -1723,7 +1723,7 @@
             "type": "STRING"
           }
         ],
-        "mode": "REQUIRED",
+        "mode": "REPEATED",
         "name": "prvDiaForcedSources",
         "type": "RECORD"
       },
@@ -1755,7 +1755,7 @@
             "type": "FLOAT"
           }
         ],
-        "mode": "REQUIRED",
+        "mode": "REPEATED",
         "name": "prvDiaNondetectionLimits",
         "type": "RECORD"
       },
@@ -2255,7 +2255,7 @@
             "type": "FLOAT"
           }
         ],
-        "mode": "REQUIRED",
+        "mode": "NULLABLE",
         "name": "diaObject",
         "type": "RECORD"
       },
@@ -2575,7 +2575,7 @@
             "type": "FLOAT"
           }
         ],
-        "mode": "REQUIRED",
+        "mode": "NULLABLE",
         "name": "ssObject",
         "type": "RECORD"
       }
