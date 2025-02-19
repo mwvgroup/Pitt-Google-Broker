@@ -26,7 +26,7 @@ define_GCP_resources() {
 
 #--- GCP resources used in this script
 store_bq_trigger_topic=$(define_GCP_resources "${survey}-alerts")
-store_bq_CF_name=$(define_GCP_resources "${survey}-store_in_bigquery")
+store_bq_CF_name=$(define_GCP_resources "${survey}-store_in_BigQuery")
 
 if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources
