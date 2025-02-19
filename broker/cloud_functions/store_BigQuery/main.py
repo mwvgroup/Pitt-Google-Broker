@@ -25,7 +25,7 @@ TOPIC_BIGQUERY_IMPORT = pittgoogle.Topic.from_cloud(
 
 
 def run(event: dict, _context: functions_v1.context.Context) -> None:
-    """Send alert data to various Pub/Sub topics.
+    """Send transformed alert data (cutouts removed) to a Pub/Sub topic.
 
     Args:
         event: Pub/Sub message data and attributes.
