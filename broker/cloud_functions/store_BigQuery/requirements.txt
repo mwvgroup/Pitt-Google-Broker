@@ -5,4 +5,4 @@
 
 google-cloud-functions
 google-cloud-logging
-pgb-broker-utils
+pittgoogle-client>=0.3.11
