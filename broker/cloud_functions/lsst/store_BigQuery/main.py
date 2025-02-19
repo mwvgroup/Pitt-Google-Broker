@@ -34,7 +34,7 @@ _ConfluentWireFormatHeader = struct.Struct(">bi")
 
 
 def run(event: dict, _context: functions_v1.context.Context) -> None:
-    """Send transformed alert data (cutouts removed) to a Pub/Sub topic.
+    """Send transformed alert data to a Pub/Sub topic.
 
     Args:
         event: Pub/Sub message data and attributes.
@@ -64,12 +64,11 @@ def run(event: dict, _context: functions_v1.context.Context) -> None:
     latest_schema = json.loads(schema.schema_str)
     content_bytes = io.BytesIO(alert_bytes[5:])
 
-    # create alert object
+    # create alert dictionary
     alert_dict = fastavro.schemaless_reader(content_bytes, latest_schema)
-    alert = pittgoogle.Alert.from_dict(payload=alert_dict, attributes=attrs)
 
     # transform the data and publish it to Pub/Sub
-    TOPIC_BIGQUERY_IMPORT.publish(_create_outgoing_alert(alert))
+    TOPIC_BIGQUERY_IMPORT.publish(_create_outgoing_alert(alert_dict, attrs))
 
 
 def deserialize_confluent_wire_header(raw):
@@ -89,44 +88,36 @@ def deserialize_confluent_wire_header(raw):
     return version
 
 
-def _create_outgoing_alert(alert: pittgoogle.alert.Alert) -> pittgoogle.alert.Alert:
-    """Publishes a valid JSON alert stream without the cutouts."""
+def _create_outgoing_alert(alert_dict: dict, attributes: dict) -> pittgoogle.alert.Alert:
+    """Creates a valid JSON alert object without the original cutouts."""
 
     # transform data
-    msg = _drop_cutouts(alert)  # drop cutouts
-    alert_dict = _transform_nan(msg.dict)  # replace NaN values with None
+    cutouts_removed = _drop_cutouts(alert_dict)  # drop cutouts
+    valid_json = _transform_nan_to_none(cutouts_removed)  # replace NaN values with None
 
-    # create outgoing alert
-    alert_out = pittgoogle.Alert.from_dict(payload=alert_dict, attributes={**alert.attributes})
-
-    return alert_out
+    return pittgoogle.Alert.from_dict(payload=valid_json, attributes=attributes)
 
 
-def _drop_cutouts(alert: pittgoogle.alert.Alert) -> pittgoogle.alert.Alert:
+def _drop_cutouts(alert_dict: dict) -> dict:
     """Removes cutouts from alerts."""
-    # collect attributes
-    attrs = {**alert.attributes}
-
-    # define message
-    msg = alert.dict
 
     # define and remove cutouts from message
     cutouts = ["cutoutTemplate", "cutoutScience", "cutoutDifference"]
     for key in cutouts:
-        msg.pop(key, None)
+        alert_dict.pop(key, None)
 
-    # create outgoing alert
-    alert_out = pittgoogle.Alert.from_dict(payload=msg, attributes=attrs)
-
-    return alert_out
+    return alert_dict
 
 
-def _transform_nan(alert_dict):
+def _transform_nan_to_none(alert_dict: dict) -> dict:
     """Recursively replace NaN values with None in a dictionary."""
+
+    # convert NaN to None
     if isinstance(alert_dict, dict):
-        return {k: _transform_nan(v) for k, v in alert_dict.items()}
+        return {k: _transform_nan_to_none(v) for k, v in alert_dict.items()}
     if isinstance(alert_dict, list):
-        return [_transform_nan(v) for v in alert_dict]
+        return [_transform_nan_to_none(v) for v in alert_dict]
     if isinstance(alert_dict, float) and math.isnan(alert_dict):
-        return None  # Convert NaN to None
+        return None
+
     return alert_dict
