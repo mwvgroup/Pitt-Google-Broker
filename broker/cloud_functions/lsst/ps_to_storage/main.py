@@ -9,6 +9,7 @@ import json
 import os
 import struct
 from typing import Optional
+from astropy.time import Time
 
 import fastavro
 import pittgoogle
@@ -93,7 +94,7 @@ def upload_bytes_to_bucket(event: dict, context: functions_v1.context.Context) -
             "schema_version": schema_version,
             "objectId": alert_dict["diaObject"]["diaObjectId"],
             "sourceId": alert_dict["diaSource"]["diaSourceId"],
-            "topic": attributes.get("kafka.topic", "no_topic"),
+            "alert_date": alert_dict["diaSource"]["midpointMjdTai"],
             "format": "avro",
         }
     )
@@ -146,19 +147,25 @@ def generate_alert_filename(aname: dict) -> str:
             Extra keys are ignored.
 
     Returns:
-        str: The formatted filename as "{topic}/{objectId}/{sourceId}.{format}".
+        str: The formatted filename as "{schema_version}/{YYYY-MM-DD}/{objectId}/{sourceId}.{format}".
     """
-    schema_version = aname.get("schema_version")
-    topic = aname.get("topic", "no_topic")
-    object_id = aname.get("objectId")
-    source_id = aname.get("sourceId")
-    file_format = aname.get("format", "avro")
 
-    return f"{schema_version}/{topic}/{object_id}/{source_id}.{file_format}"
+    schema_version = aname["schema_version"]
+    midpointMjdTai = aname["alert_date"]
+    object_id = aname["objectId"]
+    source_id = aname["sourceId"]
+    file_format = aname["format"]
+
+    # convert the MJD timestamp to "YYYY-MM-DD"
+    time_obj = Time(midpointMjdTai, format="mjd")
+    date_string = time_obj.datetime.strftime("%Y-%m-%d")
+
+    return f"{schema_version}/{date_string}/{object_id}/{source_id}.{file_format}"
 
 
 def create_file_metadata(alert_dict: dict, context):
     """Return key/value pairs to be attached to the file as metadata."""
+
     metadata = {"file_origin_message_id": context.event_id}
     metadata["diaObjectId"] = alert_dict["diaObject"]["diaObjectId"]
     metadata["diaSourceId"] = alert_dict["diaSource"]["diaSourceId"]

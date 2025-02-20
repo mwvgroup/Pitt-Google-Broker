@@ -174,7 +174,7 @@ cd .. && cd .. || exit
 cd cloud_functions && cd lsst || exit
 
 #--- to_storage cloud function
-cd to_storage || exit
+cd ps_to_storage || exit
 ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag" "$region"
 
 #--- return to setup_broker directory
