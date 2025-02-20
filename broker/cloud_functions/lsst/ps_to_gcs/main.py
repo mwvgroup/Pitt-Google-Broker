@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-"""This module stores the alert data as an Avro file in Cloud Storage,
-fixing the schema first, if necessary.
-"""
+"""This module stores the alert data as an Avro file in Cloud Storage."""
 
 import base64
 import io
@@ -40,11 +38,11 @@ available_schemas = {
 ALERTS_TOPIC = pittgoogle.Topic.from_cloud(
     "alerts", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
 )
-BUCKETS = {}
 
 # alerts are stored in GCS buckets based on their schema version; alerts in topic may contain multiple schema versions.
 # to avoid making the get_bucket call for each alert, we'll cache the buckets and assign the correct bucket dynamically
 # based on the alert's schema version
+BUCKETS = {}
 for versiontag in available_schemas.values():
     bucket_name = f"{PROJECT_ID}-{SURVEY}_alerts_{versiontag}"
     if TESTID != "False":
@@ -53,10 +51,6 @@ for versiontag in available_schemas.values():
 
 # define a binary data structure for packing and unpacking bytes
 _ConfluentWireFormatHeader = struct.Struct(">bi")
-
-# By default, spool data in memory to avoid IO unless data is too big
-# LSST alerts are anticipated at 80 kB, so 1000 kB should be plenty
-max_alert_packet_size = 1_000_000
 
 
 def run(event: dict, context: functions_v1.context.Context) -> None:
@@ -98,12 +92,12 @@ def upload_bytes_to_bucket(event: dict, context: functions_v1.context.Context) -
     # get and load schema
     sr_client = SchemaRegistryClient({"url": "https://usdf-alert-schemas-dev.slac.stanford.edu"})
     schema = sr_client.get_schema(schema_id=schema_id)
-    latest_schema = json.loads(schema.schema_str)
-    schema_version = latest_schema["namespace"].split(".")[1]
+    parse_schema = json.loads(schema.schema_str)
+    schema_version = parse_schema["namespace"].split(".")[1]
     content_bytes = io.BytesIO(alert_bytes[5:])
 
     # deserialize the alert and create Alert object
-    alert_dict = fastavro.schemaless_reader(content_bytes, latest_schema)
+    alert_dict = fastavro.schemaless_reader(content_bytes, parse_schema)
     filename = generate_alert_filename(
         {
             "objectId": alert_dict["diaObject"]["diaObjectId"],
@@ -127,8 +121,8 @@ def upload_bytes_to_bucket(event: dict, context: functions_v1.context.Context) -
         topic_name=ALERTS_TOPIC.name,
         message=alert_bytes,
         attributes={
-            "objectId": str(alert_dict["diaObject"]["diaObjectId"]),
-            "sourceId": str(alert_dict["diaSource"]["diaSourceId"]),
+            "diaObjectId": str(alert_dict["diaObject"]["diaObjectId"]),
+            "diaSourceId": str(alert_dict["diaSource"]["diaSourceId"]),
             "schema_version": schema_version,
             **attributes,
         },
@@ -190,7 +184,7 @@ def publish_outgoing_alert(
 
     # enforce bytes type for message
     if not isinstance(message, bytes):
-        raise TypeError("`message` must be bytes or a dict.")
+        raise TypeError("`message` must be bytes.")
 
     topic_path = publisher.topic_path(PROJECT_ID, topic_name)
     future = publisher.publish(topic_path, data=message, **attributes)
