@@ -69,7 +69,8 @@ fconfig=admin.properties
 sed -i "s/KAFKA_PASSWORD/${KAFKA_PASSWORD}/g" ${fconfig}
 
 fconfig=psconnect-worker.properties
-sed -i "s/KAFKA_PASSWORD/${KAFKA_PASSWORD}/g" ${fconfig} && sed -i "s/GROUP_ID/${group_id}/g" ${fconfig}
+sed -i "s/KAFKA_PASSWORD/${KAFKA_PASSWORD}/g" ${fconfig}
+sed -i "s/GROUP_ID/${group_id}/g" ${fconfig}
 
 fconfig=ps-connector.properties
 sed -i "s/PROJECT_ID/${PROJECT_ID}/g" ${fconfig}
