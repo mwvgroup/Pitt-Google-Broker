@@ -29,25 +29,15 @@ logger = logging_client.logger(log_name)
 publisher = pubsub_v1.PublisherClient()
 
 # GCP resources used in this module
-client = storage.Client()
-available_schemas = {
-    "7.1": "v7_1",
-    "7.2": "v7_2",
-    "7.3": "v7_3",
-}
 ALERTS_TOPIC = pittgoogle.Topic.from_cloud(
     "alerts", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
 )
+bucket_name = f"{PROJECT_ID}-{SURVEY}_alerts"
+if TESTID != "False":
+    bucket_name = f"{bucket_name}-{TESTID}"
 
-# alerts are stored in GCS buckets based on their schema version; alerts in topic may contain multiple schema versions.
-# to avoid making the get_bucket call for each alert, we'll cache the buckets and assign the correct bucket dynamically
-# based on the alert's schema version
-BUCKETS = {}
-for versiontag in available_schemas.values():
-    bucket_name = f"{PROJECT_ID}-{SURVEY}_alerts_{versiontag}"
-    if TESTID != "False":
-        bucket_name = f"{bucket_name}-{TESTID}"
-    BUCKETS[versiontag] = client.get_bucket(client.bucket(bucket_name, user_project=PROJECT_ID))
+client = storage.Client()
+bucket = client.get_bucket(client.bucket(bucket_name, user_project=PROJECT_ID))
 
 # define a binary data structure for packing and unpacking bytes
 _ConfluentWireFormatHeader = struct.Struct(">bi")
@@ -100,6 +90,7 @@ def upload_bytes_to_bucket(event: dict, context: functions_v1.context.Context) -
     alert_dict = fastavro.schemaless_reader(content_bytes, parse_schema)
     filename = generate_alert_filename(
         {
+            "schema_version": schema_version,
             "objectId": alert_dict["diaObject"]["diaObjectId"],
             "sourceId": alert_dict["diaSource"]["diaSourceId"],
             "topic": attributes.get("kafka.topic", "no_topic"),
@@ -107,8 +98,6 @@ def upload_bytes_to_bucket(event: dict, context: functions_v1.context.Context) -
         }
     )
 
-    # get bucket based on the alert's schema version and store the Avro file
-    bucket = BUCKETS.get(schema_version)
     blob = bucket.blob(filename)
     blob.metadata = create_file_metadata(alert_dict, context)
 
@@ -159,12 +148,13 @@ def generate_alert_filename(aname: dict) -> str:
     Returns:
         str: The formatted filename as "{topic}/{objectId}/{sourceId}.{format}".
     """
+    schema_version = aname.get("schema_version")
     topic = aname.get("topic", "no_topic")
     object_id = aname.get("objectId")
     source_id = aname.get("sourceId")
     file_format = aname.get("format", "avro")
 
-    return f"{topic}/{object_id}/{source_id}.{file_format}"
+    return f"{schema_version}/{topic}/{object_id}/{source_id}.{file_format}"
 
 
 def create_file_metadata(alert_dict: dict, context):

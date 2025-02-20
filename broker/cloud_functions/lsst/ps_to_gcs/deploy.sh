@@ -27,7 +27,7 @@ define_GCP_resources() {
 }
 
 #--- GCP resources used in this script
-avro_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}_alerts_${versiontag}")
+avro_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}_alerts")
 avro_topic=$(define_GCP_resources "projects/${PROJECT_ID}/topics/${survey}-alert_avros")
 avro_subscription=$(define_GCP_resources "${survey}-alert_avros-counter")
 ps_to_gcs_trigger_topic=$(define_GCP_resources "${survey}-alerts_raw")
