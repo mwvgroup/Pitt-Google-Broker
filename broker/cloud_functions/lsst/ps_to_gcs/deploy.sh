@@ -52,7 +52,7 @@ else # Deploy the Cloud Functions
         --member="allUsers" \
         --role="roles/storage.objectViewer"
 
-    #--- Setup the Pub/Sub notifications on ZTF Avro storage bucket
+    #--- Setup the Pub/Sub notifications on the Avro storage bucket
     echo
     echo "Configuring Pub/Sub notifications on GCS bucket..."
     trigger_event=OBJECT_FINALIZE
@@ -68,7 +68,7 @@ else # Deploy the Cloud Functions
 #--- Pub/Sub -> Cloud Storage Avro cloud function
     echo "Deploying Cloud Function: ${ps_to_gcs_CF_name}"
     ps_to_gcs_entry_point="run"
-    memory=512MB  # standard 256MB is too small here (it was always on the edge)
+    memory=512MB  # standard 256MB is too small here
 
     gcloud functions deploy "${ps_to_gcs_CF_name}" \
         --entry-point "${ps_to_gcs_entry_point}" \
