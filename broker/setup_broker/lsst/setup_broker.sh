@@ -56,6 +56,13 @@ broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
 topic_alerts_raw=$(define_GCP_resources "${survey}-alerts_raw")
 topic_alerts=$(define_GCP_resources "${survey}-alerts")
 subscription_reservoir=$(define_GCP_resources "${survey}-alerts-reservoir")
+# topics and subscriptions involved in writing alert data to BigQuery
+topic_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import")
+subscription_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import-${versiontag}") # BigQuery subscription
+deadletter_topic_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import-deadletter-${versiontag}")
+deadletter_subscription_bigquery_import="${deadletter_topic_bigquery_import}"
+
+alerts_table="alerts_${versiontag}"
 
 # function used to create (or delete) GCP resources
 manage_resources() {
@@ -67,6 +74,14 @@ manage_resources() {
     fi
 
     if [ "$mode" = "setup" ]; then
+        # create BigQuery dataset and table
+        bq --location="${region}" mk --dataset "${bq_dataset}"
+
+        cd templates || exit 5
+        bq mk --table "${PROJECT_ID}:${bq_dataset}.${alerts_table}" "bq_${survey}_${alerts_table}_schema.json" || exit 5
+        bq update --description "Alert data from LSST. This table is an archive of the lsst-alerts Pub/Sub stream. It has the same schema as the original alert bytes, including nested and repeated fields." "${PROJECT_ID}:${bq_dataset}.${alerts_table}"
+        cd .. || exit 5
+
         # create broker bucket and upload files
         echo
         echo "Creating broker_bucket and uploading files..."
@@ -88,19 +103,46 @@ manage_resources() {
         echo "Configuring Pub/Sub resources..."
         gcloud pubsub topics create "${topic_alerts_raw}"
         gcloud pubsub topics create "${topic_alerts}"
+        gcloud pubsub topics create "${topic_bigquery_import}"
+        gcloud pubsub topics create "${deadletter_topic_bigquery_import}"
         gcloud pubsub subscriptions create "${subscription_reservoir}" --topic="${topic_alerts}"
-
+        gcloud pubsub subscriptions create "${deadletter_subscription_bigquery_import}" --topic="${deadletter_topic_bigquery_import}"
+        # in order to create BigQuery subscriptions, ensure that the following service account:
+        # service-<project number>@gcp-sa-pubsub.iam.gserviceaccount.com" has the
+        # bigquery.dataEditor role for each table
+        gcloud pubsub subscriptions create "${subscription_bigquery_import}" \
+            --topic="${topic_bigquery_import}" \
+            --bigquery-table="${PROJECT_ID}:${bq_dataset}.${alerts_table}" \
+            --use-table-schema \
+            --drop-unknown-fields \
+            --dead-letter-topic="${deadletter_topic_bigquery_import}" \
+            --max-delivery-attempts=5 \
+            --dead-letter-topic-project="${PROJECT_ID}" \
+            --message-filter='attributes.schema_version = "'"${versiontag}"'"'
         # set IAM policies on resources
         user="allUsers"
         roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/userPublic"
         gcloud pubsub topics add-iam-policy-binding "${topic_alerts}" --member="${user}" --role="${roleid}"
+        # this allows dead-lettered messages to be forwarded from the BigQuery subscription to the dead letter topic
+        # and it allows dead-lettered messages to be published to the dead letter topic.
+        PUBSUB_SERVICE_ACCOUNT="service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com"
+        gcloud pubsub topics add-iam-policy-binding "${deadletter_topic_bigquery_import}" \
+            --member="serviceAccount:$PUBSUB_SERVICE_ACCOUNT"\
+            --role="roles/pubsub.publisher"
+        gcloud pubsub subscriptions add-iam-policy-binding "${subscription_bigquery_import}" \
+            --member="serviceAccount:$PUBSUB_SERVICE_ACCOUNT"\
+            --role="roles/pubsub.subscriber"
     else
         if [ "$environment_type" = "testing" ]; then
             o="GSUtil:parallel_process_count=1" # disable multiprocessing for Macs
             gsutil -m -o "${o}" rm -r "gs://${broker_bucket}"
             gcloud pubsub topics delete "${topic_alerts_raw}"
             gcloud pubsub topics delete "${topic_alerts}"
+            gcloud pubsub topics delete "${topic_bigquery_import}"
+            gcloud pubsub topics delete "${deadletter_topic_bigquery_import}"
             gcloud pubsub subscriptions delete "${subscription_reservoir}"
+            gcloud pubsub subscriptions delete "${deadletter_subscription_bigquery_import}"
+            gcloud pubsub subscriptions delete "${subscription_bigquery_import}"
         else
             echo 'ERROR: No testid supplied.'
             echo 'To avoid accidents, this script will not delete production resources.'
@@ -131,8 +173,8 @@ echo "Configuring Cloud Functions..."
 cd .. && cd .. || exit
 cd cloud_functions && cd lsst || exit
 
-#--- Pub/Sub -> Cloud Storage Avro cloud function
-cd ps_to_gcs || exit
+#--- to_storage cloud function
+cd to_storage || exit
 ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag" "$region"
 
 #--- return to setup_broker directory

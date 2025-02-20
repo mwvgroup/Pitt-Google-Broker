@@ -80,16 +80,17 @@ cd Pitt-Google-Broker/broker/setup_broker/lsst
 Define the variables used below.
 
 ```bash
-testid="enter testid value"
+testid="mytest"
 teardown="False"
 survey="lsst"
 region="us-central1"
+schema_version="7.3"
 ```
 
 Execute the `setup_broker.sh` script:
 
 ```bash
-./setup_broker.sh "${testid}" "${teardown}" "${survey}" "${region}"
+./setup_broker.sh "${testid}" "${teardown}" "${survey}" "${schema_version}" "${region}"
 ```
 
 This will create all of the necessary GCP resources. Allow the consumer VM to finish its installation process. Once
@@ -124,7 +125,8 @@ Initialize parameters and call the deployment script:
 testid="mytest"
 teardown="True"
 survey="lsst"
+schema_version="7.3"
 region="us-central1"
 
-./setup_broker.sh "${testid}" "${teardown}" "${survey}" "${region}"
+./setup_broker.sh "${testid}" "${teardown}" "${survey}" "${schema_version}" "${region}"
 ```
