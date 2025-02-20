@@ -54,9 +54,7 @@ define_GCP_resources() {
 #--- GCP resources used directly in this script
 broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
 topic_alerts_raw=$(define_GCP_resources "${survey}-alerts_raw")
-subscription_alerts_raw=$(define_GCP_resources "${survey}-alerts_raw-counter")
 topic_alerts=$(define_GCP_resources "${survey}-alerts")
-subscription_alerts=$(define_GCP_resources "${survey}-alerts-counter")
 subscription_reservoir=$(define_GCP_resources "${survey}-alerts-reservoir")
 
 # function used to create (or delete) GCP resources
@@ -90,8 +88,6 @@ manage_resources() {
         echo "Configuring Pub/Sub resources..."
         gcloud pubsub topics create "${topic_alerts_raw}"
         gcloud pubsub topics create "${topic_alerts}"
-        gcloud pubsub subscriptions create "${subscription_alerts_raw}" --topic="${topic_alerts_raw}"
-        gcloud pubsub subscriptions create "${subscription_alerts}" --topic="${topic_alerts}"
         gcloud pubsub subscriptions create "${subscription_reservoir}" --topic="${topic_alerts}"
 
         # set IAM policies on resources
@@ -104,8 +100,6 @@ manage_resources() {
             gsutil -m -o "${o}" rm -r "gs://${broker_bucket}"
             gcloud pubsub topics delete "${topic_alerts_raw}"
             gcloud pubsub topics delete "${topic_alerts}"
-            gcloud pubsub subscriptions delete "${subscription_alerts_raw}"
-            gcloud pubsub subscriptions delete "${subscription_alerts}"
             gcloud pubsub subscriptions delete "${subscription_reservoir}"
         else
             echo 'ERROR: No testid supplied.'
