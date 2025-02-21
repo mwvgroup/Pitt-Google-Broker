@@ -17,7 +17,7 @@ substitutions:
     _SURVEY: 'lsst'
     _TESTID: 'testid'
     _MODULE_NAME: '${_SURVEY}-alerts-to-storage-${_TESTID}'
-    _MODULE_IMAGE_NAME: '${PROJECT_ID}/${_MODULE_NAME}'
+    _MODULE_IMAGE_NAME: 'gcr.io/${PROJECT_ID}/${_REPOSITORY}/${_MODULE_NAME}'
     _REPOSITORY: 'cloud-run-services'
     # cloud functions automatically sets the projectid env var using the name "GCP_PROJECT"
     # use the same name here for consistency

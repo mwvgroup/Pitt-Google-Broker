@@ -28,6 +28,7 @@ define_GCP_resources() {
 }
 
 #--- GCP resources used in this script
+artifact_registry_repo=$(define_GCP_resources "cloud-run-services")
 avro_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}_alerts")
 avro_topic=$(define_GCP_resources "projects/${PROJECT_ID}/topics/${survey}-alert_avros")
 avro_subscription=$(define_GCP_resources "${survey}-alert_avros-counter")
@@ -75,7 +76,7 @@ else # Deploy the Cloud Run service
     moduledir="."  # assumes deploying what's in our current directory
     config="${moduledir}/cloudbuild.yaml"
     url=$(gcloud builds submit --config="${config}" \
-        --substitutions="_SURVEY=${survey},_TESTID=${testid},_MODULE_NAME=${cr_module_name}" \
+        --substitutions="_SURVEY=${survey},_TESTID=${testid},_MODULE_NAME=${cr_module_name},_REPOSITORY=${artifact_registry_repo}" \
         "${moduledir}" | sed -n 's/^Step #2: Service URL: \(.*\)$/\1/p')
 
     echo "Creating trigger subscription for Cloud Run..."
