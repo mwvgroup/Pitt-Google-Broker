@@ -39,7 +39,7 @@ if [ "${teardown}" = "True" ]; then
         gsutil rm -r "gs://${avro_bucket}"
         gcloud pubsub topics delete "${avro_topic}"
         gcloud pubsub subscriptions delete "${avro_subscription}"
-        gcloud functions delete "${ps_to_gcs_CF_name}"
+        gcloud functions delete "${ps_to_storage_CF_name}"
     fi
 
 else # Deploy the Cloud Functions
