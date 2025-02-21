@@ -34,7 +34,6 @@ avro_subscription=$(define_GCP_resources "${survey}-alert_avros-counter")
 cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}")  # lower case required by cloud run
 module_image_name="gcr.io/${PROJECT_ID}/${cr_module_name}"
 ps_input_subscrip=$(define_GCP_resources "${survey}-alerts_raw") # pub/sub subscription used to trigger cloud run module
-ps_output_topic=$(define_GCP_resources "${survey}-bigquery-import")
 runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
 trigger_topic=$(define_GCP_resources "${survey}-alerts_raw")
 
@@ -46,6 +45,7 @@ if [ "${teardown}" = "True" ]; then
         gcloud pubsub topics delete "${avro_topic}"
         gcloud pubsub subscriptions delete "${avro_subscription}"
         gcloud run services delete "${cr_module_name}" --region "${region}"
+        gcloud artifacts repositories delete cloud-run-services/"${module_image_name}" --location="${region}"
     fi
 
 else # Deploy the Cloud Run service

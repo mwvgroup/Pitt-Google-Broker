@@ -135,6 +135,15 @@ manage_resources() {
                 --member="serviceAccount:$PUBSUB_SERVICE_ACCOUNT"\
                 --role="roles/pubsub.subscriber"
         fi
+
+        #--- Create Artifact Registry Repository
+        echo
+        echo "Configuring Artifact Registry..."
+        gcloud artifacts repositories create cloud-run-services --repository-format=docker \
+            --location="${region}" --description="Docker repository for Cloud Run services" \
+            --project="${PROJECT_ID}"
+        gcloud auth configure-docker "${region}"-docker.pkg.dev # authenticate requests to Artifact Registry
+
     else
         if [ "$environment_type" = "testing" ]; then
             o="GSUtil:parallel_process_count=1" # disable multiprocessing for Macs
@@ -170,14 +179,6 @@ fi
 echo
 echo "Configuring VMs..."
 ./create_vm.sh "${broker_bucket}" "${testid}" "${teardown}" "${survey}" "${zone}" "${firewallrule}"
-
-#--- Create Artifact Registry Repository
-echo
-echo "Configuring Artifact Registry..."
-gcloud artifacts repositories create cloud-run-services --repository-format=docker \
-    --location=${region} --description="Docker repository for Cloud Run services" \
-    --project=${PROJECT_ID}
-gcloud auth configure-docker ${region}-docker.pkg.dev # authenticate requests to Artifact Registry
 
 #--- Deploy Cloud Functions
 echo
