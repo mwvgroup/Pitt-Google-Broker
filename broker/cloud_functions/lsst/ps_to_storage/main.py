@@ -6,6 +6,7 @@
 import base64
 import io
 import json
+import math
 import os
 import struct
 from typing import Optional
@@ -123,8 +124,6 @@ def store_alert_data(event: dict, context: functions_v1.context.Context) -> None
 
     # publish the alert as a JSON message to the bigquery-import topic
     TOPIC_BIGQUERY_IMPORT.publish(_create_valid_json(alert_dict, attributes))
-
-    return
 
 
 def deserialize_confluent_wire_header(raw):

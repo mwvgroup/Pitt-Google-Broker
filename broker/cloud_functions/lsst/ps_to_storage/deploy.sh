@@ -66,14 +66,14 @@ else # Deploy the Cloud Functions
 
 
 #--- Pub/Sub -> Cloud Storage Avro cloud function
-    echo "Deploying Cloud Function: ${ps_to_gcs_CF_name}"
-    ps_to_gcs_entry_point="run"
+    echo "Deploying Cloud Function: ${ps_to_storage_CF_name}"
+    ps_to_storage_entry_point="run"
     memory=512MB  # standard 256MB is too small here
 
-    gcloud functions deploy "${ps_to_gcs_CF_name}" \
-        --entry-point "${ps_to_gcs_entry_point}" \
+    gcloud functions deploy "${ps_to_storage_CF_name}" \
+        --entry-point "${ps_to_storage_entry_point}" \
         --runtime python312 \
         --memory "${memory}" \
-        --trigger-topic "${ps_to_gcs_trigger_topic}" \
+        --trigger-topic "${ps_to_storage_trigger_topic}" \
         --set-env-vars TESTID="${testid}",SURVEY="${survey}",VERSIONTAG="${versiontag}",GCP_PROJECT="${PROJECT_ID}"
 fi
