@@ -36,7 +36,7 @@ rm -r "${brokerdir}"
 # download fresh files
 mkdir "${brokerdir}"
 cd ${brokerdir} || exit
-gsutil -m cp -r "gs://${broker_bucket}/consumer" .
+gsutil -m cp -r "gs://${broker_bucket}/${survey}" .
 # wait. otherwise the script may continue before all files are downloaded, with adverse behavior.
 sleep 30s
 
@@ -49,7 +49,7 @@ gcloud compute instances add-metadata "$consumerVM" --zone "$zone" \
     --metadata="PS_TOPIC=${PS_TOPIC},KAFKA_TOPIC=${KAFKA_TOPIC}"
 
 #--- Files this script will write
-workingdir="${brokerdir}/consumer/${survey}"
+workingdir="${brokerdir}/${survey}"
 fout_run="${workingdir}/run-connector.out"
 fout_topics="${workingdir}/list.topics"
 
