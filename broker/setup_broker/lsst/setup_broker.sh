@@ -137,6 +137,7 @@ manage_resources() {
         if [ "$environment_type" = "testing" ]; then
             o="GSUtil:parallel_process_count=1" # disable multiprocessing for Macs
             gsutil -m -o "${o}" rm -r "gs://${broker_bucket}"
+            bq rm -r -f "${PROJECT_ID}:${bq_dataset}"
             gcloud pubsub topics delete "${topic_alerts_raw}"
             gcloud pubsub topics delete "${topic_alerts}"
             gcloud pubsub topics delete "${topic_bigquery_import}"
