@@ -30,8 +30,8 @@ define_GCP_resources() {
 avro_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}_alerts")
 avro_topic=$(define_GCP_resources "projects/${PROJECT_ID}/topics/${survey}-alert_avros")
 avro_subscription=$(define_GCP_resources "${survey}-alert_avros-counter")
-ps_to_gcs_trigger_topic=$(define_GCP_resources "${survey}-alerts_raw")
-ps_to_gcs_CF_name=$(define_GCP_resources "${survey}-upload_bytes_to_bucket")
+ps_to_storage_trigger_topic=$(define_GCP_resources "${survey}-alerts_raw")
+ps_to_storage_CF_name=$(define_GCP_resources "${survey}-alerts_to_storage")
 
 if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources

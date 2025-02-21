@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-"""This module stores the alert data as an Avro file in Cloud Storage."""
+"""This module stores LSST alert data as an Avro file in Cloud Storage."""
 
 import base64
 import io
@@ -25,13 +25,16 @@ VERSIONTAG = os.getenv("VERSIONTAG")
 
 # connect to the cloud logger and publisher
 logging_client = logging.Client()
-log_name = "ps-to-gcs-cloudfnc"
+log_name = "ps-to-storage-cloudfnc"
 logger = logging_client.logger(log_name)
 publisher = pubsub_v1.PublisherClient()
 
 # GCP resources used in this module
 ALERTS_TOPIC = pittgoogle.Topic.from_cloud(
     "alerts", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
+)
+TOPIC_BIGQUERY_IMPORT = pittgoogle.Topic.from_cloud(
+    "bigquery-import", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
 )
 bucket_name = f"{PROJECT_ID}-{SURVEY}_alerts"
 if TESTID != "False":
@@ -63,14 +66,14 @@ def run(event: dict, context: functions_v1.context.Context) -> None:
                 `resource`: the resource that emitted the event.
     """
     try:
-        upload_bytes_to_bucket(event, context)
+        store_alert_data(event, context)
     # this is raised by blob.upload_from_file if the object already exists in the bucket
     except PreconditionFailed:
         # we'll simply pass, and the duplicate alert will go no further in our pipeline
         pass
 
 
-def upload_bytes_to_bucket(event: dict, context: functions_v1.context.Context) -> None:
+def store_alert_data(event: dict, context: functions_v1.context.Context) -> None:
     """Uploads the msg data bytes to a GCP storage bucket."""
 
     alert_bytes = base64.b64decode(event["data"])  # alert packet, bytes
@@ -107,7 +110,7 @@ def upload_bytes_to_bucket(event: dict, context: functions_v1.context.Context) -
     blob.upload_from_file(io.BytesIO(alert_bytes), if_generation_match=0)
 
     # Cloud Storage says this is not a duplicate, so now we publish the broker's main "alerts" stream
-    return publish_outgoing_alert(
+    publish_alerts_stream(
         topic_name=ALERTS_TOPIC.name,
         message=alert_bytes,
         attributes={
@@ -117,6 +120,11 @@ def upload_bytes_to_bucket(event: dict, context: functions_v1.context.Context) -
             **attributes,
         },
     )
+
+    # publish the alert as a JSON message to the bigquery-import topic
+    TOPIC_BIGQUERY_IMPORT.publish(_create_valid_json(alert_dict, attributes))
+
+    return
 
 
 def deserialize_confluent_wire_header(raw):
@@ -151,13 +159,13 @@ def generate_alert_filename(aname: dict) -> str:
     """
 
     schema_version = aname["schema_version"]
-    midpointMjdTai = aname["alert_date"]
+    alert_date = aname["alert_date"]
     object_id = aname["objectId"]
     source_id = aname["sourceId"]
     file_format = aname["format"]
 
     # convert the MJD timestamp to "YYYY-MM-DD"
-    time_obj = Time(midpointMjdTai, format="mjd")
+    time_obj = Time(alert_date, format="mjd")
     date_string = time_obj.datetime.strftime("%Y-%m-%d")
 
     return f"{schema_version}/{date_string}/{object_id}/{source_id}.{file_format}"
@@ -171,13 +179,14 @@ def create_file_metadata(alert_dict: dict, context):
     metadata["diaSourceId"] = alert_dict["diaSource"]["diaSourceId"]
     metadata["ra"] = alert_dict["diaSource"]["ra"]
     metadata["dec"] = alert_dict["diaSource"]["dec"]
+
     return metadata
 
 
-def publish_outgoing_alert(
+def publish_alerts_stream(
     topic_name: str, message: bytes, attributes: Optional[dict] = None
 ) -> str:
-    """Publish messages to a Pub/Sub topic."""
+    """Publish original alert bytes to a Pub/Sub topic."""
 
     # enforce bytes type for message
     if not isinstance(message, bytes):
@@ -187,3 +196,35 @@ def publish_outgoing_alert(
     future = publisher.publish(topic_path, data=message, **attributes)
 
     return future.result()
+
+
+def _create_valid_json(alert_dict: dict, attributes: dict) -> pittgoogle.alert.Alert:
+    """Transforms alert data to a valid JSON message."""
+
+    # define and remove cutouts from message
+    cutouts = [
+        "cutoutTemplate",
+        "cutoutScience",
+        "cutoutDifference",
+    ]
+    for key in cutouts:
+        alert_dict.pop(key, None)
+
+    # replace NaN values with None
+    valid_json = _transform_nan_to_none(alert_dict)
+
+    return pittgoogle.Alert.from_dict(payload=valid_json, attributes=attributes)
+
+
+def _transform_nan_to_none(alert_dict: dict) -> dict:
+    """Recursively replace NaN values with None in a dictionary."""
+
+    # convert NaN to None
+    if isinstance(alert_dict, dict):
+        return {k: _transform_nan_to_none(v) for k, v in alert_dict.items()}
+    if isinstance(alert_dict, list):
+        return [_transform_nan_to_none(v) for v in alert_dict]
+    if isinstance(alert_dict, float) and math.isnan(alert_dict):
+        return None
+
+    return alert_dict
