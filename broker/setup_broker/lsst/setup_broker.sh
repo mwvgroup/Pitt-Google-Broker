@@ -180,7 +180,7 @@ echo
 echo "Configuring VMs..."
 ./create_vm.sh "${broker_bucket}" "${testid}" "${teardown}" "${survey}" "${zone}" "${firewallrule}"
 
-#--- Deploy Cloud Functions
+#--- Deploy Cloud Run (Functions)
 echo
 echo "Configuring Cloud Functions..."
 cd .. && cd .. || exit
