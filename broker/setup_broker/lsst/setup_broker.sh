@@ -124,15 +124,17 @@ manage_resources() {
         user="allUsers"
         roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/userPublic"
         gcloud pubsub topics add-iam-policy-binding "${topic_alerts}" --member="${user}" --role="${roleid}"
-        # this allows dead-lettered messages to be forwarded from the BigQuery subscription to the dead letter topic
-        # and it allows dead-lettered messages to be published to the dead letter topic.
-        PUBSUB_SERVICE_ACCOUNT="service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com"
-        gcloud pubsub topics add-iam-policy-binding "${deadletter_topic_bigquery_import}" \
-            --member="serviceAccount:$PUBSUB_SERVICE_ACCOUNT"\
-            --role="roles/pubsub.publisher"
-        gcloud pubsub subscriptions add-iam-policy-binding "${subscription_bigquery_import}" \
-            --member="serviceAccount:$PUBSUB_SERVICE_ACCOUNT"\
-            --role="roles/pubsub.subscriber"
+        if [ "$testid" = "False" ]; then
+            # this allows dead-lettered messages to be forwarded from the BigQuery subscription to the dead letter topic
+            # and it allows dead-lettered messages to be published to the dead letter topic.
+            PUBSUB_SERVICE_ACCOUNT="service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com"
+            gcloud pubsub topics add-iam-policy-binding "${deadletter_topic_bigquery_import}" \
+                --member="serviceAccount:$PUBSUB_SERVICE_ACCOUNT"\
+                --role="roles/pubsub.publisher"
+            gcloud pubsub subscriptions add-iam-policy-binding "${subscription_bigquery_import}" \
+                --member="serviceAccount:$PUBSUB_SERVICE_ACCOUNT"\
+                --role="roles/pubsub.subscriber"
+        fi
     else
         if [ "$environment_type" = "testing" ]; then
             o="GSUtil:parallel_process_count=1" # disable multiprocessing for Macs
