@@ -44,8 +44,8 @@ if [ "${teardown}" = "True" ]; then
         gsutil rm -r "gs://${avro_bucket}"
         gcloud pubsub topics delete "${avro_topic}"
         gcloud pubsub subscriptions delete "${avro_subscription}"
+        gcloud pubsub subscriptions delete "${ps_input_subscrip}"
         gcloud run services delete "${cr_module_name}" --region "${region}"
-        gcloud artifacts repositories delete cloud-run-services/"${module_image_name}" --location="${region}"
     fi
 
 else # Deploy the Cloud Run service

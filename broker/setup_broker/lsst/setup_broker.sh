@@ -52,6 +52,7 @@ define_GCP_resources() {
 }
 
 #--- GCP resources used directly in this script
+artifact_registry_repo=$(define_GCP_resources "cloud-run-services")
 broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
 bq_dataset=$(define_GCP_resources "${survey}")
 topic_alerts_raw=$(define_GCP_resources "${survey}-alerts_raw")
@@ -139,7 +140,7 @@ manage_resources() {
         #--- Create Artifact Registry Repository
         echo
         echo "Configuring Artifact Registry..."
-        gcloud artifacts repositories create cloud-run-services --repository-format=docker \
+        gcloud artifacts repositories create "${artifact_registry_repo}" --repository-format=docker \
             --location="${region}" --description="Docker repository for Cloud Run services" \
             --project="${PROJECT_ID}"
         gcloud auth configure-docker "${region}"-docker.pkg.dev # authenticate requests to Artifact Registry
@@ -156,6 +157,7 @@ manage_resources() {
             gcloud pubsub subscriptions delete "${subscription_reservoir}"
             gcloud pubsub subscriptions delete "${deadletter_subscription_bigquery_import}"
             gcloud pubsub subscriptions delete "${subscription_bigquery_import}"
+            gcloud artifacts repositories delete "${artifact_registry_repo}" --location="${region}"
         else
             echo 'ERROR: No testid supplied.'
             echo 'To avoid accidents, this script will not delete production resources.'
@@ -186,7 +188,7 @@ echo "Configuring Cloud Functions..."
 cd .. && cd .. || exit
 cd cloud_functions && cd lsst || exit
 
-#--- to_storage cloud function
+#--- ps_to_storage cloud function
 cd ps_to_storage || exit
 ./deploy.sh "$testid" "$teardown" "$survey" "$region"
 
