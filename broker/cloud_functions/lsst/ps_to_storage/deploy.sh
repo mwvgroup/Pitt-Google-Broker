@@ -9,10 +9,11 @@ testid="${1:-test}"
 teardown="${2:-False}"
 # name of the survey this broker instance will ingest
 survey="${3:-lsst}"
-# schema version
-versiontag="${4:-v7_3}"
-region="${5:-us-central1}"
+region="${4:-us-central1}"
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT # get the environment variable
+
+MODULE_NAME="to-storage"  # lower case required by cloud run
+ROUTE_RUN="/"  # url route that will trigger main.run()
 
 # function used to define GCP resources; appends testid if needed
 define_GCP_resources() {
@@ -30,8 +31,13 @@ define_GCP_resources() {
 avro_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}_alerts")
 avro_topic=$(define_GCP_resources "projects/${PROJECT_ID}/topics/${survey}-alert_avros")
 avro_subscription=$(define_GCP_resources "${survey}-alert_avros-counter")
-ps_to_storage_trigger_topic=$(define_GCP_resources "${survey}-alerts_raw")
-ps_to_storage_CF_name=$(define_GCP_resources "${survey}-alerts_to_storage")
+cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}")  # lower case required by cloud run
+module_image_name="gcr.io/${PROJECT_ID}/${cr_module_name}"
+ps_input_subscrip=$(define_GCP_resources "${survey}-alerts_raw") # pub/sub subscription used to trigger cloud run module
+ps_output_topic=$(define_GCP_resources "${survey}-bigquery-import")
+runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
+trigger_topic=$(define_GCP_resources "${survey}-alerts_raw")
+
 
 if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources
@@ -39,10 +45,10 @@ if [ "${teardown}" = "True" ]; then
         gsutil rm -r "gs://${avro_bucket}"
         gcloud pubsub topics delete "${avro_topic}"
         gcloud pubsub subscriptions delete "${avro_subscription}"
-        gcloud functions delete "${ps_to_storage_CF_name}"
+        gcloud run services delete "${cr_module_name}" --region "${region}"
     fi
 
-else # Deploy the Cloud Functions
+else # Deploy the Cloud Run service
 
     #--- Create the bucket that will store the alerts
     gsutil mb -l "${region}" "gs://${avro_bucket}"
@@ -65,15 +71,21 @@ else # Deploy the Cloud Functions
     gcloud pubsub subscriptions create "${avro_subscription}" --topic="${avro_topic}"
 
 
-#--- Pub/Sub -> Cloud Storage Avro cloud function
-    echo "Deploying Cloud Function: ${ps_to_storage_CF_name}"
-    ps_to_storage_entry_point="run"
-    memory=512MB  # standard 256MB is too small here
+#--- Deploy Cloud Run
+    echo "Creating container image and deploying to Cloud Run..."
+    moduledir="."  # assumes deploying what's in our current directory
+    config="${moduledir}/cloudbuild.yaml"
+    url=$(gcloud builds submit --config="${config}" \
+        --substitutions="_SURVEY=${survey},_TESTID=${testid},_MODULE_NAME=${cr_module_name}" \
+        "${moduledir}" | sed -n 's/^Step #2: Service URL: \(.*\)$/\1/p')
 
-    gcloud functions deploy "${ps_to_storage_CF_name}" \
-        --entry-point "${ps_to_storage_entry_point}" \
-        --runtime python312 \
-        --memory "${memory}" \
-        --trigger-topic "${ps_to_storage_trigger_topic}" \
-        --set-env-vars TESTID="${testid}",SURVEY="${survey}",VERSIONTAG="${versiontag}",GCP_PROJECT="${PROJECT_ID}"
+    echo "Creating trigger subscription for Cloud Run..."
+    # WARNING:  This is set to retry failed deliveries. If there is a bug in main.py this will
+    # retry indefinitely, until the message is delete manually.
+    gcloud pubsub subscriptions create "${ps_input_subscrip}" \
+        --topic "${trigger_topic}" \
+        --topic-project "${PROJECT_ID}" \
+        --ack-deadline=600 \
+        --push-endpoint="${url}${ROUTE_RUN}" \
+        --push-auth-service-account="${runinvoker_svcact}"
 fi

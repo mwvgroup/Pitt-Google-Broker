@@ -5,9 +5,15 @@
 
 confluent-kafka>=2.6.0
 fastavro
-google-cloud-functions
 google-cloud-logging
 google-cloud-pubsub
 google-cloud-storage
 httpx # used by confluent-kafka
 pittgoogle-client>=0.3.11
+
+# for Cloud Run
+# https://cloud.google.com/run/docs/quickstarts/build-and-deploy/deploy-python-service
+# pinned following quickstart example. [TODO] consider un-pinning
+Flask==3.0.3
+gunicorn==22.0.0
+Werkzeug==3.0.3

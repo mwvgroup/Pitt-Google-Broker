@@ -12,23 +12,34 @@ import struct
 from typing import Optional
 from astropy.time import Time
 
+import flask
 import fastavro
 import pittgoogle
 from confluent_kafka.schema_registry import SchemaRegistryClient
-from google.cloud import functions_v1, logging, storage, pubsub_v1
+from google.cloud import logging, storage, pubsub_v1
 from google.cloud.exceptions import PreconditionFailed
 
+# [FIXME] Make this helpful or else delete it.
+# Connect the python logger to the google cloud logger.
+# By default, this captures INFO level and above.
+# pittgoogle uses the python logger.
+# We don't currently use the python logger directly in this script, but we could.
+logging.Client().setup_logging()
+publisher = pubsub_v1.PublisherClient()
 
 PROJECT_ID = os.getenv("GCP_PROJECT")
 TESTID = os.getenv("TESTID")
 SURVEY = os.getenv("SURVEY")
 VERSIONTAG = os.getenv("VERSIONTAG")
 
-# connect to the cloud logger and publisher
-logging_client = logging.Client()
-log_name = "ps-to-storage-cloudfnc"
-logger = logging_client.logger(log_name)
-publisher = pubsub_v1.PublisherClient()
+# Variables for incoming data
+# A url route is used in setup.sh when the trigger subscription is created.
+# It is possible to define multiple routes in a single module and trigger them using different subscriptions.
+ROUTE_RUN = "/"  # HTTP route that will trigger run(). Must match deploy.sh
+
+# Variables for outgoing data
+HTTP_204 = 204  # HTTP code: Success
+HTTP_400 = 400  # HTTP code: Bad Request
 
 # GCP resources used in this module
 ALERTS_TOPIC = pittgoogle.Topic.from_cloud(
@@ -47,38 +58,44 @@ bucket = client.get_bucket(client.bucket(bucket_name, user_project=PROJECT_ID))
 # define a binary data structure for packing and unpacking bytes
 _ConfluentWireFormatHeader = struct.Struct(">bi")
 
+app = flask.Flask(__name__)
 
-def run(event: dict, context: functions_v1.context.Context) -> None:
-    """Entry point for the Cloud Function
 
-    For args descriptions, see:
-    https://cloud.google.com/functions/docs/writing/background#function_parameters
+@app.route(ROUTE_RUN, methods=["POST"])
+def run():
+    """Uploads alert data to a GCS bucket. Publishes a de-duplicated "alerts" stream and publishes valid JSON message
+    to a Pub/Sub topic.
 
-    Args:
-        event: Pub/Sub message data and attributes.
-            `data` field contains the message data in a base64-encoded string.
-            `attributes` field contains the message's custom attributes in a dict.
+    This module is intended to be deployed as a Cloud Run service. It will operate as an HTTP endpoint
+    triggered by Pub/Sub messages. This function will be called once for every message sent to this route.
+    It should accept the incoming HTTP request and return a response.
 
-        context: The Cloud Function's event metadata.
-            It has the following attributes:
-                `event_id`: the Pub/Sub message ID.
-                `timestamp`: the Pub/Sub message publish time.
-                `event_type`: for example: "google.pubsub.topic.publish".
-                `resource`: the resource that emitted the event.
+    Returns
+    -------
+    response : tuple(str, int)
+        Tuple containing the response body (string) and HTTP status code (int). Flask will convert the
+        tuple into a proper HTTP response. Note that the response is a status message for the web server.
     """
+
+    # extract the envelope from the request that triggered the endpoint
+    # this contains a single Pub/Sub message with the alert to be processed
+    envelope = flask.request.get_json()
+
     try:
-        store_alert_data(event, context)
+        store_alert_data(envelope)
     # this is raised by blob.upload_from_file if the object already exists in the bucket
     except PreconditionFailed:
         # we'll simply pass, and the duplicate alert will go no further in our pipeline
         pass
 
+    return "", HTTP_204
 
-def store_alert_data(event: dict, context: functions_v1.context.Context) -> None:
+
+def store_alert_data(envelope) -> None:
     """Uploads the msg data bytes to a GCP storage bucket."""
 
-    alert_bytes = base64.b64decode(event["data"])  # alert packet, bytes
-    attributes = event.get("attributes", {})
+    alert_bytes = base64.b64decode(envelope["message"]["data"])  # alert packet, bytes
+    attributes = envelope["message"].get("attributes", {})
 
     # unpack the alert and read schema ID
     header_bytes = alert_bytes[:5]
@@ -104,7 +121,7 @@ def store_alert_data(event: dict, context: functions_v1.context.Context) -> None
     )
 
     blob = bucket.blob(filename)
-    blob.metadata = create_file_metadata(alert_dict, context)
+    blob.metadata = create_file_metadata(alert_dict, event_id=envelope["message"]["messageId"])
 
     # raise a PreconditionFailed exception if filename already exists in the bucket using "if_generation_match=0"
     # let it raise. the main function will catch it and then drop the message.
@@ -172,10 +189,10 @@ def generate_alert_filename(aname: dict) -> str:
     return f"{schema_version}/{date_string}/{object_id}/{source_id}.{file_format}"
 
 
-def create_file_metadata(alert_dict: dict, context):
+def create_file_metadata(alert_dict: dict, event_id: str) -> dict:
     """Return key/value pairs to be attached to the file as metadata."""
 
-    metadata = {"file_origin_message_id": context.event_id}
+    metadata = {"file_origin_message_id": event_id}
     metadata["diaObjectId"] = alert_dict["diaObject"]["diaObjectId"]
     metadata["diaSourceId"] = alert_dict["diaSource"]["diaSourceId"]
     metadata["ra"] = alert_dict["diaSource"]["ra"]

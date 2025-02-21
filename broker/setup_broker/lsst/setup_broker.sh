@@ -171,6 +171,14 @@ echo
 echo "Configuring VMs..."
 ./create_vm.sh "${broker_bucket}" "${testid}" "${teardown}" "${survey}" "${zone}" "${firewallrule}"
 
+#--- Create Artifact Registry Repository
+echo
+echo "Configuring Artifact Registry..."
+gcloud artifacts repositories create cloud-run-services --repository-format=docker \
+    --location=${region} --description="Docker repository for Cloud Run services" \
+    --project=${PROJECT_ID}
+gcloud auth configure-docker ${region}-docker.pkg.dev # authenticate requests to Artifact Registry
+
 #--- Deploy Cloud Functions
 echo
 echo "Configuring Cloud Functions..."
@@ -179,7 +187,7 @@ cd cloud_functions && cd lsst || exit
 
 #--- to_storage cloud function
 cd ps_to_storage || exit
-./deploy.sh "$testid" "$teardown" "$survey" "$versiontag" "$region"
+./deploy.sh "$testid" "$teardown" "$survey" "$region"
 
 #--- return to setup_broker directory
 cd .. && cd .. || exit
