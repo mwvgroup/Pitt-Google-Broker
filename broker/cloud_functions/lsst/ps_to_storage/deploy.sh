@@ -32,7 +32,6 @@ avro_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}_alerts")
 avro_topic=$(define_GCP_resources "projects/${PROJECT_ID}/topics/${survey}-alert_avros")
 avro_subscription=$(define_GCP_resources "${survey}-alert_avros-counter")
 cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}")  # lower case required by cloud run
-module_image_name="gcr.io/${PROJECT_ID}/${cr_module_name}"
 ps_input_subscrip=$(define_GCP_resources "${survey}-alerts_raw") # pub/sub subscription used to trigger cloud run module
 runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
 trigger_topic=$(define_GCP_resources "${survey}-alerts_raw")
