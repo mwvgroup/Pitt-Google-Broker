@@ -1,0 +1,22 @@
+google-cloud-functions
+google-cloud-logging
+pittgoogle-client>=0.3.1
+
+# for Cloud Run
+# https://cloud.google.com/run/docs/quickstarts/build-and-deploy/deploy-python-service
+# pinned following quickstart example. [TODO] consider un-pinning
+Flask==3.0.3
+gunicorn==22.0.0
+Werkzeug==3.0.3
+
+# for SuperNNova
+colorama
+h5py
+natsort
+scikit-learn
+seaborn
+supernnova==3.0.1
+tqdm
+# install torch from wheel because cloud fncs don't support GPUs
+# https://stackoverflow.com/questions/55449313/google-cloud-function-python-3-7-requirements-txt-makes-deploy-fail
+https://download.pytorch.org/whl/cpu/torch-2.0.0%2Bcpu-cp311-cp311-linux_x86_64.whl
