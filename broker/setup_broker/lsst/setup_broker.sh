@@ -8,12 +8,13 @@ testid="${1:-test}"
 teardown="${2:-False}"
 # name of the survey this broker instance will ingest
 survey="${3:-lsst}"
-schema_version="${4:-7.3}"
-versiontag=v$(echo "${schema_version}" | tr . _) # 7.3 -> v7_3
+schema_version="${4:-7.4}"
+versiontag=v$(echo "${schema_version}" | tr . _) # 7.4 -> v7_4
 region="${5:-us-central1}"
 zone="${region}-a"  # just use zone "a" instead of adding another script arg
-
-PROJECT_ID=$GOOGLE_CLOUD_PROJECT # get the environment variable
+# get environment variables
+PROJECT_ID=$GOOGLE_CLOUD_PROJECT
+PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format="value(projectNumber)")
 
 #--- Make the user confirm the settings
 echo
@@ -52,7 +53,7 @@ define_GCP_resources() {
 }
 
 #--- GCP resources used directly in this script
-artifact_registry_repo=$(define_GCP_resources "cloud-run-services")
+artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
 broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
 bq_dataset=$(define_GCP_resources "${survey}")
 topic_alerts_raw=$(define_GCP_resources "${survey}-alerts_raw")
@@ -112,30 +113,35 @@ manage_resources() {
         # in order to create BigQuery subscriptions, ensure that the following service account:
         # service-<project number>@gcp-sa-pubsub.iam.gserviceaccount.com" has the
         # bigquery.dataEditor role for each table
+        PUBSUB_SERVICE_ACCOUNT="service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com"
+        roleid="roles/bigquery.dataEditor"
+        bq add-iam-policy-binding \
+            --member="serviceAccount:${PUBSUB_SERVICE_ACCOUNT}" \
+            --role="${roleid}" \
+            --table=true "${PROJECT_ID}:${bq_dataset}.${alerts_table}"
         gcloud pubsub subscriptions create "${subscription_bigquery_import}" \
             --topic="${topic_bigquery_import}" \
             --bigquery-table="${PROJECT_ID}:${bq_dataset}.${alerts_table}" \
             --use-table-schema \
-            --drop-unknown-fields \
             --dead-letter-topic="${deadletter_topic_bigquery_import}" \
             --max-delivery-attempts=5 \
             --dead-letter-topic-project="${PROJECT_ID}" \
             --message-filter='attributes.schema_version = "'"${versiontag}"'"'
+
         # set IAM policies on resources
-        user="allUsers"
-        roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/userPublic"
-        gcloud pubsub topics add-iam-policy-binding "${topic_alerts}" --member="${user}" --role="${roleid}"
         if [ "$testid" = "False" ]; then
-            # this allows dead-lettered messages to be forwarded from the BigQuery subscription to the dead letter topic
-            # and it allows dead-lettered messages to be published to the dead letter topic.
-            PUBSUB_SERVICE_ACCOUNT="service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com"
-            gcloud pubsub topics add-iam-policy-binding "${deadletter_topic_bigquery_import}" \
-                --member="serviceAccount:$PUBSUB_SERVICE_ACCOUNT"\
-                --role="roles/pubsub.publisher"
-            gcloud pubsub subscriptions add-iam-policy-binding "${subscription_bigquery_import}" \
-                --member="serviceAccount:$PUBSUB_SERVICE_ACCOUNT"\
-                --role="roles/pubsub.subscriber"
+            user="allUsers"
+            roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/userPublic"
+            gcloud pubsub topics add-iam-policy-binding "${topic_alerts}" --member="${user}" --role="${roleid}"
         fi
+        # this allows dead-lettered messages to be forwarded from the BigQuery subscription to the dead letter topic
+        # and it allows dead-lettered messages to be published to the dead letter topic.
+        gcloud pubsub topics add-iam-policy-binding "${deadletter_topic_bigquery_import}" \
+            --member="serviceAccount:$PUBSUB_SERVICE_ACCOUNT"\
+            --role="roles/pubsub.publisher"
+        gcloud pubsub subscriptions add-iam-policy-binding "${subscription_bigquery_import}" \
+            --member="serviceAccount:$PUBSUB_SERVICE_ACCOUNT"\
+            --role="roles/pubsub.subscriber"
 
         #--- Create Artifact Registry Repository
         echo
@@ -182,13 +188,13 @@ echo
 echo "Configuring VMs..."
 ./create_vm.sh "${broker_bucket}" "${testid}" "${teardown}" "${survey}" "${zone}" "${firewallrule}"
 
-#--- Deploy Cloud Run (Functions)
+#--- Deploy Cloud Run services
 echo
-echo "Configuring Cloud Functions..."
+echo "Configuring Cloud Run services..."
 cd .. && cd .. || exit
-cd cloud_functions && cd lsst || exit
+cd cloud_run && cd lsst || exit
 
-#--- ps_to_storage cloud function
+#--- ps_to_storage Cloud Run service
 cd ps_to_storage || exit
 ./deploy.sh "$testid" "$teardown" "$survey" "$region"
 

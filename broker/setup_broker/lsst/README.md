@@ -84,7 +84,7 @@ testid="mytest"
 teardown="False"
 survey="lsst"
 region="us-central1"
-schema_version="7.3"
+schema_version="7.4"
 ```
 
 Execute the `setup_broker.sh` script:
@@ -125,7 +125,7 @@ Initialize parameters and call the deployment script:
 testid="mytest"
 teardown="True"
 survey="lsst"
-schema_version="7.3"
+schema_version="7.4"
 region="us-central1"
 
 ./setup_broker.sh "${testid}" "${teardown}" "${survey}" "${schema_version}" "${region}"

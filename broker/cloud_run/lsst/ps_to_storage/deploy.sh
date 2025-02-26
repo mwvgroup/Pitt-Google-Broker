@@ -12,7 +12,7 @@ survey="${3:-lsst}"
 region="${4:-us-central1}"
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT # get the environment variable
 
-MODULE_NAME="to-storage"  # lower case required by cloud run
+MODULE_NAME="alerts-to-storage"  # lower case required by cloud run
 ROUTE_RUN="/"  # url route that will trigger main.run()
 
 # function used to define GCP resources; appends testid if needed
@@ -28,7 +28,7 @@ define_GCP_resources() {
 }
 
 #--- GCP resources used in this script
-artifact_registry_repo=$(define_GCP_resources "cloud-run-services")
+artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
 avro_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}_alerts")
 avro_topic=$(define_GCP_resources "projects/${PROJECT_ID}/topics/${survey}-alert_avros")
 avro_subscription=$(define_GCP_resources "${survey}-alert_avros-counter")

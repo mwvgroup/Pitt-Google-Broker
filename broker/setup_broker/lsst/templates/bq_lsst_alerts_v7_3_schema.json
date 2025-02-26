@@ -953,6 +953,12 @@
             "type": "BOOLEAN"
           },
           {
+            "description": "Source was detected as significantly negative.",
+            "mode": "NULLABLE",
+            "name": "is_negative",
+            "type": "BOOLEAN"
+          },
+          {
             "description": "Flux in a 12 pixel radius aperture on the difference image.",
             "mode": "NULLABLE",
             "name": "apFlux",
@@ -1551,6 +1557,12 @@
             "mode": "NULLABLE",
             "name": "band",
             "type": "STRING"
+          },
+          {
+            "description":"Attempted to fit a dipole model to this source.",
+            "mode": "NULLABLE",
+            "name": "dipoleFitAttempted",
+            "type": "BOOLEAN"
           },
           {
             "description": "General pixel flags failure; set if anything went wrong when setting pixels flags from this footprint's mask. This implies that some pixelFlags for this source may be incorrectly set to False.",
