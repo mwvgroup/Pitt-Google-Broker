@@ -1849,7 +1849,7 @@
           {
             "description": "Parallax",
             "mode": "NULLABLE",
-            "name": "Parallax",
+            "name": "parallax",
             "type": "FLOAT"
           },
           {

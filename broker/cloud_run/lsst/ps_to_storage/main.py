@@ -16,7 +16,7 @@ import flask
 import fastavro
 import pittgoogle
 from confluent_kafka.schema_registry import SchemaRegistryClient
-from google.cloud import logging, storage
+from google.cloud import logging, storage, pubsub_v1
 from google.cloud.exceptions import PreconditionFailed
 
 # [FIXME] Make this helpful or else delete it.
@@ -52,7 +52,7 @@ if TESTID != "False":
 
 client = storage.Client()
 bucket = client.get_bucket(client.bucket(bucket_name, user_project=PROJECT_ID))
-publisher = pittgoogle.Topic.client
+publisher = pubsub_v1.PublisherClient()
 
 # define a binary data structure for packing and unpacking bytes
 _ConfluentWireFormatHeader = struct.Struct(">bi")
