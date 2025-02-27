@@ -9,7 +9,7 @@ import json
 import math
 import os
 import struct
-from typing import Optional
+from typing import Any, Dict, Optional
 from astropy.time import Time
 
 import flask
@@ -25,12 +25,10 @@ from google.cloud.exceptions import PreconditionFailed
 # pittgoogle uses the python logger.
 # We don't currently use the python logger directly in this script, but we could.
 logging.Client().setup_logging()
-publisher = pubsub_v1.PublisherClient()
 
 PROJECT_ID = os.getenv("GCP_PROJECT")
 TESTID = os.getenv("TESTID")
 SURVEY = os.getenv("SURVEY")
-VERSIONTAG = os.getenv("VERSIONTAG")
 
 # Variables for incoming data
 # A url route is used in setup.sh when the trigger subscription is created.
@@ -42,7 +40,7 @@ HTTP_204 = 204  # HTTP code: Success
 HTTP_400 = 400  # HTTP code: Bad Request
 
 # GCP resources used in this module
-ALERTS_TOPIC = pittgoogle.Topic.from_cloud(
+TOPIC_ALERTS = pittgoogle.Topic.from_cloud(
     "alerts", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
 )
 TOPIC_BIGQUERY_IMPORT = pittgoogle.Topic.from_cloud(
@@ -54,17 +52,20 @@ if TESTID != "False":
 
 client = storage.Client()
 bucket = client.get_bucket(client.bucket(bucket_name, user_project=PROJECT_ID))
+publisher = pubsub_v1.PublisherClient()
 
 # define a binary data structure for packing and unpacking bytes
 _ConfluentWireFormatHeader = struct.Struct(">bi")
+sr_client = SchemaRegistryClient({"url": "https://usdf-alert-schemas-dev.slac.stanford.edu"})
 
 app = flask.Flask(__name__)
 
 
 @app.route(ROUTE_RUN, methods=["POST"])
 def run():
-    """Uploads alert data to a GCS bucket. Publishes a de-duplicated "alerts" stream and publishes valid JSON message
-    to a Pub/Sub topic.
+    """Uploads alert data to a GCS bucket. Publishes a de-duplicated "alerts" stream (${survey}-alerts) containing the
+    original alert bytes and publishes an additional JSON message stream (${survey}-bigquery-import) in which a
+    BigQuery subscription is used to write alert data to the appropriate BigQuery table.
 
     This module is intended to be deployed as a Cloud Run service. It will operate as an HTTP endpoint
     triggered by Pub/Sub messages. This function will be called once for every message sent to this route.
@@ -102,20 +103,24 @@ def store_alert_data(envelope) -> None:
     schema_id = deserialize_confluent_wire_header(header_bytes)
 
     # get and load schema
-    sr_client = SchemaRegistryClient({"url": "https://usdf-alert-schemas-dev.slac.stanford.edu"})
     schema = sr_client.get_schema(schema_id=schema_id)
     parse_schema = json.loads(schema.schema_str)
     schema_version = parse_schema["namespace"].split(".")[1]
     content_bytes = io.BytesIO(alert_bytes[5:])
 
-    # deserialize the alert and create Alert object
+    # deserialize the alert
     alert_dict = fastavro.schemaless_reader(content_bytes, parse_schema)
+
+    # convert the MJD timestamp to "YYYY-MM-DD"
+    time_obj = Time(alert_dict["diaSource"]["midpointMjdTai"], format="mjd")
+    alert_date = time_obj.datetime.strftime("%Y-%m-%d")
+
     filename = generate_alert_filename(
         {
             "schema_version": schema_version,
+            "alert_date": alert_date,
             "objectId": alert_dict["diaObject"]["diaObjectId"],
             "sourceId": alert_dict["diaSource"]["diaSourceId"],
-            "alert_date": alert_dict["diaSource"]["midpointMjdTai"],
             "format": "avro",
         }
     )
@@ -125,11 +130,11 @@ def store_alert_data(envelope) -> None:
 
     # raise a PreconditionFailed exception if filename already exists in the bucket using "if_generation_match=0"
     # let it raise. the main function will catch it and then drop the message.
-    blob.upload_from_file(io.BytesIO(alert_bytes), if_generation_match=0)
+    blob.upload_from_string(alert_bytes, if_generation_match=0)
 
     # Cloud Storage says this is not a duplicate, so now we publish the broker's main "alerts" stream
     publish_alerts_stream(
-        topic_name=ALERTS_TOPIC.name,
+        topic_name=TOPIC_ALERTS.name,
         message=alert_bytes,
         attributes={
             "diaObjectId": str(alert_dict["diaObject"]["diaObjectId"]),
@@ -141,7 +146,9 @@ def store_alert_data(envelope) -> None:
 
     # publish the alert as a JSON message to the bigquery-import topic
     TOPIC_BIGQUERY_IMPORT.publish(
-        _create_valid_json(alert_dict, attributes={"schema_version": schema_version})
+        _reformat_alert_data_to_valid_json(
+            alert_dict, attributes={"schema_version": schema_version}
+        )
     )
 
 
@@ -182,11 +189,7 @@ def generate_alert_filename(aname: dict) -> str:
     source_id = aname["sourceId"]
     file_format = aname["format"]
 
-    # convert the MJD timestamp to "YYYY-MM-DD"
-    time_obj = Time(alert_date, format="mjd")
-    date_string = time_obj.datetime.strftime("%Y-%m-%d")
-
-    return f"{schema_version}/{date_string}/{object_id}/{source_id}.{file_format}"
+    return f"{schema_version}/{alert_date}/{object_id}/{source_id}.{file_format}"
 
 
 def create_file_metadata(alert_dict: dict, event_id: str) -> dict:
@@ -216,10 +219,12 @@ def publish_alerts_stream(
     return future.result()
 
 
-def _create_valid_json(alert_dict: dict, attributes: dict) -> pittgoogle.alert.Alert:
-    """Transforms alert data to a valid JSON message."""
+def _reformat_alert_data_to_valid_json(
+    alert_dict: dict, attributes: dict
+) -> pittgoogle.alert.Alert:
+    """Creates an Alert object whose data will be published as a valid JSON message."""
 
-    # define and remove cutouts from message
+    # cutouts are sent as bytes; define and remove them
     cutouts = [
         "cutoutTemplate",
         "cutoutScience",
@@ -228,21 +233,23 @@ def _create_valid_json(alert_dict: dict, attributes: dict) -> pittgoogle.alert.A
     for key in cutouts:
         alert_dict.pop(key, None)
 
-    # replace NaN values with None
-    valid_json = _transform_nan_to_none(alert_dict)
+    # alert may contain NaN values; replace them with None
+    valid_json_dict = _reformat_nan_in_alert_dict(alert_dict)
 
-    return pittgoogle.Alert.from_dict(payload=valid_json, attributes=attributes)
+    return pittgoogle.Alert.from_dict(payload=valid_json_dict, attributes=attributes)
 
 
-def _transform_nan_to_none(alert_dict: dict) -> dict:
-    """Recursively replace NaN values with None in a dictionary."""
+def _reformat_nan_in_alert_dict(alert_dict: Dict[str, Any]) -> Dict[str, Any]:
+    """Recursively replace NaN values with None if present in alert dictionary."""
+    return {k: _replace_nan_values_with_none(v) for k, v in alert_dict.items()}
 
-    # convert NaN to None
-    if isinstance(alert_dict, dict):
-        return {k: _transform_nan_to_none(v) for k, v in alert_dict.items()}
-    if isinstance(alert_dict, list):
-        return [_transform_nan_to_none(v) for v in alert_dict]
-    if isinstance(alert_dict, float) and math.isnan(alert_dict):
+
+def _replace_nan_values_with_none(value: Any) -> Any:
+    """Recursively replace NaN values with None."""
+    if isinstance(value, dict):
+        return {k: _replace_nan_values_with_none(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_replace_nan_values_with_none(v) for v in value]
+    if isinstance(value, float) and math.isnan(value):
         return None
-
-    return alert_dict
+    return value

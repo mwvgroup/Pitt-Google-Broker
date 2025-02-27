@@ -1,0 +1,62 @@
+[
+    {
+      "description": "unique alert identifier",
+      "mode": "REQUIRED",
+      "name": "alertId",
+      "type": "INTEGER"
+    },
+    {
+      "description": "object identifier or name",
+      "mode": "REQUIRED",
+      "name": "diaObjectId",
+      "type": "INTEGER"
+    },
+    {
+      "description": "Candidate ID from operations DB",
+      "mode": "REQUIRED",
+      "name": "diaSourceId",
+      "type": "INTEGER"
+    },
+    {
+      "description": "probability object is a type Ia supernova",
+      "mode": "NULLABLE",
+      "name": "prob_class0",
+      "type": "FLOAT"
+    },
+    {
+      "description": "probability object is non-Ia",
+      "mode": "NULLABLE",
+      "name": "prob_class1",
+      "type": "FLOAT"
+    },
+    {
+      "description": "predicted class; 0 = Ia, 1 = non-Ia",
+      "mode": "NULLABLE",
+      "name": "predicted_class",
+      "type": "INTEGER"
+    },
+    {
+      "description": "classifier module version",
+      "mode": "NULLABLE",
+      "name": "brokerVersion",
+      "type": "STRING"
+    },
+    {
+      "description": "timestamp from originating LSST alert",
+      "mode": "NULLABLE",
+      "name": "LSSTPublishTimestamp",
+      "type": "TIMESTAMP"
+    },
+    {
+      "description": "timestamp of broker ingestion of LSST alert",
+      "mode": "NULLABLE",
+      "name": "brokerIngestTimestamp",
+      "type": "TIMESTAMP"
+    },
+    {
+      "description": "timestamp of SuperNNova classification of LSST alert",
+      "mode": "NULLABLE",
+      "name": "classifierTimestamp",
+      "type": "TIMESTAMP"
+    }
+  ]

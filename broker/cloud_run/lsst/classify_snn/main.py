@@ -35,7 +35,7 @@ from supernnova.validation.validate_onthefly import classify_lcs  # Classify the
 # We don't currently use the python logger directly in this script, but we could.
 google.cloud.logging.Client().setup_logging()
 
-# These environment variables are defined when running the setup.sh script.
+# These environment variables are defined when running the deploy.sh script.
 PROJECT_ID = os.getenv("GCP_PROJECT")
 TESTID = os.getenv("TESTID")
 SURVEY = os.getenv("SURVEY")
@@ -57,22 +57,27 @@ MODEL_PATH = Path(__file__).resolve().parent / model_dir_name / model_file_name
 # A url route is used in setup.sh when the trigger subscription is created.
 # It is possible to define multiple routes in a single module and trigger them using different subscriptions.
 ROUTE_RUN = "/"  # HTTP route that will trigger run(). Must match setup.sh
-# Schema name of the incoming alert. View name options: pittgoogle.
-SCHEMA_IN = "lsst.v7_4.alert"  # View the schema: pittgoogle.Schemas.get(SCHEMA_IN).avsc
-# define a binary data structure for packing and unpacking bytes
-_ConfluentWireFormatHeader = struct.Struct(">bi")
 
 # Variables for outgoing data
 HTTP_204 = 204  # HTTP code: Success
 HTTP_400 = 400  # HTTP code: Bad Request
 SCHEMA_OUT = "elasticc.v0_9_1.brokerClassification"  # View the schema: pittgoogle.Schemas.get(SCHEMA_OUT).avsc
+
+# define a binary data structure for packing and unpacking bytes
+_ConfluentWireFormatHeader = struct.Struct(">bi")
+sr_client = SchemaRegistryClient({"url": "https://usdf-alert-schemas-dev.slac.stanford.edu"})
+
+# GCP resources used in this module
 # pittgoogle will construct the full resource names from the MODULE_NAME, SURVEY, and TESTID
 TABLE = pittgoogle.Table.from_cloud(MODULE_NAME, survey=SURVEY, testid=TESTID)
 # DESC is already listening to this pubsub stream so the leave camel case to avoid a breaking change
 TOPIC = pittgoogle.Topic.from_cloud(
     "SuperNNova", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
 )
-
+TOPIC_BIGQUERY_IMPORT = pittgoogle.Topic.from_cloud(
+    "bigquery-import-SuperNNova", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
+)
+publisher = pubsub_v1.PublisherClient()
 
 app = flask.Flask(__name__)
 
@@ -98,17 +103,37 @@ def run():
 
     # unpack the alert. raises a `BadRequest` if the envelope does not contain a valid message
     try:
+        alert = _unpack_alert(envelope)
         # classify
         classifications = _classify(alert)
-        alert = pittgoogle.Alert.from_cloud_run(envelope=envelope, schema_name=SCHEMA_IN)
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
     # publish
-    TOPIC.publish(_create_outgoing_alert(alert, classifications))
-    TABLE.insert_rows([classifications])
+    classification_alert = _create_outgoing_alert(alert, classifications)
+    TOPIC.publish(classification_alert)
+    TOPIC_BIGQUERY_IMPORT.publish(classification_alert)
 
     return "", HTTP_204
+
+
+def _unpack_alert(envelope) -> pittgoogle.Alert:
+    alert_bytes = base64.b64decode(envelope["message"]["data"])  # alert packet, bytes
+    attributes = envelope["message"].get("attributes", {})
+
+    # unpack the alert and read schema ID
+    header_bytes = alert_bytes[:5]
+    schema_id = deserialize_confluent_wire_header(header_bytes)
+
+    # get and load schema
+    schema = sr_client.get_schema(schema_id=schema_id)
+    parse_schema = json.loads(schema.schema_str)
+    content_bytes = io.BytesIO(alert_bytes[5:])
+
+    # deserialize the alert
+    alert_dict = fastavro.schemaless_reader(content_bytes, parse_schema)
+
+    return pittgoogle.Alert.from_dict(payload=alert_dict, attributes=attributes)
 
 
 def _classify(alert: pittgoogle.Alert) -> dict:
@@ -132,7 +157,7 @@ def _classify(alert: pittgoogle.Alert) -> dict:
         "predicted_class": np.argmax(pred_probs).item(),
         "brokerVersion": MODULE_VERSION,
         # divide by 1000 to switch millisecond -> microsecond precision for BigQuery
-        "elasticcPublishTimestamp": int(alert.attributes["kafka.timestamp"]) / 1000,
+        "LSSTPublishTimestamp": int(alert.attributes["kafka.timestamp"]) / 1000,
         "brokerIngestTimestamp": alert.msg.publish_time,
         "classifierTimestamp": datetime.now(timezone.utc),
     }
@@ -143,6 +168,7 @@ def _classify(alert: pittgoogle.Alert) -> dict:
 def _format_for_classifier(alert: pittgoogle.Alert) -> pd.DataFrame:
     """Create a DataFrame for input to SuperNNova."""
     alert_df = alert.dataframe
+    alert_df = pd.DataFrame.from_dict(alert.dict)
     snn_df = pd.DataFrame(
         data={
             # select a subset of columns and rename them for SuperNNova
@@ -173,7 +199,7 @@ def _create_outgoing_alert(alert_in: pittgoogle.Alert, results: dict) -> pittgoo
         "alertId": alert_in.alertid,
         "diaSourceId": alert_in.sourceid,
         # multiply by 1000 to switch microsecond -> millisecond precision for elasticc schema
-        "elasticcPublishTimestamp": int(results["elasticcPublishTimestamp"] * 1000),
+        "LSSTPublishTimestamp": int(results["LSSTPublishTimestamp"] * 1000),
         "brokerIngestTimestamp": results["brokerIngestTimestamp"],
         "brokerName": BROKER_NAME,
         "brokerVersion": results["brokerVersion"],
