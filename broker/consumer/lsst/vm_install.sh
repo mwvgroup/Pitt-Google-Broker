@@ -64,7 +64,7 @@ echo "Installing the Kafka -> Pub/Sub connector"
     CONNECTOR_RELEASE=v0.5-alpha
     mkdir -p ${plugindir}
     #- install the connector
-    cd ${plugindir} || exit
+    cd ${plugindir}
     wget https://github.com/GoogleCloudPlatform/pubsub/releases/download/${CONNECTOR_RELEASE}/pubsub-kafka-connector.jar
     echo "Done installing the Kafka -> Pub/Sub connector"
 ) || exit
