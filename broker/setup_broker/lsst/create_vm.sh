@@ -2,14 +2,15 @@
 # Creates or deletes the GCP VM instances needed by the broker.
 # This script will not delete VMs that are in production
 
-
-broker_bucket=$1 # name of GCS bucket where broker files are staged
+# name of GCS bucket where broker files are staged
+broker_bucket=$1
+# "False" uses production resources
+# any other string will be appended to the names of all resources
 testid="${2:-test}"
-#   "False" uses production resources
-#   any other string will be appended to the names of all resources
-teardown="${3:-False}" # "True" tearsdown/deletes resources, else setup
-survey="${4:-rubin}"
+# "True" tearsdown/deletes resources, else setup
+teardown="${3:-False}"
 # name of the survey this broker instance will ingest
+survey="${4:-lsst}"
 zone="${5:-us-central1-a}"
 firewallrule="${6:-tcpport9094}"
 
@@ -34,13 +35,12 @@ else
     machinetype=e2-standard-2
     # metadata
     googlelogging="google-logging-enabled=true"
-    startupscript="startup-script-url=gs://${broker_bucket}/consumer/${survey}/vm_install.sh"
-    shutdownscript="shutdown-script-url=gs://${broker_bucket}/consumer/${survey}/vm_shutdown.sh"
+    startupscript="startup-script-url=gs://${broker_bucket}/${survey}/vm_install.sh"
+    shutdownscript="shutdown-script-url=gs://${broker_bucket}/${survey}/vm_shutdown.sh"
     gcloud compute instances create "${consumerVM}" \
         --zone="${zone}" \
         --machine-type="${machinetype}" \
         --scopes=cloud-platform \
         --metadata="${googlelogging},${startupscript},${shutdownscript}" \
         --tags="${firewallrule}"
-
 fi

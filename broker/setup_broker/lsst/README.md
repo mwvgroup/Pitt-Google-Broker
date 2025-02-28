@@ -29,7 +29,8 @@ This section assumes that you have:
 your GCP project and service account credentials
 - Authenticated the service account to make `gcloud` calls through the project
 - Enabled the [Secret Manager API](https://cloud.google.com/secret-manager/docs/configuring-secret-manager#enable_api)
-in your Google Cloud Project
+and the [Artifact Registry API](https://cloud.google.com/artifact-registry/docs/enable-service) in your Google Cloud
+Project
 - Granted the default compute service account the role of `Secret Manager Secret Accessor` in the
 [IAM & Admin page](https://console.cloud.google.com/iam-admin)
 
@@ -42,7 +43,7 @@ Create a secret for your access credential:
 
 ```bash
 # define parameters
-survey="rubin"
+survey="lsst"
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT
 
 # define secret names
@@ -70,26 +71,36 @@ echo -n "enter the client secret provided by GCN" | \
     gcloud secrets versions add "${client_secret}" --data-file=-
 ```
 
+Authenticate requests to Artifact Registry:
+
+```bash
+# define parameters
+region="us-central1"
+
+# authenticate requests to Artifact Registry
+gcloud auth configure-docker "${region}"-docker.pkg.dev
+```
+
 Clone the repo and cd into the directory:
 
 ```bash
 git clone https://github.com/mwvgroup/Pitt-Google-Broker.git
-cd Pitt-Google-Broker/broker/setup_broker/rubin
+cd Pitt-Google-Broker/broker/setup_broker/lsst
 ```
 
 Define the variables used below.
 
 ```bash
-testid="enter testid value"
+testid="mytest"
 teardown="False"
-survey="rubin"
-region="us-central1"
+survey="lsst"
+schema_version="7.4"
 ```
 
 Execute the `setup_broker.sh` script:
 
 ```bash
-./setup_broker.sh "${testid}" "${teardown}" "${survey}" "${region}"
+./setup_broker.sh "${testid}" "${teardown}" "${survey}" "${schema_version}" "${region}"
 ```
 
 This will create all of the necessary GCP resources. Allow the consumer VM to finish its installation process. Once
@@ -123,8 +134,9 @@ Initialize parameters and call the deployment script:
 ```bash
 testid="mytest"
 teardown="True"
-survey="rubin"
+survey="lsst"
+schema_version="7.4"
 region="us-central1"
 
-./setup_broker.sh "${testid}" "${teardown}" "${survey}" "${region}"
+./setup_broker.sh "${testid}" "${teardown}" "${survey}" "${schema_version}" "${region}"
 ```

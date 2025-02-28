@@ -1,18 +1,18 @@
-# Start the Rubin consumer VM
+# Start the LSST consumer VM
 
-See `Pitt-Google-Broker/broker/setup_broker/rubin/README.md` for setup instructions.
+See `Pitt-Google-Broker/broker/setup_broker/lsst/README.md` for setup instructions.
 
 To start the consumer VM:
 
 ```bash
-survey="rubin"
+survey="lsst"
 testid="mytest"
 consumerVM="${survey}-consumer-${testid}"
 zone="us-central1-a"
 
 # Set the VM metadata
 KAFKA_TOPIC="alerts-simulated"
-PS_TOPIC="${survey}-alerts-${testid}"
+PS_TOPIC="${survey}-alerts_raw-${testid}"
 gcloud compute instances add-metadata "${consumerVM}" --zone "${zone}" \
     --metadata="PS_TOPIC_FORCE=${PS_TOPIC},KAFKA_TOPIC_FORCE=${KAFKA_TOPIC}"
 
@@ -25,7 +25,7 @@ gcloud compute instances start ${consumerVM} --zone ${zone}
 To stop stop the consumer VM:
 
 ```bash
-survey="rubin"
+survey="lsst"
 testid="mytest"
 consumerVM="${survey}-consumer-${testid}"
 zone="us-central1-a"
