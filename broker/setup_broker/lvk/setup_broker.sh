@@ -117,8 +117,8 @@ manage_resources() {
             gsutil -m -o "${o}" rm -r "gs://${broker_bucket}"
             bq rm -r -f "${PROJECT_ID}:${bq_dataset}"
             gcloud pubsub topics delete "${topic_alerts}"
-            gcloud pubsub subscriptions delete "${subscription_alerts_reservoir}"
             gcloud pubsub topics delete "${deadletter_topic_bigquery_import}"
+            gcloud pubsub subscriptions delete "${subscription_alerts_reservoir}"
             gcloud pubsub subscriptions delete "${deadletter_subscription_bigquery_import}"
             gcloud pubsub subscriptions delete "${subscription_bigquery_import}"
         fi

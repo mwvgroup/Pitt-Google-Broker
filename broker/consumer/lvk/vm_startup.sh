@@ -31,15 +31,17 @@ if [ "$testid" != "False" ]; then
 fi
 
 #--- Download config files from GCS
-# remove all files
-rm -r "${brokerdir}"
-# download fresh files
-mkdir "${brokerdir}"
-cd ${brokerdir} || exit
-gsutil -m cp -r "gs://${broker_bucket}/consumer" .
-gsutil -m cp -r "gs://${broker_bucket}/schema_maps" .
-# wait. otherwise the script may continue before all files are downloaded, with adverse behavior.
-sleep 30s
+(
+    # remove all files
+    rm -r "${brokerdir}"
+    # download fresh files
+    mkdir "${brokerdir}"
+    cd ${brokerdir}
+
+    gsutil -m cp -r "gs://${broker_bucket}/${survey}" .
+    # wait. otherwise the script may continue before all files are downloaded, with adverse behavior.
+    sleep 30s
+) || exit
 
 #--- Set the topic names to the "FORCE" metadata attributes if exist, else defaults
 KAFKA_TOPIC_DEFAULT="igwn.gwalert"
@@ -50,32 +52,37 @@ gcloud compute instances add-metadata "$consumerVM" --zone "$zone" \
     --metadata="PS_TOPIC=${PS_TOPIC},KAFKA_TOPIC=${KAFKA_TOPIC}"
 
 #--- Files this script will write
-workingdir="${brokerdir}/consumer/${survey}"
+workingdir="${brokerdir}/${survey}"
 fout_run="${workingdir}/run-connector.out"
 fout_topics="${workingdir}/list.topics"
 
 #--- Set the connector's configs (client ID, client secret, project, and topics)
-# define LVK-related parameters
-client_id="${survey}-${PROJECT_ID}-client-id"
-client_secret="${survey}-${PROJECT_ID}-client-secret"
-CLIENT_ID=$(gcloud secrets versions access latest --secret="${client_id}")
-CLIENT_SECRET=$(gcloud secrets versions access latest --secret="${client_secret}")
-group_id="pittgooglebroker"
-# use test resources, if requested
-if [ "$testid" != "False" ]; then
-    group_id="${group_id}-${testid}"
-fi
+(
+    cd "${workingdir}"
 
-cd "${workingdir}" || exit
+    # define LVK-related parameters
+    client_id="${survey}-${PROJECT_ID}-client-id"
+    client_secret="${survey}-${PROJECT_ID}-client-secret"
+    CLIENT_ID=$(gcloud secrets versions access latest --secret="${client_id}")
+    CLIENT_SECRET=$(gcloud secrets versions access latest --secret="${client_secret}")
+    group_id="pittgooglebroker"
+    # use test resources, if requested
+    if [ "$testid" != "False" ]; then
+        group_id="${group_id}-${testid}"
+    fi
 
-fconfig=admin.properties
-sed -i "s/CLIENT_ID/${CLIENT_ID}/g" ${fconfig} && sed -i "s/CLIENT_SECRET/${CLIENT_SECRET}/g" ${fconfig}
+    fconfig=admin.properties
+    sed -i "s/CLIENT_ID/${CLIENT_ID}/g" ${fconfig}
+    sed -i "s/CLIENT_SECRET/${CLIENT_SECRET}/g" ${fconfig}
 
-fconfig=psconnect-worker-authenticated.properties
-sed -i "s/CLIENT_ID/${CLIENT_ID}/g" ${fconfig} && sed -i "s/CLIENT_SECRET/${CLIENT_SECRET}/g" ${fconfig} && sed -i "s/GROUP_ID/${group_id}/g" ${fconfig}
+    fconfig=psconnect-worker-authenticated.properties
+    sed -i "s/CLIENT_ID/${CLIENT_ID}/g" ${fconfig}
+    sed -i "s/CLIENT_SECRET/${CLIENT_SECRET}/g" ${fconfig} && sed -i "s/GROUP_ID/${group_id}/g" ${fconfig}
 
-fconfig=ps-connector.properties
-sed -i "s/PROJECT_ID/${PROJECT_ID}/g" ${fconfig} && sed -i "s/PS_TOPIC/${PS_TOPIC}/g" ${fconfig} && sed -i "s/KAFKA_TOPIC/${KAFKA_TOPIC}/g" ${fconfig}
+    fconfig=ps-connector.properties
+    sed -i "s/PROJECT_ID/${PROJECT_ID}/g" ${fconfig}
+    sed -i "s/PS_TOPIC/${PS_TOPIC}/g" ${fconfig} && sed -i "s/KAFKA_TOPIC/${KAFKA_TOPIC}/g" ${fconfig}
+) || exit
 
 #--- Check until alerts start streaming into the topic
 alerts_flowing=false
