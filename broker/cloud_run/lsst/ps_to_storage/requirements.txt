@@ -3,10 +3,9 @@
 # dependencies for a Cloud Function must be specified in a `requirements.txt`
 # file (or packaged with the function) in the same directory as `main.py`
 
-confluent-kafka>=2.6.0
+confluent-kafka==2.6.0
 fastavro
 google-cloud-logging
-google-cloud-pubsub
 google-cloud-storage
 httpx # used by confluent-kafka
 pittgoogle-client>=0.3.11
