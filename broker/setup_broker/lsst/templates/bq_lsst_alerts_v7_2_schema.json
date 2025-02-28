@@ -1547,6 +1547,12 @@
             "type": "STRING"
           },
           {
+            "description":"Attempted to fit a dipole model to this source.",
+            "mode": "NULLABLE",
+            "name": "dipoleFitAttempted",
+            "type": "BOOLEAN"
+          },
+          {
             "description": "General pixel flags failure; set if anything went wrong when setting pixels flags from this footprint's mask. This implies that some pixelFlags for this source may be incorrectly set to False.",
             "mode": "NULLABLE",
             "name": "pixelFlags",
@@ -1831,7 +1837,7 @@
           {
             "description": "Parallax",
             "mode": "NULLABLE",
-            "name": "Parallax",
+            "name": "parallax",
             "type": "FLOAT"
           },
           {

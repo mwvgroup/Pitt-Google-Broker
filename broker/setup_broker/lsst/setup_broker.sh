@@ -153,7 +153,6 @@ manage_resources() {
         gcloud artifacts repositories create "${artifact_registry_repo}" --repository-format=docker \
             --location="${region}" --description="Docker repository for Cloud Run services" \
             --project="${PROJECT_ID}"
-        gcloud auth configure-docker "${region}"-docker.pkg.dev # authenticate requests to Artifact Registry
 
     else
         if [ "$environment_type" = "testing" ]; then

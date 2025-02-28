@@ -183,10 +183,15 @@ Command line
     gcloud auth login
     # this will open a browser and prompt you for authorization. follow the instructions
 
-    # create the project, set it as the gcloud default, and enable the Pub/Sub API
+    # create the project, set it as the gcloud default, and enable the following APIs
     gcloud projects create $PROJECT_ID
     gcloud config set project $PROJECT_ID
     gcloud services enable pubsub.googleapis.com
+    gcloud services enable artifactregistry.googleapis.com
+
+    # authenticate requests to Artifact Registry
+    region="us-central1"
+    gcloud auth configure-docker "${region}"-docker.pkg.dev
 
     # create an owner service account and download a key file
     gcloud iam service-accounts create $NAME
