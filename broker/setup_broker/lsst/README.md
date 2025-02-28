@@ -72,6 +72,7 @@ echo -n "enter the client secret provided by GCN" | \
 ```
 
 Authenticate requests to Artifact Registry:
+
 ```bash
 # define parameters
 region="us-central1"
