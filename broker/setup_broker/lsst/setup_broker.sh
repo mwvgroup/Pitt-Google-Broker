@@ -80,10 +80,8 @@ manage_resources() {
         # create BigQuery dataset and table
         bq --location="${region}" mk --dataset "${bq_dataset}"
 
-        cd templates || exit 5
-        bq mk --table "${PROJECT_ID}:${bq_dataset}.${alerts_table}" "bq_${survey}_${alerts_table}_schema.json" || exit 5
+        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${alerts_table}" "bq_${survey}_${alerts_table}_schema.json") || exit 5
         bq update --description "Alert data from LSST. This table is an archive of the lsst-alerts Pub/Sub stream. It has the same schema as the original alert bytes, including nested and repeated fields." "${PROJECT_ID}:${bq_dataset}.${alerts_table}"
-        cd .. || exit 5
 
         # create broker bucket and upload files
         echo
@@ -190,13 +188,11 @@ echo "Configuring VMs..."
 #--- Deploy Cloud Run services
 echo
 echo "Configuring Cloud Run services..."
-cd .. && cd .. || exit
-cd cloud_run && cd lsst || exit
+(
+    cd .. && cd ..
+    cd cloud_run && cd lsst
 
-#--- ps_to_storage Cloud Run service
-cd ps_to_storage || exit
-./deploy.sh "$testid" "$teardown" "$survey" "$region"
-
-#--- return to setup_broker directory
-cd .. && cd .. || exit
-cd .. && cd setup_broker || exit
+    #--- ps_to_storage Cloud Run service
+    cd ps_to_storage
+    ./deploy.sh "$testid" "$teardown" "$survey" "$region"
+) || exit
