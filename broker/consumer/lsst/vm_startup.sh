@@ -41,7 +41,7 @@ fi
     gsutil -m cp -r "gs://${broker_bucket}/${survey}" .
     # wait. otherwise the script may continue before all files are downloaded, with adverse behavior.
     sleep 30s
-)
+) || exit
 
 #--- Set the topic names to the "FORCE" metadata attributes if exist, else defaults
 KAFKA_TOPIC_DEFAULT="alerts-simulated"

@@ -62,9 +62,9 @@ fout_topics="${workingdir}/list.topics"
 
 #--- Set the connector's configs (project and topics)
 (
-    cd ${workingdir}
+    cd "${workingdir}"
 
-    config=ps-connector.properties
+    fconfig=ps-connector.properties
     sed -i "s/PROJECT_ID/${PROJECT_ID}/g" ${fconfig}
     sed -i "s/PS_TOPIC/${PS_TOPIC}/g" ${fconfig}
     sed -i "s/KAFKA_TOPIC/${KAFKA_TOPIC}/g" ${fconfig}
