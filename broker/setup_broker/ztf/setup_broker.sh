@@ -173,6 +173,7 @@ fi
 echo
 echo "Configuring Cloud Functions..."
 (
+    # navigate to the correct directory
     cd .. && cd .. && cd cloud_functions && cd ztf
 
     #--- Check cue response cloud function
