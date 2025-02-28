@@ -172,32 +172,30 @@ fi
 #--- Deploy Cloud Functions
 echo
 echo "Configuring Cloud Functions..."
-(cd .. && cd .. && cd cloud_functions) || exit
+(
+    cd .. && cd .. && cd cloud_functions && cd ztf
 
-#--- Check cue response cloud function
-(cd check_cue_response) || exit
-./deploy.sh "$testid" "$teardown" "$survey" "$versiontag" "$zone"
+    #--- Check cue response cloud function
+    cd check_cue_response
+    ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag" "$zone"
 
-#--- classify with SNN cloud function
-(cd .. && cd classify_snn) || exit
-./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
+    #--- classify with SNN cloud function
+    cd .. && cd classify_snn
+    ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
 
-#--- alerts-lite cloud function
-(cd .. && cd lite) || exit
-./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
+    #--- alerts-lite cloud function
+    cd .. && cd lite
+    ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
 
-#--- Pub/Sub -> Cloud Storage Avro cloud function
-(cd .. && cd ps_to_gcs) || exit
-./deploy.sh "$testid" "$teardown" "$survey" "$versiontag" "$region"
+    #--- Pub/Sub -> Cloud Storage Avro cloud function
+    cd .. && cd ps_to_gcs
+    ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag" "$region"
 
-#--- BigQuery storage cloud function
-(cd .. && cd store_BigQuery) || exit
-./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
+    #--- BigQuery storage cloud function
+    cd .. && cd store_BigQuery
+    ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
 
-#--- tag alerts cloud function
-(cd .. && cd tag) || exit
-./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
-
-#--- return to setup_broker directory
-(cd .. && cd ..) || exit
-(cd setup_broker) || exit
+    #--- tag alerts cloud function
+    cd .. && cd tag
+    ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
+) || exit
