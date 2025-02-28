@@ -68,7 +68,7 @@ wget https://repo1.maven.org/maven2/com/google/cloud/pubsub-group-kafka-connecto
 echo "Done installing the Kafka -> Pub/Sub connector"
 
 #--- Set the startup script and shutdown
-startupscript="gs://${broker_bucket}/consumer/${survey}/vm_startup.sh"
+startupscript="gs://${broker_bucket}/${survey}/vm_startup.sh"
 gcloud compute instances add-metadata "$consumerVM" --zone "$zone" \
     --metadata startup-script-url="$startupscript"
 echo "vm_install.sh is complete. Shutting down."

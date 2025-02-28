@@ -172,7 +172,7 @@ fi
 #--- Deploy Cloud Functions
 echo
 echo "Configuring Cloud Functions..."
-(cd .. && cd cloud_functions) || exit
+(cd .. && cd .. && cd cloud_functions) || exit
 
 #--- Check cue response cloud function
 (cd check_cue_response) || exit
