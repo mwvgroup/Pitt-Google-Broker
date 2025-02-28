@@ -172,32 +172,32 @@ fi
 #--- Deploy Cloud Functions
 echo
 echo "Configuring Cloud Functions..."
-cd .. && cd cloud_functions || exit
+(cd .. && cd cloud_functions) || exit
 
 #--- Check cue response cloud function
-cd check_cue_response || exit
+(cd check_cue_response) || exit
 ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag" "$zone"
 
 #--- classify with SNN cloud function
-cd .. && cd classify_snn || exit
+(cd .. && cd classify_snn) || exit
 ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
 
 #--- alerts-lite cloud function
-cd .. && cd lite || exit
+(cd .. && cd lite) || exit
 ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
 
 #--- Pub/Sub -> Cloud Storage Avro cloud function
-cd .. && cd ps_to_gcs || exit
+(cd .. && cd ps_to_gcs) || exit
 ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag" "$region"
 
 #--- BigQuery storage cloud function
-cd .. && cd store_BigQuery || exit
+(cd .. && cd store_BigQuery) || exit
 ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
 
 #--- tag alerts cloud function
-cd .. && cd tag || exit
+(cd .. && cd tag) || exit
 ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
 
 #--- return to setup_broker directory
-cd .. && cd .. || exit
-cd setup_broker || exit
+(cd .. && cd ..) || exit
+(cd setup_broker) || exit
