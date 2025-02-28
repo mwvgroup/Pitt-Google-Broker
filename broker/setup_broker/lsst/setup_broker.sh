@@ -189,8 +189,8 @@ echo "Configuring VMs..."
 echo
 echo "Configuring Cloud Run services..."
 (
-    cd .. && cd ..
-    cd cloud_run && cd lsst
+    # navigate to the correct directory
+    cd .. && cd .. && cd cloud_run && cd lsst
 
     #--- ps_to_storage Cloud Run service
     cd ps_to_storage

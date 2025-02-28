@@ -31,14 +31,17 @@ if [ "$testid" != "False" ]; then
 fi
 
 #--- Download config files from GCS
-# remove all files
-rm -r "${brokerdir}"
-# download fresh files
-mkdir "${brokerdir}"
-cd ${brokerdir} || exit
-gsutil -m cp -r "gs://${broker_bucket}/${survey}" .
-# wait. otherwise the script may continue before all files are downloaded, with adverse behavior.
-sleep 30s
+(
+    # remove all files
+    rm -r "${brokerdir}"
+    # download fresh files
+    mkdir "${brokerdir}"
+    cd ${brokerdir}
+
+    gsutil -m cp -r "gs://${broker_bucket}/${survey}" .
+    # wait. otherwise the script may continue before all files are downloaded, with adverse behavior.
+    sleep 30s
+)
 
 #--- Set the topic names to the "FORCE" metadata attributes if exist, else defaults
 KAFKA_TOPIC_DEFAULT="alerts-simulated"
@@ -54,28 +57,30 @@ fout_run="${workingdir}/run-connector.out"
 fout_topics="${workingdir}/list.topics"
 
 #--- Set the connector's configs (Kafka password, project, and topic)
-# define Rubin-related parameters
-kafka_password="${survey}-${PROJECT_ID}-kafka-password"
-KAFKA_PASSWORD=$(gcloud secrets versions access latest --secret="${kafka_password}")
-group_id="pittgoogle-idfint-kafka-pubsub-connector"
-# use test resources, if requested
-if [ "$testid" != "False" ]; then
-    group_id="${group_id}-${testid}"
-fi
+(
+    cd "${workingdir}" || exit
 
-cd "${workingdir}" || exit
+    # define LSST-related parameters
+    kafka_password="${survey}-${PROJECT_ID}-kafka-password"
+    KAFKA_PASSWORD=$(gcloud secrets versions access latest --secret="${kafka_password}")
+    group_id="pittgoogle-idfint-kafka-pubsub-connector"
+    # use test resources, if requested
+    if [ "$testid" != "False" ]; then
+        group_id="${group_id}-${testid}"
+    fi
 
-fconfig=admin.properties
-sed -i "s/KAFKA_PASSWORD/${KAFKA_PASSWORD}/g" ${fconfig}
+    fconfig=admin.properties
+    sed -i "s/KAFKA_PASSWORD/${KAFKA_PASSWORD}/g" ${fconfig}
 
-fconfig=psconnect-worker.properties
-sed -i "s/KAFKA_PASSWORD/${KAFKA_PASSWORD}/g" ${fconfig}
-sed -i "s/GROUP_ID/${group_id}/g" ${fconfig}
+    fconfig=psconnect-worker.properties
+    sed -i "s/KAFKA_PASSWORD/${KAFKA_PASSWORD}/g" ${fconfig}
+    sed -i "s/GROUP_ID/${group_id}/g" ${fconfig}
 
-fconfig=ps-connector.properties
-sed -i "s/PROJECT_ID/${PROJECT_ID}/g" ${fconfig}
-sed -i "s/PS_TOPIC/${PS_TOPIC}/g" ${fconfig}
-sed -i "s/KAFKA_TOPIC/${KAFKA_TOPIC}/g" ${fconfig}
+    fconfig=ps-connector.properties
+    sed -i "s/PROJECT_ID/${PROJECT_ID}/g" ${fconfig}
+    sed -i "s/PS_TOPIC/${PS_TOPIC}/g" ${fconfig}
+    sed -i "s/KAFKA_TOPIC/${KAFKA_TOPIC}/g" ${fconfig}
+) || exit
 
 #--- Check until alerts start streaming into the topic
 alerts_flowing=false
