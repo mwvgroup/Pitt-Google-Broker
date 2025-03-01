@@ -147,7 +147,7 @@ fi
 #--- Create VM instances
 echo
 echo "Configuring VMs..."
-/create_vm.sh "${broker_bucket}" "${testid}" "${teardown}" "${survey}" "${region}" "${zone}" "${use_authentication}"
+./create_vm.sh "${broker_bucket}" "${testid}" "${teardown}" "${survey}" "${region}" "${zone}" "${use_authentication}"
 
 
 #--- Create the cron jobs that check the VM status
