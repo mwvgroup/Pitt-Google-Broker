@@ -9,7 +9,7 @@ teardown="${2:-False}"
 # "True" tearsdown/deletes resources, else setup
 survey="${3:-ztf}"
 # name of the survey this broker instance will ingest
-versiontag="${4:-v3_3}"
+versiontag="${4:-v4_02}"
 
 #--- GCP resources used in this script
 lite_trigger_topic="${survey}-alerts"
@@ -33,6 +33,7 @@ else # Deploy the Cloud Functions
     lite_entry_point="run"
 
     gcloud functions deploy "${lite_CF_name}" \
+        --no-gen2 \
         --entry-point "${lite_entry_point}" \
         --runtime python312 \
         --trigger-topic "${lite_trigger_topic}" \

@@ -26,6 +26,7 @@ echo "GOOGLE_CLOUD_PROJECT = ${PROJECT_ID}"
 echo "survey = ${survey}"
 echo "testid = ${testid}"
 echo "teardown = ${teardown}"
+echo "schema_version = ${schema_version}"
 echo
 echo "Continue?  [y/(n)]: "
 

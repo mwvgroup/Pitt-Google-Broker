@@ -68,8 +68,8 @@ else
     machinetype=e2-standard-2
     # metadata
     googlelogging="google-logging-enabled=true"
-    startupscript="startup-script-url=gs://${broker_bucket}/consumer/vm_install.sh"
-    shutdownscript="shutdown-script-url=gs://${broker_bucket}/consumer/vm_shutdown.sh"
+    startupscript="startup-script-url=gs://${broker_bucket}/${survey}/vm_install.sh"
+    shutdownscript="shutdown-script-url=gs://${broker_bucket}/${survey}/vm_shutdown.sh"
     authentication="USE_AUTHENTICATION=${use_authentication}"
     gcloud compute instances create "$consumerVM" \
         --resource-policies="${consumerVMsched}" \

@@ -9,7 +9,7 @@ teardown="${2:-False}"
 # "True" tearsdown/deletes resources, else setup
 survey="${3:-ztf}"
 # name of the survey this broker instance will ingest
-versiontag="${4:-v3_3}"
+versiontag="${4:-v4_02}"
 zone="${5:-us-central1-a}"
 
 #--- GCP resources used in this script
@@ -35,6 +35,7 @@ else # Deploy the Cloud Function
     check_cue_entry_point="run"
 
     gcloud functions deploy "${check_cue_CF_name}" \
+        --no-gen2 \
         --entry-point "${check_cue_entry_point}" \
         --runtime python312 \
         --trigger-topic "${check_cue_trigger_topic}" \
