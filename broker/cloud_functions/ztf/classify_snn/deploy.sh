@@ -9,7 +9,7 @@ teardown="${2:-False}"
 # "True" tearsdown/deletes resources, else setup
 survey="${3:-ztf}"
 # name of the survey this broker instance will ingest
-versiontag="${4:-v3_3}"
+versiontag="${4:-v4_02}"
 
 #--- GCP resources used in this script
 classify_snn_trigger_topic="${survey}-tagged"
@@ -34,6 +34,7 @@ else # Deploy the Cloud Functions
     memory=512MB  # standard 256MB is too small here
 
     gcloud functions deploy "${classify_snn_CF_name}" \
+        --no-gen2 \
         --entry-point "${classify_snn_entry_point}" \
         --memory "${memory}" \
         --runtime python312 \

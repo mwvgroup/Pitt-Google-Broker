@@ -59,16 +59,18 @@ echo "Done installing Confluent Platform."
 #--- Install Kafka -> Pub/Sub connector
 # see https://github.com/googleapis/java-pubsub-group-kafka-connector/tree/main
 echo "Installing the Kafka -> Pub/Sub connector"
-plugindir=/usr/local/share/kafka/plugins
-CONNECTOR_RELEASE="1.1.0"
-mkdir -p ${plugindir}
-#- install the connector
-cd ${plugindir} || exit
-wget https://repo1.maven.org/maven2/com/google/cloud/pubsub-group-kafka-connector/${CONNECTOR_RELEASE}/pubsub-group-kafka-connector-${CONNECTOR_RELEASE}.jar
-echo "Done installing the Kafka -> Pub/Sub connector"
+(
+    plugindir=/usr/local/share/kafka/plugins
+    CONNECTOR_RELEASE="1.1.0"
+    mkdir -p ${plugindir}
+    #- install the connector
+    cd ${plugindir}
+    wget https://repo1.maven.org/maven2/com/google/cloud/pubsub-group-kafka-connector/${CONNECTOR_RELEASE}/pubsub-group-kafka-connector-${CONNECTOR_RELEASE}.jar
+    echo "Done installing the Kafka -> Pub/Sub connector"
+) || exit
 
 #--- Set the startup script and shutdown
-startupscript="gs://${broker_bucket}/consumer/${survey}/vm_startup.sh"
+startupscript="gs://${broker_bucket}/${survey}/vm_startup.sh"
 gcloud compute instances add-metadata "$consumerVM" --zone "$zone" \
     --metadata startup-script-url="$startupscript"
 echo "vm_install.sh is complete. Shutting down."

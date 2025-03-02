@@ -137,7 +137,7 @@ def _resources(service, survey="ztf", testid="test", versiontag="v3_3"):
             ],
         }
         # Files are currently expected to reside in the
-        # ``../../tests/test_alerts`` directory.
+        # ``../../../tests/test_alerts`` directory.
         # Note that if you want to upload an entire directory, it is easier to
         # use the commandline tool `gsutil`. See ``setup_broker.sh``.
 
@@ -333,7 +333,7 @@ def setup_buckets(
             bucket = storage_client.get_bucket(bucket_name)
             for filename in files:
                 blob = bucket.blob(filename)
-                inpath = Path("../../tests/test_alerts") / filename
+                inpath = Path("../../../tests/test_alerts") / filename
                 with inpath.open("rb") as infile:
                     blob.upload_from_file(infile)
                 print(f"Uploaded {inpath} to {bucket_name}")

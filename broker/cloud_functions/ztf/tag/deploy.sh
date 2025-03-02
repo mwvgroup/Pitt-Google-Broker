@@ -9,7 +9,7 @@ teardown="${2:-False}"
 # "True" tearsdown/deletes resources, else setup
 survey="${3:-ztf}"
 # name of the survey this broker instance will ingest
-versiontag="${4:-v3_3}"
+versiontag="${4:-v4_02}"
 
 #--- GCP resources used in this script
 tag_trigger_topic="${survey}-lite"
@@ -34,6 +34,7 @@ else # Deploy the Cloud Functions
     memory=512MB  # standard 256MB is too small here
 
     gcloud functions deploy "$tag_CF_name" \
+        --no-gen2 \
         --entry-point "$tag_entry_point" \
         --runtime python312 \
         --memory "$memory" \

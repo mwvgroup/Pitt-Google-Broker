@@ -25,7 +25,7 @@ if [ "$testid" != "False" ]; then
 fi
 
 # krb5.conf goes in a special place. put it there now.
-gsutil cp "gs://${broker_bucket}/consumer/krb5.conf" /etc/krb5.conf
+gsutil cp "gs://${broker_bucket}/${survey}/krb5.conf" /etc/krb5.conf
 
 #--- Install general utils
 apt-get update
@@ -61,16 +61,18 @@ echo "Done installing Confluent Platform."
 #--- Install Kafka -> Pub/Sub connector
 # see https://github.com/GoogleCloudPlatform/pubsub/tree/master/kafka-connector
 echo "Installing the Kafka -> Pub/Sub connector"
-plugindir=/usr/local/share/kafka/plugins
-CONNECTOR_RELEASE=v0.5-alpha
-mkdir -p ${plugindir}
-#- install the connector
-cd ${plugindir}
-wget https://github.com/GoogleCloudPlatform/pubsub/releases/download/${CONNECTOR_RELEASE}/pubsub-kafka-connector.jar
-echo "Done installing the Kafka -> Pub/Sub connector"
+(
+    plugindir=/usr/local/share/kafka/plugins
+    CONNECTOR_RELEASE=v0.5-alpha
+    mkdir -p ${plugindir}
+    #- install the connector
+    cd ${plugindir}
+    wget https://github.com/GoogleCloudPlatform/pubsub/releases/download/${CONNECTOR_RELEASE}/pubsub-kafka-connector.jar
+    echo "Done installing the Kafka -> Pub/Sub connector"
+) || exit
 
 #--- Set the startup script and shutdown
-startupscript="gs://${broker_bucket}/consumer/vm_startup.sh"
+startupscript="gs://${broker_bucket}/${survey}/vm_startup.sh"
 gcloud compute instances add-metadata "$consumerVM" --zone "$zone" \
     --metadata startup-script-url="$startupscript"
 echo "vm_install.sh is complete. Shutting down."

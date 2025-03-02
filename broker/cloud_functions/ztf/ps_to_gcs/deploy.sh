@@ -9,7 +9,7 @@ teardown="${2:-False}"
 # "True" tearsdown/deletes resources, else setup
 survey="${3:-ztf}"
 # name of the survey this broker instance will ingest
-versiontag="${4:-v3_3}"
+versiontag="${4:-v4_02}"
 region="${5:-us-central1}"
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT # get the environment variable
 
@@ -63,6 +63,7 @@ else # Deploy the Cloud Functions
     memory=512MB  # standard 256MB is too small here (it was always on the edge)
 
     gcloud functions deploy "${ps_to_gcs_CF_name}" \
+        --no-gen2 \
         --entry-point "${ps_to_gcs_entry_point}" \
         --runtime python312 \
         --memory "${memory}" \

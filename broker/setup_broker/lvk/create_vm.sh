@@ -33,8 +33,8 @@ else
     machinetype=e2-custom-1-5632
     # metadata
     googlelogging="google-logging-enabled=true"
-    startupscript="startup-script-url=gs://${broker_bucket}/consumer/${survey}/vm_install.sh"
-    shutdownscript="shutdown-script-url=gs://${broker_bucket}/consumer/${survey}/vm_shutdown.sh"
+    startupscript="startup-script-url=gs://${broker_bucket}/${survey}/vm_install.sh"
+    shutdownscript="shutdown-script-url=gs://${broker_bucket}/${survey}/vm_shutdown.sh"
     gcloud compute instances create "$consumerVM" \
         --zone="$zone" \
         --machine-type="$machinetype" \
