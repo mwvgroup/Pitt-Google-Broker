@@ -1,10 +1,6 @@
 #! /bin/bash
 # Configure and Start the Kafka -> Pub/Sub connector
 
-brokerdir=/home/broker
-# if using an authenticated connection, the keytab file must already exist in the workingdir
-workingdir="${brokerdir}/consumer"
-
 #--- Get project and instance metadata
 # for info on working with metadata, see here
 # https://cloud.google.com/compute/docs/storing-retrieving-metadata
@@ -24,6 +20,10 @@ else
     testid=$(echo "$consumerVM" | awk -F "-" '{print $NF}')
 fi
 
+brokerdir=/home/broker
+# if using an authenticated connection, the keytab file must already exist in the workingdir
+workingdir="${brokerdir}/${survey}"
+
 #--- GCP resources used in this script
 broker_bucket="${PROJECT_ID}-${survey}-broker_files"
 PS_TOPIC_DEFAULT="${survey}-alerts_raw"
@@ -34,16 +34,17 @@ if [ "$testid" != "False" ]; then
 fi
 
 #--- Download config files from GCS
-# remove all files
-rm -r "${brokerdir}"
-# download fresh files
-mkdir "${brokerdir}"
-cd ${brokerdir}
-gsutil -m cp -r "gs://${broker_bucket}/consumer" .
-gsutil -m cp -r "gs://${broker_bucket}/schema_maps" .
-# wait. otherwise the script may continue before all files are downloaded, with adverse behavior.
-sleep 30s
-cd ${workingdir}
+(
+    # remove all files
+    rm -r "${brokerdir}"
+    # download fresh files
+    mkdir "${brokerdir}"
+    cd "${brokerdir}"
+    gsutil -m cp -r "gs://${broker_bucket}/${survey}" .
+    gsutil -m cp -r "gs://${broker_bucket}/schema_maps" .
+    # wait. otherwise the script may continue before all files are downloaded, with adverse behavior.
+    sleep 30s
+) || exit
 
 #--- Set the topic names to the "FORCE" metadata attributes if exist, else defaults
 kafka_topic_syntax=$(cat "${brokerdir}/schema_maps/${survey}.yaml" | yq ".TOPIC_SYNTAX")
@@ -55,16 +56,19 @@ PS_TOPIC="${PS_TOPIC_FORCE:-${PS_TOPIC_DEFAULT}}"
 gcloud compute instances add-metadata "$consumerVM" --zone "$zone" \
     --metadata="PS_TOPIC=${PS_TOPIC},KAFKA_TOPIC=${KAFKA_TOPIC}"
 
-
 #--- Files this script will write
 fout_run="${workingdir}/run-connector.out"
 fout_topics="${workingdir}/list.topics"
 
 #--- Set the connector's configs (project and topics)
-fconfig=ps-connector.properties
-sed -i "s/PROJECT_ID/${PROJECT_ID}/g" ${fconfig}
-sed -i "s/PS_TOPIC/${PS_TOPIC}/g" ${fconfig}
-sed -i "s/KAFKA_TOPIC/${KAFKA_TOPIC}/g" ${fconfig}
+(
+    cd "${workingdir}"
+
+    fconfig=ps-connector.properties
+    sed -i "s/PROJECT_ID/${PROJECT_ID}/g" ${fconfig}
+    sed -i "s/PS_TOPIC/${PS_TOPIC}/g" ${fconfig}
+    sed -i "s/KAFKA_TOPIC/${KAFKA_TOPIC}/g" ${fconfig}
+) || exit
 
 #--- Check until alerts start streaming into the topic
 alerts_flowing=false

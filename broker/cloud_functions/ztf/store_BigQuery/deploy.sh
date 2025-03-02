@@ -41,6 +41,7 @@ else # Deploy the Cloud Functions
     memory=512MB
 
     gcloud functions deploy "${store_bq_CF_name}" \
+        --no-gen2 \
         --entry-point "${store_bq_entry_point}" \
         --runtime python312 \
         --memory "${memory}" \

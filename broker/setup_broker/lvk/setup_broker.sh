@@ -77,10 +77,8 @@ manage_resources() {
         echo "Creating BigQuery dataset and table..."
         bq --location="${region}" mk --dataset "${bq_dataset}"
 
-        cd templates || exit 5
-        bq mk --table "${PROJECT_ID}:${bq_dataset}.${alerts_table}" "bq_${survey}_${alerts_table}_schema.json" || exit 5
+        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${alerts_table}" "bq_${survey}_${alerts_table}_schema.json") || exit 5
         bq update --description "Alert data from LIGO/Virgo/KAGRA. This table is an archive of the lvk-alerts Pub/Sub stream. It has the same schema (excluding skymaps) as the original alert bytes, including nested and repeated fields." "${PROJECT_ID}:${bq_dataset}.${alerts_table}"
-        cd .. || exit 5
 
         # create broker bucket and upload files
         echo
@@ -119,8 +117,8 @@ manage_resources() {
             gsutil -m -o "${o}" rm -r "gs://${broker_bucket}"
             bq rm -r -f "${PROJECT_ID}:${bq_dataset}"
             gcloud pubsub topics delete "${topic_alerts}"
-            gcloud pubsub subscriptions delete "${subscription_alerts_reservoir}"
             gcloud pubsub topics delete "${deadletter_topic_bigquery_import}"
+            gcloud pubsub subscriptions delete "${subscription_alerts_reservoir}"
             gcloud pubsub subscriptions delete "${deadletter_subscription_bigquery_import}"
             gcloud pubsub subscriptions delete "${subscription_bigquery_import}"
         fi
@@ -139,4 +137,4 @@ fi
 #--- Create VM instances
 echo
 echo "Configuring VMs..."
-./create_vms.sh "${broker_bucket}" "${testid}" "${teardown}" "${survey}" "${zone}"
+./create_vm.sh "${broker_bucket}" "${testid}" "${teardown}" "${survey}" "${zone}"

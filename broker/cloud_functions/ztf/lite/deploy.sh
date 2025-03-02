@@ -9,34 +9,33 @@ teardown="${2:-False}"
 # "True" tearsdown/deletes resources, else setup
 survey="${3:-ztf}"
 # name of the survey this broker instance will ingest
-versiontag="${4:-v3_3}"
+versiontag="${4:-v4_02}"
 
 #--- GCP resources used in this script
-tag_trigger_topic="${survey}-lite"
-tag_CF_name="${survey}-tag"
+lite_trigger_topic="${survey}-alerts"
+lite_CF_name="${survey}-lite"
 
 # use test resources, if requested
-if [ "$testid" != "False" ]; then
-    tag_trigger_topic="${tag_trigger_topic}-${testid}"
-    tag_CF_name="${tag_CF_name}-${testid}"
+if [ "${testid}" != "False" ]; then
+    lite_trigger_topic="${lite_trigger_topic}-${testid}"
+    lite_CF_name="${lite_CF_name}-${testid}"
 fi
 
-if [ "$teardown" = "True" ]; then
+if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources
-    if [ "$testid" != "False" ]; then
-        gcloud functions delete "$tag_CF_name"
+    if [ "${testid}" != "False" ]; then
+        gcloud functions delete "${lite_CF_name}"
     fi
 
 else # Deploy the Cloud Functions
-#--- tag alerts cloud function
-    echo "Deploying Cloud Function: $tag_CF_name"
-    tag_entry_point="run"
-    memory=512MB  # standard 256MB is too small here
+#--- alerts-lite cloud function
+    echo "Deploying Cloud Function: ${lite_CF_name}"
+    lite_entry_point="run"
 
-    gcloud functions deploy "$tag_CF_name" \
-        --entry-point "$tag_entry_point" \
+    gcloud functions deploy "${lite_CF_name}" \
+        --no-gen2 \
+        --entry-point "${lite_entry_point}" \
         --runtime python312 \
-        --memory "$memory" \
-        --trigger-topic "$tag_trigger_topic" \
+        --trigger-topic "${lite_trigger_topic}" \
         --set-env-vars TESTID="${testid}",SURVEY="${survey}",VERSIONTAG="${versiontag}",GCP_PROJECT="${GOOGLE_CLOUD_PROJECT}"
 fi
