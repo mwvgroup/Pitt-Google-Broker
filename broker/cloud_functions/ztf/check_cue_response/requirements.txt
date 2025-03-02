@@ -4,3 +4,4 @@
 # file (or packaged with the function) in the same directory as `main.py`
 
 google-cloud-logging
+google-api-python-client
