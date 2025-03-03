@@ -196,4 +196,8 @@ echo "Configuring Cloud Run services..."
     #--- ps_to_storage Cloud Run service
     cd ps_to_storage
     ./deploy.sh "$testid" "$teardown" "$survey" "$region"
+
+    #--- classify_snn Cloud Run service
+    cd .. && cd classify_snn || exit
+    ./deploy.sh "$testid" "$teardown" "$survey" "$region"
 ) || exit
