@@ -46,7 +46,6 @@ deadletter_subscription_bigquery_import="${deadletter_topic_bigquery_import}"
 bq_dataset=$(define_GCP_resources "${survey}")
 supernnova_classifications_table="SuperNNova"
 cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}")  # lower case required by cloud run
-module_image_name="gcr.io/${PROJECT_ID}/${cr_module_name}"
 runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
 
 

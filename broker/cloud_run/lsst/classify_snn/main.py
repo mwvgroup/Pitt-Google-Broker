@@ -11,17 +11,13 @@ import io
 import json
 import os
 import struct
-from typing import Optional
-from astropy.time import Time
-
+from datetime import datetime, timezone
+from pathlib import Path
 import flask  # Manage the HTTP request containing the alert
 import fastavro
 import pittgoogle  # Manipulate the alert and interact with cloud resources
 from confluent_kafka.schema_registry import SchemaRegistryClient
-from google.cloud import storage, pubsub_v1
-
-from datetime import datetime, timezone
-from pathlib import Path
+from google.cloud import pubsub_v1
 
 import google.cloud.logging
 import numpy as np
