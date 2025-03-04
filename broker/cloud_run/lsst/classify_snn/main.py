@@ -69,7 +69,6 @@ sr_client = SchemaRegistryClient({"url": "https://usdf-alert-schemas-dev.slac.st
 
 # GCP resources used in this module
 # pittgoogle will construct the full resource names from the MODULE_NAME, SURVEY, and TESTID
-TABLE = pittgoogle.Table.from_cloud(MODULE_NAME, survey=SURVEY, testid=TESTID)
 # DESC is already listening to this pubsub stream so the leave camel case to avoid a breaking change
 TOPIC = pittgoogle.Topic.from_cloud(
     "SuperNNova", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
@@ -120,6 +119,7 @@ def run():
 def _unpack_alert(envelope) -> pittgoogle.Alert:
     alert_bytes = base64.b64decode(envelope["message"]["data"])  # alert packet, bytes
     attributes = envelope["message"].get("attributes", {})
+    content_bytes = io.BytesIO(alert_bytes[5:])
 
     # unpack the alert and read schema ID
     header_bytes = alert_bytes[:5]
@@ -128,12 +128,14 @@ def _unpack_alert(envelope) -> pittgoogle.Alert:
     # get and load schema
     schema = sr_client.get_schema(schema_id=schema_id)
     parse_schema = json.loads(schema.schema_str)
-    content_bytes = io.BytesIO(alert_bytes[5:])
+    schema_name = parse_schema["namespace"] + ".alert"  # returns lsst.v7_x.alert string
 
     # deserialize the alert
     alert_dict = fastavro.schemaless_reader(content_bytes, parse_schema)
 
-    return pittgoogle.Alert.from_dict(payload=alert_dict, attributes=attributes)
+    return pittgoogle.Alert.from_dict(
+        payload=alert_dict, attributes=attributes, schema_name=schema_name
+    )
 
 
 def _classify(alert: pittgoogle.Alert) -> dict:
@@ -145,7 +147,6 @@ def _classify(alert: pittgoogle.Alert) -> dict:
     # classify
     _, pred_probs = classify_lcs(snn_df, MODEL_PATH, device)
 
-    # extract results to a dict that matches the TABLE schema (TABLE.table.schema)
     # use `.item()` to convert numpy -> python types for later serialization
     pred_probs = pred_probs.flatten()
     classifications = {
@@ -168,7 +169,6 @@ def _classify(alert: pittgoogle.Alert) -> dict:
 def _format_for_classifier(alert: pittgoogle.Alert) -> pd.DataFrame:
     """Create a DataFrame for input to SuperNNova."""
     alert_df = alert.dataframe
-    alert_df = pd.DataFrame.from_dict(alert.dict)
     snn_df = pd.DataFrame(
         data={
             # select a subset of columns and rename them for SuperNNova
