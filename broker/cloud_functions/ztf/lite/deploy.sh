@@ -11,6 +11,12 @@ survey="${3:-ztf}"
 # name of the survey this broker instance will ingest
 versiontag="${4:-v4_02}"
 
+# The deployed module will rely on this env var.
+if [ -z "${GOOGLE_CLOUD_PROJECT}" ]; then
+    echo "Error: GOOGLE_CLOUD_PROJECT environment variable is not set."
+    exit 1
+fi
+
 #--- GCP resources used in this script
 lite_trigger_topic="${survey}-alerts"
 lite_CF_name="${survey}-lite"
