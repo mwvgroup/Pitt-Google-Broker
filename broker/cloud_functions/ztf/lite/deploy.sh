@@ -34,7 +34,7 @@ if [ "${teardown}" = "True" ]; then
     fi
 
 else # Deploy the Cloud Functions
-#--- alerts-lite cloud function
+    #--- alerts-lite cloud function
     echo "Deploying Cloud Function: ${lite_CF_name}"
     lite_entry_point="run"
 
