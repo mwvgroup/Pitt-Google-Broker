@@ -177,12 +177,8 @@ echo "Configuring Cloud Functions..."
     # navigate to the correct directory
     cd .. && cd .. && cd cloud_functions && cd ztf
 
-    #--- Check cue response cloud function
-    cd check_cue_response
-    ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag" "$zone"
-
     #--- classify with SNN cloud function
-    cd .. && cd classify_snn
+    cd classify_snn
     ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
 
     #--- alerts-lite cloud function
