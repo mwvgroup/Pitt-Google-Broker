@@ -22,6 +22,9 @@ ps_topic = f"{SURVEY}-lite"
 if TESTID != "False":  # attach the testid to the names
     ps_topic = f"{ps_topic}-{TESTID}"
 
+# Load here to avoid hitting the broker_files bucket for every alert.
+SCHEMA_MAP = schema_maps.load_schema_map(SURVEY, TESTID)
+
 
 def semantic_compression(alert_dict, schema_map) -> dict:
     """Construct and return the `alert_lite` dictionary."""
@@ -50,7 +53,7 @@ def semantic_compression(alert_dict, schema_map) -> dict:
         "filter": source[schema_map["filter"]],
     }
 
-    access_prev = alert_dict.get(schema_map["prvSources"], {})
+    access_prev = alert_dict[schema_map["prvSources"]] or []
 
     prev_sources = []
 
@@ -122,7 +125,7 @@ def run(msg: dict, context):
                 `event_type`: for example: "google.pubsub.topic.publish".
                 `resource`: the resource that emitted the event.
     """
-    schema_map = schema_maps.load_schema_map(SURVEY, TESTID)
+    schema_map = SCHEMA_MAP
 
     alert_dict = data_utils.open_alert(msg["data"], drop_cutouts=True, schema_map=schema_map)
 
