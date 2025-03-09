@@ -1,17 +1,13 @@
 #!/bin/bash
 
-_usage() {
-    echo "Usage: $0 [-s|--stem] <stem> [[-g|--gcp-service] <gcp_service>]"
-}
-
 _info() {
-    echo "Use '$(basename $0) --help' for more information."
+    echo "Use '$(basename "$0") --help' for more information."
 }
 
 _help() {
     echo "Construct the GCP resource name using the supplied options and the env vars SURVEY and TESTID."
     echo
-    _usage
+    echo "Usage: $0 [-s|--stem] <stem> [[-g|--gcp-service] <gcp_service>]"
     echo
     echo "Options:"
     echo "  -s, --stem <stem>       Name stem for the resource. SURVEY will be prepended and TESTID "

@@ -2,10 +2,13 @@
 # Build the image, create ancillary resources, and deploy the module as a Cloud Run service.
 #
 # --------- Example usage -----------------------
-#   First, double check the values in env.yaml. Then:
+#
+# First, double check the values in env.yaml. Then:
+#
 # $ gcloud auth ...
-# $ export PROJECT_ID=... (is this set automatically by gcloud auth?)
-# $ bash deploy.sh
+# $ export PROJECT_ID=... (Is this set automatically by gcloud auth?)
+# $ bash deploy.sh  # That's it. All variables retrieved from env.yaml.
+#
 # -----------------------------------------------
 
 # --------- Set environment variables -----------
@@ -31,9 +34,12 @@ check_env_vars PROJECT_ID _SURVEY _TESTID MODULE_NAME_STEM MODULE_ROUTE REGION R
 
 # Construct and export additional environment variables for cloudbuild.yaml.
 # Environment variables that will be used by cloudbuild.yaml must start with "_", per GCP's requirements.
-export _MODULE_NAME=$(construct-name.sh --stem "$MODULE_NAME_STEM")
-export _REPOSITORY=$(construct-name.sh --stem "$REPOSITORY_STEM")
-export _TRIGGER_TOPIC=$(construct-name.sh --stem "$TRIGGER_TOPIC_STEM")
+_MODULE_NAME=$(construct-name.sh --stem "$MODULE_NAME_STEM")
+export _MODULE_NAME="$_MODULE_NAME"
+_REPOSITORY=$(construct-name.sh --stem "$REPOSITORY_STEM")
+export _REPOSITORY="$_REPOSITORY"
+_TRIGGER_TOPIC=$(construct-name.sh --stem "$TRIGGER_TOPIC_STEM")
+export _TRIGGER_TOPIC="$_TRIGGER_TOPIC"
 # -----------------------------------------------
 
 # --------- Project setup -----------------------

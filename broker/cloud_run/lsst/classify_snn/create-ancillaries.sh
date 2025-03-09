@@ -10,7 +10,6 @@ bq_table_supernnova="supernnova"
 ps_topic_out=$(construct-name.sh --stem "supernnova")
 ps_topic_bqimport=$(construct-name.sh --stem "bigquery-import-supernnova")
 ps_topic_bqimport_deadletter=$(construct-name.sh --stem "bigquery-import-supernnova-deadletter")
-ps_subscrip_trigger="$_TRIGGER_TOPIC"
 ps_subscrip_bqimport="$ps_topic_bqimport"
 ps_subscrip_bqimport_deadletter="$ps_topic_bqimport_deadletter"
 
