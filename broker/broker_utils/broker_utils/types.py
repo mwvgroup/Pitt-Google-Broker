@@ -43,13 +43,11 @@ class AlertFilename:
         """
         if isinstance(aname, str):
             self.name = aname
-            self.parsed = self.ParsedFilename._make(re.split('/|\.', aname))
+            self.parsed = self.ParsedFilename._make(re.split("/|\.", aname))
 
         elif isinstance(aname, dict):
             parsed = self.ParsedFilename(
-                **dict(
-                    (k, v) for k, v in aname.items() if k in self.ParsedFilename._fields
-                )
+                **dict((k, v) for k, v in aname.items() if k in self.ParsedFilename._fields)
             )
             self.parsed = parsed
             self.name = f"{parsed.topic}/{parsed.objectId}/{parsed.sourceId}.{parsed.format}"
@@ -103,9 +101,7 @@ class AlertIds:
 
         elif attrs is not None:
             id_keys = self.id_keys
-            ids = _AlertIds(
-                attrs.get(id_keys.sourceId), attrs.get(id_keys.objectId)
-            )
+            ids = _AlertIds(attrs.get(id_keys.sourceId), attrs.get(id_keys.objectId))
 
         elif filename is not None:
             parsed = AlertFilename(filename).parsed

@@ -17,4 +17,4 @@ def mag_to_flux(mag: float, zeropoint: float, magerr: float) -> Tuple[float, flo
 
 def jd_to_mjd(jd: float) -> float:
     """Convert Julian Date to modified Julian Date."""
-    return Time(jd, format='jd').mjd
+    return Time(jd, format="jd").mjd
