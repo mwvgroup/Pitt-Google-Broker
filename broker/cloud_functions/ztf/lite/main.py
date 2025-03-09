@@ -106,7 +106,7 @@ def semantic_compression(alert_dict, schema_map) -> dict:
     return alert_lite
 
 
-def run(msg: dict, context):
+def run(msg: dict, _context):
     """Create a "lite" alert containing the subset of fields necessary for broker and downstream.
 
     Both parameters are required by Cloud Functions, regardless of whether they are used.
