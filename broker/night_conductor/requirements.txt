@@ -1,6 +1,8 @@
 apache-beam[gcp]==2.25.0
 argparse
-astropy==3.2.1
+# Astropy version patched for Dependabot. Original version left as comment for provenance.
+# astropy==3.2.1
+astropy>=5.3.3
 fastavro==0.22.3
 # apache-beam 2.25.0 requires pyarrow<0.18.0,>=0.15.1
 # but google-cloud-bigquery>=2.10.0 requires pyarrow>=3
