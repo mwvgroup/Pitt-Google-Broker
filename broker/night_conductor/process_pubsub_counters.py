@@ -59,7 +59,10 @@ def _log_and_print(msg, severity="INFO"):
 
 
 def run(
-    survey: str, testid: Union[str, bool], timeout: int, testrun: bool,
+    survey: str,
+    testid: Union[str, bool],
+    timeout: int,
+    testrun: bool,
 ):
     """Collect and store all metadata in the Pub/Sub counters."""
     collector = MetadataCollector(survey, testid, timeout, testrun)
@@ -211,9 +214,7 @@ class MetadataCollector:
             # convert some types
             if topic_stub == "alerts_raw":
                 # convert the kafka timestamp to np.datetime64
-                df["kafka.timestamp"] = pd.to_datetime(
-                    df["kafka.timestamp"], unit="ms", utc=True
-                )
+                df["kafka.timestamp"] = pd.to_datetime(df["kafka.timestamp"], unit="ms", utc=True)
                 # Pub/Sub schema says message_id is a str,
                 # which I (Troy) confirmed by manually pulling a message.
                 # But for some reason it is a float64 in this df. Convert it.
@@ -306,9 +307,7 @@ class MetadataCollector:
         if not self.metadata_df.empty:
             # by default, conforms the dataframe to the table schema
             # i.e., converts dtypes and drops extra columns
-            gcp_utils.load_dataframe_bigquery(
-                self.bq_table, self.metadata_df, logger=logger
-            )
+            gcp_utils.load_dataframe_bigquery(self.bq_table, self.metadata_df, logger=logger)
         else:
             _log_and_print("metadata_df is empty. Skipping BigQuery upload.")
 
