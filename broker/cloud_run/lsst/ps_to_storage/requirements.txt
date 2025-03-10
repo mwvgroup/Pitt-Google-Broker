@@ -8,7 +8,7 @@ fastavro
 google-cloud-logging
 google-cloud-storage
 httpx # used by confluent-kafka
-pittgoogle-client>=0.3.11
+pittgoogle-client>=0.3.12
 
 # for Cloud Run
 # https://cloud.google.com/run/docs/quickstarts/build-and-deploy/deploy-python-service
