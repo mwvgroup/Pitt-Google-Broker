@@ -64,10 +64,6 @@ topic_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import")
 subscription_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import-${versiontag}") # BigQuery subscription
 deadletter_topic_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import-deadletter-${versiontag}")
 deadletter_subscription_bigquery_import="${deadletter_topic_bigquery_import}"
-topic_bigquery_import_supernnova=$(define_GCP_resources "${survey}-bigquery-import-supernnova")
-subscription_bigquery_import_supernnova="${topic_bigquery_import_supernnova}"
-deadletter_topic_bigquery_import_supernnova=$(define_GCP_resources "${survey}-bigquery-import-supernnova-deadletter")
-deadletter_subscription_bigquery_import_supernnova="${deadletter_topic_bigquery_import_supernnova}"
 
 alerts_table="alerts_${versiontag}"
 supernnova_classifications_table="SuperNNova"
@@ -113,11 +109,8 @@ manage_resources() {
         gcloud pubsub topics create "${topic_alerts}"
         gcloud pubsub topics create "${topic_bigquery_import}"
         gcloud pubsub topics create "${deadletter_topic_bigquery_import}"
-        gcloud pubsub topics create "${topic_bigquery_import_supernnova}"
-        gcloud pubsub topics create "${deadletter_topic_bigquery_import_supernnova}"
-        gcloud pubsub subscriptions create "${subscription_reservoir}" --topic="${topic_alerts}"
-        gcloud pubsub subscriptions create "${deadletter_subscription_bigquery_import}" --topic="${deadletter_topic_bigquery_import}"
-        gcloud pubsub subscriptions create "${deadletter_subscription_bigquery_import_supernnova}" --topic="${deadletter_topic_bigquery_import_supernnova}"
+        gcloud pubsub subscriptions create "${subscription_reservoir}" \
+            --topic="${topic_alerts}"
 
         # in order to create BigQuery subscriptions, ensure that the following service account:
         # service-<project number>@gcp-sa-pubsub.iam.gserviceaccount.com" has the
@@ -136,13 +129,6 @@ manage_resources() {
             --max-delivery-attempts=5 \
             --dead-letter-topic-project="${PROJECT_ID}" \
             --message-filter='attributes.schema_version = "'"${versiontag}"'"'
-        gcloud pubsub subscriptions create "${subscription_bigquery_import_supernnova}" \
-            --topic="${topic_bigquery_import_supernnova}" \
-            --bigquery-table="${PROJECT_ID}:${bq_dataset}.${supernnova_classifications_table}" \
-            --use-table-schema \
-            --dead-letter-topic="${deadletter_topic_bigquery_import_supernnova}" \
-            --max-delivery-attempts=5 \
-            --dead-letter-topic-project="${PROJECT_ID}" \
 
         # set IAM policies on resources
         if [ "$testid" = "False" ]; then
@@ -175,13 +161,9 @@ manage_resources() {
             gcloud pubsub topics delete "${topic_alerts}"
             gcloud pubsub topics delete "${topic_bigquery_import}"
             gcloud pubsub topics delete "${deadletter_topic_bigquery_import}"
-            gcloud pubsub topics delete "${topic_bigquery_import_supernnova}"
-            gcloud pubsub topics delete "${deadletter_topic_bigquery_import_supernnova}"
             gcloud pubsub subscriptions delete "${subscription_reservoir}"
             gcloud pubsub subscriptions delete "${deadletter_subscription_bigquery_import}"
             gcloud pubsub subscriptions delete "${subscription_bigquery_import}"
-            gcloud pubsub subscriptions delete "${deadletter_subscription_bigquery_import_supernnova}"
-            gcloud pubsub subscriptions delete "${subscription_bigquery_import_supernnova}"
             gcloud artifacts repositories delete "${artifact_registry_repo}" --location="${region}"
         else
             echo 'ERROR: No testid supplied.'

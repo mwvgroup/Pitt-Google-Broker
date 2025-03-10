@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-"""Classify an alert using SuperNNova (M¨oller & de Boissi`ere 2019).
+"""Classify an alert using SuperNNova (Möller & de Boissière 2019).
 
 This code is intended to be containerized and deployed to Google Cloud Run.
 Once deployed, individual alerts in the "trigger" stream will be delivered to the container as HTTP requests.
@@ -57,7 +57,6 @@ ROUTE_RUN = "/"  # HTTP route that will trigger run(). Must match setup.sh
 # Variables for outgoing data
 HTTP_204 = 204  # HTTP code: Success
 HTTP_400 = 400  # HTTP code: Bad Request
-SCHEMA_OUT = "elasticc.v0_9_1.brokerClassification"  # View the schema: pittgoogle.Schemas.get(SCHEMA_OUT).avsc
 
 # define a binary data structure for packing and unpacking bytes
 _ConfluentWireFormatHeader = struct.Struct(">bi")
@@ -105,9 +104,9 @@ def run():
         return str(exc), HTTP_400
 
     # publish
-    classification_alert = _create_outgoing_alert(alert, classifications)
-    TOPIC.publish(classification_alert)
-    TOPIC_BIGQUERY_IMPORT.publish(classification_alert)
+    classified_alert = _create_outgoing_alert(alert, classifications)
+    TOPIC.publish(classified_alert)
+    TOPIC_BIGQUERY_IMPORT.publish(classifications)
 
     return "", HTTP_204
 
@@ -184,30 +183,22 @@ def _format_for_classifier(alert: pittgoogle.Alert) -> pd.DataFrame:
 
 def _create_outgoing_alert(alert_in: pittgoogle.Alert, results: dict) -> pittgoogle.Alert:
     """Combine the incoming alert with the classification results to create the outgoing alert."""
-    # write down the mappings between our classifications and the ELAsTiCC taxonomy
-    # https://github.com/LSSTDESC/elasticc/blob/main/taxonomy/taxonomy.ipynb
-    classifications = [
-        {"classId": 2222, "probability": results["prob_class0"]},
-    ]
 
-    # construct a dict that conforms to SCHEMA_OUT
     outgoing_dict = {
         "alertId": alert_in.alertid,
         "diaSourceId": alert_in.sourceid,
-        # multiply by 1000 to switch microsecond -> millisecond precision for elasticc schema
+        # multiply by 1000 to switch microsecond -> millisecond precision
         "LSSTPublishTimestamp": int(results["LSSTPublishTimestamp"] * 1000),
         "brokerIngestTimestamp": results["brokerIngestTimestamp"],
         "brokerName": BROKER_NAME,
         "brokerVersion": results["brokerVersion"],
         "classifierName": CLASSIFIER_NAME,
         "classifierParams": str(MODEL_PATH),  # record the training file
-        "classifications": classifications,
+        "probability": results["prob_class0"],
     }
 
     # create the outgoing Alert
-    alert_out = pittgoogle.Alert.from_dict(
-        payload=outgoing_dict, attributes=alert_in.attributes, schema_name=SCHEMA_OUT
-    )
+    alert_out = pittgoogle.Alert.from_dict(payload=outgoing_dict, attributes=alert_in.attributes)
     # add the predicted class to the attributes. may help downstream users filter messages.
     alert_out.attributes[MODULE_NAME] = results["predicted_class"]
 
