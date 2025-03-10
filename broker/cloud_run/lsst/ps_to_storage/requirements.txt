@@ -15,4 +15,4 @@ pittgoogle-client>=0.3.12
 # pinned following quickstart example. [TODO] consider un-pinning
 Flask==3.0.3
 gunicorn==22.0.0
-Werkzeug==3.0.3
+Werkzeug==3.0.6
