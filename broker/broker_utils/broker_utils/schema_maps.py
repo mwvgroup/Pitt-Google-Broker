@@ -97,8 +97,7 @@ def _download_schema_map(survey: str, testid: str, schema: str) -> dict:
 def _broker_bucket_name(survey, testid):
     if testid in ["False", False]:
         return f'{PROJECT_ID}-{survey}-broker_files'
-    else:
-        return f'{PROJECT_ID}-{survey}-broker_files-{testid}'
+    return f'{PROJECT_ID}-{survey}-broker_files-{testid}'
 
 
 def _schema_object_name(survey):

@@ -41,16 +41,16 @@ else
     msgSTART='START'
     msgEND='END'
 
-    gcloud scheduler jobs create pubsub $night_conductor_START \
+    gcloud scheduler jobs create pubsub "$night_conductor_START" \
         --schedule "${scheduleSTART}" \
-        --topic $cue_night_conductor \
+        --topic "$cue_night_conductor" \
         --message-body $msgSTART \
         --time-zone $timezone \
         --location "$region"
 
-    gcloud scheduler jobs create pubsub $night_conductor_END \
+    gcloud scheduler jobs create pubsub "$night_conductor_END" \
         --schedule "${scheduleEND}" \
-        --topic $cue_night_conductor \
+        --topic "$cue_night_conductor" \
         --message-body $msgEND \
         --time-zone $timezone \
         --location "$region"

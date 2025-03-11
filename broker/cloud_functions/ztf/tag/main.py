@@ -53,7 +53,7 @@ def is_pure(alert_dict):
     if SURVEY == "decat":
         pure = rb
 
-    elif SURVEY == "ztf":
+    else:
         nbad = source["nbad"] == 0  # num bad pixels
         fwhm = source["fwhm"] <= 5  # Full Width Half Max, SExtractor [pixels]
         elong = source["elong"] <= 1.2  # major / minor axis, SExtractor
@@ -86,7 +86,7 @@ def _is_extragalactic_transient(alert_dict: dict) -> dict:
         # Assume the alert should pass the filter:
         is_extragalactic_transient = True
 
-    elif SURVEY == "ztf":
+    else:
         dflc = data_utils.alert_lite_to_dataframe(alert_dict)
 
         candidate = dflc.loc[0]
@@ -128,7 +128,7 @@ def _is_extragalactic_transient(alert_dict: dict) -> dict:
     return exgalac_dict
 
 
-def run(msg: dict, context):
+def run(msg: dict, _context):
     """Identify basic categorizations; publish results to BigQuery and as Pub/Sub msg attributes.
 
     Both parameters are required by Cloud Functions, regardless of whether they are used.

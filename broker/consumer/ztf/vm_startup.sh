@@ -86,8 +86,8 @@ do
             /bin/kafka-topics \
                 --bootstrap-server public2.alerts.ztf.uw.edu:9094 \
                 --list \
-                --command-config ${workingdir}/admin.properties \
-                > ${fout_topics}
+                --command-config "${workingdir}/admin.properties" \
+                > "${fout_topics}"
         } || {
             true
         }
@@ -103,7 +103,7 @@ do
     fi
 
     # check if our topic is in the list
-    if grep -Fq "${KAFKA_TOPIC}" $fout_topics
+    if grep -Fq "${KAFKA_TOPIC}" "$fout_topics"
     then
         alerts_flowing=true  # start consuming
     else
@@ -115,12 +115,12 @@ done
 if [ "${USE_AUTHENTICATION}" = true ]
 then
     /bin/connect-standalone \
-        ${workingdir}/psconnect-worker-authenticated.properties \
-        ${workingdir}/ps-connector.properties \
-        &>> ${fout_run}
+        "${workingdir}/psconnect-worker-authenticated.properties" \
+        "${workingdir}/ps-connector.properties" \
+        &>> "${fout_run}"
 else
     /bin/connect-standalone \
-        ${workingdir}/psconnect-worker-unauthenticated.properties \
-        ${workingdir}/ps-connector.properties \
-        &>> ${fout_run}
+        "${workingdir}/psconnect-worker-unauthenticated.properties" \
+        "${workingdir}/ps-connector.properties" \
+        &>> "${fout_run}"
 fi
