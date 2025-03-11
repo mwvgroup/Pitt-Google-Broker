@@ -4,18 +4,14 @@
 """This module stores LSST alert data as an Avro file in Cloud Storage."""
 
 import base64
-import io
 import json
 import math
 import os
-import struct
 from typing import Any, Dict, Optional
 from astropy.time import Time
 
 import flask
-import fastavro
 import pittgoogle
-from confluent_kafka.schema_registry import SchemaRegistryClient
 from google.cloud import logging, storage
 from google.cloud.exceptions import PreconditionFailed
 
@@ -54,10 +50,6 @@ client = storage.Client()
 bucket = client.get_bucket(client.bucket(bucket_name, user_project=PROJECT_ID))
 publisher = TOPIC_ALERTS.client
 
-# define a binary data structure for packing and unpacking bytes
-_ConfluentWireFormatHeader = struct.Struct(">bi")
-sr_client = SchemaRegistryClient({"url": "https://usdf-alert-schemas-dev.slac.stanford.edu"})
-
 app = flask.Flask(__name__)
 
 
@@ -77,13 +69,10 @@ def run():
         Tuple containing the response body (string) and HTTP status code (int). Flask will convert the
         tuple into a proper HTTP response. Note that the response is a status message for the web server.
     """
-
     # extract the envelope from the request that triggered the endpoint
     # this contains a single Pub/Sub message with the alert to be processed
-    envelope = flask.request.get_json()
-
     try:
-        store_alert_data(envelope)
+        store_alert_data(envelope=flask.request.get_json())
     # this is raised by blob.upload_from_file if the object already exists in the bucket
     except PreconditionFailed:
         # we'll simply pass, and the duplicate alert will go no further in our pipeline
@@ -96,7 +85,7 @@ def store_alert_data(envelope) -> None:
     """Uploads the msg data bytes to a GCP storage bucket."""
 
     # create an alert object from the envelope
-    alert = _unpack_alert(envelope)
+    alert = pittgoogle.Alert.from_cloud_run(envelope, "lsst")
 
     blob = bucket.blob(_generate_alert_filename(alert))
     blob.metadata = _create_file_metadata(alert, event_id=envelope["message"]["messageId"])
@@ -113,63 +102,9 @@ def store_alert_data(envelope) -> None:
         topic_name=TOPIC_BIGQUERY_IMPORT.name,
         message=json_dict,
         attributes={
-            "schema_version": alert.attributes.get("schema_version"),
+            "schema_version": alert.schema.version_id,
         },
     )
-
-
-def _unpack_alert(envelope) -> pittgoogle.Alert:
-    """Unpacks an alert from a base64-encoded message envelope and deserializes it into a `pittgoogle.Alert` object.
-    Parameters
-    ----------
-    envelope : dict
-        A dictionary containing the message envelope.
-    Returns
-    -------
-    pittgoogle.Alert: The alert object.
-    """
-
-    alert_bytes = base64.b64decode(envelope["message"]["data"])  # alert packet, bytes
-    attributes = envelope["message"].get("attributes", {})
-    content_bytes = io.BytesIO(alert_bytes[5:])
-
-    # unpack the alert and create an alert dictionary
-    header_bytes = alert_bytes[:5]
-    schema_id = deserialize_confluent_wire_header(header_bytes)
-    schema = sr_client.get_schema(schema_id=schema_id)
-    parse_schema = json.loads(schema.schema_str)
-    schema_version = parse_schema["namespace"].split(".")[1]
-    schema_name = parse_schema["namespace"] + ".alert"  # returns "lsst.v7_x.alert"
-    alert_dict = fastavro.schemaless_reader(content_bytes, parse_schema)
-
-    return pittgoogle.Alert.from_dict(
-        payload=alert_dict,
-        attributes={
-            "diaObjectId": str(alert_dict["diaObject"]["diaObjectId"]),
-            "diaSourceId": str(alert_dict["diaSource"]["diaSourceId"]),
-            "schema_version": schema_version,
-            **attributes,
-        },
-        schema_name=schema_name,
-    )
-
-
-def deserialize_confluent_wire_header(raw):
-    """Parses the byte prefix for Confluent Wire Format-style Kafka messages.
-    Parameters
-    ----------
-    raw : `bytes`
-        The 5-byte encoded message prefix.
-    Returns
-    -------
-    schema_version : `int`
-        A version number which indicates the Confluent Schema Registry ID
-        number of the Avro schema used to encode the message that follows this
-        header.
-    """
-    _, version = _ConfluentWireFormatHeader.unpack(raw)
-
-    return version
 
 
 def _generate_alert_filename(alert: pittgoogle.Alert) -> str:
