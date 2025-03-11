@@ -94,6 +94,7 @@ class AlertIds:
         Attempts to extract IDs from alert_dict, attrs, and filename, in that order.
         kwargs are ignored and only provided for the caller's convenience.
         """
+        ids = _AlertIds()
         if alert_dict is not None:
             ids = _AlertIds(
                 get_value("sourceId", alert_dict, self.schema_map),

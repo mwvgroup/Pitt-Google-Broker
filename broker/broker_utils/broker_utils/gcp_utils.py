@@ -139,6 +139,7 @@ def pull_pubsub(
         # unpack the messages
         message_list, ack_ids = [], []
         for received_message in response.received_messages:
+            success = True
 
             if msg_only:
                 # extract the message bytes and append
@@ -156,7 +157,7 @@ def pull_pubsub(
                     success = callback(received_message)
 
             # collect ack_id, if appropriate
-            if (callback is None) or (success):
+            if success:
                 ack_ids.append(received_message.ack_id)
 
         # acknowledge the messages so they will not be sent again
@@ -169,8 +170,7 @@ def pull_pubsub(
 
     if not return_count:
         return message_list
-    else:
-        return len(message_list)
+    return len(message_list)
 
 
 def streamingPull_pubsub(
