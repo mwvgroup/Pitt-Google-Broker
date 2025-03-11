@@ -102,7 +102,7 @@ def store_alert_data(envelope) -> None:
         topic_name=TOPIC_BIGQUERY_IMPORT.name,
         message=json_dict,
         attributes={
-            "schema_version": alert.schema.version_id,
+            "schema_version": alert.schema.version,
         },
     )
 
@@ -122,7 +122,7 @@ def _generate_alert_filename(alert: pittgoogle.Alert) -> str:
         "%Y-%m-%d"
     )  # convert the MJD timestamp to "YYYY-MM-DD"
 
-    return f"{alert.schema.version_id}/{alert_date}/{alert.objectid}/{alert.sourceid}.avro"
+    return f"{alert.schema.version}/{alert_date}/{alert.objectid}/{alert.sourceid}.avro"
 
 
 def _create_file_metadata(alert: pittgoogle.Alert, event_id: str) -> dict:
