@@ -9,7 +9,6 @@ testid="${1:-test}"
 teardown="${2:-False}"
 # name of the survey this broker instance will ingest
 survey="${3:-ztf}"
-versiontag="${4:-v4_02}"
 # get environment variables
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT
 PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format="value(projectNumber)")
@@ -37,8 +36,7 @@ define_GCP_resources() {
 #--- GCP resources used in this script
 artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
 classify_snn_trigger_topic=$(define_GCP_resources "${survey}-tagged")
-classify_snn_CF_name=$(define_GCP_resources "${survey}-classify_with_SuperNNova")
-ps_input_subscrip=$(define_GCP_resources "${survey}-alerts") # Pub/Sub subscription used to trigger Cloud Run service
+ps_input_subscrip="${classify_snn_trigger_topic}" # Pub/Sub subscription used to trigger Cloud Run service
 
 # additional GCP resources & variables used in this script
 cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}")  # lower case required by Cloud Run

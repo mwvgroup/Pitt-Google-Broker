@@ -189,7 +189,7 @@ echo "Configuring Cloud Functions..."
 
     #--- classify with SNN cloud function
     cd classify_snn
-    ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
+    ./deploy.sh "$testid" "$teardown" "$survey"
 
     #--- navigate to the Cloud Run Functions directory
     cd .. && cd .. && cd .. && cd cloud_functions && cd ztf
