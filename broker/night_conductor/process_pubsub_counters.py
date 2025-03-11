@@ -4,16 +4,15 @@
 
 
 import argparse
-from google import api_core
-from google.cloud import bigquery, logging
 import json
-import numpy as np
-import pandas as pd
 import time
 from typing import List, Optional, Tuple, Union
 
+import numpy as np
+import pandas as pd
 from broker_utils import gcp_utils, schema_maps
-
+from google import api_core
+from google.cloud import bigquery, logging
 
 project_id = "ardent-cycling-243415"
 
@@ -450,19 +449,18 @@ class SubscriptionMetadataCollector:
             # keep everything
             return metadata
 
-        else:
-            keep_keys = self._keep_field_names(self.requested_fields, metadata.keys())
-            # keep message_id so we can drop duplicates later
-            keep_keys = keep_keys + ["message_id"]
+        keep_keys = self._keep_field_names(self.requested_fields, metadata.keys())
+        # keep message_id so we can drop duplicates later
+        keep_keys = keep_keys + ["message_id"]
 
-            metadata_to_keep = {k: v for k, v in metadata.items() if k in keep_keys}
+        metadata_to_keep = {k: v for k, v in metadata.items() if k in keep_keys}
 
-            return metadata_to_keep
+        return metadata_to_keep
 
     def _stash_dicts_to_json_file(self):
         # for debugging
         fname = f"metadata/{self.subscription}.json"
-        with open(fname, "w") as fout:
+        with open(fname, "w", encoding="utf-8") as fout:
             json.dump(self.metadata_dicts_list, fout, allow_nan=True)
 
     def _package_metadata_into_df(self):
