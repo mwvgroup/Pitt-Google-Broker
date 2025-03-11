@@ -1,12 +1,22 @@
-colorama
+google-cloud-functions
 google-cloud-logging
+pittgoogle-client>=0.3.12
+
+# for Cloud Run
+# https://cloud.google.com/run/docs/quickstarts/build-and-deploy/deploy-python-service
+# pinned following quickstart example. [TODO] consider un-pinning
+Flask==3.0.3
+gunicorn==22.0.0
+Werkzeug==3.0.6
+
+# for SuperNNova
+colorama
 h5py
 natsort
 pandas<2  # required by supernnova
-pgb-broker-utils>=0.2.45
 scikit-learn
 seaborn
-supernnova==1.3
+supernnova==3.0.1
 tqdm
 # pip install torch doesn't work because cloud fncs don't support GPUs.
 # instead, install cpu version from wheel

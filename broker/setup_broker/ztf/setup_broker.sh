@@ -55,6 +55,7 @@ define_GCP_resources() {
 }
 
 #--- GCP resources used directly in this script
+artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
 broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
 bq_dataset=$(define_GCP_resources "${survey}")
 # topics and subscriptions involved in writing alert data to BigQuery
@@ -103,6 +104,14 @@ manage_resources() {
         gcloud pubsub subscriptions add-iam-policy-binding "${subscription_bigquery_import}" \
             --member="serviceAccount:$PUBSUB_SERVICE_ACCOUNT"\
             --role="roles/pubsub.subscriber"
+
+        #--- Create Artifact Registry Repository
+        echo
+        echo "Configuring Artifact Registry..."
+        gcloud artifacts repositories create "${artifact_registry_repo}" --repository-format=docker \
+            --location="${region}" --description="Docker repository for Cloud Run services" \
+            --project="${PROJECT_ID}"
+
     else
         if [ "$environment_type" = "testing" ]; then
             # delete testing resources
@@ -111,6 +120,7 @@ manage_resources() {
             gcloud pubsub topics delete "${deadletter_topic_bigquery_import}"
             gcloud pubsub subscriptions delete "${deadletter_subscription_bigquery_import}"
             gcloud pubsub subscriptions delete "${subscription_bigquery_import}"
+            gcloud artifacts repositories delete "${artifact_registry_repo}" --location="${region}"
         else
             echo 'ERROR: No testid supplied.'
             echo 'To avoid accidents, this script will not delete production resources.'
@@ -174,15 +184,18 @@ fi
 echo
 echo "Configuring Cloud Functions..."
 (
-    # navigate to the correct directory
-    cd .. && cd .. && cd cloud_functions && cd ztf
+    # navigate to the Cloud Run directory
+    cd .. && cd .. && cd cloud_run && cd ztf
 
     #--- classify with SNN cloud function
     cd classify_snn
     ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
 
+    #--- navigate to the Cloud Run Functions directory
+    cd .. && cd .. && cd .. && cd cloud_functions && cd ztf
+
     #--- alerts-lite cloud function
-    cd .. && cd lite
+    cd lite
     ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
 
     #--- Pub/Sub -> Cloud Storage Avro cloud function
