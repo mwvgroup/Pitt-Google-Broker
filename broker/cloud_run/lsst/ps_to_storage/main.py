@@ -122,7 +122,7 @@ def _generate_alert_filename(alert: pittgoogle.Alert) -> str:
         "%Y-%m-%d"
     )  # convert the MJD timestamp to "YYYY-MM-DD"
 
-    return f"{alert.attributes.get('schema_version')}/{alert_date}/{alert.objectid}/{alert.sourceid}.avro"
+    return f"{alert.schema.version_id}/{alert_date}/{alert.objectid}/{alert.sourceid}.avro"
 
 
 def _create_file_metadata(alert: pittgoogle.Alert, event_id: str) -> dict:
