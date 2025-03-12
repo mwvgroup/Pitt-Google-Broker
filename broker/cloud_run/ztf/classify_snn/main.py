@@ -2,7 +2,6 @@
 # -*- coding: UTF-8 -*-
 """Classify alerts using SuperNNova (Möller & de Boissière 2019)."""
 import os
-from datetime import datetime, timezone
 from pathlib import Path
 
 import flask
@@ -11,6 +10,7 @@ import numpy as np
 import pandas as pd
 import pittgoogle
 from supernnova.validation.validate_onthefly import classify_lcs
+from broker_utils import math
 
 # [FIXME] Make this helpful or else delete it.
 # Connect the python logger to the google cloud logger.
@@ -22,14 +22,9 @@ google.cloud.logging.Client().setup_logging()
 PROJECT_ID = os.getenv("GCP_PROJECT")
 TESTID = os.getenv("TESTID")
 SURVEY = os.getenv("SURVEY")
-
-# Provenance variables
-BROKER_NAME = "Pitt-Google Broker"
-MODULE_NAME = "supernnova"
-MODULE_VERSION = "v0.6"
+MODULE_NAME = "SuperNNova"
 
 # Classifier variables
-CLASSIFIER_NAME = "SuperNNova_v1.3"  # include the version for provenance
 model_dir_name = "ZTF_DMAM_V19_NoC_SNIa_vs_CC_forFink"
 model_file_name = (
     "vanilla_S_0_CLF_2_R_none_photometry_DF_1.0_N_global_lstm_32x2_0.05_128_True_mean.pt"
@@ -85,20 +80,7 @@ def run():
     snn_dict = _classify_with_snn(alert_lite)
 
     # announce to Pub/Sub
-    TOPIC.publish(
-        message={**alert_lite, "SuperNNova": snn_dict},
-        attributes={"supernnova_class": str(snn_dict["predicted_class"])},
-    )
-
-    # when finished, return an empty string and an HTTP success code
-    return "", 204
-
-    # announce to pubsub
-    gcp_utils.publish_pubsub(
-        ps_topic,
-        message={**alert_lite, "SuperNNova": snn_dict},
-        attrs={**attrs, "supernnova_class": str(snn_dict["predicted_class"])},
-    )
+    TOPIC.publish(_create_outgoing_alert(alert_lite, snn_dict))
 
     # store in bigquery
     errors = gcp_utils.insert_rows_bigquery(
@@ -129,6 +111,9 @@ def run():
     if len(errors) > 0:
         logger.log_text(f"BigQuery insert error: {errors}", severity="WARNING")
 
+    # when finished, return an empty string and an HTTP success code
+    return "", 204
+
 
 def _classify_with_snn(alert_lite: pittgoogle.Alert) -> dict:
     """Classify the alert using SuperNNova."""
@@ -140,32 +125,39 @@ def _classify_with_snn(alert_lite: pittgoogle.Alert) -> dict:
 
     # use `.item()` to convert numpy -> python types for later json serialization
     pred_probs = pred_probs.flatten()
-    snn_dict = {
+    classifications = {
         "prob_class0": pred_probs[0].item(),
         "prob_class1": pred_probs[1].item(),
         "predicted_class": np.argmax(pred_probs).item(),
     }
 
-    return snn_dict
+    return classifications
 
 
 def _format_for_snn(alert_lite: pittgoogle.Alert) -> pd.DataFrame:
-    """Compute features and cast to a DataFrame for input to SuperNNova."""
-
+    """Create a DataFrame for input to SuperNNova."""
     alert_df = alert_lite.dataframe
+    fluxcal, fluxcalerr = math.mag_to_flux(
+        alert_df[alert_lite.get_key("mag")],
+        alert_df[alert_lite.get_key("mag_zp")],
+        alert_df[alert_lite.get_key("mag_err")],
+    )
 
-    snn_df = pd.DataFrame(data={"SNID": alert_lite.objectid}, index=alert_df.index)
-    snn_df["FLT"] = alert_df["filter"].map(data_utils.ztf_fid_names())
-
-    if SURVEY == "ztf":
-        snn_df["MJD"] = math.jd_to_mjd(alert_df["jd"].loc[0])
-        snn_df["FLUXCAL"], snn_df["FLUXCALERR"] = math.mag_to_flux(
-            alert_df["mag"], alert_df["magzp"], alert_df["magerr"]
-        )
-
-    elif SURVEY == "decat":
-        col_map = {"mjd": "MJD", "flux": "FLUXCAL", "fluxerr": "FLUXCALERR"}
-        for acol, scol in col_map.items():
-            snn_df[scol] = alert_df[acol]
-
+    snn_df = pd.DataFrame(
+        data={
+            "SNID": [alert_lite.objectid] * len(alert_df.index),
+            "FLT": alert_df[alert_lite.get_key("filter")].map(pittgoogle.utils.ztf_fid_names()),
+            "MJD": math.jd_to_mjd(alert_df["jd"].loc[0]),
+            "FLUXCAL": fluxcal,
+            "FLUXCALERR": fluxcalerr,
+        },
+        index=alert_df.index,
+    )
     return snn_df
+
+
+def _create_outgoing_alert(alert_in: pittgoogle.Alert, results: dict) -> pittgoogle.Alert:
+    return pittgoogle.Alert.from_dict(
+        alert_dict={**alert_in.dict, "SuperNNova": results},
+        attributes={"supernnova_class": str(results["predicted_class"]), **alert_in.attributes},
+    )

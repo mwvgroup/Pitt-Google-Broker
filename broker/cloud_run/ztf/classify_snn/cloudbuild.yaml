@@ -14,11 +14,11 @@ steps:
 images:
 - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_MODULE_IMAGE_NAME}'
 substitutions:
-    _SURVEY: 'lsst'
+    _SURVEY: 'ztf'
     _TESTID: 'testid'
     _MODULE_NAME: '${_SURVEY}-classify_with_SuperNNova-${_TESTID}'
     _MODULE_IMAGE_NAME: 'gcr.io/${PROJECT_ID}/${_REPOSITORY}/${_MODULE_NAME}'
-    _REPOSITORY: 'cloud-run-services'
+    _REPOSITORY: '${_SURVEY}-cloud-run-services'
     # cloud functions automatically sets the projectid env var using the name "GCP_PROJECT"
     # use the same name here for consistency
     # [TODO] PROJECT_ID is set in setup.sh. this is confusing and we should revisit the decision.
