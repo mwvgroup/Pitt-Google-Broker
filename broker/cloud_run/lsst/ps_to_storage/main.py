@@ -94,7 +94,11 @@ def store_alert_data(envelope) -> None:
 
     # raise a PreconditionFailed exception if filename already exists in the bucket using "if_generation_match=0"
     # let it raise. the main function will catch it and then drop the message.
-    blob.upload_from_string(base64.b64decode(envelope["message"]["data"]), if_generation_match=0)
+    try:
+        blob.upload_from_string(alert.msg.data, if_generation_match=0)
+    except PreconditionFailed:
+        # This alert is a duplicate. Drop it.
+        return "", HTTP_204
 
     json_dict = _reformat_alert_data_to_valid_json(alert)
 
