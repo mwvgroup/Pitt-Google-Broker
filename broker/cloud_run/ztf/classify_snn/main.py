@@ -23,9 +23,6 @@ PROJECT_ID = os.getenv("GCP_PROJECT")
 TESTID = os.getenv("TESTID")
 SURVEY = os.getenv("SURVEY")
 
-
-MODULE_NAME = "SuperNNova"
-
 # classifier variables
 CLASSIFIER_VERSION = 1.3
 model_dir_name = "ZTF_DMAM_V19_NoC_SNIa_vs_CC_forFink"
@@ -33,6 +30,7 @@ model_file_name = (
     "vanilla_S_0_CLF_2_R_none_photometry_DF_1.0_N_global_lstm_32x2_0.05_128_True_mean.pt"
 )
 MODEL_PATH = Path(__file__).resolve().parent / model_dir_name / model_file_name
+MODULE_NAME = "SuperNNova"
 
 # variables for incoming data
 # a url route is used in setup.sh when the trigger subscription is created.
