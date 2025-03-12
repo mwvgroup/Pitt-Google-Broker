@@ -5,7 +5,6 @@
 
 google-cloud-logging
 google-cloud-storage
-httpx # used by confluent-kafka
 pittgoogle-client>=0.3.12
 
 # for Cloud Run

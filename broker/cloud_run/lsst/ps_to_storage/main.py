@@ -3,12 +3,10 @@
 
 """This module stores LSST alert data as an Avro file in Cloud Storage."""
 
-import base64
 import json
 import math
 import os
 from typing import Any, Dict, Optional
-from astropy.time import Time
 
 import flask
 import pittgoogle
@@ -48,6 +46,7 @@ if TESTID != "False":
 
 client = storage.Client()
 bucket = client.get_bucket(client.bucket(bucket_name, user_project=PROJECT_ID))
+publisher = TOPIC_ALERTS.client
 
 app = flask.Flask(__name__)
 
@@ -70,20 +69,7 @@ def run():
     """
     # extract the envelope from the request that triggered the endpoint
     # this contains a single Pub/Sub message with the alert to be processed
-    try:
-        store_alert_data(envelope=flask.request.get_json())
-    # this is raised by blob.upload_from_file if the object already exists in the bucket
-    except PreconditionFailed:
-        # we'll simply pass, and the duplicate alert will go no further in our pipeline
-        pass
-
-    return "", HTTP_204
-
-
-def store_alert_data(envelope) -> None:
-    """Uploads the msg data bytes to a GCP storage bucket."""
-
-    # create an alert object from the envelope
+    envelope = flask.request.get_json()
     try:
         alert = pittgoogle.Alert.from_cloud_run(envelope, "lsst")
     except pittgoogle.exceptions.BadRequest as exc:
@@ -93,17 +79,16 @@ def store_alert_data(envelope) -> None:
     blob.metadata = _create_file_metadata(alert, event_id=envelope["message"]["messageId"])
 
     # raise a PreconditionFailed exception if filename already exists in the bucket using "if_generation_match=0"
-    # let it raise. the main function will catch it and then drop the message.
+    # let it raise. the message will be dropped.
     try:
         blob.upload_from_string(alert.msg.data, if_generation_match=0)
     except PreconditionFailed:
-        # This alert is a duplicate. Drop it.
+        # this alert is a duplicate. drop it.
         return "", HTTP_204
-
-    json_dict = _reformat_alert_data_to_valid_json(alert)
 
     # publish alerts to appropriate Pub/Sub topics
     TOPIC_ALERTS.publish(alert)  # deduplicated "alerts" stream
+    json_dict = _reformat_alert_data_to_valid_json(alert)
     publish_valid_json_stream(
         topic_name=TOPIC_BIGQUERY_IMPORT.name,
         message=json_dict,
@@ -112,23 +97,7 @@ def store_alert_data(envelope) -> None:
         },
     )
 
-
-def _generate_alert_filename(alert: pittgoogle.Alert) -> str:
-    """Generate the filename of an alert stored to a Cloud Storage bucket.
-    Parameters
-    ----------
-    alert : pittgoogle.Alert
-        The alert object.
-    Returns
-    -------
-    str: The formatted filename as "{schema_version}/{YYYY-MM-DD}/{diaObjectId}/{diaSourceId}.{format}".
-    """
-    time_obj = Time(alert.get("mjd"), format="mjd")
-    alert_date = time_obj.datetime.strftime(
-        "%Y-%m-%d"
-    )  # convert the MJD timestamp to "YYYY-MM-DD"
-
-    return f"{alert.schema.version}/{alert_date}/{alert.objectid}/{alert.sourceid}.avro"
+    return "", HTTP_204
 
 
 def _create_file_metadata(alert: pittgoogle.Alert, event_id: str) -> dict:
