@@ -89,7 +89,7 @@ def store_alert_data(envelope) -> None:
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
-    blob = bucket.blob(_generate_alert_filename(alert))
+    blob = bucket.blob(alert.name_in_bucket)
     blob.metadata = _create_file_metadata(alert, event_id=envelope["message"]["messageId"])
 
     # raise a PreconditionFailed exception if filename already exists in the bucket using "if_generation_match=0"
