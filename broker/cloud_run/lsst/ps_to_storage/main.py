@@ -48,7 +48,6 @@ if TESTID != "False":
 
 client = storage.Client()
 bucket = client.get_bucket(client.bucket(bucket_name, user_project=PROJECT_ID))
-publisher = TOPIC_ALERTS.client
 
 app = flask.Flask(__name__)
 
