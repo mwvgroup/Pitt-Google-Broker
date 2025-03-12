@@ -22,21 +22,24 @@ google.cloud.logging.Client().setup_logging()
 PROJECT_ID = os.getenv("GCP_PROJECT")
 TESTID = os.getenv("TESTID")
 SURVEY = os.getenv("SURVEY")
+
+
 MODULE_NAME = "SuperNNova"
 
-# Classifier variables
+# classifier variables
+CLASSIFIER_VERSION = 1.3
 model_dir_name = "ZTF_DMAM_V19_NoC_SNIa_vs_CC_forFink"
 model_file_name = (
     "vanilla_S_0_CLF_2_R_none_photometry_DF_1.0_N_global_lstm_32x2_0.05_128_True_mean.pt"
 )
 MODEL_PATH = Path(__file__).resolve().parent / model_dir_name / model_file_name
 
-# Variables for incoming data
-# A url route is used in setup.sh when the trigger subscription is created.
-# It is possible to define multiple routes in a single module and trigger them using different subscriptions.
+# variables for incoming data
+# a url route is used in setup.sh when the trigger subscription is created.
+# it is possible to define multiple routes in a single module and trigger them using different subscriptions.
 ROUTE_RUN = "/"  # HTTP route that will trigger run(). Must match setup.sh
 
-# Variables for outgoing data
+# variables for outgoing data
 HTTP_204 = 204  # HTTP code: Success
 HTTP_400 = 400  # HTTP code: Bad Request
 TABLE_SUPERNNOVA = pittgoogle.Table.from_cloud(MODULE_NAME, survey=SURVEY, testid=TESTID)
@@ -44,7 +47,7 @@ TABLE_CLASSIFICATIONS = pittgoogle.Table.from_cloud(
     "classifications", survey=SURVEY, testid=TESTID
 )
 TOPIC = pittgoogle.Topic.from_cloud(
-    "SuperNNova", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
+    MODULE_NAME, survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
 )
 
 app = flask.Flask(__name__)
@@ -52,7 +55,7 @@ app = flask.Flask(__name__)
 
 @app.route(ROUTE_RUN, methods=["POST"])
 def run():
-    """Classify the alert with SuperNNova; publish and store results.
+    """Classify alert with SuperNNova; publish and store results.
 
     This module is intended to be deployed as a Cloud Run service. It will operate as an HTTP endpoint
     triggered by Pub/Sub messages. This function will be called once for every message sent to this route.
@@ -66,56 +69,44 @@ def run():
         and should not contain the classification results.
     """
     try:
-        # unpack the alert
-        # if the request does not contain a valid message, this raises a `BadRequest`
         alert_lite = pittgoogle.Alert.from_cloud_run(
             envelope=flask.request.get_json(), schema_name="ztf"
         )
-        # what about attributes?
     except pittgoogle.exceptions.BadRequest as exc:
-        # return the error text and an HTTP 400 Bad Request code
-        return str(exc), 400
+        return str(exc), HTTP_400
 
-    # continue processing the alert
-    snn_dict = _classify_with_snn(alert_lite)
+    snn_dict = _classify(alert_lite)
 
     # announce to Pub/Sub
     TOPIC.publish(_create_outgoing_alert(alert_lite, snn_dict))
 
-    # store in bigquery
-    errors = gcp_utils.insert_rows_bigquery(
-        snn_table,
+    # store in BigQuery
+    TABLE_SUPERNNOVA.insert_rows(
         [
             {
-                **snn_dict,
                 "objectId": alert_lite["alertIds"]["objectId"],
                 "candid": alert_lite["alertIds"]["sourceId"],
-            }
-        ],
+            },
+            snn_dict,
+        ]
     )
-    if len(errors) > 0:
-        logger.log_text(f"BigQuery insert error: {errors}", severity="WARNING")
+    TABLE_CLASSIFICATIONS.insert_rows(
+        [
+            {
+                "objectId": alert_lite.objectid,
+                "candid": alert_lite.attributes.get("candid"),
+                "classifier": MODULE_NAME,
+                "classifier_version": CLASSIFIER_VERSION,
+                "class": snn_dict["predicted_class"],
+                "probability": max(snn_dict["prob_class0"], snn_dict["prob_class1"]),
+            }
+        ]
+    )
 
-    # store in bigquery
-    classifications = [
-        {
-            "objectId": attrs["objectId"],
-            "candid": attrs["candid"],
-            "classifier": "SuperNNova",
-            "classifier_version": 1.3,
-            "class": snn_dict["predicted_class"],
-            "probability": max(snn_dict["prob_class0"], snn_dict["prob_class1"]),
-        }
-    ]
-    errors = gcp_utils.insert_rows_bigquery(class_table, classifications)
-    if len(errors) > 0:
-        logger.log_text(f"BigQuery insert error: {errors}", severity="WARNING")
-
-    # when finished, return an empty string and an HTTP success code
-    return "", 204
+    return "", HTTP_204
 
 
-def _classify_with_snn(alert_lite: pittgoogle.Alert) -> dict:
+def _classify(alert_lite: pittgoogle.Alert) -> dict:
     """Classify the alert using SuperNNova."""
     snn_df = _format_for_snn(alert_lite)
     device = "cpu"
@@ -158,6 +149,6 @@ def _format_for_snn(alert_lite: pittgoogle.Alert) -> pd.DataFrame:
 
 def _create_outgoing_alert(alert_in: pittgoogle.Alert, results: dict) -> pittgoogle.Alert:
     return pittgoogle.Alert.from_dict(
-        alert_dict={**alert_in.dict, "SuperNNova": results},
+        payload={**alert_in.dict, **results},
         attributes={"supernnova_class": str(results["predicted_class"]), **alert_in.attributes},
     )
