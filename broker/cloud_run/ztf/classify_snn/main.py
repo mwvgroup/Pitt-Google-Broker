@@ -150,5 +150,5 @@ def _format_for_snn(alert_lite: pittgoogle.Alert) -> pd.DataFrame:
 def _create_outgoing_alert(alert_in: pittgoogle.Alert, results: dict) -> pittgoogle.Alert:
     return pittgoogle.Alert.from_dict(
         payload={**alert_in.dict, **results},
-        attributes={"supernnova_class": str(results["predicted_class"]), **alert_in.attributes},
+        attributes={"supernnova_class": results["predicted_class"], **alert_in.attributes},
     )
