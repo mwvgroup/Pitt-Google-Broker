@@ -84,7 +84,10 @@ def store_alert_data(envelope) -> None:
     """Uploads the msg data bytes to a GCP storage bucket."""
 
     # create an alert object from the envelope
-    alert = pittgoogle.Alert.from_cloud_run(envelope, "lsst")
+    try:
+        alert = pittgoogle.Alert.from_cloud_run(envelope, "lsst")
+    except pittgoogle.exceptions.BadRequest as exc:
+        return str(exc), HTTP_400
 
     blob = bucket.blob(_generate_alert_filename(alert))
     blob.metadata = _create_file_metadata(alert, event_id=envelope["message"]["messageId"])
