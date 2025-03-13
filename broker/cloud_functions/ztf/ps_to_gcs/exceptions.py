@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-"""Custom exceptions for ps_to_gcs Cloud Function.
-"""
+"""Custom exceptions for ps_to_gcs Cloud Function."""
 
 
 class CloudConnectionError(Exception):

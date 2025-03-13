@@ -96,12 +96,12 @@ def _download_schema_map(survey: str, testid: str, schema: str) -> dict:
 
 def _broker_bucket_name(survey, testid):
     if testid in ["False", False]:
-        return f'{PROJECT_ID}-{survey}-broker_files'
-    return f'{PROJECT_ID}-{survey}-broker_files-{testid}'
+        return f"{PROJECT_ID}-{survey}-broker_files"
+    return f"{PROJECT_ID}-{survey}-broker_files-{testid}"
 
 
 def _schema_object_name(survey):
-    return f'schema_maps/{survey}.yaml'
+    return f"schema_maps/{survey}.yaml"
 
 
 def load_yaml(fin: Union[Path, str, Blob]) -> dict:
@@ -134,7 +134,6 @@ def get_value(key: str, alert_dict: dict, schema_map: dict) -> Union[int, str]:
 
         if len(fullkey) == 2:
             return alert_dict.get(fullkey[0]).get(fullkey[1])
-
 
         if len(fullkey) == 3:
             return alert_dict.get(fullkey[0]).get(fullkey[1]).get(fullkey[2])
