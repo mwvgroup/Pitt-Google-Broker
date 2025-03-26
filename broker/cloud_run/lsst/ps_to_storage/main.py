@@ -4,7 +4,6 @@
 """This module stores LSST alert data as an Avro file in Cloud Storage."""
 
 import os
-
 import flask
 import pittgoogle
 from google.cloud import logging, storage
