@@ -3,10 +3,7 @@
 
 """This module stores LSST alert data as an Avro file in Cloud Storage."""
 
-import json
-import math
 import os
-from typing import Any, Dict, Optional
 
 import flask
 import pittgoogle
@@ -46,7 +43,6 @@ if TESTID != "False":
 
 client = storage.Client()
 bucket = client.get_bucket(client.bucket(bucket_name, user_project=PROJECT_ID))
-publisher = TOPIC_ALERTS.client
 
 app = flask.Flask(__name__)
 
@@ -86,16 +82,10 @@ def run():
         # this alert is a duplicate. drop it.
         return "", HTTP_204
 
-    # publish alerts to appropriate Pub/Sub topics
-    TOPIC_ALERTS.publish(alert)  # deduplicated "alerts" stream
-    json_dict = _reformat_alert_data_to_valid_json(alert)
-    publish_valid_json_stream(
-        topic_name=TOPIC_BIGQUERY_IMPORT.name,
-        message=json_dict,
-        attributes={
-            "schema_version": alert.schema.version,
-        },
-    )
+    # publish the same alert as Confluent Wire Avro.
+    TOPIC_ALERTS.publish(alert)
+    # publish the same alert as JSON. Data will be coerced to valid JSON by pittgoogle.
+    TOPIC_BIGQUERY_IMPORT.publish(alert, serializer="json")
 
     return "", HTTP_204
 
@@ -110,38 +100,3 @@ def _create_file_metadata(alert: pittgoogle.Alert, event_id: str) -> dict:
     metadata[alert.get_key("dec")] = alert.dec
 
     return metadata
-
-
-def _reformat_alert_data_to_valid_json(alert: pittgoogle.Alert) -> dict:
-    """Creates an Alert object whose data will be published as a valid JSON message."""
-    return _reformat_nan_in_alert_dict(alert.drop_cutouts())
-
-
-def _reformat_nan_in_alert_dict(alert_dict: Dict[str, Any]) -> Dict[str, Any]:
-    """Recursively replace NaN values with None if present in alert dictionary."""
-    return {k: _replace_nan_values_with_none(v) for k, v in alert_dict.items()}
-
-
-def _replace_nan_values_with_none(value: Any) -> Any:
-    """Recursively replace NaN values with None."""
-    if isinstance(value, dict):
-        return {k: _replace_nan_values_with_none(v) for k, v in value.items()}
-    if isinstance(value, list):
-        return [_replace_nan_values_with_none(v) for v in value]
-    if isinstance(value, float) and math.isnan(value):
-        return None
-    return value
-
-
-def publish_valid_json_stream(
-    topic_name: str, message: dict, attributes: Optional[dict] = None
-) -> str:
-    """Publish alert data to a Pub/Sub topic as a valid JSON message."""
-
-    message_json = json.dumps(message, default=str)
-    message_bytes = message_json.encode("utf-8")
-
-    topic_path = publisher.topic_path(PROJECT_ID, topic_name)
-    future = publisher.publish(topic_path, data=message_bytes, **attributes)
-
-    return future.result()
