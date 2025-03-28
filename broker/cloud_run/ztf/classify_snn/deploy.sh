@@ -9,9 +9,9 @@ testid="${1:-test}"
 teardown="${2:-False}"
 # name of the survey this broker instance will ingest
 survey="${3:-ztf}"
+region="${4:-us-central1}"
 # get environment variables
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT
-PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format="value(projectNumber)")
 
 MODULE_NAME="supernnova"  # lower case required by cloud run
 ROUTE_RUN="/"  # url route that will trigger main.run()
