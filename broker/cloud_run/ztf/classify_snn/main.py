@@ -24,7 +24,7 @@ TESTID = os.getenv("TESTID")
 SURVEY = os.getenv("SURVEY")
 
 # classifier variables
-CLASSIFIER_VERSION = 1.3
+CLASSIFIER_VERSION = 0.1
 model_dir_name = "ZTF_DMAM_V19_NoC_SNIa_vs_CC_forFink"
 model_file_name = (
     "vanilla_S_0_CLF_2_R_none_photometry_DF_1.0_N_global_lstm_32x2_0.05_128_True_mean.pt"
@@ -93,7 +93,7 @@ def run():
             {
                 "objectId": alert_lite.objectid,
                 "candid": alert_lite.attributes.get("candid"),
-                "classifier": MODULE_NAME,
+                "classifier": "purity",
                 "classifier_version": CLASSIFIER_VERSION,
                 "class": snn_dict["predicted_class"],
                 "probability": max(snn_dict["prob_class0"], snn_dict["prob_class1"]),
@@ -114,13 +114,13 @@ def _classify(alert_lite: pittgoogle.Alert) -> dict:
 
     # use `.item()` to convert numpy -> python types for later json serialization
     pred_probs = pred_probs.flatten()
-    classifications = {
+    snn_dict = {
         "prob_class0": pred_probs[0].item(),
         "prob_class1": pred_probs[1].item(),
         "predicted_class": np.argmax(pred_probs).item(),
     }
 
-    return classifications
+    return snn_dict
 
 
 def _format_for_snn(alert_lite: pittgoogle.Alert) -> pd.DataFrame:
@@ -145,8 +145,8 @@ def _format_for_snn(alert_lite: pittgoogle.Alert) -> pd.DataFrame:
     return snn_df
 
 
-def _create_outgoing_alert(alert_in: pittgoogle.Alert, results: dict) -> pittgoogle.Alert:
+def _create_outgoing_alert(alert: pittgoogle.Alert, snn_dict: dict) -> pittgoogle.Alert:
     return pittgoogle.Alert.from_dict(
-        payload={**alert_in.dict, **results},
-        attributes={"supernnova_class": results["predicted_class"], **alert_in.attributes},
+        payload={**alert.dict, "SuperNNova": snn_dict},
+        attributes={"supernnova_class": snn_dict["predicted_class"], **alert.attributes},
     )
