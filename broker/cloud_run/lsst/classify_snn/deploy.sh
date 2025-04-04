@@ -35,30 +35,38 @@ define_GCP_resources() {
 
 #--- GCP resources used in this script
 artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
-deadletter_topic_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import-SuperNNova-deadletter")
-deadletter_subscription_bigquery_import="${deadletter_topic_bigquery_import}"
+deadletter_topic_bigquery_import_snn=$(define_GCP_resources "${survey}-bigquery-import-SuperNNova-deadletter")
+deadletter_subscription_bigquery_import_snn="${deadletter_topic_bigquery_import_snn}"
+deadletter_topic_bigquery_import_classifications=$(define_GCP_resources "${survey}-bigquery-import-classifications-deadletter")
+deadletter_subscription_bigquery_import_classifications="${deadletter_topic_bigquery_import_classifications}"
 ps_input_subscrip=$(define_GCP_resources "${survey}-alerts") # pub/sub subscription used to trigger cloud run module
 ps_output_topic=$(define_GCP_resources "${survey}-SuperNNova")
-subscription_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import-SuperNNova") # BigQuery subscription
-topic_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import-SuperNNova")
+topic_bigquery_import_snn=$(define_GCP_resources "${survey}-bigquery-import-SuperNNova")
+subscription_bigquery_import_snn="${topic_bigquery_import_snn}" # BigQuery subscription
+topic_bigquery_import_classifications=$(define_GCP_resources "${survey}-bigquery-import-classifications")
+subscription_bigquery_import_classifications="${topic_bigquery_import_classifications}" # BigQuery subscription
 trigger_topic=$(define_GCP_resources "${survey}-alerts")
 
 # additional GCP resources & variables used in this script
 bq_dataset=$(define_GCP_resources "${survey}")
 supernnova_classifications_table="SuperNNova"
+classifications_table="classifications"
 cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}")  # lower case required by Cloud Run
 runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
-
 
 if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources
     if [ "${testid}" != "False" ]; then
         gcloud pubsub topics delete "${ps_output_topic}"
-        gcloud pubsub topics delete "${topic_bigquery_import}"
-        gcloud pubsub topics delete "${deadletter_topic_bigquery_import}"
+        gcloud pubsub topics delete "${topic_bigquery_import_snn}"
+        gcloud pubsub topics delete "${topic_bigquery_import_classifications}"
+        gcloud pubsub topics delete "${deadletter_topic_bigquery_import_snn}"
+        gcloud pubsub topics delete "${deadletter_topic_bigquery_import_classifications}"
         gcloud pubsub subscriptions delete "${ps_input_subscrip}"
-        gcloud pubsub subscriptions delete "${subscription_bigquery_import}"
-        gcloud pubsub subscriptions delete "${deadletter_subscription_bigquery_import}"
+        gcloud pubsub subscriptions delete "${subscription_bigquery_import_snn}"
+        gcloud pubsub subscriptions delete "${subscription_bigquery_import_classifications}"
+        gcloud pubsub subscriptions delete "${deadletter_subscription_bigquery_import_snn}"
+        gcloud pubsub subscriptions delete "${deadletter_subscription_bigquery_import_classifications}"
         gcloud run services delete "${cr_module_name}" --region "${region}"
     fi
 
@@ -67,9 +75,13 @@ else # Deploy the Cloud Run service
 #--- Deploy Cloud Run service
     echo "Configuring Pub/Sub resources for classify_snn Cloud Run service..."
     gcloud pubsub topics create "${ps_output_topic}"
-    gcloud pubsub topics create "${topic_bigquery_import}"
-    gcloud pubsub topics create "${deadletter_topic_bigquery_import}"
-    gcloud pubsub subscriptions create "${deadletter_subscription_bigquery_import}" --topic="${deadletter_topic_bigquery_import}"
+    gcloud pubsub topics create "${topic_bigquery_import_snn}"
+    gcloud pubsub topics create "${deadletter_topic_bigquery_import_snn}"
+    gcloud pubsub subscriptions create "${deadletter_subscription_bigquery_import_snn}" --topic="${deadletter_topic_bigquery_import_snn}"
+    gcloud pubsub topics create "${topic_bigquery_import_classifications}"
+    gcloud pubsub topics create "${deadletter_topic_bigquery_import_classifications}"
+    gcloud pubsub subscriptions create "${deadletter_subscription_bigquery_import_classifications}" --topic="${deadletter_topic_bigquery_import_classifications}"
+
     # in order to create BigQuery subscriptions, ensure that the following service account:
     # service-<project number>@gcp-sa-pubsub.iam.gserviceaccount.com" has the
     # bigquery.dataEditor role for each table
@@ -79,20 +91,33 @@ else # Deploy the Cloud Run service
         --member="serviceAccount:${PUBSUB_SERVICE_ACCOUNT}" \
         --role="${roleid}" \
         --table=true "${PROJECT_ID}:${bq_dataset}.${supernnova_classifications_table}"
-    gcloud pubsub subscriptions create "${subscription_bigquery_import}" \
-        --topic="${topic_bigquery_import}" \
+    gcloud pubsub subscriptions create "${subscription_bigquery_import_snn}" \
+        --topic="${topic_bigquery_import_snn}" \
         --bigquery-table="${PROJECT_ID}:${bq_dataset}.${supernnova_classifications_table}" \
         --use-table-schema \
-        --dead-letter-topic="${deadletter_topic_bigquery_import}" \
+        --dead-letter-topic="${deadletter_topic_bigquery_import_snn}" \
+        --max-delivery-attempts=5 \
+        --dead-letter-topic-project="${PROJECT_ID}"
+    gcloud pubsub subscriptions create "${subscription_bigquery_import_classifications}" \
+        --topic="${topic_bigquery_import_classifications}" \
+        --bigquery-table="${PROJECT_ID}:${bq_dataset}.${classifications_table}" \
+        --use-table-schema \
+        --dead-letter-topic="${deadletter_topic_bigquery_import_classifications}" \
         --max-delivery-attempts=5 \
         --dead-letter-topic-project="${PROJECT_ID}"
 
     # this allows dead-lettered messages to be forwarded from the BigQuery subscription to the dead letter topic
     # and it allows dead-lettered messages to be published to the dead letter topic.
-    gcloud pubsub topics add-iam-policy-binding "${deadletter_topic_bigquery_import}" \
+    gcloud pubsub topics add-iam-policy-binding "${deadletter_topic_bigquery_import_snn}" \
         --member="serviceAccount:$PUBSUB_SERVICE_ACCOUNT"\
         --role="roles/pubsub.publisher"
-    gcloud pubsub subscriptions add-iam-policy-binding "${subscription_bigquery_import}" \
+    gcloud pubsub subscriptions add-iam-policy-binding "${subscription_bigquery_import_snn}" \
+        --member="serviceAccount:$PUBSUB_SERVICE_ACCOUNT"\
+        --role="roles/pubsub.subscriber"
+    gcloud pubsub topics add-iam-policy-binding "${deadletter_topic_bigquery_import_classifications}" \
+        --member="serviceAccount:$PUBSUB_SERVICE_ACCOUNT"\
+        --role="roles/pubsub.publisher"
+    gcloud pubsub subscriptions add-iam-policy-binding "${subscription_bigquery_import_classifications}" \
         --member="serviceAccount:$PUBSUB_SERVICE_ACCOUNT"\
         --role="roles/pubsub.subscriber"
 

@@ -6,17 +6,10 @@ This code is intended to be containerized and deployed to Google Cloud Run.
 Once deployed, individual alerts in the "trigger" stream will be delivered to the container as HTTP requests.
 """
 
-import base64
-import io
-import json
 import os
-import struct
-from datetime import datetime, timezone
 from pathlib import Path
 import flask  # Manage the HTTP request containing the alert
-import fastavro
 import pittgoogle  # Manipulate the alert and interact with cloud resources
-from confluent_kafka.schema_registry import SchemaRegistryClient
 from google.cloud import pubsub_v1
 
 import google.cloud.logging
@@ -36,13 +29,11 @@ PROJECT_ID = os.getenv("GCP_PROJECT")
 TESTID = os.getenv("TESTID")
 SURVEY = os.getenv("SURVEY")
 
-# Provenance variables
-BROKER_NAME = "Pitt-Google Broker"
-MODULE_NAME = "supernnova"
-MODULE_VERSION = "v0.6"
+# provenance variables
+MODULE_NAME = "SuperNNova"
+MODULE_VERSION = "v0.1"
 
-# Classifier variables
-CLASSIFIER_NAME = "SuperNNova_v1.3"  # include the version for provenance
+# classifier variables
 model_dir_name = "ZTF_DMAM_V19_NoC_SNIa_vs_CC_forFink"
 model_file_name = (
     "vanilla_S_0_CLF_2_R_none_photometry_DF_1.0_N_global_lstm_32x2_0.05_128_True_mean.pt"
@@ -58,20 +49,19 @@ ROUTE_RUN = "/"  # HTTP route that will trigger run(). Must match setup.sh
 HTTP_204 = 204  # HTTP code: Success
 HTTP_400 = 400  # HTTP code: Bad Request
 
-# define a binary data structure for packing and unpacking bytes
-_ConfluentWireFormatHeader = struct.Struct(">bi")
-sr_client = SchemaRegistryClient({"url": "https://usdf-alert-schemas-dev.slac.stanford.edu"})
-
 # GCP resources used in this module
 # pittgoogle will construct the full resource names from the MODULE_NAME, SURVEY, and TESTID
 # DESC is already listening to this pubsub stream so the leave camel case to avoid a breaking change
 TOPIC = pittgoogle.Topic.from_cloud(
-    "SuperNNova", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
+    MODULE_NAME, survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
 )
-TOPIC_BIGQUERY_IMPORT = pittgoogle.Topic.from_cloud(
+TOPIC_BIGQUERY_IMPORT_SUPERNNOVA = pittgoogle.Topic.from_cloud(
     "bigquery-import-SuperNNova", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
 )
-publisher = pubsub_v1.PublisherClient()
+
+TOPIC_BIGQUERY_IMPORT_CLASSIFICATIONS = pittgoogle.Topic.from_cloud(
+    "bigquery-import-classifications", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
+)
 
 app = flask.Flask(__name__)
 
@@ -97,40 +87,21 @@ def run():
 
     # unpack the alert. raises a `BadRequest` if the envelope does not contain a valid message
     try:
-        alert = _unpack_alert(envelope)
-        # classify
-        classifications = _classify(alert)
+        alert = pittgoogle.Alert.from_cloud_run(envelope, "lsst")
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
+    # classify
+    snn_dict = _classify(alert)
+
     # publish
-    classified_alert = _create_outgoing_alert(alert, classifications)
-    TOPIC.publish(classified_alert)
-    TOPIC_BIGQUERY_IMPORT.publish(classifications)
+    TOPIC.publish(_create_outgoing_alert(alert, snn_dict), serializer="avro")
+    TOPIC_BIGQUERY_IMPORT_CLASSIFICATIONS.publish(
+        _classification_summary(snn_dict), serializer="json"
+    )
+    TOPIC_BIGQUERY_IMPORT_SUPERNNOVA.publish(snn_dict, serializer="json")
 
     return "", HTTP_204
-
-
-def _unpack_alert(envelope) -> pittgoogle.Alert:
-    alert_bytes = base64.b64decode(envelope["message"]["data"])  # alert packet, bytes
-    attributes = envelope["message"].get("attributes", {})
-    content_bytes = io.BytesIO(alert_bytes[5:])
-
-    # unpack the alert and read schema ID
-    header_bytes = alert_bytes[:5]
-    schema_id = deserialize_confluent_wire_header(header_bytes)
-
-    # get and load schema
-    schema = sr_client.get_schema(schema_id=schema_id)
-    parse_schema = json.loads(schema.schema_str)
-    schema_name = parse_schema["namespace"] + ".alert"  # returns lsst.v7_x.alert string
-
-    # deserialize the alert
-    alert_dict = fastavro.schemaless_reader(content_bytes, parse_schema)
-
-    return pittgoogle.Alert.from_dict(
-        payload=alert_dict, attributes=attributes, schema_name=schema_name
-    )
 
 
 def _classify(alert: pittgoogle.Alert) -> dict:
@@ -144,21 +115,15 @@ def _classify(alert: pittgoogle.Alert) -> dict:
 
     # use `.item()` to convert numpy -> python types for later serialization
     pred_probs = pred_probs.flatten()
-    classifications = {
-        "alertId": alert.alertid,
+    snn_dict = {
         "diaObjectId": alert.objectid,
         "diaSourceId": alert.sourceid,
         "prob_class0": pred_probs[0].item(),
         "prob_class1": pred_probs[1].item(),
         "predicted_class": np.argmax(pred_probs).item(),
-        "brokerVersion": MODULE_VERSION,
-        # divide by 1000 to switch millisecond -> microsecond precision for BigQuery
-        "LSSTPublishTimestamp": int(alert.attributes["kafka.timestamp"]) / 1000,
-        "brokerIngestTimestamp": alert.msg.publish_time,
-        "classifierTimestamp": datetime.now(timezone.utc),
     }
 
-    return classifications
+    return snn_dict
 
 
 def _format_for_classifier(alert: pittgoogle.Alert) -> pd.DataFrame:
@@ -169,55 +134,36 @@ def _format_for_classifier(alert: pittgoogle.Alert) -> pd.DataFrame:
             # select a subset of columns and rename them for SuperNNova
             # get_key returns the name that the survey uses for a given field
             # for the full mapping, see alert.schema.map
+            "SNID": [alert.objectid] * len(alert_df.index),
             "FLT": alert_df[alert.get_key("filter")],
+            "MJD": alert_df[alert.get_key("mjd")],
             "FLUXCAL": alert_df[alert.get_key("flux")],
             "FLUXCALERR": alert_df[alert.get_key("flux_err")],
-            "MJD": alert_df[alert.get_key("mjd")],
-            # add the object ID
-            "SNID": [alert.objectid] * len(alert_df.index),
         },
         index=alert_df.index,
     )
+
     return snn_df
 
 
-def _create_outgoing_alert(alert_in: pittgoogle.Alert, results: dict) -> pittgoogle.Alert:
+def _create_outgoing_alert(alert: pittgoogle.Alert, snn_dict: dict) -> pittgoogle.Alert:
     """Combine the incoming alert with the classification results to create the outgoing alert."""
 
-    outgoing_dict = {
-        "alertId": alert_in.alertid,
-        "diaSourceId": alert_in.sourceid,
-        # multiply by 1000 to switch microsecond -> millisecond precision
-        "LSSTPublishTimestamp": int(results["LSSTPublishTimestamp"] * 1000),
-        "brokerIngestTimestamp": results["brokerIngestTimestamp"],
-        "brokerName": BROKER_NAME,
-        "brokerVersion": results["brokerVersion"],
-        "classifierName": CLASSIFIER_NAME,
-        "classifierParams": str(MODEL_PATH),  # record the training file
-        "probability": results["prob_class0"],
-    }
-
-    # create the outgoing Alert
-    alert_out = pittgoogle.Alert.from_dict(payload=outgoing_dict, attributes=alert_in.attributes)
-    # add the predicted class to the attributes. may help downstream users filter messages.
-    alert_out.attributes[MODULE_NAME] = results["predicted_class"]
-
-    return alert_out
+    return pittgoogle.Alert.from_dict(
+        payload={**alert.dict, "SuperNNova": snn_dict},
+        attributes={"supernnova_class": snn_dict["predicted_class"], **alert.attributes},
+    )
 
 
-def deserialize_confluent_wire_header(raw):
-    """Parses the byte prefix for Confluent Wire Format-style Kafka messages.
-    Parameters
-    ----------
-    raw : `bytes`
-        The 5-byte encoded message prefix.
-    Returns
-    -------
-    schema_version : `int`
-        A version number which indicates the Confluent Schema Registry ID
-        number of the Avro schema used to encode the message that follows this
-        header.
-    """
-    _, version = _ConfluentWireFormatHeader.unpack(raw)
-
-    return version
+def _classification_summary(snn_dict: dict) -> dict:
+    """Create a summary of the classification results for storage in BigQuery."""
+    return [
+        {
+            "diaObjectId": snn_dict["diaObjectId"],
+            "diaSourceId": snn_dict["diaSourceId"],
+            "classifier": "purity",
+            "classifier_version": MODULE_VERSION,
+            "class": snn_dict["predicted_class"],
+            "probability": max(snn_dict["prob_class0"], snn_dict["prob_class1"]),
+        }
+    ]

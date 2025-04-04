@@ -1,15 +1,12 @@
 google-cloud-functions
 google-cloud-logging
-pittgoogle-client>=0.3.12
-confluent-kafka==2.6.0
-fastavro
+pittgoogle-client>=0.3.13
 
 # for Cloud Run
 # https://cloud.google.com/run/docs/quickstarts/build-and-deploy/deploy-python-service
-# pinned following quickstart example. [TODO] consider un-pinning
-Flask==3.0.3
-gunicorn==22.0.0
-Werkzeug==3.0.3
+Flask
+gunicorn
+Werkzeug
 
 # for SuperNNova
 colorama
@@ -21,4 +18,4 @@ supernnova==3.0.1
 tqdm
 # install torch from wheel because cloud fncs don't support GPUs
 # https://stackoverflow.com/questions/55449313/google-cloud-function-python-3-7-requirements-txt-makes-deploy-fail
-https://download.pytorch.org/whl/cpu/torch-2.0.0%2Bcpu-cp311-cp311-linux_x86_64.whl
+https://download.pytorch.org/whl/cpu/torch-2.2.0%2Bcpu-cp312-cp312-linux_x86_64.whl#sha256=8258824bec0181e01a086aef5809016116a97626af2dcbf932d4e0b192d9c1b8
