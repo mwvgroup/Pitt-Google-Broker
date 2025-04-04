@@ -64,19 +64,18 @@ def write_valid_schema(fin: str, survey: str, version: float) -> dict:
     fpkl = f'{survey}_v{version}.pkl'
     fout = Path(__file__).resolve().parent / 'valid_schemas' / fpkl
 
-    schema, __ = _load_Avro(fin)  # load the file
+    schema, _ = _load_Avro(fin)  # load the file
 
     try:
         format_func = format_funcs.get(survey, {})[version]
 
-    except IndexError:
+    except IndexError as exc:
         err_msg = f'Formatting not available for {survey} {version}'
         log.error(err_msg)
-        raise RuntimeError(err_msg)
+        raise RuntimeError(err_msg) from exc
 
-    else:
-        valid_schema = format_func(schema)  # get the corrected schema
-        _write_dict_to_pickle(valid_schema, fout)
+    valid_schema = format_func(schema)  # get the corrected schema
+    _write_dict_to_pickle(valid_schema, fout)
 
     return valid_schema
 

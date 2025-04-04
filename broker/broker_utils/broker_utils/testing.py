@@ -262,9 +262,7 @@ class Mock:
 
         event_id = int(1e12 * np.random.uniform())
         timestamp = (
-            datetime.now(timezone.utc)
-            .isoformat(timespec="milliseconds")
-            .replace("+00:00", "Z")
+            datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
         )
         # event_type = "google.pubsub.topic.publish"
         event_type = "broker_utils.testing.Mock"
@@ -538,7 +536,7 @@ class IntegrationTestValidator:
                     "\tbroker_utils.gcp_utils.purge_subscription(%s)\n"
                     "and run the test again."
                 ),
-                self.subscrip
+                self.subscrip,
             )
 
         return success, unmatched_ids

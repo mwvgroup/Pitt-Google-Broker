@@ -26,6 +26,7 @@ LOGGER = logging.getLogger(__name__)
 # cloud functions use GCP_PROJECT
 if "GCP_PROJECT" in os.environ:
     import google.cloud.logging
+
     google.cloud.logging.Client().setup_logging()
 
 
@@ -34,9 +35,7 @@ class OpenAlertError(Exception):
 
 
 def load_alert(
-    fin: Union[str, Path],
-    return_as: str = "dict",
-    **kwargs
+    fin: Union[str, Path], return_as: str = "dict", **kwargs
 ) -> Union[bytes, dict, "pd.DataFrame"]:
     """***Deprecated. Use open_alert() instead.***
 
@@ -61,7 +60,7 @@ def load_alert(
 
 def decode_alert(
     alert_avro: Union[str, Path, bytes],
-    return_as: str = 'dict',
+    return_as: str = "dict",
     drop_cutouts: bool = False,
     **kwargs
 ) -> Union[dict, "pd.DataFrame"]:
@@ -73,10 +72,7 @@ def decode_alert(
 
 
 def open_alert(
-    alert: Union[str, Path, bytes],
-    return_as: str = 'dict',
-    drop_cutouts: bool = False,
-    **kwargs
+    alert: Union[str, Path, bytes], return_as: str = "dict", drop_cutouts: bool = False, **kwargs
 ) -> Union[bytes, dict, "pd.DataFrame"]:
     """Load ``alert``, decode it, and return it in the requested format.
 
@@ -172,7 +168,9 @@ def _alert_to_bytes(alert: Union[str, Path, bytes]):
         raise e
 
 
-def _avro_to_dicts(avroin: Union[str, Path, bytes], load_schema: Union[bool, str, None] = None) -> dict:
+def _avro_to_dicts(
+    avroin: Union[str, Path, bytes], load_schema: Union[bool, str, None] = None
+) -> dict:
     """Convert an Avro-serialized object to a dictionary.
 
     Args:
@@ -192,6 +190,7 @@ def _avro_to_dicts(avroin: Union[str, Path, bytes], load_schema: Union[bool, str
         List[dict]:
             ``avroin`` as a list of dictionaries.
     """
+
     # define two helper functions to call the fastavro reader
     def _read(fin, load_schema):
         # no try/except. load_schema must be properly defined.
@@ -244,7 +243,7 @@ def _avro_to_dicts(avroin: Union[str, Path, bytes], load_schema: Union[bool, str
 
             # maybe avroin is a local path
             try:
-                with open(avroin, 'rb') as fin:
+                with open(avroin, "rb") as fin:
                     list_of_dicts = _read(fin, load_schema)
 
             except Exception as e2:
@@ -286,14 +285,14 @@ def _json_to_dicts(jsonin: str):
 
 
 def alert_dict_to_dataframe(alert_dict: dict, schema_map: dict) -> "pd.DataFrame":
-    """ Packages an alert into a dataframe.
+    """Packages an alert into a dataframe.
     Adapted from: https://github.com/ZwickyTransientFacility/ztf-avro-alert/blob/master/notebooks/Filtering_alerts.ipynb
     """
     # lazy-load pandas. it hogs memory on cloud functions.
     import pandas as pd
 
-    src_df = pd.DataFrame(alert_dict[schema_map['source']], index=[0])
-    prvs_df = pd.DataFrame(alert_dict[schema_map['prvSources']])
+    src_df = pd.DataFrame(alert_dict[schema_map["source"]], index=[0])
+    prvs_df = pd.DataFrame(alert_dict[schema_map["prvSources"]])
     df = pd.concat([src_df, prvs_df], ignore_index=True)
 
     # attach some metadata. note this may not be preserved after all operations
@@ -314,27 +313,28 @@ def alert_lite_to_dataframe(alert_dict: dict) -> "pd.DataFrame":
     Adapted from: https://github.com/ZwickyTransientFacility/ztf-avro-alert/blob/master/notebooks/Filtering_alerts.ipynb
     """
     import pandas as pd
-    src_df = pd.DataFrame(alert_dict['source'], index=[0])
-    prvs_df = pd.DataFrame(alert_dict['prvSources'])
+
+    src_df = pd.DataFrame(alert_dict["source"], index=[0])
+    prvs_df = pd.DataFrame(alert_dict["prvSources"])
     return pd.concat([src_df, prvs_df], ignore_index=True)
 
 
 def _drop_cutouts(alert_dict: dict, schema_map: dict) -> dict:
     """Drop the cutouts from the alert dictionary."""
     cutouts = [
-        schema_map['cutoutScience'],
-        schema_map['cutoutTemplate'],
-        schema_map['cutoutDifference']
+        schema_map["cutoutScience"],
+        schema_map["cutoutTemplate"],
+        schema_map["cutoutDifference"],
     ]
 
-    if schema_map['SURVEY'] == 'decat':
+    if schema_map["SURVEY"] == "decat":
         alert_lite = {k: v for k, v in alert_dict.items()}
         for co in cutouts:
-            alert_lite[schema_map['source']].pop(co, None)
-            for psource in alert_lite[schema_map['prvSources']]:
+            alert_lite[schema_map["source"]].pop(co, None)
+            for psource in alert_lite[schema_map["prvSources"]]:
                 psource.pop(co, None)
 
-    elif schema_map['SURVEY'] in ['ztf',  'elasticc']:
+    elif schema_map["SURVEY"] in ["ztf", "elasticc"]:
         alert_lite = {k: v for k, v in alert_dict.items() if k not in cutouts}
 
     return alert_lite

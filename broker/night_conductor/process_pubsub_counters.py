@@ -4,16 +4,15 @@
 
 
 import argparse
-from google import api_core
-from google.cloud import bigquery, logging
 import json
-import numpy as np
-import pandas as pd
 import time
 from typing import List, Optional, Tuple, Union
 
+import numpy as np
+import pandas as pd
 from broker_utils import gcp_utils, schema_maps
-
+from google import api_core
+from google.cloud import bigquery, logging
 
 project_id = "ardent-cycling-243415"
 
@@ -60,7 +59,10 @@ def _log_and_print(msg, severity="INFO"):
 
 
 def run(
-    survey: str, testid: Union[str, bool], timeout: int, testrun: bool,
+    survey: str,
+    testid: Union[str, bool],
+    timeout: int,
+    testrun: bool,
 ):
     """Collect and store all metadata in the Pub/Sub counters."""
     collector = MetadataCollector(survey, testid, timeout, testrun)
@@ -212,9 +214,7 @@ class MetadataCollector:
             # convert some types
             if topic_stub == "alerts_raw":
                 # convert the kafka timestamp to np.datetime64
-                df["kafka.timestamp"] = pd.to_datetime(
-                    df["kafka.timestamp"], unit="ms", utc=True
-                )
+                df["kafka.timestamp"] = pd.to_datetime(df["kafka.timestamp"], unit="ms", utc=True)
                 # Pub/Sub schema says message_id is a str,
                 # which I (Troy) confirmed by manually pulling a message.
                 # But for some reason it is a float64 in this df. Convert it.
@@ -307,9 +307,7 @@ class MetadataCollector:
         if not self.metadata_df.empty:
             # by default, conforms the dataframe to the table schema
             # i.e., converts dtypes and drops extra columns
-            gcp_utils.load_dataframe_bigquery(
-                self.bq_table, self.metadata_df, logger=logger
-            )
+            gcp_utils.load_dataframe_bigquery(self.bq_table, self.metadata_df, logger=logger)
         else:
             _log_and_print("metadata_df is empty. Skipping BigQuery upload.")
 
@@ -450,19 +448,18 @@ class SubscriptionMetadataCollector:
             # keep everything
             return metadata
 
-        else:
-            keep_keys = self._keep_field_names(self.requested_fields, metadata.keys())
-            # keep message_id so we can drop duplicates later
-            keep_keys = keep_keys + ["message_id"]
+        keep_keys = self._keep_field_names(self.requested_fields, metadata.keys())
+        # keep message_id so we can drop duplicates later
+        keep_keys = keep_keys + ["message_id"]
 
-            metadata_to_keep = {k: v for k, v in metadata.items() if k in keep_keys}
+        metadata_to_keep = {k: v for k, v in metadata.items() if k in keep_keys}
 
-            return metadata_to_keep
+        return metadata_to_keep
 
     def _stash_dicts_to_json_file(self):
         # for debugging
         fname = f"metadata/{self.subscription}.json"
-        with open(fname, "w") as fout:
+        with open(fname, "w", encoding="utf-8") as fout:
             json.dump(self.metadata_dicts_list, fout, allow_nan=True)
 
     def _package_metadata_into_df(self):

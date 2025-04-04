@@ -79,7 +79,6 @@ Module Documentation
 """
 
 import argparse
-import json
 import os
 import shlex
 import subprocess
@@ -322,7 +321,6 @@ def setup_buckets(
                     bucket.delete(force=True)
                 except ValueError as e:
                     warn(f"Cannot delete {bucket_name}.\n{e}")
-                    pass
                 else:
                     print(f"Deleted bucket {bucket_name}")
             else:

@@ -37,7 +37,7 @@ model_file_name = (
 model_path = Path(__file__).resolve().parent / f"{model_dir_name}/{model_file_name}"
 
 
-def run(msg: dict, context) -> None:
+def run(msg: dict, _context) -> None:
     """Classify alert with SuperNNova; publish and store results.
 
     Both parameters are required by Cloud Functions, regardless of whether they are used.
