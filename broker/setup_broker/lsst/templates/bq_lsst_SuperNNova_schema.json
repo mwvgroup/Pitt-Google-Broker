@@ -1,18 +1,12 @@
 [
     {
-      "description": "unique alert identifier",
-      "mode": "REQUIRED",
-      "name": "alertId",
-      "type": "INTEGER"
-    },
-    {
-      "description": "object identifier or name",
+      "description": "Id of the diaObject this source was associated with",
       "mode": "REQUIRED",
       "name": "diaObjectId",
       "type": "INTEGER"
     },
     {
-      "description": "Candidate ID from operations DB",
+      "description": "Unique identifier of this DiaSource",
       "mode": "REQUIRED",
       "name": "diaSourceId",
       "type": "INTEGER"
@@ -34,29 +28,5 @@
       "mode": "NULLABLE",
       "name": "predicted_class",
       "type": "INTEGER"
-    },
-    {
-      "description": "classifier module version",
-      "mode": "NULLABLE",
-      "name": "brokerVersion",
-      "type": "STRING"
-    },
-    {
-      "description": "timestamp from originating LSST alert",
-      "mode": "NULLABLE",
-      "name": "LSSTPublishTimestamp",
-      "type": "TIMESTAMP"
-    },
-    {
-      "description": "timestamp of broker ingestion of LSST alert",
-      "mode": "NULLABLE",
-      "name": "brokerIngestTimestamp",
-      "type": "TIMESTAMP"
-    },
-    {
-      "description": "timestamp of SuperNNova classification of LSST alert",
-      "mode": "NULLABLE",
-      "name": "classifierTimestamp",
-      "type": "TIMESTAMP"
     }
-  ]
+]
