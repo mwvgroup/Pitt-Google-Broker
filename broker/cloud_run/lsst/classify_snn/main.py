@@ -95,7 +95,7 @@ def run():
     # prepare data for publishing
     classifier_summary = _classification_summary(snn_dict)
     snn_alert = _create_outgoing_alert(alert, snn_dict)
-    snn_results = pittgoogle.Alert.from_dict(payload={snn_dict})
+    snn_results = pittgoogle.Alert.from_dict(payload=snn_dict)
 
     # publish
     TOPIC.publish(snn_alert, serializer="avro")
