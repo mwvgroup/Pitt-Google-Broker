@@ -12,9 +12,10 @@ Werkzeug
 colorama
 h5py
 natsort
+pandas<2
 scikit-learn
 seaborn
-supernnova==3.0.1
+supernnova==1.3
 tqdm
 # install torch from wheel because cloud fncs don't support GPUs
 # https://stackoverflow.com/questions/55449313/google-cloud-function-python-3-7-requirements-txt-makes-deploy-fail

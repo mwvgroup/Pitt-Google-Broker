@@ -36,20 +36,20 @@ define_GCP_resources() {
 #--- GCP resources used in this script
 artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
 deadletter_topic_bigquery_import_snn=$(define_GCP_resources "${survey}-bigquery-import-SuperNNova-deadletter")
-deadletter_subscription_bigquery_import_snn="${deadletter_topic_bigquery_import_snn}"
 deadletter_topic_bigquery_import_classifications=$(define_GCP_resources "${survey}-bigquery-import-classifications-deadletter")
+deadletter_subscription_bigquery_import_snn="${deadletter_topic_bigquery_import_snn}"
 deadletter_subscription_bigquery_import_classifications="${deadletter_topic_bigquery_import_classifications}"
-ps_input_subscrip=$(define_GCP_resources "${survey}-alerts") # pub/sub subscription used to trigger cloud run module
-ps_output_topic=$(define_GCP_resources "${survey}-SuperNNova")
 topic_bigquery_import_snn=$(define_GCP_resources "${survey}-bigquery-import-SuperNNova")
-subscription_bigquery_import_snn="${topic_bigquery_import_snn}" # BigQuery subscription
 topic_bigquery_import_classifications=$(define_GCP_resources "${survey}-bigquery-import-classifications")
+subscription_bigquery_import_snn="${topic_bigquery_import_snn}" # BigQuery subscription
 subscription_bigquery_import_classifications="${topic_bigquery_import_classifications}" # BigQuery subscription
 trigger_topic=$(define_GCP_resources "${survey}-alerts")
+ps_input_subscrip="${trigger_topic}" # pub/sub subscription used to trigger cloud run module
+ps_output_topic=$(define_GCP_resources "${survey}-SuperNNova")
 
 # additional GCP resources & variables used in this script
 bq_dataset=$(define_GCP_resources "${survey}")
-supernnova_classifications_table="SuperNNova"
+supernnova_table="SuperNNova"
 classifications_table="classifications"
 cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}")  # lower case required by Cloud Run
 runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
@@ -75,11 +75,11 @@ else # Deploy the Cloud Run service
 #--- Deploy Cloud Run service
     echo "Configuring Pub/Sub resources for classify_snn Cloud Run service..."
     gcloud pubsub topics create "${ps_output_topic}"
-    gcloud pubsub topics create "${topic_bigquery_import_snn}"
     gcloud pubsub topics create "${deadletter_topic_bigquery_import_snn}"
-    gcloud pubsub subscriptions create "${deadletter_subscription_bigquery_import_snn}" --topic="${deadletter_topic_bigquery_import_snn}"
-    gcloud pubsub topics create "${topic_bigquery_import_classifications}"
     gcloud pubsub topics create "${deadletter_topic_bigquery_import_classifications}"
+    gcloud pubsub topics create "${topic_bigquery_import_snn}"
+    gcloud pubsub topics create "${topic_bigquery_import_classifications}"
+    gcloud pubsub subscriptions create "${deadletter_subscription_bigquery_import_snn}" --topic="${deadletter_topic_bigquery_import_snn}"
     gcloud pubsub subscriptions create "${deadletter_subscription_bigquery_import_classifications}" --topic="${deadletter_topic_bigquery_import_classifications}"
 
     # in order to create BigQuery subscriptions, ensure that the following service account:
@@ -90,10 +90,10 @@ else # Deploy the Cloud Run service
     bq add-iam-policy-binding \
         --member="serviceAccount:${PUBSUB_SERVICE_ACCOUNT}" \
         --role="${roleid}" \
-        --table=true "${PROJECT_ID}:${bq_dataset}.${supernnova_classifications_table}"
+        --table=true "${PROJECT_ID}:${bq_dataset}.${supernnova_table}"
     gcloud pubsub subscriptions create "${subscription_bigquery_import_snn}" \
         --topic="${topic_bigquery_import_snn}" \
-        --bigquery-table="${PROJECT_ID}:${bq_dataset}.${supernnova_classifications_table}" \
+        --bigquery-table="${PROJECT_ID}:${bq_dataset}.${supernnova_table}" \
         --use-table-schema \
         --dead-letter-topic="${deadletter_topic_bigquery_import_snn}" \
         --max-delivery-attempts=5 \

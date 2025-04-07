@@ -2,6 +2,17 @@
 # https://hub.docker.com/_/python
 FROM python:3.12-slim
 
+RUN pip install --upgrade pip
+
+# Install gcc otherwise fails
+RUN apt-get update && apt-get install -y \
+    gcc \
+    build-essential \
+    libffi-dev \
+    libpq-dev \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 # Allow statements and log messages to immediately appear in the Knative logs
 ENV PYTHONUNBUFFERED True
 
