@@ -10,7 +10,6 @@ import os
 from pathlib import Path
 import flask  # Manage the HTTP request containing the alert
 import pittgoogle  # Manipulate the alert and interact with cloud resources
-from google.cloud import pubsub_v1
 
 import google.cloud.logging
 import numpy as np
@@ -31,7 +30,7 @@ SURVEY = os.getenv("SURVEY")
 
 # provenance variables
 MODULE_NAME = "SuperNNova"
-MODULE_VERSION = "v0.1"
+MODULE_VERSION = 0.1
 
 # classifier variables
 model_dir_name = "ZTF_DMAM_V19_NoC_SNIa_vs_CC_forFink"
@@ -51,7 +50,6 @@ HTTP_400 = 400  # HTTP code: Bad Request
 
 # GCP resources used in this module
 # pittgoogle will construct the full resource names from the MODULE_NAME, SURVEY, and TESTID
-# DESC is already listening to this pubsub stream so the leave camel case to avoid a breaking change
 TOPIC = pittgoogle.Topic.from_cloud(
     MODULE_NAME, survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
 )
@@ -135,10 +133,10 @@ def _format_for_classifier(alert: pittgoogle.Alert) -> pd.DataFrame:
             # get_key returns the name that the survey uses for a given field
             # for the full mapping, see alert.schema.map
             "SNID": [alert.objectid] * len(alert_df.index),
-            "FLT": alert_df[alert.get_key("filter")],
-            "MJD": alert_df[alert.get_key("mjd")],
-            "FLUXCAL": alert_df[alert.get_key("flux")],
-            "FLUXCALERR": alert_df[alert.get_key("flux_err")],
+            "FLT": alert_df[alert.get_key("filter")[1]],
+            "MJD": alert_df[alert.get_key("mjd")[1]],
+            "FLUXCAL": alert_df[alert.get_key("flux")[1]],
+            "FLUXCALERR": alert_df[alert.get_key("flux_err")[1]],
         },
         index=alert_df.index,
     )
