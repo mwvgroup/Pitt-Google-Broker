@@ -92,12 +92,15 @@ def run():
     # classify
     snn_dict = _classify(alert)
 
+    # prepare data for publishing
+    classifier_summary = _classification_summary(snn_dict)
+    snn_alert = _create_outgoing_alert(alert, snn_dict)
+    snn_results = pittgoogle.Alert.from_dict(payload={snn_dict})
+
     # publish
-    TOPIC.publish(_create_outgoing_alert(alert, snn_dict), serializer="avro")
-    TOPIC_BIGQUERY_IMPORT_CLASSIFICATIONS.publish(
-        _classification_summary(snn_dict), serializer="json"
-    )
-    TOPIC_BIGQUERY_IMPORT_SUPERNNOVA.publish(snn_dict, serializer="json")
+    TOPIC.publish(snn_alert, serializer="avro")
+    TOPIC_BIGQUERY_IMPORT_CLASSIFICATIONS.publish(classifier_summary, serializer="json")
+    TOPIC_BIGQUERY_IMPORT_SUPERNNOVA.publish(snn_results, serializer="json")
 
     return "", HTTP_204
 
@@ -153,15 +156,15 @@ def _create_outgoing_alert(alert: pittgoogle.Alert, snn_dict: dict) -> pittgoogl
     )
 
 
-def _classification_summary(snn_dict: dict) -> dict:
+def _classification_summary(snn_dict: dict) -> pittgoogle.Alert:
     """Create a summary of the classification results for storage in BigQuery."""
-    return [
-        {
-            "diaObjectId": snn_dict["diaObjectId"],
-            "diaSourceId": snn_dict["diaSourceId"],
-            "classifier": "purity",
-            "classifier_version": MODULE_VERSION,
-            "class": snn_dict["predicted_class"],
-            "probability": max(snn_dict["prob_class0"], snn_dict["prob_class1"]),
-        }
-    ]
+    classification_dict = {
+        "diaObjectId": snn_dict["diaObjectId"],
+        "diaSourceId": snn_dict["diaSourceId"],
+        "classifier": "purity",
+        "classifier_version": MODULE_VERSION,
+        "class": snn_dict["predicted_class"],
+        "probability": max(snn_dict["prob_class0"], snn_dict["prob_class1"]),
+    }
+
+    return pittgoogle.Alert.from_dict(payload={**classification_dict})
