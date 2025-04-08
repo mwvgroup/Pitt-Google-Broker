@@ -40,6 +40,7 @@ if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources
     if [ "${testid}" != "False" ]; then
         gcloud pubsub topics delete "${ps_output_topic}"
+        gcloud pubsub subscriptions delete "${ps_input_subscrip}"
         gcloud run services delete "${cr_module_name}" --region "${region}"
     fi
 
