@@ -98,7 +98,7 @@ def run():
     snn_results = pittgoogle.Alert.from_dict(payload=snn_dict)
 
     # publish
-    TOPIC.publish(snn_alert, serializer="avro")
+    TOPIC.publish(snn_alert, serializer="json")
     TOPIC_BIGQUERY_IMPORT_CLASSIFICATIONS.publish(classifier_summary, serializer="json")
     TOPIC_BIGQUERY_IMPORT_SUPERNNOVA.publish(snn_results, serializer="json")
 

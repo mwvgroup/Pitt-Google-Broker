@@ -1,3 +1,5 @@
+pandas==1.5.1
+numpy==1.23.3
 google-cloud-functions
 google-cloud-logging
 pittgoogle-client>=0.3.13
@@ -12,11 +14,10 @@ Werkzeug
 colorama
 h5py
 natsort
-pandas<2
 scikit-learn
 seaborn
-supernnova==1.3
+supernnova
 tqdm
 # install torch from wheel because cloud fncs don't support GPUs
 # https://stackoverflow.com/questions/55449313/google-cloud-function-python-3-7-requirements-txt-makes-deploy-fail
-https://download.pytorch.org/whl/cpu/torch-2.2.0%2Bcpu-cp312-cp312-linux_x86_64.whl#sha256=8258824bec0181e01a086aef5809016116a97626af2dcbf932d4e0b192d9c1b8
+https://download.pytorch.org/whl/cpu/torch-2.2.0%2Bcpu-cp311-cp311-linux_x86_64.whl#sha256=2a8ff4440c1f024ad7982018c378470d2ae0a72f2bc269a22b1a677e09bdd3b1
