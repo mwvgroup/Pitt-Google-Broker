@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+# -*- coding: UTF-8 -*-
+
+"""This module creates a "lite" LSST alert containing a subset of fields."""
+
+import os
+import flask
+import pittgoogle
+from google.cloud import logging
+
+# [FIXME] Make this helpful or else delete it.
+# Connect the python logger to the google cloud logger.
+# By default, this captures INFO level and above.
+# pittgoogle uses the python logger.
+# We don't currently use the python logger directly in this script, but we could.
+logging.Client().setup_logging()
+
+PROJECT_ID = os.getenv("GCP_PROJECT")
+TESTID = os.getenv("TESTID")
+SURVEY = os.getenv("SURVEY")
+
+# Variables for incoming data
+# A url route is used in setup.sh when the trigger subscription is created.
+# It is possible to define multiple routes in a single module and trigger them using different subscriptions.
+ROUTE_RUN = "/"  # HTTP route that will trigger run(). Must match deploy.sh
+
+# Variables for outgoing data
+HTTP_204 = 204  # HTTP code: Success
+HTTP_400 = 400  # HTTP code: Bad Request
+
+# GCP resources used in this module
+TOPIC_LITE = pittgoogle.Topic.from_cloud(
+    "lite", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
+)
+
+app = flask.Flask(__name__)
+
+
+@app.route(ROUTE_RUN, methods=["POST"])
+def run():
+    """Produces a 'lite' LSST alert stream (${survey}-lite). Messages in this stream contain a subset of fields
+    from the original LSST alert stream.
+
+    This module is intended to be deployed as a Cloud Run service. It will operate as an HTTP endpoint
+    triggered by Pub/Sub messages. This function will be called once for every message sent to this route.
+    It should accept the incoming HTTP request and return a response.
+
+    Returns
+    -------
+    response : tuple(str, int)
+        Tuple containing the response body (string) and HTTP status code (int). Flask will convert the
+        tuple into a proper HTTP response. Note that the response is a status message for the web server.
+    """
+    # extract the envelope from the request that triggered the endpoint
+    # this contains a single Pub/Sub message with the alert to be processed
+    envelope = flask.request.get_json()
+    try:
+        alert = pittgoogle.Alert.from_cloud_run(envelope, "lsst")
+    except pittgoogle.exceptions.BadRequest as exc:
+        return str(exc), HTTP_400
+
+    TOPIC_LITE.publish(_semantic_compression(alert), serializer="json")
+
+    return "", HTTP_204
+
+
+def _semantic_compression(alert: pittgoogle.Alert) -> pittgoogle.Alert:
+    """Construct and return the `alert_lite` dictionary."""
+    return
