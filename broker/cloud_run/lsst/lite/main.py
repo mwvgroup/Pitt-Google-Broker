@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-"""This module creates a "lite" LSST alert containing a subset of fields."""
+"""This module creates a "lite" LSST alert containing a subset of fields from the original LSST alert."""
 
 import os
 import flask
@@ -39,7 +39,7 @@ app = flask.Flask(__name__)
 @app.route(ROUTE_RUN, methods=["POST"])
 def run():
     """Produces a 'lite' LSST alert stream (${survey}-lite). Messages in this stream contain a subset of fields
-    from the original LSST alert stream.
+    from the original LSST alert.
 
     This module is intended to be deployed as a Cloud Run service. It will operate as an HTTP endpoint
     triggered by Pub/Sub messages. This function will be called once for every message sent to this route.
@@ -59,11 +59,66 @@ def run():
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
-    TOPIC_LITE.publish(_semantic_compression(alert), serializer="json")
+    TOPIC_LITE.publish(_create_lite_alert(alert), serializer="json")
 
     return "", HTTP_204
 
 
-def _semantic_compression(alert: pittgoogle.Alert) -> pittgoogle.Alert:
-    """Construct and return the `alert_lite` dictionary."""
-    return
+def _create_lite_alert(alert: pittgoogle.Alert) -> pittgoogle.Alert:
+    """Create a "lite" LSST alert containing a subset of the fields of the original alert packet."""
+
+    # 'source' field names that will be kept in the lite alert
+    source_field_names = _create_source_fields_list(alert)
+
+    # create dictionaries
+    source_lite_dict = _create_lite_dict(
+        alert.dict.get(alert.get_key("source")), source_field_names
+    )
+    prev_sources_lite_dict = _create_prv_sources_dict(
+        alert.dict.get(alert.get_key("prv_sources")), source_field_names
+    )
+
+    alert_lite_dict = {
+        alert.get_key("alertid"): alert.alertid,
+        alert.get_key("source"): source_lite_dict,
+        alert.get_key("prv_sources"): prev_sources_lite_dict,
+    }
+
+    return pittgoogle.Alert.from_dict(alert_lite_dict)
+
+
+def _create_source_fields_list(alert: pittgoogle.Alert) -> list[str]:
+    broker_field_names = ["sourceid", "mjd", "ra", "dec", "flux", "flux_err"]
+    _survey_field_names = [alert.get_key(field) for field in broker_field_names]
+    # fields may be lists, extract the second element
+    survey_field_names = [
+        _survey_field_name[1] if isinstance(_survey_field_name, list) else _survey_field_name
+        for _survey_field_name in _survey_field_names
+    ]
+
+    return survey_field_names
+
+
+def _create_lite_dict(alert_dict: dict, field_names: list[str]) -> dict:
+    return _drop_fields(alert_dict, field_names)
+
+
+def _create_prv_sources_dict(source_history: list[dict], field_names: list[str]) -> list[dict]:
+    """Create a list of prv_sources dictionaries."""
+
+    if source_history is None:
+        return
+    else:
+        prev_sources = []
+        for prv_s in source_history:
+            lite_source_dict = _drop_fields(prv_s, field_names)
+            prev_sources.append(lite_source_dict)
+
+        return prev_sources
+
+
+def _drop_fields(alert_dict: dict, field_names: list[str]) -> dict:
+    """Drop fields from the alert dictionary that are not present in 'field_names'."""
+    lite_dict = {k: v for k, v in alert_dict.items() if k in field_names}
+
+    return lite_dict
