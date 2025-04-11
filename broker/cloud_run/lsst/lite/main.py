@@ -103,18 +103,20 @@ def _create_lite_dict(alert_dict: dict, field_names: list[str]) -> dict:
     return _drop_fields(alert_dict, field_names)
 
 
-def _create_prv_sources_dict(source_history: list[dict], field_names: list[str]) -> list[dict]:
+def _create_prv_sources_dict(
+    source_history: list[dict], field_names: list[str]
+) -> list[dict] | None:
     """Create a list of prv_sources dictionaries."""
 
     if source_history is None:
-        return
-    else:
-        prev_sources = []
-        for prv_s in source_history:
-            lite_source_dict = _drop_fields(prv_s, field_names)
-            prev_sources.append(lite_source_dict)
+        return source_history
 
-        return prev_sources
+    prev_sources = []
+    for prv_s in source_history:
+        lite_source_dict = _drop_fields(prv_s, field_names)
+        prev_sources.append(lite_source_dict)
+
+    return prev_sources
 
 
 def _drop_fields(alert_dict: dict, field_names: list[str]) -> dict:
