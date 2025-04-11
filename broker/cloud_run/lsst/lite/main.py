@@ -7,6 +7,7 @@ import os
 import flask
 import pittgoogle
 from google.cloud import logging
+from typing import Optional
 
 # [FIXME] Make this helpful or else delete it.
 # Connect the python logger to the google cloud logger.
@@ -105,7 +106,7 @@ def _create_lite_dict(alert_dict: dict, field_names: list[str]) -> dict:
 
 def _create_prv_sources_dict(
     source_history: list[dict], field_names: list[str]
-) -> list[dict] | None:
+) -> Optional[list[dict]]:
     """Create a list of prv_sources dictionaries."""
 
     if source_history is None:
