@@ -4,10 +4,10 @@
 """This module creates a "lite" LSST alert containing a subset of fields from the original LSST alert."""
 
 import os
+from typing import Optional
 import flask
 import pittgoogle
 from google.cloud import logging
-from typing import Optional
 
 # [FIXME] Make this helpful or else delete it.
 # Connect the python logger to the google cloud logger.
@@ -107,7 +107,7 @@ def _create_lite_dict(alert_dict: dict, field_names: list[str]) -> dict:
 def _create_prv_sources_dict(
     source_history: list[dict], field_names: list[str]
 ) -> Optional[list[dict]]:
-    """Create a list of prv_sources dictionaries."""
+    """Create a list of prv_sources dictionaries if they exist."""
 
     if source_history is None:
         return source_history
