@@ -68,8 +68,9 @@ def run():
 def _create_lite_alert(alert: pittgoogle.Alert) -> pittgoogle.Alert:
     """Create a "lite" LSST alert containing a subset of the fields of the original alert packet."""
 
-    # 'source' field names that will be kept in the lite alert
+    # create lists of field names that will be kept in the lite alert
     source_field_names = _create_source_fields_list(alert)
+    object_field_names = _create_object_fields_list(alert)
 
     # create dictionaries
     source_lite_dict = _create_lite_dict(
@@ -78,18 +79,31 @@ def _create_lite_alert(alert: pittgoogle.Alert) -> pittgoogle.Alert:
     prev_sources_lite_dict = _create_prv_sources_dict(
         alert.dict.get(alert.get_key("prv_sources")), source_field_names
     )
-
+    object_lite_dict = _create_lite_dict(
+        alert.dict.get(alert.get_key("object")), object_field_names
+    )
     alert_lite_dict = {
         alert.get_key("alertid"): alert.alertid,
         alert.get_key("source"): source_lite_dict,
         alert.get_key("prv_sources"): prev_sources_lite_dict,
+        alert.get_key("object"): object_lite_dict,
     }
 
     return pittgoogle.Alert.from_dict(alert_lite_dict)
 
 
 def _create_source_fields_list(alert: pittgoogle.Alert) -> list[str]:
-    broker_field_names = ["sourceid", "mjd", "ra", "dec", "flux", "flux_err"]
+    broker_field_names = [
+        "sourceid",
+        "mjd",
+        "ra",
+        "ra_err",
+        "dec",
+        "dec_err",
+        "flux",
+        "flux_err",
+        "band",
+    ]
     _survey_field_names = [alert.get_key(field) for field in broker_field_names]
     # fields may be lists, extract the second element
     survey_field_names = [
@@ -98,6 +112,35 @@ def _create_source_fields_list(alert: pittgoogle.Alert) -> list[str]:
     ]
 
     return survey_field_names
+
+
+def _create_object_fields_list(alert: pittgoogle.Alert) -> list[str]:
+    _object_fields_names = [
+        alert.get_key("objectid"),
+        "nearbyObj1",
+        "nearbyObj1Dist",
+        "nearbyObj1LnP",
+        "nearbyObj2",
+        "nearbyObj2Dist",
+        "nearbyObj2LnP",
+        "nearbyObj3",
+        "nearbyObj3Dist",
+        "nearbyObj3LnP",
+        "u_psfFluxErrMean",
+        "g_psfFluxErrMean",
+        "r_psfFluxErrMean",
+        "i_psfFluxErrMean",
+        "z_psfFluxErrMean",
+        "y_psfFluxErrMean",
+    ]
+
+    # fields may be lists, extract the second element
+    object_fields_names = [
+        _object_fields_name[1] if isinstance(_object_fields_name, list) else _object_fields_name
+        for _object_fields_name in _object_fields_names
+    ]
+
+    return object_fields_names
 
 
 def _create_lite_dict(alert_dict: dict, field_names: list[str]) -> dict:
