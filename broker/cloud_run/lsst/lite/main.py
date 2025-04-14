@@ -85,12 +85,12 @@ def _create_lite_alert(alert: pittgoogle.Alert) -> pittgoogle.Alert:
     )
     alert_lite_dict = {
         alert.get_key("alertid"): alert.alertid,
-        alert.get_key("source"): source_lite_dict,
-        alert.get_key("prv_sources"): prev_sources_lite_dict,
-        alert.get_key("object"): object_lite_dict,
+        alert.get_key("source") + "-lite": source_lite_dict,
+        alert.get_key("prv_sources") + "-lite": prev_sources_lite_dict,
+        alert.get_key("object") + "-lite": object_lite_dict,
     }
 
-    return pittgoogle.Alert.from_dict(alert_lite_dict)
+    return pittgoogle.Alert.from_dict(payload=alert_lite_dict, schema_name="lsst.lite")
 
 
 def _create_source_fields_list(alert: pittgoogle.Alert) -> list[str]:
