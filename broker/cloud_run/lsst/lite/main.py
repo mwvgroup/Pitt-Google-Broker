@@ -5,6 +5,7 @@
 
 import os
 from typing import Optional
+
 import flask
 import pittgoogle
 from google.cloud import logging
