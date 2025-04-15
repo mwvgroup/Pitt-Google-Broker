@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-"""This module creates a "lite" LSST alert containing a subset of fields from the original LSST alert."""
+"""This module creates a "lite" alert containing a subset of fields from the original alert packet."""
 
 import os
 from typing import Optional
@@ -40,8 +40,8 @@ app = flask.Flask(__name__)
 
 @app.route(ROUTE_RUN, methods=["POST"])
 def run():
-    """Produces a 'lite' LSST alert stream (${survey}-lite). Messages in this stream contain a subset of fields
-    from the original LSST alert.
+    """Produces a 'lite' alert stream (${survey}-lite). Messages in this stream contain a subset of fields
+    from the original alert packet.
 
     This module is intended to be deployed as a Cloud Run service. It will operate as an HTTP endpoint
     triggered by Pub/Sub messages. This function will be called once for every message sent to this route.
@@ -57,7 +57,7 @@ def run():
     # this contains a single Pub/Sub message with the alert to be processed
     envelope = flask.request.get_json()
     try:
-        alert = pittgoogle.Alert.from_cloud_run(envelope, "lsst")
+        alert = pittgoogle.Alert.from_cloud_run(envelope, f"{SURVEY}")
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
@@ -67,7 +67,7 @@ def run():
 
 
 def _create_lite_alert(alert: pittgoogle.Alert) -> pittgoogle.Alert:
-    """Create a "lite" LSST alert containing a subset of the fields of the original alert packet."""
+    """Create a "lite" alert containing a subset of the fields of the original alert packet."""
 
     # create dictionaries
     object_lite_dict = _create_lite_dict(
@@ -86,7 +86,7 @@ def _create_lite_alert(alert: pittgoogle.Alert) -> pittgoogle.Alert:
         alert.get_key("object") + "-lite": object_lite_dict,
     }
 
-    return pittgoogle.Alert.from_dict(payload=alert_lite_dict, schema_name="lsst.lite")
+    return pittgoogle.Alert.from_dict(payload=alert_lite_dict, schema_name=f"{SURVEY}.lite")
 
 
 def _create_source_fields_list(alert: pittgoogle.Alert) -> list[str]:
