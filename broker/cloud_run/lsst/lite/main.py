@@ -100,7 +100,7 @@ def _create_source_fields_list(alert: pittgoogle.Alert) -> list[str]:
         "dec_err",
         "flux",
         "flux_err",
-        "band",
+        "filter",
     ]
 
     return _get_survey_field_names(alert, broker_field_names)
