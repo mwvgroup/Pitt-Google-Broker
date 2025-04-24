@@ -69,24 +69,45 @@ def run():
 def _create_lite_alert(alert: pittgoogle.Alert) -> pittgoogle.Alert:
     """Create a "lite" alert containing a subset of the fields of the original alert packet."""
 
+    object_fields_list = [
+        "diaObjectId",
+        "nearbyObj1",
+        "nearbyObj2",
+        "nearbyObj3",
+        "nearbyObj1Dist",
+        "nearbyObj2Dist",
+        "nearbyObj3Dist",
+        "nearbyObj1LnP",
+        "nearbyObj2LnP",
+        "nearbyObj3LnP",
+        "u_psfFluxErrMean",
+        "g_psfFluxErrMean",
+        "r_psfFluxErrMean",
+        "i_psfFluxErrMean",
+        "z_psfFluxErrMean",
+        "y_psfFluxErrMean",
+    ]
+
+    source_fields_list = _create_source_fields_list(alert)
+
     # create dictionaries
     object_lite_dict = _create_lite_dict(
-        alert.dict.get(alert.get_key("object")), _create_object_fields_list(alert)
+        alert.dict.get(alert.get_key("object")), object_fields_list
     )
-    prev_sources_lite_dict = _create_prv_sources_dict(
-        alert.dict.get(alert.get_key("prv_sources")), _create_source_fields_list(alert)
+    prev_sources_lite_dict = _create_prv_sources_lite_dict(
+        alert.dict.get(alert.get_key("prv_sources")), source_fields_list
     )
     source_lite_dict = _create_lite_dict(
-        alert.dict.get(alert.get_key("source")), _create_source_fields_list(alert)
+        alert.dict.get(alert.get_key("source")), source_fields_list
     )
     alert_lite_dict = {
         alert.get_key("alertid"): alert.alertid,
-        alert.get_key("source") + "-lite": source_lite_dict,
-        alert.get_key("prv_sources") + "-lite": prev_sources_lite_dict,
-        alert.get_key("object") + "-lite": object_lite_dict,
+        alert.get_key("source"): source_lite_dict,
+        alert.get_key("prv_sources"): prev_sources_lite_dict,
+        alert.get_key("object"): object_lite_dict,
     }
 
-    return pittgoogle.Alert.from_dict(payload=alert_lite_dict, schema_name=f"{SURVEY}.lite")
+    return pittgoogle.Alert.from_dict(payload=alert_lite_dict, schema_name=f"{SURVEY}")
 
 
 def _create_source_fields_list(alert: pittgoogle.Alert) -> list[str]:
@@ -106,30 +127,6 @@ def _create_source_fields_list(alert: pittgoogle.Alert) -> list[str]:
     return _get_survey_field_names(alert, broker_field_names)
 
 
-def _create_object_fields_list(alert: pittgoogle.Alert) -> list[str]:
-    """Creates a list of survey-specific field names to be included in the lite alert for the object dictionary."""
-    broker_field_names = [
-        "objectid",
-        "nearby_object1",
-        "nearby_object2",
-        "nearby_object3",
-        "nearby_object1_distance",
-        "nearby_object2_distance",
-        "nearby_object3_distance",
-        "prob_is_object1",
-        "prob_is_object2",
-        "prob_is_object3",
-        "u_flux_err_mean",
-        "g_flux_err_mean",
-        "r_flux_err_mean",
-        "i_flux_err_mean",
-        "z_flux_err_mean",
-        "y_flux_err_mean",
-    ]
-
-    return _get_survey_field_names(alert, broker_field_names)
-
-
 def _get_survey_field_names(alert: pittgoogle.Alert, broker_field_names: list) -> list[str]:
     """Returns a list of survey-specific field names to be included in the lite dictionary."""
     _survey_field_names = [alert.get_key(field) for field in broker_field_names]
@@ -144,27 +141,21 @@ def _get_survey_field_names(alert: pittgoogle.Alert, broker_field_names: list) -
 
 
 def _create_lite_dict(alert_dict: dict, field_names: list[str]) -> dict:
-    return _drop_fields(alert_dict, field_names)
+    """Returns a lite dictionary containing fields specified in field_names."""
+    return {k: v for k, v in alert_dict.items() if k in field_names}
 
 
-def _create_prv_sources_dict(
+def _create_prv_sources_lite_dict(
     source_history: list[dict], field_names: list[str]
 ) -> Optional[list[dict]]:
-    """Create a list of prv_sources dictionaries if they exist."""
+    """Create a list of prv_sources lite dictionaries if prv_sources exist."""
 
     if source_history is None:
         return source_history
 
     prev_sources = []
     for prv_s in source_history:
-        lite_source_dict = _drop_fields(prv_s, field_names)
+        lite_source_dict = _create_lite_dict(prv_s, field_names)
         prev_sources.append(lite_source_dict)
 
     return prev_sources
-
-
-def _drop_fields(alert_dict: dict, field_names: list[str]) -> dict:
-    """Drop fields from the alert dictionary that are not present in 'field_names'."""
-    lite_dict = {k: v for k, v in alert_dict.items() if k in field_names}
-
-    return lite_dict
