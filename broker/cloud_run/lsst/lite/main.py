@@ -118,7 +118,7 @@ def _create_fields_list(field: str) -> list[str]:
 
         return source_fields_list
 
-    elif field == "object":
+    if field == "object":
         object_fields_list = [
             "diaObjectId",
             "nearbyObj1",
@@ -140,7 +140,7 @@ def _create_fields_list(field: str) -> list[str]:
 
         return object_fields_list
 
-    elif field == "ssobject":
+    if field == "ssobject":
         ss_object_fields_list = [
             "ssObjectId",
             "firstObservationDate",
@@ -171,6 +171,9 @@ def _create_fields_list(field: str) -> list[str]:
         ]
 
         return ss_object_fields_list
+
+    else:
+        raise ValueError(f"Unrecognized field type: {field}")
 
 
 def _create_lite_dict(alert_dict: dict, field_names: list[str]) -> dict:
