@@ -67,14 +67,14 @@ def run():
 
 
 def _create_lite_alert(alert: pittgoogle.Alert) -> pittgoogle.Alert:
-    """Create a "lite" alert containing a subset of the fields of the original alert packet."""
+    """Creates a "lite" alert containing a subset of the fields of the original alert packet."""
 
-    # define the fields that will be present in the lite alert
-    source_fields_list = _create_fields_list(field="source")
-    object_fields_list = _create_fields_list(field="object")
-    ss_object_fields_list = _create_fields_list(field="ssobject")
+    # create a list of field names that will be included in a lite dictionary
+    source_fields_list = _get_fields(field_name=alert.get_key("source"))
+    object_fields_list = _get_fields(field_name=alert.get_key("object"))
+    ss_object_fields_list = _get_fields(field_name=alert.get_key("ss_object"))
 
-    # create lite versions of fields in the original alert packet
+    # create lite dictionaries for each of the fields that will be included in the lite alert
     object_lite_dict = _create_lite_dict(
         alert.dict.get(alert.get_key("object")), object_fields_list
     )
@@ -87,9 +87,9 @@ def _create_lite_alert(alert: pittgoogle.Alert) -> pittgoogle.Alert:
     ssobject_lite_dict = _create_lite_dict(
         alert.dict.get(alert.get_key("ss_object")), ss_object_fields_list
     )
-    # create lite dictionary
+    # create the lite dictionary for the outgoing alert
     alert_lite_dict = {
-        alert.get_key("alertid"): alert.alertid,
+        alert.get_key("alertid"): alert.get("alertid"),
         alert.get_key("source"): source_lite_dict,
         alert.get_key("prv_sources"): prev_sources_lite_dict,
         "prvDiaForcedSources": alert.dict.get("prvDiaForcedSources"),
@@ -101,9 +101,9 @@ def _create_lite_alert(alert: pittgoogle.Alert) -> pittgoogle.Alert:
     return pittgoogle.Alert.from_dict(payload=alert_lite_dict, schema_name=f"{SURVEY}")
 
 
-def _create_fields_list(field: str) -> list[str]:
-    """Creates a list of survey-specific field names that will be included in the lite dictionary."""
-    if field == "source":
+def _get_fields(field_name: str) -> list[str]:
+    """Returns a list of survey-specific field names that will be included in a lite dictionary."""
+    if field_name == "diaSource":
         source_fields_list = [
             "diaSourceId",
             "midpointMjdTai",
@@ -118,7 +118,7 @@ def _create_fields_list(field: str) -> list[str]:
 
         return source_fields_list
 
-    if field == "object":
+    if field_name == "diaObject":
         object_fields_list = [
             "diaObjectId",
             "nearbyObj1",
@@ -140,7 +140,7 @@ def _create_fields_list(field: str) -> list[str]:
 
         return object_fields_list
 
-    if field == "ssobject":
+    if field_name == "ssObject":
         ss_object_fields_list = [
             "ssObjectId",
             "firstObservationDate",
@@ -172,7 +172,9 @@ def _create_fields_list(field: str) -> list[str]:
 
         return ss_object_fields_list
 
-    raise ValueError(f"Unrecognized field type: {field}")
+    raise ValueError(
+        f"Unrecognized field type: {field_name}. Only 'diaSource', 'diaObject', and 'ssObject' are supported."
+    )
 
 
 def _create_lite_dict(alert_dict: dict, field_names: list[str]) -> dict:
