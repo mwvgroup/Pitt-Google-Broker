@@ -172,8 +172,7 @@ def _create_fields_list(field: str) -> list[str]:
 
         return ss_object_fields_list
 
-    else:
-        raise ValueError(f"Unrecognized field type: {field}")
+    raise ValueError(f"Unrecognized field type: {field}")
 
 
 def _create_lite_dict(alert_dict: dict, field_names: list[str]) -> dict:
