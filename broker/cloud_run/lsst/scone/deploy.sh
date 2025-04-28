@@ -35,13 +35,13 @@ define_GCP_resources() {
 
 #--- GCP resources used in this script
 artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
-deadletter_topic_bigquery_import_snn=$(define_GCP_resources "${survey}-bigquery-import-SCONE-deadletter")
+deadletter_topic_bigquery_import_scone=$(define_GCP_resources "${survey}-bigquery-import-SCONE-deadletter")
 deadletter_topic_bigquery_import_classifications=$(define_GCP_resources "${survey}-bigquery-import-classifications-deadletter")
-deadletter_subscription_bigquery_import_snn="${deadletter_topic_bigquery_import_snn}"
+deadletter_subscription_bigquery_import_scone="${deadletter_topic_bigquery_import_scone}"
 deadletter_subscription_bigquery_import_classifications="${deadletter_topic_bigquery_import_classifications}"
-topic_bigquery_import_snn=$(define_GCP_resources "${survey}-bigquery-import-SCONE")
+topic_bigquery_import_scone=$(define_GCP_resources "${survey}-bigquery-import-SCONE")
 topic_bigquery_import_classifications=$(define_GCP_resources "${survey}-bigquery-import-classifications")
-subscription_bigquery_import_snn="${topic_bigquery_import_snn}" # BigQuery subscription
+subscription_bigquery_import_scone="${topic_bigquery_import_scone}" # BigQuery subscription
 subscription_bigquery_import_classifications="${topic_bigquery_import_classifications}" # BigQuery subscription
 trigger_topic=$(define_GCP_resources "${survey}-alerts")
 ps_input_subscrip="${trigger_topic}" # pub/sub subscription used to trigger cloud run module
@@ -58,14 +58,14 @@ if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources
     if [ "${testid}" != "False" ]; then
         gcloud pubsub topics delete "${ps_output_topic}"
-        gcloud pubsub topics delete "${topic_bigquery_import_snn}"
+        gcloud pubsub topics delete "${topic_bigquery_import_scone}"
         gcloud pubsub topics delete "${topic_bigquery_import_classifications}"
-        gcloud pubsub topics delete "${deadletter_topic_bigquery_import_snn}"
+        gcloud pubsub topics delete "${deadletter_topic_bigquery_import_scone}"
         gcloud pubsub topics delete "${deadletter_topic_bigquery_import_classifications}"
         gcloud pubsub subscriptions delete "${ps_input_subscrip}"
-        gcloud pubsub subscriptions delete "${subscription_bigquery_import_snn}"
+        gcloud pubsub subscriptions delete "${subscription_bigquery_import_scone}"
         gcloud pubsub subscriptions delete "${subscription_bigquery_import_classifications}"
-        gcloud pubsub subscriptions delete "${deadletter_subscription_bigquery_import_snn}"
+        gcloud pubsub subscriptions delete "${deadletter_subscription_bigquery_import_scone}"
         gcloud pubsub subscriptions delete "${deadletter_subscription_bigquery_import_classifications}"
         gcloud run services delete "${cr_module_name}" --region "${region}"
     fi
@@ -73,13 +73,13 @@ if [ "${teardown}" = "True" ]; then
 else # Deploy the Cloud Run service
 
 #--- Deploy Cloud Run service
-    echo "Configuring Pub/Sub resources for classify_snn Cloud Run service..."
+    echo "Configuring Pub/Sub resources for classify_scone Cloud Run service..."
     gcloud pubsub topics create "${ps_output_topic}"
-    gcloud pubsub topics create "${deadletter_topic_bigquery_import_snn}"
+    gcloud pubsub topics create "${deadletter_topic_bigquery_import_scone}"
     gcloud pubsub topics create "${deadletter_topic_bigquery_import_classifications}"
-    gcloud pubsub topics create "${topic_bigquery_import_snn}"
+    gcloud pubsub topics create "${topic_bigquery_import_scone}"
     gcloud pubsub topics create "${topic_bigquery_import_classifications}"
-    gcloud pubsub subscriptions create "${deadletter_subscription_bigquery_import_snn}" --topic="${deadletter_topic_bigquery_import_snn}"
+    gcloud pubsub subscriptions create "${deadletter_subscription_bigquery_import_scone}" --topic="${deadletter_topic_bigquery_import_scone}"
     gcloud pubsub subscriptions create "${deadletter_subscription_bigquery_import_classifications}" --topic="${deadletter_topic_bigquery_import_classifications}"
 
     # in order to create BigQuery subscriptions, ensure that the following service account:
@@ -91,11 +91,11 @@ else # Deploy the Cloud Run service
         --member="serviceAccount:${PUBSUB_SERVICE_ACCOUNT}" \
         --role="${roleid}" \
         --table=true "${PROJECT_ID}:${bq_dataset}.${scone_table}"
-    gcloud pubsub subscriptions create "${subscription_bigquery_import_snn}" \
-        --topic="${topic_bigquery_import_snn}" \
+    gcloud pubsub subscriptions create "${subscription_bigquery_import_scone}" \
+        --topic="${topic_bigquery_import_scone}" \
         --bigquery-table="${PROJECT_ID}:${bq_dataset}.${scone_table}" \
         --use-table-schema \
-        --dead-letter-topic="${deadletter_topic_bigquery_import_snn}" \
+        --dead-letter-topic="${deadletter_topic_bigquery_import_scone}" \
         --max-delivery-attempts=5 \
         --dead-letter-topic-project="${PROJECT_ID}"
     gcloud pubsub subscriptions create "${subscription_bigquery_import_classifications}" \
@@ -108,10 +108,10 @@ else # Deploy the Cloud Run service
 
     # this allows dead-lettered messages to be forwarded from the BigQuery subscription to the dead letter topic
     # and it allows dead-lettered messages to be published to the dead letter topic.
-    gcloud pubsub topics add-iam-policy-binding "${deadletter_topic_bigquery_import_snn}" \
+    gcloud pubsub topics add-iam-policy-binding "${deadletter_topic_bigquery_import_scone}" \
         --member="serviceAccount:$PUBSUB_SERVICE_ACCOUNT"\
         --role="roles/pubsub.publisher"
-    gcloud pubsub subscriptions add-iam-policy-binding "${subscription_bigquery_import_snn}" \
+    gcloud pubsub subscriptions add-iam-policy-binding "${subscription_bigquery_import_scone}" \
         --member="serviceAccount:$PUBSUB_SERVICE_ACCOUNT"\
         --role="roles/pubsub.subscriber"
     gcloud pubsub topics add-iam-policy-binding "${deadletter_topic_bigquery_import_classifications}" \
