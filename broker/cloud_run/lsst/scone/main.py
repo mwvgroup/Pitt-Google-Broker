@@ -16,7 +16,6 @@ import numpy as np
 import pandas as pd
 
 from model_utils import *
-from data_utils import *
 from base import CreateHeatmapsBase
 
 # [FIXME] Make this helpful or else delete it.

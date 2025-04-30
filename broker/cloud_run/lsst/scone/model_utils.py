@@ -5,18 +5,9 @@
 #     is useful for side-by-side testing of scone codes or options. This code
 #     should still be compatible with both original and refactored scone codes
 #
-import os
 import numpy as np
-import pandas as pd
-import yaml
 import tensorflow as tf
 from tensorflow.keras import layers, models
-import time
-import json
-
-from data_utils import *
-from scone_utils import *  # RK - should merge with data_utils ?
-import scone_utils as util
 
 # =====================================================
 # =====================================================
@@ -38,7 +29,7 @@ class SconeClassifier:
         self.output_path = config["output_path"]
         self.heatmaps_paths = (
             config["heatmaps_paths"] if "heatmaps_paths" in config else config["heatmaps_path"]
-        )  # #TODO(6/21/23): eventually remove, for backwards compatibility
+        )
         self.mode = config["mode"]
 
         self.strategy = tf.distribute.MirroredStrategy()
@@ -56,11 +47,7 @@ class SconeClassifier:
             raise KeyError(
                 "cannot perform categorical classification without knowing the number of source types! please specify the `types` key in your config file to reflect this information"
             )
-            # TODO: should i write num types info into a file after create heatmaps? maybe ids file will be large
-            # ids_file = h5py.File(config['ids_path'], "r")
-            # types = [x.decode('utf-8').split("_")[0] for x in ids_file["names"]]
-            # ids_file.close()
-            # self.num_types = len(np.unique(types))
+
         self.num_types = len(self.types) if self.categorical else 2
         self.train_proportion = config.get("train_proportion", 0.8)
         self.with_z = config.get("with_z", False)
@@ -88,6 +75,7 @@ class SconeClassifier:
 
         dataset = self._retrieve_data(raw_dataset)
         predict_dict = self.predict(dataset)
+
         return predict_dict
 
     def predict(self, dataset):
@@ -128,3 +116,37 @@ class SconeClassifier:
         )
 
         return dataset.apply(tf.data.experimental.ignore_errors())
+
+
+# retrieves heatmap data
+# requires:
+#   - raw_record
+#   - INPUT_SHAPE
+def get_images(raw_record, input_shape, with_z=False):
+    image_feature_description = {
+        "label": tf.io.FixedLenFeature([], tf.int64),
+        "image_raw": tf.io.FixedLenFeature([], tf.string),
+        "id": tf.io.FixedLenFeature([], tf.int64),
+    }
+    if with_z:
+        image_feature_description["z"] = tf.io.FixedLenFeature([], tf.float32)
+        image_feature_description["z_err"] = tf.io.FixedLenFeature([], tf.float32)
+
+    example = tf.io.parse_single_example(raw_record, image_feature_description)
+    image = tf.reshape(tf.io.decode_raw(example["image_raw"], tf.float64), input_shape)
+    image = image / tf.reduce_max(image[:, :, 0])
+
+    # TODO: have to subtract 1 from label to get rid of KN in early classification dataset
+    if with_z:
+        output = [
+            {"image": image, "z": example["z"], "z_err": example["z_err"]},
+            {"label": example["label"]},
+            {"id": tf.cast(example["id"], tf.int32)},
+        ]
+    else:
+        output = [
+            {"image": image},
+            {"label": example["label"]},
+            {"id": tf.cast(example["id"], tf.int32)},
+        ]
+    return output
