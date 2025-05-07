@@ -123,11 +123,7 @@ class SconeClassifier:
 #   - raw_record
 #   - INPUT_SHAPE
 def get_images(raw_record, input_shape, with_z=False):
-    image_feature_description = {
-        "label": tf.io.FixedLenFeature([], tf.int64),
-        "image_raw": tf.io.FixedLenFeature([], tf.string),
-        "id": tf.io.FixedLenFeature([], tf.int64),
-    }
+    image_feature_description = {"image_raw": tf.io.FixedLenFeature([], tf.string)}
     if with_z:
         image_feature_description["z"] = tf.io.FixedLenFeature([], tf.float32)
         image_feature_description["z_err"] = tf.io.FixedLenFeature([], tf.float32)
@@ -140,13 +136,9 @@ def get_images(raw_record, input_shape, with_z=False):
     if with_z:
         output = [
             {"image": image, "z": example["z"], "z_err": example["z_err"]},
-            {"label": example["label"]},
-            {"id": tf.cast(example["id"], tf.int32)},
         ]
     else:
         output = [
             {"image": image},
-            {"label": example["label"]},
-            {"id": tf.cast(example["id"], tf.int32)},
         ]
     return output

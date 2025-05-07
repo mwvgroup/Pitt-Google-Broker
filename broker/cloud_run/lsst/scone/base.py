@@ -86,24 +86,21 @@ class CreateHeatmapsBase(abc.ABC):
     def _calculate_mjd_range(sn_data):
         pass
 
-    def create_heatmaps(self, input_data, mjd_minmaxes, fit_on_full_lc=True):
+    def create_heatmaps(self, input_data, fit_on_full_lc=True):
         # TODO: infer this from config file rather than making the subclasses pass it in
         self.fit_on_full_lc = fit_on_full_lc
 
-        for mjd_minmax in mjd_minmaxes:
-            sn_data = self._get_sn_data(input_data)
-            sn_lcdata, mjd_range = sn_data
-            wave = [self.band_to_wave[elem] for elem in sn_lcdata["passband"]]
-            gp = build_gp(20, sn_lcdata, wave)
-            milkyway_ebv = 0.0019738385  # TODO: Update parameter; I, Chris, asserted this value (obtained from an ELAsTiCC2 FITS file)
-            predictions, prediction_errs = self._get_predictions_heatmap(
-                gp, mjd_range, milkyway_ebv
-            )
-            heatmap = np.dstack((predictions, prediction_errs))
+        sn_data = self._get_sn_data(input_data)
+        sn_lcdata, mjd_range = sn_data
+        wave = [self.band_to_wave[elem] for elem in sn_lcdata["passband"]]
+        gp = build_gp(20, sn_lcdata, wave)
+        milkyway_ebv = 0.0019738385  # TODO: Needs to be revisited?nano I, Chris, asserted this value (obtained from an ELAsTiCC2 FITS file)
+        predictions, prediction_errs = self._get_predictions_heatmap(gp, mjd_range, milkyway_ebv)
+        heatmap = np.dstack((predictions, prediction_errs))
 
-            image_bytes = image_example(heatmap.flatten().tobytes())
+        image_bytes = image_example(heatmap.flatten().tobytes())
 
-            return image_bytes
+        return image_bytes
 
     # ================================================
     # HELPER FUNCTIONS

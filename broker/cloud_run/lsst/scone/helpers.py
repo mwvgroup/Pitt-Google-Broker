@@ -41,7 +41,7 @@ def get_band_to_wave(survey):
 def build_gp(guess_length_scale, sn_data, bands):
     """This is  all  taken from Avacado -
     see https://github.com/kboone/avocado/blob/master/avocado/astronomical_object.py
-    In this a 2D matern kernal is used  to  model the transient. The kernel
+    In this a 2D matern kernal is used to  model the transient. The kernel
     width in the wavelength direction is fixed. We fit for the kernel width
     in the time direction"""
 

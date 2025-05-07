@@ -164,7 +164,7 @@ class CreateHeatmapsManager:
 
 class CreateHeatmapsFull(CreateHeatmapsBase):
     def run(self, input_data):
-        heatmap = self.create_heatmaps(input_data, [[-30, 150]])
+        heatmap = self.create_heatmaps(input_data)
         return heatmap
 
     @staticmethod
