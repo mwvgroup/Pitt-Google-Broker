@@ -84,7 +84,7 @@ def run():
     # publish the same alert as Confluent Wire Avro.
     TOPIC_ALERTS.publish(alert)
     # publish the same alert as JSON. Data will be coerced to valid JSON by pittgoogle.
-    TOPIC_BIGQUERY_IMPORT.publish(alert, serializer="json")
+    TOPIC_BIGQUERY_IMPORT.publish(alert, serializer="json", drop_cutouts=True)
 
     return "", HTTP_204
 
