@@ -124,7 +124,7 @@ manage_resources() {
             --dead-letter-topic="${deadletter_topic_bigquery_import}" \
             --max-delivery-attempts=5 \
             --dead-letter-topic-project="${PROJECT_ID}" \
-            --message-filter='attributes.schema_version = "'"${versiontag}"'"'
+            --message-filter='attributes."schema.version" = "'"${versiontag}"'"'
 
         # set IAM policies on resources
         if [ "$testid" = "False" ]; then
