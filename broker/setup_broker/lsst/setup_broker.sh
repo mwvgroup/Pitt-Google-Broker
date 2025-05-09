@@ -58,9 +58,9 @@ broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
 bq_dataset=$(define_GCP_resources "${survey}")
 topic_alerts_raw=$(define_GCP_resources "${survey}-alerts_raw")
 topic_alerts=$(define_GCP_resources "${survey}-alerts")
+topic_alerts_json=$(define_GCP_resources "${survey}-alerts-json")
 subscription_reservoir=$(define_GCP_resources "${survey}-alerts-reservoir")
 # topics and subscriptions involved in writing alert data to BigQuery
-topic_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import")
 subscription_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import-${versiontag}") # BigQuery subscription
 deadletter_topic_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import-deadletter-${versiontag}")
 deadletter_subscription_bigquery_import="${deadletter_topic_bigquery_import}"
@@ -104,7 +104,7 @@ manage_resources() {
         echo "Configuring Pub/Sub resources..."
         gcloud pubsub topics create "${topic_alerts_raw}"
         gcloud pubsub topics create "${topic_alerts}"
-        gcloud pubsub topics create "${topic_bigquery_import}"
+        gcloud pubsub topics create "${topic_alerts_json}"
         gcloud pubsub topics create "${deadletter_topic_bigquery_import}"
         gcloud pubsub subscriptions create "${subscription_reservoir}" --topic="${topic_alerts}"
         gcloud pubsub subscriptions create "${deadletter_subscription_bigquery_import}" --topic="${deadletter_topic_bigquery_import}"
@@ -118,9 +118,10 @@ manage_resources() {
             --role="${roleid}" \
             --table=true "${PROJECT_ID}:${bq_dataset}.${alerts_table}"
         gcloud pubsub subscriptions create "${subscription_bigquery_import}" \
-            --topic="${topic_bigquery_import}" \
+            --topic="${topic_alerts_json}" \
             --bigquery-table="${PROJECT_ID}:${bq_dataset}.${alerts_table}" \
             --use-table-schema \
+            --drop-unknown-fields \
             --dead-letter-topic="${deadletter_topic_bigquery_import}" \
             --max-delivery-attempts=5 \
             --dead-letter-topic-project="${PROJECT_ID}" \
@@ -155,7 +156,7 @@ manage_resources() {
             bq rm -r -f "${PROJECT_ID}:${bq_dataset}"
             gcloud pubsub topics delete "${topic_alerts_raw}"
             gcloud pubsub topics delete "${topic_alerts}"
-            gcloud pubsub topics delete "${topic_bigquery_import}"
+            gcloud pubsub topics delete "${topic_alerts_json}"
             gcloud pubsub topics delete "${deadletter_topic_bigquery_import}"
             gcloud pubsub subscriptions delete "${subscription_reservoir}"
             gcloud pubsub subscriptions delete "${deadletter_subscription_bigquery_import}"

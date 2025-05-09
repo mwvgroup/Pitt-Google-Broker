@@ -33,8 +33,8 @@ HTTP_400 = 400  # HTTP code: Bad Request
 TOPIC_ALERTS = pittgoogle.Topic.from_cloud(
     "alerts", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
 )
-TOPIC_BIGQUERY_IMPORT = pittgoogle.Topic.from_cloud(
-    "bigquery-import", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
+TOPIC_ALERTS_JSON = pittgoogle.Topic.from_cloud(
+    "alerts-json", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
 )
 bucket_name = f"{PROJECT_ID}-{SURVEY}_alerts"
 if TESTID != "False":
@@ -84,7 +84,7 @@ def run():
     # publish the same alert as Confluent Wire Avro.
     TOPIC_ALERTS.publish(alert)
     # publish the same alert as JSON. Data will be coerced to valid JSON by pittgoogle.
-    TOPIC_BIGQUERY_IMPORT.publish(alert, serializer="json")
+    TOPIC_ALERTS_JSON.publish(alert, serializer="json")
 
     return "", HTTP_204
 
@@ -93,9 +93,9 @@ def _create_file_metadata(alert: pittgoogle.Alert, event_id: str) -> dict:
     """Return key/value pairs to be attached to the file as metadata."""
 
     metadata = {"file_origin_message_id": event_id}
-    metadata[alert.get_key("objectid")] = alert.objectid
-    metadata[alert.get_key("sourceid")] = alert.sourceid
-    metadata[alert.get_key("ra")] = alert.ra
-    metadata[alert.get_key("dec")] = alert.dec
+    metadata["_".join(alert.get_key("objectid"))] = alert.objectid
+    metadata["_".join(alert.get_key("sourceid"))] = alert.sourceid
+    metadata["_".join(alert.get_key("ra"))] = alert.ra
+    metadata["_".join(alert.get_key("dec"))] = alert.dec
 
     return metadata
