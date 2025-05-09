@@ -4,7 +4,6 @@
 """This module creates a "lite" alert containing a subset of fields from the original alert packet."""
 
 import os
-from typing import Optional
 
 import flask
 import pittgoogle
