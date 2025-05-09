@@ -93,9 +93,9 @@ def _create_file_metadata(alert: pittgoogle.Alert, event_id: str) -> dict:
     """Return key/value pairs to be attached to the file as metadata."""
 
     metadata = {"file_origin_message_id": event_id}
-    metadata[alert.get_key("objectid")[1]] = alert.objectid
-    metadata[alert.get_key("sourceid")[1]] = alert.sourceid
-    metadata[alert.get_key("ra")[1]] = alert.ra
-    metadata[alert.get_key("dec")[1]] = alert.dec
+    metadata["_".join(alert.get_key("objectid"))] = alert.objectid
+    metadata["_".join(alert.get_key("sourceid"))] = alert.sourceid
+    metadata["_".join(alert.get_key("ra"))] = alert.ra
+    metadata["_".join(alert.get_key("dec"))] = alert.dec
 
     return metadata
