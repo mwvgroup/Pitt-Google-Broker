@@ -4,7 +4,7 @@
 """This module creates a "lite" alert containing a subset of fields from the original alert packet."""
 
 import os
-
+from typing import List, Dict, Optional
 import flask
 import pittgoogle
 from google.cloud import logging
@@ -184,8 +184,8 @@ def _create_lite_dict(alert_dict: dict, field_names: list[str]) -> dict:
 
 
 def _create_prv_sources_lite_dict(
-    source_history: list[dict] | None, field_names: list[str]
-) -> list[dict] | None:
+    source_history: Optional[List[Dict]], field_names: List[str]
+) -> Optional[List[Dict]]:
     """Create a list of prv_sources lite dictionaries if prv_sources exist."""
 
     if source_history is None:
