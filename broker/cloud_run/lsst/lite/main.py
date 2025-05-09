@@ -92,8 +92,8 @@ def _create_lite_alert(alert: pittgoogle.Alert) -> pittgoogle.Alert:
         alert.get_key("alertid"): alert.get("alertid"),
         alert.get_key("source"): source_lite_dict,
         alert.get_key("prv_sources"): prev_sources_lite_dict,
-        "prvDiaForcedSources": alert.dict.get("prvDiaForcedSources"),
-        "prvDiaNondetectionLimits": alert.dict.get("prvDiaNondetectionLimits"),
+        alert.get_key("prv_forced_sources"): alert.dict.get("prvDiaForcedSources"),
+        alert.get_key("prv_nondetect_limits"): alert.dict.get("prvDiaNondetectionLimits"),
         alert.get_key("object"): object_lite_dict,
         alert.get_key("ss_object"): ssobject_lite_dict,
     }
