@@ -185,8 +185,8 @@ def _create_lite_dict(alert_dict: dict, field_names: list[str]) -> dict:
 
 
 def _create_prv_sources_lite_dict(
-    source_history: list[dict], field_names: list[str]
-) -> Optional[list[dict]]:
+    source_history: list[dict] | None, field_names: list[str]
+) -> list[dict] | None:
     """Create a list of prv_sources lite dictionaries if prv_sources exist."""
 
     if source_history is None:
