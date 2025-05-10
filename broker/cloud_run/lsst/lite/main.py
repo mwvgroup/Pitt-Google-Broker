@@ -97,7 +97,9 @@ def _create_lite_alert(alert: pittgoogle.Alert) -> pittgoogle.Alert:
         alert.get_key("ss_object"): ssobject_lite_dict,
     }
 
-    return pittgoogle.Alert.from_dict(payload=alert_lite_dict, schema_name=f"{SURVEY}")
+    return pittgoogle.Alert.from_dict(
+        payload=alert_lite_dict, schema_name=f"{SURVEY}", attributes={**alert.attributes}
+    )
 
 
 def _get_fields(field_name: str) -> list[str]:
