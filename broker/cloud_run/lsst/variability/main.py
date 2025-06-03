@@ -4,7 +4,7 @@
 """This module creates a "value-added" alert containing StetsonJ statistics on the DIA point source fluxes."""
 
 import os
-from typing import Dict, float
+from typing import Dict
 import numpy as np
 import flask
 import pittgoogle
@@ -31,7 +31,7 @@ HTTP_204 = 204  # HTTP code: Success
 HTTP_400 = 400  # HTTP code: Bad Request
 
 # GCP resources used in this module
-TOPIC_VARIABILITY = pittgoogle.Topic.from_cloud(
+TOPIC_VALUE_ADDED = pittgoogle.Topic.from_cloud(
     "value-added", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
 )
 
@@ -61,7 +61,7 @@ def run():
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
-    TOPIC_VARIABILITY.publish(_create_outgoing_alert(alert), serializer="json")
+    TOPIC_VALUE_ADDED.publish(_create_outgoing_alert(alert), serializer="json")
 
     return "", HTTP_204
 
@@ -144,7 +144,7 @@ def _stetson_J(fluxes, errors) -> float:
     return np.mean(np.sign(p_k) * np.sqrt(np.fabs(p_k)))
 
 
-def _stetson_mean(values, errors, alpha=2.0, beta=2.0, n_iter=20, tol=1e-6) -> float:
+def _stetson_mean(values, errors) -> float:
     """Adapted from:
     https://github.com/lsst/meas_base/blob/e5cf12406b54a6312b9d6fa23fbd132cd7999387/python/lsst/meas/base/diaCalculationPlugins.py#L979
 
@@ -178,6 +178,12 @@ def _stetson_mean(values, errors, alpha=2.0, beta=2.0, n_iter=20, tol=1e-6) -> f
     .. [1] Stetson, P. B., "On the Automatic Determination of Light-Curve Parameters for Cepheid Variables", PASP, 108,
     851S, 1996
     """
+    # define values
+    alpha = 2.0
+    beta = 2.0
+    n_iter = 20
+    tol = 1e-6
+
     n_points = len(values)
     n_factor = np.sqrt(n_points / (n_points - 1))
     inv_var = 1 / errors**2
