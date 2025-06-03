@@ -56,6 +56,7 @@ define_GCP_resources() {
 artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
 broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
 bq_dataset=$(define_GCP_resources "${survey}")
+bq_dataset_value_added=$(define_GCP_resources "${survey}_value_added")
 topic_alerts_raw=$(define_GCP_resources "${survey}-alerts_raw")
 topic_alerts=$(define_GCP_resources "${survey}-alerts")
 topic_alerts_json=$(define_GCP_resources "${survey}-alerts-json")
@@ -66,6 +67,7 @@ deadletter_topic_bigquery_import=$(define_GCP_resources "${survey}-bigquery-impo
 deadletter_subscription_bigquery_import="${deadletter_topic_bigquery_import}"
 
 alerts_table="alerts_${versiontag}"
+variability_table="variability"
 
 # function used to create (or delete) GCP resources
 manage_resources() {
@@ -77,12 +79,13 @@ manage_resources() {
     fi
 
     if [ "$mode" = "setup" ]; then
-        # create BigQuery dataset and table
+        # create BigQuery datasets and tables
         bq --location="${region}" mk --dataset "${bq_dataset}"
+        bq --location="${region}" mk --dataset "${bq_dataset_value_added}"
 
         (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${alerts_table}" "bq_${survey}_${alerts_table}_schema.json") || exit 5
         bq update --description "Alert data from LSST. This table is an archive of the lsst-alerts Pub/Sub stream. It has the same schema as the original alert bytes, including nested and repeated fields." "${PROJECT_ID}:${bq_dataset}.${alerts_table}"
-
+        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset_value_added}.${variability_table}" "bq_${bq_dataset_value_added}_${variability_table}_schema.json") || exit 5
         # create broker bucket and upload files
         echo
         echo "Creating broker_bucket and uploading files..."
