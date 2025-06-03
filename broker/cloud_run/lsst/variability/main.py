@@ -71,7 +71,7 @@ def _create_outgoing_alert(alert: pittgoogle.Alert) -> pittgoogle.Alert:
     fields from the original alert-lite packet that triggers this module."""
 
     value_added_dict = _calculate_stetsonJ_statistics(alert)
-    outgoing_alert_dict = {"alert": alert.dict, "value_added": value_added_dict}
+    outgoing_alert_dict = {"alert": alert.dict, "variability": value_added_dict}
 
     return pittgoogle.Alert.from_dict(
         outgoing_alert_dict,
