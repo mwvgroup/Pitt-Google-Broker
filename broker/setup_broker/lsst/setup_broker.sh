@@ -199,4 +199,7 @@ echo "Configuring Cloud Run services..."
 
     cd .. && cd lite
     ./deploy.sh "$testid" "$teardown" "$survey" "$region"
+
+    cd .. && cd variability
+    ./deploy.sh "$testid" "$teardown" "$survey" "$region"
 ) || exit
