@@ -74,7 +74,9 @@ def _create_outgoing_alert(alert: pittgoogle.Alert) -> pittgoogle.Alert:
     outgoing_alert_dict = {"alert": alert.dict, "value_added": value_added_dict}
 
     return pittgoogle.Alert.from_dict(
-        outgoing_alert_dict, attributes=alert.attributes, schema_name="default"
+        outgoing_alert_dict,
+        attributes={**alert.attributes, "value_added": "variability"},
+        schema_name="default",
     )
 
 
@@ -189,7 +191,7 @@ def _stetson_mean(values, errors) -> float:
     inv_var = 1 / errors**2
     mean = np.average(values, weights=inv_var)
 
-    for iter_idx in range(n_iter):
+    for _ in range(n_iter):
         chi = np.fabs(n_factor * (values - mean) / errors)
         tmp_mean = np.average(values, weights=inv_var / (1 + (chi / alpha) ** beta))
         diff = np.fabs(tmp_mean - mean)
