@@ -21,7 +21,11 @@ define_GCP_resources() {
     local testid_suffix=""
 
     if [ "$testid" != "False" ]; then
-        testid_suffix="-${testid}"
+        if [ "$base_name" = "${survey}" ] || [ "$base_name" = "${survey}_value_added" ]; then
+            testid_suffix="_${testid}"  # complies with BigQuery naming conventions
+        else
+            testid_suffix="-${testid}"
+        fi
     fi
 
     echo "${base_name}${testid_suffix}"

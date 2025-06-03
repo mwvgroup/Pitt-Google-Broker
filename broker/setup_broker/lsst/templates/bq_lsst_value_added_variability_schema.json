@@ -1,56 +1,64 @@
 [
     {
-      "description": "Unique identifier of this DiaObject.",
+      "description": "Relevant variability statistics.",
+      "fields": [
+          {
+            "description": "Unique identifier of this DiaObject.",
+            "mode": "REQUIRED",
+            "name": "diaObjectId",
+            "type": "FLOAT"
+          },
+          {
+            "description": "Unique identifier of this DiaSource.",
+            "mode": "REQUIRED",
+            "name": "diaSourceId",
+            "type": "INTEGER"
+          },
+          {
+            "description": "Number of previous detections of this DiaObject.",
+            "mode": "REQUIRED",
+            "name": "n_previous_detections",
+            "type": "INTEGER"
+          },
+          {
+            "description": "StetsonJ statistic on the DIA point source fluxes for the u band",
+            "mode": "NULLABLE",
+            "name": "u_psfFluxStetsonJ",
+            "type": "FLOAT"
+          },
+          {
+            "description": "StetsonJ statistic on the DIA point source fluxes for the g band",
+            "mode": "NULLABLE",
+            "name": "g_psfFluxStetsonJ",
+            "type": "FLOAT"
+          },
+          {
+            "description": "StetsonJ statistic on the DIA point source fluxes for the r band",
+            "mode": "NULLABLE",
+            "name": "r_psfFluxStetsonJ",
+            "type": "FLOAT"
+          },
+          {
+            "description": "StetsonJ statistic on the DIA point source fluxes for the i band",
+            "mode": "NULLABLE",
+            "name": "i_psfFluxStetsonJ",
+            "type": "FLOAT"
+          },
+          {
+            "description": "StetsonJ statistic on the DIA point source fluxes for the z band",
+            "mode": "NULLABLE",
+            "name": "z_psfFluxStetsonJ",
+            "type": "FLOAT"
+          },
+          {
+            "description": "StetsonJ statistic on the DIA point source fluxes for the y band",
+            "mode": "NULLABLE",
+            "name": "y_psfFluxStetsonJ",
+            "type": "FLOAT"
+          }
+      ],
       "mode": "REQUIRED",
-      "name": "diaObjectId",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Unique identifier of this DiaSource.",
-      "mode": "REQUIRED",
-      "name": "diaSourceId",
-      "type": "INTEGER"
-    },
-    {
-      "description": "Number of previous detections of this DiaObject.",
-      "mode": "REQUIRED",
-      "name": "n_previous_detections",
-      "type": "INTEGER"
-    },
-    {
-      "description": "StetsonJ statistic on the DIA point source fluxes for the u band",
-      "mode": "REQUIRED",
-      "name": "u_psfFluxStetsonJ",
-      "type": "FLOAT"
-    },
-    {
-      "description": "StetsonJ statistic on the DIA point source fluxes for the g band",
-      "mode": "REQUIRED",
-      "name": "g_psfFluxStetsonJ",
-      "type": "FLOAT"
-    },
-    {
-      "description": "StetsonJ statistic on the DIA point source fluxes for the r band",
-      "mode": "REQUIRED",
-      "name": "r_psfFluxStetsonJ",
-      "type": "FLOAT"
-    },
-    {
-      "description": "StetsonJ statistic on the DIA point source fluxes for the i band",
-      "mode": "REQUIRED",
-      "name": "i_psfFluxStetsonJ",
-      "type": "FLOAT"
-    },
-    {
-      "description": "StetsonJ statistic on the DIA point source fluxes for the z band",
-      "mode": "REQUIRED",
-      "name": "z_psfFluxStetsonJ",
-      "type": "FLOAT"
-    },
-    {
-      "description": "StetsonJ statistic on the DIA point source fluxes for the y band",
-      "mode": "REQUIRED",
-      "name": "y_psfFluxStetsonJ",
-      "type": "FLOAT"
+      "name": "variability",
+      "type": "RECORD"
     }
 ]

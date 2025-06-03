@@ -42,7 +42,7 @@ define_GCP_resources() {
     local testid_suffix=""
 
     if [ "$testid" != "False" ]; then
-        if [ "$base_name" = "$survey" ]; then
+        if [ "$base_name" = "${survey}" ] || [ "$base_name" = "${survey}_value_added" ]; then
             testid_suffix="_${testid}"  # complies with BigQuery naming conventions
         else
             testid_suffix="-${testid}"
@@ -85,7 +85,7 @@ manage_resources() {
 
         (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${alerts_table}" "bq_${survey}_${alerts_table}_schema.json") || exit 5
         bq update --description "Alert data from LSST. This table is an archive of the lsst-alerts Pub/Sub stream. It has the same schema as the original alert bytes, including nested and repeated fields." "${PROJECT_ID}:${bq_dataset}.${alerts_table}"
-        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset_value_added}.${variability_table}" "bq_${bq_dataset_value_added}_${variability_table}_schema.json") || exit 5
+        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset_value_added}.${variability_table}" "bq_${survey}_value_added_${variability_table}_schema.json") || exit 5
         # create broker bucket and upload files
         echo
         echo "Creating broker_bucket and uploading files..."
@@ -200,9 +200,11 @@ echo "Configuring Cloud Run services..."
     cd ps_to_storage
     ./deploy.sh "$testid" "$teardown" "$survey" "$region"
 
+    #--- lite Cloud Run service
     cd .. && cd lite
     ./deploy.sh "$testid" "$teardown" "$survey" "$region"
 
+    #--- variability Cloud Run service
     cd .. && cd variability
     ./deploy.sh "$testid" "$teardown" "$survey" "$region"
 ) || exit
