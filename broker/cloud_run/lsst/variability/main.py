@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-"""This module creates a "value-added" alert containing StetsonJ statistics on the DIA point source fluxes."""
+"""This module produces "value-added" lite alerts containing StetsonJ statistics on the DIA point source fluxes."""
 
 import os
 from typing import Dict
@@ -31,7 +31,7 @@ HTTP_204 = 204  # HTTP code: Success
 HTTP_400 = 400  # HTTP code: Bad Request
 
 # GCP resources used in this module
-TOPIC_VALUE_ADDED = pittgoogle.Topic.from_cloud(
+TOPIC = pittgoogle.Topic.from_cloud(
     "value-added", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
 )
 
@@ -61,7 +61,7 @@ def run():
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
-    TOPIC_VALUE_ADDED.publish(_create_outgoing_alert(alert), serializer="json")
+    TOPIC.publish(_create_outgoing_alert(alert), serializer="json")
 
     return "", HTTP_204
 

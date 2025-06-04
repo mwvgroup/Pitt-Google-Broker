@@ -33,26 +33,26 @@ define_GCP_resources() {
 
 #--- GCP resources used in this script
 artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
-bq_dataset_value_added=$(define_GCP_resources "${survey}_value_added")
+bq_dataset=$(define_GCP_resources "${survey}_value_added")
+bq_table="variability"
 cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}")  # lower case required by cloud run
 ps_input_subscrip=$(define_GCP_resources "${survey}-${MODULE_NAME}") # pub/sub subscription used to trigger cloud run module
 ps_output_topic=$(define_GCP_resources "${survey}-value-added")
 runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
 trigger_topic=$(define_GCP_resources "${survey}-lite")
-variability_table="variability"
 # topics and subscriptions involved in writing data to BigQuery
-subscription_bigquery_import=$(define_GCP_resources "${survey}-${MODULE_NAME}-bigquery-import") # BigQuery subscription
-deadletter_topic_bigquery_import=$(define_GCP_resources "${survey}-${MODULE_NAME}-bigquery-import-deadletter")
-deadletter_subscription_bigquery_import="${deadletter_topic_bigquery_import}"
+bq_subscription=$(define_GCP_resources "${survey}-${MODULE_NAME}-bigquery-import") # BigQuery subscription
+ps_deadletter_topic=$(define_GCP_resources "${survey}-${MODULE_NAME}-bigquery-import-deadletter")
+ps_deadletter_subscription="${ps_deadletter_topic}"
 
 
 if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources
     if [ "${testid}" != "False" ]; then
         gcloud pubsub topics delete "${ps_output_topic}"
-        gcloud pubsub topics delete "${deadletter_topic_bigquery_import}"
-        gcloud pubsub subscriptions delete "${subscription_bigquery_import}"
-        gcloud pubsub subscriptions delete "${deadletter_subscription_bigquery_import}"
+        gcloud pubsub topics delete "${ps_deadletter_topic}"
+        gcloud pubsub subscriptions delete "${bq_subscription}"
+        gcloud pubsub subscriptions delete "${ps_deadletter_subscription}"
         gcloud pubsub subscriptions delete "${ps_input_subscrip}"
         gcloud run services delete "${cr_module_name}" --region "${region}"
     fi
@@ -61,14 +61,14 @@ else # Deploy the Cloud Run service
 
 #--- Deploy Cloud Run
     gcloud pubsub topics create "${ps_output_topic}"
-    gcloud pubsub topics create "${deadletter_topic_bigquery_import}"
-    gcloud pubsub subscriptions create "${deadletter_subscription_bigquery_import}" --topic="${deadletter_topic_bigquery_import}"
-    gcloud pubsub subscriptions create "${subscription_bigquery_import}" \
+    gcloud pubsub topics create "${ps_deadletter_topic}"
+    gcloud pubsub subscriptions create "${ps_deadletter_subscription}" --topic="${ps_deadletter_topic}"
+    gcloud pubsub subscriptions create "${bq_subscription}" \
         --topic="${ps_output_topic}" \
-        --bigquery-table="${PROJECT_ID}:${bq_dataset_value_added}.${variability_table}" \
+        --bigquery-table="${PROJECT_ID}:${bq_dataset}.${bq_table}" \
         --use-table-schema \
         --drop-unknown-fields \
-        --dead-letter-topic="${deadletter_topic_bigquery_import}" \
+        --dead-letter-topic="${ps_deadletter_topic}" \
         --max-delivery-attempts=5 \
         --dead-letter-topic-project="${PROJECT_ID}" \
         --message-filter='attributes.value_added = "variability"'
