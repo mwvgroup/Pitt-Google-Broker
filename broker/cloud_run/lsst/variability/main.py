@@ -58,14 +58,14 @@ def run():
     # this contains a single Pub/Sub message with the alert to be processed
     envelope = flask.request.get_json()
     try:
-        alert = pittgoogle.Alert.from_cloud_run(envelope, schema_name="default")
+        alert_lite = pittgoogle.Alert.from_cloud_run(envelope, schema_name="default")
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
     TOPIC.publish(
         pittgoogle.Alert.from_dict(
-            {**alert.dict, "variability": _calculate_stetsonJ_statistics(alert)},
-            attributes={**alert.attributes, "value_added": "variability"},
+            {**alert_lite.dict, "variability": _calculate_stetsonJ_statistics(alert_lite)},
+            attributes={**alert_lite.attributes, "value_added": "variability"},
             schema_name="default",
         )
     )
@@ -73,18 +73,18 @@ def run():
     return "", HTTP_204
 
 
-def _calculate_stetsonJ_statistics(alert: pittgoogle.Alert) -> Dict:
+def _calculate_stetsonJ_statistics(alert_lite: pittgoogle.Alert) -> Dict:
     """Adapted from:
     https://github.com/lsst/meas_base/blob/e5cf12406b54a6312b9d6fa23fbd132cd7999387/python/lsst/meas/base/diaCalculationPlugins.py#L904
 
     Compute the StetsonJ statistics on the DIA point source fluxes for each band.
     """
-    alert_dict = alert.dict["alert"]
-    alert_df = _create_dataframe(alert_dict)
+    alert_lite_dict = alert_lite.dict["alert"]
+    alert_df = _create_dataframe(alert_lite_dict)
     bands = alert_df["band"].unique()
     outgoing_dict = {
-        "diaObjectId": alert_dict["diaObject"]["diaObjectId"],
-        "diaSourceId": alert_dict["diaSource"]["diaSourceId"],
+        "diaObjectId": alert_lite_dict["diaObject"]["diaObjectId"],
+        "diaSourceId": alert_lite_dict["diaSource"]["diaSourceId"],
     }
 
     # filter diaSource(s) in alert_df based on the filter(s) used
