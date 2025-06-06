@@ -99,7 +99,6 @@ def _create_lite_alert(alert: pittgoogle.Alert) -> pittgoogle.Alert:
 
     return pittgoogle.Alert.from_dict(
         payload={"alert_lite": alert_lite_dict},
-        schema_name="default",
         attributes={**alert.attributes},
     )
 
