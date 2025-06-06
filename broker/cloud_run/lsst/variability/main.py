@@ -134,7 +134,7 @@ def _create_dataframe(alert_dict: pittgoogle.Alert) -> "pd.DataFrame":
     return _dataframe
 
 
-def _stetson_J(fluxes, errors) -> float:
+def _stetson_J(fluxes: np.ndarray, errors: np.ndarray) -> float:
     """Adapted from:
     https://github.com/lsst/meas_base/blob/e5cf12406b54a6312b9d6fa23fbd132cd7999387/python/lsst/meas/base/diaCalculationPlugins.py#L949
 
@@ -165,7 +165,7 @@ def _stetson_J(fluxes, errors) -> float:
     return np.mean(np.sign(p_k) * np.sqrt(np.fabs(p_k)))
 
 
-def _stetson_mean(values, errors) -> float:
+def _stetson_mean(values: np.ndarray, errors: np.ndarray) -> float:
     """Adapted from:
     https://github.com/lsst/meas_base/blob/e5cf12406b54a6312b9d6fa23fbd132cd7999387/python/lsst/meas/base/diaCalculationPlugins.py#L979
 
