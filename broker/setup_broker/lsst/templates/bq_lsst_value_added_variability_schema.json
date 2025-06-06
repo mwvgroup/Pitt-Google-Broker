@@ -15,12 +15,6 @@
             "type": "INTEGER"
           },
           {
-            "description": "Number of previous detections of this DiaObject.",
-            "mode": "REQUIRED",
-            "name": "n_previous_detections",
-            "type": "INTEGER"
-          },
-          {
             "description": "StetsonJ statistic on the DIA point source fluxes for the u band",
             "mode": "NULLABLE",
             "name": "u_psfFluxStetsonJ",
@@ -55,6 +49,42 @@
             "mode": "NULLABLE",
             "name": "y_psfFluxStetsonJ",
             "type": "FLOAT"
+          },
+          {
+            "description": "Number of detections of this DiaObject in the u band.",
+            "mode": "NULLABLE",
+            "name": "n_detections_u_band",
+            "type": "INTEGER"
+          },
+          {
+            "description": "Number of detections of this DiaObject in the g band.",
+            "mode": "NULLABLE",
+            "name": "n_detections_g_band",
+            "type": "INTEGER"
+          },
+          {
+            "description": "Number of detections of this DiaObject in the r band.",
+            "mode": "NULLABLE",
+            "name": "n_detections_r_band",
+            "type": "INTEGER"
+          },
+          {
+            "description": "Number of detections of this DiaObject in the i band.",
+            "mode": "NULLABLE",
+            "name": "n_detections_i_band",
+            "type": "INTEGER"
+          },
+          {
+            "description": "Number of detections of this DiaObject in the z band.",
+            "mode": "NULLABLE",
+            "name": "n_detections_z_band",
+            "type": "INTEGER"
+          },
+          {
+            "description": "Number of detections of this DiaObject in the y band.",
+            "mode": "NULLABLE",
+            "name": "n_detections_y_band",
+            "type": "INTEGER"
           }
       ],
       "mode": "REQUIRED",
