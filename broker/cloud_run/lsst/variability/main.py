@@ -62,9 +62,10 @@ def run():
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
+    stetsonj_stats = _calculate_stetsonJ_statistics(alert_lite)
     TOPIC.publish(
         pittgoogle.Alert.from_dict(
-            {**alert_lite.dict, "variability": _calculate_stetsonJ_statistics(alert_lite)},
+            {**alert_lite.dict, "variability": stetsonj_stats},
             attributes={**alert_lite.attributes, "value_added": "variability"},
             schema_name="default",
         )
