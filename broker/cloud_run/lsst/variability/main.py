@@ -57,27 +57,19 @@ def run():
     # this contains a single Pub/Sub message with the alert to be processed
     envelope = flask.request.get_json()
     try:
-        alert = pittgoogle.Alert.from_cloud_run(envelope, f"{SURVEY}")
+        alert = pittgoogle.Alert.from_cloud_run(envelope, schema_name="default")
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
-    TOPIC.publish(_create_outgoing_alert(alert), serializer="json")
+    TOPIC.publish(
+        pittgoogle.Alert.from_dict(
+            {**alert.dict, "variability": _calculate_stetsonJ_statistics(alert)},
+            attributes={**alert.attributes, "value_added": "variability"},
+            schema_name="default",
+        )
+    )
 
     return "", HTTP_204
-
-
-def _create_outgoing_alert(alert: pittgoogle.Alert) -> pittgoogle.Alert:
-    """Creates an Alert object containing StetsonJ statistics on the DIA point source fluxes in addition to the
-    fields from the original alert-lite packet that triggers this module."""
-
-    value_added_dict = _calculate_stetsonJ_statistics(alert)
-    outgoing_alert_dict = {"alert": alert.dict, "variability": value_added_dict}
-
-    return pittgoogle.Alert.from_dict(
-        outgoing_alert_dict,
-        attributes={**alert.attributes, "value_added": "variability"},
-        schema_name="default",
-    )
 
 
 def _calculate_stetsonJ_statistics(alert: pittgoogle.Alert) -> Dict:
@@ -86,33 +78,60 @@ def _calculate_stetsonJ_statistics(alert: pittgoogle.Alert) -> Dict:
 
     Compute the StetsonJ statistics on the DIA point source fluxes for each band.
     """
-    alert_df = alert.dataframe
-    bands = alert_df[alert.get_key("filter")[1]].unique()
+    alert_dict = alert.dict["alert"]
+    alert_df = _create_dataframe(alert_dict)
+    bands = alert_df["band"].unique()
     outgoing_dict = {
-        alert.get_key("objectid")[1]: alert.get("objectid"),
-        alert.get_key("sourceid")[1]: alert.get("sourceid"),
-        "n_previous_detections": alert.attributes["n_previous_detections"],
+        "diaObjectId": alert_dict["diaObject"]["diaObjectId"],
+        "diaSourceId": alert_dict["diaSource"]["diaSourceId"],
     }
 
     # filter diaSource(s) in alert_df based on the filter(s) used
     for band in bands:
-        filter_diaSources = alert_df[alert_df[alert.get_key("filter")[1]] == band]
+        filter_diaSources = alert_df[alert_df["band"] == band]
         tmp_df = filter_diaSources[
             ~np.logical_or(
-                np.isnan(filter_diaSources[alert.get_key("flux")[1]]),
-                np.isnan(filter_diaSources[alert.get_key("flux_err")[1]]),
+                np.isnan(filter_diaSources["psfFlux"]),
+                np.isnan(filter_diaSources["psfFluxErr"]),
             )
         ]
 
         if len(tmp_df) < 2:
-            outgoing_dict[band] = np.nan
+            outgoing_dict[f"n_detections_{band}_band"] = len(tmp_df)
+            outgoing_dict[f"{band}_psfFluxStetsonJ"] = np.nan
             continue
 
-        fluxes = tmp_df[alert.get_key("flux")[1]].to_numpy()
-        errors = tmp_df[alert.get_key("flux_err")[1]].to_numpy()
+        fluxes = tmp_df["psfFlux"].to_numpy()
+        errors = tmp_df["psfFluxErr"].to_numpy()
+        outgoing_dict[f"n_detections_{band}_band"] = len(tmp_df)
         outgoing_dict[f"{band}_psfFluxStetsonJ"] = _stetson_J(fluxes, errors)
 
     return outgoing_dict
+
+
+def _create_dataframe(alert_dict: pittgoogle.Alert) -> "pd.DataFrame":
+    """Return a pandas DataFrame containing the source detections."""
+
+    import pandas as pd  # always lazy-load pandas. it hogs memory on cloud functions and run
+
+    # sources and previous sources are expected to have the same fields
+    sources_df = pd.DataFrame(
+        [alert_dict.get("diaSource")] + (alert_dict.get("prvDiaSources") or [])
+    )
+    # sources and forced sources may have different fields
+    forced_df = pd.DataFrame(alert_dict.get("prvDiaForcedSources") or [])
+
+    # use nullable integer data type to avoid converting ints to floats
+    # for columns in one dataframe but not the other
+    sources_ints = [c for c, v in sources_df.dtypes.items() if v == int]
+    sources_df = sources_df.astype(
+        {c: "Int64" for c in set(sources_ints) - set(forced_df.columns)}
+    )
+    forced_ints = [c for c, v in forced_df.dtypes.items() if v == int]
+    forced_df = forced_df.astype({c: "Int64" for c in set(forced_ints) - set(sources_df.columns)})
+
+    _dataframe = pd.concat([sources_df, forced_df], ignore_index=True)
+    return _dataframe
 
 
 def _stetson_J(fluxes, errors) -> float:
