@@ -79,7 +79,7 @@ def _calculate_stetsonJ_statistics(alert_lite: pittgoogle.Alert) -> Dict:
 
     Compute the StetsonJ statistics on the DIA point source fluxes for each band.
     """
-    alert_lite_dict = alert_lite.dict["alert"]
+    alert_lite_dict = alert_lite.dict["alert_lite"]
     alert_df = _create_dataframe(alert_lite_dict)
     bands = alert_df["band"].unique()
     outgoing_dict = {
