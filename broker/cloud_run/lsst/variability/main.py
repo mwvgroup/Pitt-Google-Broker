@@ -6,6 +6,7 @@
 import os
 from typing import Dict
 import numpy as np
+import pandas as pd
 import flask
 import pittgoogle
 from google.cloud import logging
@@ -111,8 +112,6 @@ def _calculate_stetsonJ_statistics(alert: pittgoogle.Alert) -> Dict:
 
 def _create_dataframe(alert_dict: pittgoogle.Alert) -> "pd.DataFrame":
     """Return a pandas DataFrame containing the source detections."""
-
-    import pandas as pd  # always lazy-load pandas. it hogs memory on cloud functions and run
 
     # sources and previous sources are expected to have the same fields
     sources_df = pd.DataFrame(
