@@ -60,7 +60,7 @@ def run():
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
-    TOPIC_LITE.publish(_create_lite_alert(alert), serializer="json")
+    TOPIC_LITE.publish(_create_lite_alert(alert))
 
     return "", HTTP_204
 
@@ -98,7 +98,9 @@ def _create_lite_alert(alert: pittgoogle.Alert) -> pittgoogle.Alert:
     }
 
     return pittgoogle.Alert.from_dict(
-        payload=alert_lite_dict, schema_name=f"{SURVEY}", attributes={**alert.attributes}
+        payload={"alert": alert_lite_dict},
+        schema_name="default",
+        attributes={**alert.attributes},
     )
 
 
