@@ -4,9 +4,10 @@
 """Classify alerts using UPSILoN (Kim & Bailer-Jones 2015)."""
 
 import os
-from typing import List, Dict, Optional
+from typing import Dict
 import flask
 import pandas as pd
+import numpy as np
 import pittgoogle
 import upsilon
 from google.cloud import logging
@@ -32,9 +33,7 @@ HTTP_204 = 204  # HTTP code: Success
 HTTP_400 = 400  # HTTP code: Bad Request
 
 # GCP resources used in this module
-TOPIC_LITE = pittgoogle.Topic.from_cloud(
-    "upsilon", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
-)
+TOPIC = pittgoogle.Topic.from_cloud("upsilon", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID)
 
 app = flask.Flask(__name__)
 
@@ -57,42 +56,59 @@ def run():
     # this contains a single Pub/Sub message with the alert to be processed
     envelope = flask.request.get_json()
     try:
-        alert = pittgoogle.Alert.from_cloud_run(envelope, "default")
+        alert_lite = pittgoogle.Alert.from_cloud_run(envelope, "default")
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
-    upsilon_dict = _classify_with_UPSILoN(alert)
+    upsilon_dict = _classify_with_UPSILoN(alert_lite)
 
-    TOPIC_LITE.publish(_create_outgoing_alert(upsilon_dict))
+    TOPIC.publish(
+        pittgoogle.Alert.from_dict(
+            {**alert_lite.dict, "upsilon": upsilon_dict},
+            attributes={**alert_lite.attributes},
+            schema_name="default",
+        )
+    )
 
     return "", HTTP_204
 
 
-def _classify_with_UPSILoN(alert: pittgoogle.Alert) -> Dict:
+def _classify_with_UPSILoN(alert_lite: pittgoogle.Alert) -> Dict:
     # extract the alert
-    alert_lite_dict = alert.dict["alert_lite"]
+    alert_lite_dict = alert_lite.dict["alert_lite"]
     alert_df = _create_dataframe(alert_lite_dict)
     bands = alert_df["band"].unique()
+    outgoing_dict = {
+        "diaObjectId": alert_lite_dict["diaObject"]["diaObjectId"],
+        "diaSourceId": alert_lite_dict["diaSource"]["diaSourceId"],
+    }
 
     # load UPSILoN's classification model
     rf_model = upsilon.load_rf_model()
     for band in bands:
-        # read the light curve's date (in days), magnitude, and magnitude errors.
+        # define parameters for feature extractions
         filter_diaSources = alert_df[alert_df["band"] == band]
-        # date = np.array([...])
-        # mag = np.array([...])
-        # err = np.array([...])
+        mask = filter_diaSources["psfFlux"].to_numpy() > 0
+        flux = filter_diaSources["psfFlux"].to_numpy()[mask]
+        flux_err = filter_diaSources["psfFluxErr"].to_numpy()[mask]
 
-        # # Extract features
-        # e_features = upsilon.ExtractFeatures(date, mag, err)
-        # e_features.run()
-        # features = e_features.get_features()
+        # UPSILoN requires three features to make a prediction, define them below:
+        date = filter_diaSources["midpointMjdTai"].to_numpy()[mask]
+        mag = _convert_flux_to_mag(flux)
+        mag_err = _convert_flux_err_to_mag_err(flux, flux_err)
 
-        # # Classify the light curve
-        # label, probability, flag = upsilon.predict(rf_model, features)
-        # print label, probability, flag
+        # extract features
+        e_features = upsilon.ExtractFeatures(date, mag, mag_err)
+        e_features.run()
+        features = e_features.get_features()
 
-    return
+        # classify
+        label, probability, flag = upsilon.predict(rf_model, features)
+        outgoing_dict[f"{band}_label"] = label
+        outgoing_dict[f"{band}_probability"] = probability
+        outgoing_dict[f"{band}_flag"] = flag
+
+    return outgoing_dict
 
 
 def _create_dataframe(alert_dict: pittgoogle.Alert) -> "pd.DataFrame":
@@ -118,6 +134,12 @@ def _create_dataframe(alert_dict: pittgoogle.Alert) -> "pd.DataFrame":
     return _dataframe
 
 
-def _create_outgoing_alert(alert: pittgoogle.Alert) -> pittgoogle.Alert:
-    """Creates a "lite" alert containing a subset of the fields of the original alert packet."""
-    return
+def _convert_flux_to_mag(flux: np.ndarray) -> float:
+    """Adapted from:
+    https://github.com/lsst/tutorial-notebooks/blob/044219c9ae5521edcc816af88e4b341e19326dbf/DP0.2/01_Introduction_to_DP02.ipynb#L511
+    """
+    return -2.50 * np.log10(flux) + 31.4
+
+
+def _convert_flux_err_to_mag_err(flux: np.ndarray, flux_err: np.ndarray) -> float:
+    return (-1.08574 / flux) * flux_err
