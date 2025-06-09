@@ -1,6 +1,6 @@
 [
     {
-      "description": "Relevant variability statistics.",
+      "description": "Classification results using UPSILoN (Kim & Bailer-Jones 2015).",
       "fields": [
           {
             "description": "Unique identifier of this DiaObject.",
