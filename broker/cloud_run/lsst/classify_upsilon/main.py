@@ -109,7 +109,7 @@ def _classify_with_UPSILoN(alert_lite: pittgoogle.Alert) -> Dict:
         # UPSILoN requires three features to make a prediction, define them below:
         date = filter_diaSources["midpointMjdTai"].to_numpy()[mask]
         mag = _convert_flux_to_mag(flux)
-        mag_err = _convert_flux_err_to_mag_err(flux, flux_err)
+        mag_err = _calculate_mag_err(flux, flux_err)
 
         # skip band if too few data points; limit set by UPSILoN
         if len(date) < 7:
@@ -155,9 +155,12 @@ def _create_dataframe(alert_dict: pittgoogle.Alert) -> "pd.DataFrame":
 def _convert_flux_to_mag(flux: np.ndarray) -> float:
     """Adapted from:
     https://github.com/lsst/tutorial-notebooks/blob/044219c9ae5521edcc816af88e4b341e19326dbf/DP0.2/01_Introduction_to_DP02.ipynb#L511
+
+    Converts flux [nJy] to AB magnitude.
     """
     return -2.50 * np.log10(flux) + 31.4
 
 
-def _convert_flux_err_to_mag_err(flux: np.ndarray, flux_err: np.ndarray) -> float:
+def _calculate_mag_err(flux: np.ndarray, flux_err: np.ndarray) -> float:
+    """Calculates magnitude uncertainty."""
     return (-1.08574 / flux) * flux_err
