@@ -33,7 +33,7 @@ cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}")  # lower case 
 ps_input_subscrip=$(define_GCP_resources "${survey}-upsilon") # pub/sub subscription used to trigger cloud run module
 ps_output_topic=$(define_GCP_resources "${survey}-upsilon")
 runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
-trigger_topic=$(define_GCP_resources "${survey}-variability")
+trigger_topic=$(define_GCP_resources "${survey}-lite")
 
 
 if [ "${teardown}" = "True" ]; then
