@@ -105,6 +105,10 @@ def _classify_with_UPSILoN(alert_lite: pittgoogle.Alert) -> Dict:
         mag = _convert_flux_to_mag(flux)
         mag_err = _convert_flux_err_to_mag_err(flux, flux_err)
 
+        # skip band if too few data points; limit set by UPSILoN
+        if len(date) < 7:
+            continue
+
         # extract features
         e_features = upsilon.ExtractFeatures(date, mag, mag_err)
         e_features.run()
