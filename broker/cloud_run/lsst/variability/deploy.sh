@@ -37,7 +37,7 @@ bq_dataset=$(define_GCP_resources "${survey}_value_added")
 bq_table="variability"
 cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}")  # lower case required by cloud run
 ps_input_subscrip=$(define_GCP_resources "${survey}-${MODULE_NAME}") # pub/sub subscription used to trigger cloud run module
-ps_output_topic=$(define_GCP_resources "${survey}-value-added")
+ps_output_topic=$(define_GCP_resources "${survey}-${MODULE_NAME}")
 runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
 trigger_topic=$(define_GCP_resources "${survey}-lite")
 # topics and subscriptions involved in writing data to BigQuery
@@ -70,8 +70,7 @@ else # Deploy the Cloud Run service
         --drop-unknown-fields \
         --dead-letter-topic="${ps_deadletter_topic}" \
         --max-delivery-attempts=5 \
-        --dead-letter-topic-project="${PROJECT_ID}" \
-        --message-filter='attributes.value_added = "variability"'
+        --dead-letter-topic-project="${PROJECT_ID}"
 
 
     echo "Creating container image and deploying to Cloud Run..."

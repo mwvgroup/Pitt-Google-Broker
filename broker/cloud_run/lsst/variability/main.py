@@ -33,7 +33,7 @@ HTTP_400 = 400  # HTTP code: Bad Request
 
 # GCP resources used in this module
 TOPIC = pittgoogle.Topic.from_cloud(
-    "value-added", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
+    "variability", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
 )
 
 app = flask.Flask(__name__)
@@ -41,7 +41,7 @@ app = flask.Flask(__name__)
 
 @app.route(ROUTE_RUN, methods=["POST"])
 def run():
-    """Produces a value-added alert stream (${survey}-value-added) containing StetsonJ statistics on the DIA point
+    """Produces a value-added alert stream (${survey}-variability) containing StetsonJ statistics on the DIA point
     source fluxes. Messages in this stream retain fields from the original alert-lite packet.
 
     This module is intended to be deployed as a Cloud Run service. It will operate as an HTTP endpoint
@@ -66,7 +66,7 @@ def run():
     TOPIC.publish(
         pittgoogle.Alert.from_dict(
             {**alert_lite.dict, "variability": stetsonj_stats},
-            attributes={**alert_lite.attributes, "value_added": "variability"},
+            attributes={**alert_lite.attributes},
             schema_name="default",
         )
     )
