@@ -79,6 +79,8 @@ else # Deploy the Cloud Run service
         --substitutions="_SURVEY=${survey},_TESTID=${testid},_MODULE_NAME=${cr_module_name},_REPOSITORY=${artifact_registry_repo}" \
         "${moduledir}" | sed -n 's/^Step #2: Service URL: \(.*\)$/\1/p')
 
+    gcloud run services update "${cr_module_name}" --memory 2G --region "${region}"
+
     echo "Creating trigger subscription for Cloud Run..."
     # WARNING:  This is set to retry failed deliveries. If there is a bug in main.py this will
     # retry indefinitely, until the message is delete manually.
