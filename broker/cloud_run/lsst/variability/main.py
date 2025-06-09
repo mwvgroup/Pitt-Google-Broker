@@ -63,10 +63,20 @@ def run():
         return str(exc), HTTP_400
 
     stetsonj_stats = _calculate_stetsonJ_statistics(alert_lite)
+    pg_variable = {}
+
+    if (
+        stetsonj_stats.get("n_detections_g_band", 0) >= 30
+        and stetsonj_stats.get("g_psfFluxStetsonJ", 0) > 20
+    ):
+        pg_variable = {"pg_variable": "likely"}
+    else:
+        pg_variable = {"pg_variable": "unlikely"}
+
     TOPIC.publish(
         pittgoogle.Alert.from_dict(
             {**alert_lite.dict, "variability": stetsonj_stats},
-            attributes={**alert_lite.attributes},
+            attributes={**alert_lite.attributes, **pg_variable},
             schema_name="default",
         )
     )
