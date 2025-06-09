@@ -55,7 +55,7 @@ define_GCP_resources() {
 #--- GCP resources used directly in this script
 artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
 broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
-bq_dataset_alerts=$(define_GCP_resources "${survey}")
+bq_dataset_alerts=$(define_GCP_resources "${survey}_alerts")
 bq_dataset_value_added=$(define_GCP_resources "${survey}_value_added")
 topic_alerts_raw=$(define_GCP_resources "${survey}-alerts_raw")
 topic_alerts=$(define_GCP_resources "${survey}-alerts")
