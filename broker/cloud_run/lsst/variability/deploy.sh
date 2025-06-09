@@ -1,6 +1,6 @@
 #! /bin/bash
-# Deploys or deletes broker Cloud Functions
-# This script will not delete Cloud Functions that are in production
+# Deploys or deletes broker Cloud Run service
+# This script will not delete Cloud Run services that are in production
 
 # "False" uses production resources
 # any other string will be appended to the names of all resources
