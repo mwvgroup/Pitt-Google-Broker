@@ -68,11 +68,17 @@ def run():
             attributes={
                 **alert_lite.attributes,
                 "pg_u_predicted_class": upsilon_dict["u_label"],
+                "pg_u_flag": upsilon_dict["u_flag"],
                 "pg_g_predicted_class": upsilon_dict["g_label"],
+                "pg_g_flag": upsilon_dict["g_flag"],
                 "pg_r_predicted_class": upsilon_dict["r_label"],
+                "pg_r_flag": upsilon_dict["r_flag"],
                 "pg_i_predicted_class": upsilon_dict["i_label"],
+                "pg_i_flag": upsilon_dict["i_flag"],
                 "pg_z_predicted_class": upsilon_dict["z_label"],
+                "pg_z_flag": upsilon_dict["z_flag"],
                 "pg_y_predicted_class": upsilon_dict["y_label"],
+                "pg_y_flag": upsilon_dict["y_flag"],
             },
             schema_name="default",
         )
