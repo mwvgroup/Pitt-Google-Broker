@@ -113,6 +113,9 @@ def _classify_with_UPSILoN(alert_lite: pittgoogle.Alert) -> Dict:
 
         # skip band if too few data points; limit set by UPSILoN
         if len(date) < 7:
+            outgoing_dict[f"{band}_label"] = None
+            outgoing_dict[f"{band}_probability"] = None
+            outgoing_dict[f"{band}_flag"] = None
             continue
 
         # extract features
