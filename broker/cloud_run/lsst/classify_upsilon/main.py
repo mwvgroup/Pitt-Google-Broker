@@ -65,7 +65,15 @@ def run():
     TOPIC.publish(
         pittgoogle.Alert.from_dict(
             {**alert_lite.dict, "upsilon": upsilon_dict},
-            attributes={**alert_lite.attributes},
+            attributes={
+                **alert_lite.attributes,
+                "pg_u_predicted_class": upsilon_dict["u_label"],
+                "pg_g_predicted_class": upsilon_dict["g_label"],
+                "pg_r_predicted_class": upsilon_dict["r_label"],
+                "pg_i_predicted_class": upsilon_dict["i_label"],
+                "pg_z_predicted_class": upsilon_dict["z_label"],
+                "pg_y_predicted_class": upsilon_dict["y_label"],
+            },
             schema_name="default",
         )
     )
