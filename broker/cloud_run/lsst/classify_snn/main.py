@@ -140,7 +140,7 @@ def _format_for_classifier(alert_lite: pittgoogle.Alert) -> pd.DataFrame:
     return snn_df
 
 
-def _create_dataframe(alert_dict: pittgoogle.Alert) -> "pd.DataFrame":
+def _create_dataframe(alert_dict: dict) -> "pd.DataFrame":
     """Return a pandas DataFrame containing the source detections."""
 
     # sources and previous sources are expected to have the same fields
