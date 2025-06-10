@@ -79,12 +79,6 @@ else # Deploy the Cloud Run service
         --substitutions="_SURVEY=${survey},_TESTID=${testid},_MODULE_NAME=${cr_module_name},_REPOSITORY=${artifact_registry_repo}" \
         "${moduledir}" | sed -n 's/^Step #2: Service URL: \(.*\)$/\1/p')
 
-    # ensure the Cloud Run service has the necessary permisions
-    role="roles/run.invoker"
-    gcloud run services add-iam-policy-binding "${cr_module_name}" \
-        --member="serviceAccount:${runinvoker_svcact}" \
-        --role="${role}"
-
     echo "Creating trigger subscription for Cloud Run..."
     # WARNING:  This is set to retry failed deliveries. If there is a bug in main.py this will
     # retry indefinitely, until the message is delete manually.
