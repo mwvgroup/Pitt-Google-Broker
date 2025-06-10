@@ -5,6 +5,7 @@
 
 import os
 from pathlib import Path
+from typing import Tuple
 
 import flask
 import google.cloud.logging
@@ -12,7 +13,6 @@ import numpy as np
 import pandas as pd
 import pittgoogle
 from supernnova.validation.validate_onthefly import classify_lcs
-from typing import Tuple
 from astropy.time import Time
 
 # [FIXME] Make this helpful or else delete it.
