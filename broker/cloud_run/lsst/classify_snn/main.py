@@ -1,20 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-"""Classify an alert using SuperNNova (Möller & de Boissière 2019).
 
-This code is intended to be containerized and deployed to Google Cloud Run.
-Once deployed, individual alerts in the "trigger" stream will be delivered to the container as HTTP requests.
-"""
+"""Classify an alert using SuperNNova (Möller & de Boissière 2019)."""
 
 import os
 from pathlib import Path
-import flask  # Manage the HTTP request containing the alert
-import pittgoogle  # Manipulate the alert and interact with cloud resources
+import flask
+import pittgoogle
 
 import google.cloud.logging
 import numpy as np
 import pandas as pd
-from supernnova.validation.validate_onthefly import classify_lcs  # Classify the alert
+from supernnova.validation.validate_onthefly import classify_lcs
 
 # [FIXME] Make this helpful or else delete it.
 # Connect the python logger to the google cloud logger.
@@ -23,13 +20,12 @@ from supernnova.validation.validate_onthefly import classify_lcs  # Classify the
 # We don't currently use the python logger directly in this script, but we could.
 google.cloud.logging.Client().setup_logging()
 
-# These environment variables are defined when running the deploy.sh script.
+# these environment variables are defined when running the deploy.sh script.
 PROJECT_ID = os.getenv("GCP_PROJECT")
 TESTID = os.getenv("TESTID")
 SURVEY = os.getenv("SURVEY")
 
 # provenance variables
-MODULE_NAME = "SuperNNova"
 MODULE_VERSION = 0.1
 
 # classifier variables
@@ -49,17 +45,11 @@ HTTP_204 = 204  # HTTP code: Success
 HTTP_400 = 400  # HTTP code: Bad Request
 
 # GCP resources used in this module
-# pittgoogle will construct the full resource names from the MODULE_NAME, SURVEY, and TESTID
+# pittgoogle will construct the full resource names from the module name, SURVEY, and TESTID
 TOPIC = pittgoogle.Topic.from_cloud(
-    MODULE_NAME, survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
-)
-TOPIC_BIGQUERY_IMPORT_SUPERNNOVA = pittgoogle.Topic.from_cloud(
-    "bigquery-import-SuperNNova", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
+    "SuperNNova", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
 )
 
-TOPIC_BIGQUERY_IMPORT_CLASSIFICATIONS = pittgoogle.Topic.from_cloud(
-    "bigquery-import-classifications", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
-)
 
 app = flask.Flask(__name__)
 
@@ -85,30 +75,32 @@ def run():
 
     # unpack the alert. raises a `BadRequest` if the envelope does not contain a valid message
     try:
-        alert = pittgoogle.Alert.from_cloud_run(envelope, "lsst")
+        alert_lite = pittgoogle.Alert.from_cloud_run(envelope, "default")
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
     # classify
-    snn_dict = _classify(alert)
-
-    # prepare data for publishing
-    classifier_summary = _classification_summary(snn_dict)
-    snn_alert = _create_outgoing_alert(alert, snn_dict)
-    snn_results = pittgoogle.Alert.from_dict(payload=snn_dict)
+    snn_dict = _classify(alert_lite)
 
     # publish
-    TOPIC.publish(snn_alert, serializer="json")
-    TOPIC_BIGQUERY_IMPORT_CLASSIFICATIONS.publish(classifier_summary, serializer="json")
-    TOPIC_BIGQUERY_IMPORT_SUPERNNOVA.publish(snn_results, serializer="json")
+    TOPIC.publish(
+        pittgoogle.Alert.from_dict(
+            payload={**alert_lite.dict, "SuperNNova": snn_dict},
+            attributes={
+                **alert_lite.attributes,
+                "pg_supernnova_class": snn_dict["predicted_class"],
+            },
+            schema_name="default",
+        )
+    )
 
     return "", HTTP_204
 
 
-def _classify(alert: pittgoogle.Alert) -> dict:
+def _classify(alert_lite: pittgoogle.Alert) -> dict:
     """Classify the alert using SuperNNova."""
     # init
-    snn_df = _format_for_classifier(alert)
+    snn_df = _format_for_classifier(alert_lite)
     device = "cpu"
 
     # classify
@@ -117,8 +109,8 @@ def _classify(alert: pittgoogle.Alert) -> dict:
     # use `.item()` to convert numpy -> python types for later serialization
     pred_probs = pred_probs.flatten()
     snn_dict = {
-        "diaObjectId": alert.objectid,
-        "diaSourceId": alert.sourceid,
+        "diaObjectId": alert_lite.dict["alert_lite"]["diaObject"]["diaObjectId"],
+        "diaSourceId": alert_lite.dict["alert_lite"]["diaSource"]["diaSourceId"],
         "prob_class0": pred_probs[0].item(),
         "prob_class1": pred_probs[1].item(),
         "predicted_class": np.argmax(pred_probs).item(),
@@ -127,19 +119,20 @@ def _classify(alert: pittgoogle.Alert) -> dict:
     return snn_dict
 
 
-def _format_for_classifier(alert: pittgoogle.Alert) -> pd.DataFrame:
+def _format_for_classifier(alert_lite: pittgoogle.Alert) -> pd.DataFrame:
     """Create a DataFrame for input to SuperNNova."""
-    alert_df = alert.dataframe
+    alert_lite_dict = alert_lite.dict["alert_lite"]
+    alert_df = _create_dataframe(alert_lite_dict)
     snn_df = pd.DataFrame(
         data={
             # select a subset of columns and rename them for SuperNNova
             # get_key returns the name that the survey uses for a given field
             # for the full mapping, see alert.schema.map
-            "SNID": [alert.objectid] * len(alert_df.index),
-            "FLT": alert_df[alert.get_key("filter")[1]],
-            "MJD": alert_df[alert.get_key("mjd")[1]],
-            "FLUXCAL": alert_df[alert.get_key("flux")[1]],
-            "FLUXCALERR": alert_df[alert.get_key("flux_err")[1]],
+            "SNID": [alert_lite_dict["diaObject"]["diaObjectId"]] * len(alert_df.index),
+            "FLT": alert_df["band"],
+            "MJD": alert_df["midpointMjdTai"],
+            "FLUXCAL": alert_df["psfFlux"],
+            "FLUXCALERR": alert_df["psfFluxErr"],
         },
         index=alert_df.index,
     )
@@ -147,24 +140,24 @@ def _format_for_classifier(alert: pittgoogle.Alert) -> pd.DataFrame:
     return snn_df
 
 
-def _create_outgoing_alert(alert: pittgoogle.Alert, snn_dict: dict) -> pittgoogle.Alert:
-    """Combine the incoming alert with the classification results to create the outgoing alert."""
+def _create_dataframe(alert_dict: pittgoogle.Alert) -> "pd.DataFrame":
+    """Return a pandas DataFrame containing the source detections."""
 
-    return pittgoogle.Alert.from_dict(
-        payload={**alert.dict, "SuperNNova": snn_dict},
-        attributes={"supernnova_class": snn_dict["predicted_class"], **alert.attributes},
+    # sources and previous sources are expected to have the same fields
+    sources_df = pd.DataFrame(
+        [alert_dict.get("diaSource")] + (alert_dict.get("prvDiaSources") or [])
     )
+    # sources and forced sources may have different fields
+    forced_df = pd.DataFrame(alert_dict.get("prvDiaForcedSources") or [])
 
+    # use nullable integer data type to avoid converting ints to floats
+    # for columns in one dataframe but not the other
+    sources_ints = [c for c, v in sources_df.dtypes.items() if v == int]
+    sources_df = sources_df.astype(
+        {c: "Int64" for c in set(sources_ints) - set(forced_df.columns)}
+    )
+    forced_ints = [c for c, v in forced_df.dtypes.items() if v == int]
+    forced_df = forced_df.astype({c: "Int64" for c in set(forced_ints) - set(sources_df.columns)})
+    _dataframe = pd.concat([sources_df, forced_df], ignore_index=True)
 
-def _classification_summary(snn_dict: dict) -> pittgoogle.Alert:
-    """Create a summary of the classification results for storage in BigQuery."""
-    classification_dict = {
-        "diaObjectId": snn_dict["diaObjectId"],
-        "diaSourceId": snn_dict["diaSourceId"],
-        "classifier": "purity",
-        "classifier_version": MODULE_VERSION,
-        "class": snn_dict["predicted_class"],
-        "probability": max(snn_dict["prob_class0"], snn_dict["prob_class1"]),
-    }
-
-    return pittgoogle.Alert.from_dict(payload={**classification_dict})
+    return _dataframe
