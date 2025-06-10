@@ -35,8 +35,9 @@ define_GCP_resources() {
 
 #--- GCP resources used in this script
 artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
-classify_snn_trigger_topic=$(define_GCP_resources "${survey}-tagged")
-ps_input_subscrip="${classify_snn_trigger_topic}" # Pub/Sub subscription used to trigger Cloud Run service
+trigger_topic=$(define_GCP_resources "${survey}-tagged")
+ps_input_subscrip=$(define_GCP_resources "${survey}-SuperNNova") # Pub/Sub subscription used to trigger Cloud Run service
+ps_output_topic=$(define_GCP_resources "${survey}-SuperNNova")
 
 # additional GCP resources & variables used in this script
 cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}")  # lower case required by Cloud Run
@@ -45,6 +46,7 @@ runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
 if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources
     if [ "${testid}" != "False" ]; then
+        gcloud pubsub topics delete "${ps_output_topic}"
         gcloud pubsub subscriptions delete "${ps_input_subscrip}"
         gcloud run services delete "${cr_module_name}" --region "${region}"
     fi
@@ -52,6 +54,9 @@ if [ "${teardown}" = "True" ]; then
 else
 
 #--- Deploy Cloud Run service
+    echo "Configuring Pub/Sub resources for classify_snn Cloud Run service..."
+    gcloud pubsub topics create "${ps_output_topic}"
+
     echo "Creating container image and deploying to Cloud Run..."
     moduledir="."  # deploys what's in our current directory
     config="${moduledir}/cloudbuild.yaml"
@@ -70,7 +75,7 @@ else
     # WARNING:  This is set to retry failed deliveries. If there is a bug in main.py this will
     # retry indefinitely, until the message is delete manually.
     gcloud pubsub subscriptions create "${ps_input_subscrip}" \
-        --topic "${classify_snn_trigger_topic}" \
+        --topic "${trigger_topic}" \
         --topic-project "${PROJECT_ID}" \
         --ack-deadline=600 \
         --push-endpoint="${url}${ROUTE_RUN}" \
