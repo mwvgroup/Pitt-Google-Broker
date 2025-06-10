@@ -42,7 +42,7 @@ define_GCP_resources() {
     local testid_suffix=""
 
     if [ "$testid" != "False" ]; then
-        if [ "$base_name" = "$survey" ]; then
+        if [ "$base_name" = "${survey}_alerts" ] || [ "$base_name" = "${survey}_value_added" ]; then
             testid_suffix="_${testid}"  # complies with BigQuery naming conventions
         else
             testid_suffix="-${testid}"
@@ -55,7 +55,8 @@ define_GCP_resources() {
 #--- GCP resources used directly in this script
 artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
 broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
-bq_dataset=$(define_GCP_resources "${survey}")
+bq_dataset_alerts=$(define_GCP_resources "${survey}_alerts")
+bq_dataset_value_added=$(define_GCP_resources "${survey}_value_added")
 topic_alerts_raw=$(define_GCP_resources "${survey}-alerts_raw")
 topic_alerts=$(define_GCP_resources "${survey}-alerts")
 topic_alerts_json=$(define_GCP_resources "${survey}-alerts-json")
@@ -67,7 +68,6 @@ deadletter_subscription_bigquery_import="${deadletter_topic_bigquery_import}"
 
 alerts_table="alerts_${versiontag}"
 supernnova_table="SuperNNova"
-classifications_table="classifications"
 
 # function used to create (or delete) GCP resources
 manage_resources() {
@@ -80,13 +80,12 @@ manage_resources() {
 
     if [ "$mode" = "setup" ]; then
         # create BigQuery dataset and table
-        bq --location="${region}" mk --dataset "${bq_dataset}"
-
-        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${alerts_table}" "bq_${survey}_${alerts_table}_schema.json") || exit 5
-        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${supernnova_table}" "bq_${survey}_${supernnova_table}_schema.json") || exit 5
-        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${classifications_table}" "bq_${survey}_${classifications_table}_schema.json") || exit 5
-        bq update --description "Alert data from LSST. This table is an archive of the lsst-alerts Pub/Sub stream. It has the same schema as the original alert bytes, including nested and repeated fields." "${PROJECT_ID}:${bq_dataset}.${alerts_table}"
-        bq update --description "Binary classification results from SuperNNova." "${PROJECT_ID}:${bq_dataset}.${supernnova_table}"
+        bq --location="${region}" mk --dataset "${bq_dataset_alerts}"
+        bq --location="${region}" mk --dataset "${bq_dataset_value_added}"
+        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset_alerts}.${alerts_table}" "bq_${survey}_${alerts_table}_schema.json") || exit 5
+        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset_value_added}.${supernnova_table}" "bq_${survey}_value_added_${supernnova_table}_schema.json") || exit 5
+        bq update --description "Alert data from LSST. This table is an archive of the lsst-alerts Pub/Sub stream. It has the same schema as the original alert bytes, including nested and repeated fields." "${PROJECT_ID}:${bq_dataset_alerts}.${alerts_table}"
+        bq update --description "Binary classification results from SuperNNova." "${PROJECT_ID}:${bq_dataset_value_added}.${supernnova_table}"
 
         # create broker bucket and upload files
         echo
@@ -124,10 +123,10 @@ manage_resources() {
         bq add-iam-policy-binding \
             --member="serviceAccount:${PUBSUB_SERVICE_ACCOUNT}" \
             --role="${roleid}" \
-            --table=true "${PROJECT_ID}:${bq_dataset}.${alerts_table}"
+            --table=true "${PROJECT_ID}:${bq_dataset_alerts}.${alerts_table}"
         gcloud pubsub subscriptions create "${subscription_bigquery_import}" \
             --topic="${topic_alerts_json}" \
-            --bigquery-table="${PROJECT_ID}:${bq_dataset}.${alerts_table}" \
+            --bigquery-table="${PROJECT_ID}:${bq_dataset_alerts}.${alerts_table}" \
             --use-table-schema \
             --drop-unknown-fields \
             --dead-letter-topic="${deadletter_topic_bigquery_import}" \
@@ -161,7 +160,8 @@ manage_resources() {
         if [ "$environment_type" = "testing" ]; then
             o="GSUtil:parallel_process_count=1" # disable multiprocessing for Macs
             gsutil -m -o "${o}" rm -r "gs://${broker_bucket}"
-            bq rm -r -f "${PROJECT_ID}:${bq_dataset}"
+            bq rm -r -f "${PROJECT_ID}:${bq_dataset_alerts}"
+            bq rm -r -f "${PROJECT_ID}:${bq_dataset_value_added}"
             gcloud pubsub topics delete "${topic_alerts_raw}"
             gcloud pubsub topics delete "${topic_alerts}"
             gcloud pubsub topics delete "${topic_alerts_json}"
@@ -205,10 +205,13 @@ echo "Configuring Cloud Run services..."
     cd ps_to_storage
     ./deploy.sh "$testid" "$teardown" "$survey" "$region"
 
+    #--- lite Cloud Run service
+    cd .. && cd lite
+    ./deploy.sh "$testid" "$teardown" "$survey" "$region"
+
     #--- classify_snn Cloud Run service
     cd .. && cd classify_snn
     ./deploy.sh "$testid" "$teardown" "$survey" "$region"
 
-    cd .. && cd lite
-    ./deploy.sh "$testid" "$teardown" "$survey" "$region"
+
 ) || exit
