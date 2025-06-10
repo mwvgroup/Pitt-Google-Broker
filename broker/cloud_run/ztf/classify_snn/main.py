@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
+
 """Classify alerts using SuperNNova (Möller & de Boissière 2019)."""
+
 import os
 from pathlib import Path
 
@@ -10,7 +12,8 @@ import numpy as np
 import pandas as pd
 import pittgoogle
 from supernnova.validation.validate_onthefly import classify_lcs
-from broker_utils import math
+from typing import Tuple
+from astropy.time import Time
 
 # [FIXME] Make this helpful or else delete it.
 # Connect the python logger to the google cloud logger.
@@ -68,7 +71,7 @@ def run():
     """
     try:
         alert_lite = pittgoogle.Alert.from_cloud_run(
-            envelope=flask.request.get_json(), schema_name="ztf"
+            envelope=flask.request.get_json(), schema_name="default"
         )
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
@@ -76,14 +79,22 @@ def run():
     snn_dict = _classify(alert_lite)
 
     # announce to Pub/Sub
-    TOPIC.publish(_create_outgoing_alert(alert_lite, snn_dict))
+    TOPIC.publish(
+        pittgoogle.Alert.from_dict(
+            payload={**alert_lite.dict, "SuperNNova": snn_dict},
+            attributes={
+                **alert_lite.attributes,
+                "pg_supernnova_class": snn_dict["predicted_class"],
+            },
+        )
+    )
 
     # store in BigQuery
     TABLE_SUPERNNOVA.insert_rows(
         [
             {
-                "objectId": alert_lite["alertIds"]["objectId"],
-                "candid": alert_lite["alertIds"]["sourceId"],
+                "objectId": alert_lite.dict["alertIds"]["objectId"],
+                "candid": alert_lite["alertIds"]["candid"],
             },
             snn_dict,
         ]
@@ -91,8 +102,8 @@ def run():
     TABLE_CLASSIFICATIONS.insert_rows(
         [
             {
-                "objectId": alert_lite.objectid,
-                "candid": alert_lite.attributes.get("candid"),
+                "objectId": alert_lite.dict["alertIds"]["objectId"],
+                "candid": alert_lite["alertIds"]["candid"],
                 "classifier": "purity",
                 "classifier_version": CLASSIFIER_VERSION,
                 "class": snn_dict["predicted_class"],
@@ -125,18 +136,19 @@ def _classify(alert_lite: pittgoogle.Alert) -> dict:
 
 def _format_for_snn(alert_lite: pittgoogle.Alert) -> pd.DataFrame:
     """Create a DataFrame for input to SuperNNova."""
-    alert_df = alert_lite.dataframe
-    fluxcal, fluxcalerr = math.mag_to_flux(
-        alert_df[alert_lite.get_key("mag")],
-        alert_df[alert_lite.get_key("mag_zp")],
-        alert_df[alert_lite.get_key("mag_err")],
+    alert_lite_dict = alert_lite.dict
+    alert_df = _create_dataframe(alert_lite_dict)
+    fluxcal, fluxcalerr = mag_to_flux(
+        alert_df["mag"],
+        alert_df["magzp"],
+        alert_df["magerr"],
     )
 
     snn_df = pd.DataFrame(
         data={
-            "SNID": [alert_lite.objectid] * len(alert_df.index),
-            "FLT": alert_df[alert_lite.get_key("filter")].map(pittgoogle.utils.ztf_fid_names()),
-            "MJD": math.jd_to_mjd(alert_df["jd"].loc[0]),
+            "SNID": [alert_lite.dict["alertIds"]["objectId"]] * len(alert_df.index),
+            "FLT": alert_df["fid"].map(pittgoogle.utils.ztf_fid_names()),
+            "MJD": jd_to_mjd(alert_df["jd"].loc[0]),
             "FLUXCAL": fluxcal,
             "FLUXCALERR": fluxcalerr,
         },
@@ -145,8 +157,27 @@ def _format_for_snn(alert_lite: pittgoogle.Alert) -> pd.DataFrame:
     return snn_df
 
 
-def _create_outgoing_alert(alert: pittgoogle.Alert, snn_dict: dict) -> pittgoogle.Alert:
-    return pittgoogle.Alert.from_dict(
-        payload={**alert.dict, "SuperNNova": snn_dict},
-        attributes={"supernnova_class": snn_dict["predicted_class"], **alert.attributes},
-    )
+def _create_dataframe(alert_dict: dict) -> "pd.DataFrame":
+    """Return a pandas DataFrame containing the source detections."""
+
+    # sources and previous sources are expected to have the same fields
+    sources_df = pd.DataFrame([alert_dict.get("source")] + (alert_dict.get("prvSources") or []))
+
+    # use nullable integer data type to avoid converting ints to floats
+    # for columns in one dataframe but not the other
+    sources_ints = [c for c, v in sources_df.dtypes.items() if v == int]
+    _dataframe = sources_df.astype({c: "Int64" for c in sources_ints})
+
+    return _dataframe
+
+
+def mag_to_flux(mag: float, zeropoint: float, magerr: float) -> Tuple[float, float]:
+    """Convert an AB magnitude and its error to fluxes."""
+    flux = 10 ** ((zeropoint - mag) / 2.5)
+    fluxerr = flux * magerr * np.log(10 / 2.5)
+    return flux, fluxerr
+
+
+def jd_to_mjd(jd: float) -> float:
+    """Convert Julian Date to modified Julian Date."""
+    return Time(jd, format="jd").mjd
