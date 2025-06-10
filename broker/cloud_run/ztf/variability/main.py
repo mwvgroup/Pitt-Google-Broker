@@ -4,7 +4,7 @@
 """This module produces "value-added" lite alerts containing StetsonJ statistics on the DIA point source fluxes."""
 
 import os
-from typing import Dict
+from typing import Dict, Tuple
 import numpy as np
 import pandas as pd
 import flask
@@ -90,21 +90,26 @@ def _calculate_stetsonJ_statistics(alert_lite: pittgoogle.Alert) -> Dict:
 
     Compute the StetsonJ statistics on the DIA point source fluxes for each band.
     """
-    alert_lite_dict = alert_lite.dict["alert_lite"]
+    alert_lite_dict = alert_lite.dict
     alert_df = _create_dataframe(alert_lite_dict)
-    bands = alert_df["band"].unique()
+    bands = alert_df["fid"].map(pittgoogle.utils.ztf_fid_names()).unique()
     outgoing_dict = {
-        "diaObjectId": alert_lite_dict["diaObject"]["diaObjectId"],
-        "diaSourceId": alert_lite_dict["diaSource"]["diaSourceId"],
+        "objectId": alert_lite.dict["alertIds"]["objectId"],
+        "candid": alert_lite.dict["alertIds"]["candid"],
     }
 
     # filter diaSource(s) in alert_df based on the filter(s) used
     for band in bands:
-        filter_diaSources = alert_df[alert_df["band"] == band]
+        filter_diaSources = alert_df[alert_df["fid"].map(pittgoogle.utils.ztf_fid_names()) == band]
+        flux, flux_err = mag_to_flux(
+            filter_diaSources["mag"],
+            filter_diaSources["magzp"],
+            filter_diaSources["magerr"],
+        )
         tmp_df = filter_diaSources[
             ~np.logical_or(
-                np.isnan(filter_diaSources["psfFlux"]),
-                np.isnan(filter_diaSources["psfFluxErr"]),
+                np.isnan(flux),
+                np.isnan(flux_err),
             )
         ]
 
@@ -113,35 +118,33 @@ def _calculate_stetsonJ_statistics(alert_lite: pittgoogle.Alert) -> Dict:
             outgoing_dict[f"{band}_psfFluxStetsonJ"] = np.nan
             continue
 
-        fluxes = tmp_df["psfFlux"].to_numpy()
-        errors = tmp_df["psfFluxErr"].to_numpy()
+        fluxes = tmp_df[flux].to_numpy()
+        errors = tmp_df[flux_err].to_numpy()
         outgoing_dict[f"n_detections_{band}_band"] = len(tmp_df)
         outgoing_dict[f"{band}_psfFluxStetsonJ"] = _stetson_J(fluxes, errors)
 
     return outgoing_dict
 
 
-def _create_dataframe(alert_dict: pittgoogle.Alert) -> "pd.DataFrame":
+def _create_dataframe(alert_dict: dict) -> "pd.DataFrame":
     """Return a pandas DataFrame containing the source detections."""
 
     # sources and previous sources are expected to have the same fields
-    sources_df = pd.DataFrame(
-        [alert_dict.get("diaSource")] + (alert_dict.get("prvDiaSources") or [])
-    )
-    # sources and forced sources may have different fields
-    forced_df = pd.DataFrame(alert_dict.get("prvDiaForcedSources") or [])
+    sources_df = pd.DataFrame([alert_dict.get("source")] + (alert_dict.get("prvSources") or []))
 
     # use nullable integer data type to avoid converting ints to floats
     # for columns in one dataframe but not the other
     sources_ints = [c for c, v in sources_df.dtypes.items() if v == int]
-    sources_df = sources_df.astype(
-        {c: "Int64" for c in set(sources_ints) - set(forced_df.columns)}
-    )
-    forced_ints = [c for c, v in forced_df.dtypes.items() if v == int]
-    forced_df = forced_df.astype({c: "Int64" for c in set(forced_ints) - set(sources_df.columns)})
+    _dataframe = sources_df.astype({c: "Int64" for c in sources_ints})
 
-    _dataframe = pd.concat([sources_df, forced_df], ignore_index=True)
     return _dataframe
+
+
+def mag_to_flux(mag: float, zeropoint: float, magerr: float) -> Tuple[float, float]:
+    """Convert an AB magnitude and its error to fluxes."""
+    flux = 10 ** ((zeropoint - mag) / 2.5)
+    fluxerr = flux * magerr * np.log(10 / 2.5)
+    return flux, fluxerr
 
 
 def _stetson_J(fluxes: np.ndarray, errors: np.ndarray) -> float:
