@@ -75,7 +75,7 @@ else # Deploy the Cloud Run service
     bq add-iam-policy-binding \
         --member="serviceAccount:${PUBSUB_SERVICE_ACCOUNT}" \
         --role="${roleid}" \
-        --table=true "${PROJECT_ID}:${bq_dataset}.${supernnova_table}"
+        --table=true "${PROJECT_ID}:${bq_dataset}.${bq_table}"
     gcloud pubsub subscriptions create "${bq_subscription}" \
         --topic="${ps_output_topic}" \
         --bigquery-table="${PROJECT_ID}:${bq_dataset}.${bq_table}" \
