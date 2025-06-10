@@ -91,7 +91,7 @@ def _classify_with_UPSILoN(alert_lite: pittgoogle.Alert) -> Dict:
     # extract the alert
     alert_lite_dict = alert_lite.dict["alert_lite"]
     alert_df = _create_dataframe(alert_lite_dict)
-    bands = alert_df["band"].unique()
+    bands = ["u", "g", "r", "i", "z", "y"]
     outgoing_dict = {
         "diaObjectId": alert_lite_dict["diaObject"]["diaObjectId"],
         "diaSourceId": alert_lite_dict["diaSource"]["diaSourceId"],
@@ -103,6 +103,13 @@ def _classify_with_UPSILoN(alert_lite: pittgoogle.Alert) -> Dict:
         # define parameters for feature extractions
         filter_diaSources = alert_df[alert_df["band"] == band]
         mask = filter_diaSources["psfFlux"].to_numpy() > 0
+        # set output to None if data is absent or there are too few data points for this band; limit set by UPSILoN
+        if filter_diaSources.empty or mask.sum() < 7:
+            outgoing_dict[f"{band}_label"] = None
+            outgoing_dict[f"{band}_probability"] = None
+            outgoing_dict[f"{band}_flag"] = None
+            continue
+
         flux = filter_diaSources["psfFlux"].to_numpy()[mask]
         flux_err = filter_diaSources["psfFluxErr"].to_numpy()[mask]
 
@@ -110,13 +117,6 @@ def _classify_with_UPSILoN(alert_lite: pittgoogle.Alert) -> Dict:
         date = filter_diaSources["midpointMjdTai"].to_numpy()[mask]
         mag = _convert_flux_to_mag(flux)
         mag_err = _calculate_mag_err(flux, flux_err)
-
-        # skip band if too few data points; limit set by UPSILoN
-        if len(date) < 7:
-            outgoing_dict[f"{band}_label"] = None
-            outgoing_dict[f"{band}_probability"] = None
-            outgoing_dict[f"{band}_flag"] = None
-            continue
 
         # extract features
         e_features = upsilon.ExtractFeatures(date, mag, mag_err)
