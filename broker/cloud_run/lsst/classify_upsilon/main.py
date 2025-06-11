@@ -36,9 +36,12 @@ TOPIC = pittgoogle.Topic.from_cloud("upsilon", survey=SURVEY, testid=TESTID, pro
 
 app = flask.Flask(__name__)
 
+# load UPSILoN's classification model
+rf_model = upsilon.load_rf_model()
+
 
 @app.route(ROUTE_RUN, methods=["POST"])
-def run():
+def run() -> tuple[str, int]:
     """Classify alert with UPSILoN; publish and store results.
 
     This module is intended to be deployed as a Cloud Run service. It will operate as an HTTP endpoint
@@ -59,11 +62,11 @@ def run():
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
-    upsilon_dict = _classify_with_UPSILoN(alert_lite)
+    upsilon_dict = _classify_with_upsilon(alert_lite)
 
     TOPIC.publish(
         pittgoogle.Alert.from_dict(
-            {**alert_lite.dict, "upsilon": upsilon_dict},
+            {"alert_lite": alert_lite.dict, "upsilon": upsilon_dict},
             attributes={
                 **alert_lite.attributes,
                 "pg_upsilon_u_label": upsilon_dict["u_label"],
@@ -86,7 +89,7 @@ def run():
     return "", HTTP_204
 
 
-def _classify_with_UPSILoN(alert_lite: pittgoogle.Alert) -> Dict:
+def _classify_with_upsilon(alert_lite: pittgoogle.Alert) -> dict:
     # extract the alert
     alert_lite_dict = alert_lite.dict["alert_lite"]
     alert_df = _create_dataframe(alert_lite_dict)
@@ -96,24 +99,23 @@ def _classify_with_UPSILoN(alert_lite: pittgoogle.Alert) -> Dict:
         "diaSourceId": alert_lite_dict["diaSource"]["diaSourceId"],
     }
 
-    # load UPSILoN's classification model
-    rf_model = upsilon.load_rf_model()
     for band in bands:
         # define parameters for feature extractions
         filter_diaSources = alert_df[alert_df["band"] == band]
-        mask = filter_diaSources["psfFlux"].to_numpy() > 0
+        flux_gt_zero = filter_diaSources["psfFlux"].to_numpy() > 0
+
         # set output to None if data is absent or there are too few data points for this band; limit set by UPSILoN
-        if filter_diaSources.empty or mask.sum() < 7:
+        if filter_diaSources.empty or flux_gt_zero.sum() < 7:
             outgoing_dict[f"{band}_label"] = None
             outgoing_dict[f"{band}_probability"] = None
             outgoing_dict[f"{band}_flag"] = None
             continue
 
-        flux = filter_diaSources["psfFlux"].to_numpy()[mask]
-        flux_err = filter_diaSources["psfFluxErr"].to_numpy()[mask]
+        flux = filter_diaSources["psfFlux"].to_numpy()[flux_gt_zero]
+        flux_err = filter_diaSources["psfFluxErr"].to_numpy()[flux_gt_zero]
 
         # UPSILoN requires three features to make a prediction, define them below:
-        date = filter_diaSources["midpointMjdTai"].to_numpy()[mask]
+        date = filter_diaSources["midpointMjdTai"].to_numpy()[flux_gt_zero]
         mag = _convert_flux_to_mag(flux)
         mag_err = _calculate_mag_err(flux, flux_err)
 
@@ -131,7 +133,7 @@ def _classify_with_UPSILoN(alert_lite: pittgoogle.Alert) -> Dict:
     return outgoing_dict
 
 
-def _create_dataframe(alert_dict: pittgoogle.Alert) -> "pd.DataFrame":
+def _create_dataframe(alert_dict: pittgoogle.Alert) -> pd.DataFrame:
     """Return a pandas DataFrame containing the source detections."""
 
     # sources and previous sources are expected to have the same fields
@@ -154,7 +156,7 @@ def _create_dataframe(alert_dict: pittgoogle.Alert) -> "pd.DataFrame":
     return _dataframe
 
 
-def _convert_flux_to_mag(flux: np.ndarray) -> float:
+def _convert_flux_to_mag(flux: np.ndarray) -> np.ndarray:
     """Adapted from:
     https://github.com/lsst/tutorial-notebooks/blob/044219c9ae5521edcc816af88e4b341e19326dbf/DP0.2/01_Introduction_to_DP02.ipynb#L511
 
@@ -163,6 +165,6 @@ def _convert_flux_to_mag(flux: np.ndarray) -> float:
     return -2.50 * np.log10(flux) + 31.4
 
 
-def _calculate_mag_err(flux: np.ndarray, flux_err: np.ndarray) -> float:
+def _calculate_mag_err(flux: np.ndarray, flux_err: np.ndarray) -> np.ndarray:
     """Calculates magnitude uncertainty."""
-    return (-1.08574 / flux) * flux_err
+    return abs(-2.5 / (flux * np.log(10))) * flux_err
