@@ -162,7 +162,7 @@ def _convert_flux_to_mag(flux: np.ndarray) -> np.ndarray:
 
     Converts flux [nJy] to AB magnitude.
     """
-    return -2.50 * np.log10(flux) + 31.4
+    return -2.5 * np.log10(flux) + 31.4
 
 
 def _calculate_mag_err(flux: np.ndarray, flux_err: np.ndarray) -> np.ndarray:
