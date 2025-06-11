@@ -4,7 +4,6 @@
 """Classify alerts using UPSILoN (Kim & Bailer-Jones 2015)."""
 
 import os
-from typing import Dict
 import flask
 import pandas as pd
 import numpy as np
