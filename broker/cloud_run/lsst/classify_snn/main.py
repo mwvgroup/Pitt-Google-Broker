@@ -85,7 +85,7 @@ def run():
     # publish
     TOPIC.publish(
         pittgoogle.Alert.from_dict(
-            payload={**alert_lite.dict, "SuperNNova": snn_dict},
+            payload={"alert_lite": alert_lite.dict, "SuperNNova": snn_dict},
             attributes={
                 **alert_lite.attributes,
                 "pg_supernnova_class": snn_dict["predicted_class"],
