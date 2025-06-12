@@ -1,0 +1,130 @@
+[
+    {
+      "description": "Classification results using UPSILoN (Kim & Bailer-Jones 2015).",
+      "fields": [
+          {
+            "description": "Unique identifier of this DiaObject.",
+            "mode": "REQUIRED",
+            "name": "diaObjectId",
+            "type": "FLOAT"
+          },
+          {
+            "description": "Unique identifier of this DiaSource.",
+            "mode": "REQUIRED",
+            "name": "diaSourceId",
+            "type": "INTEGER"
+          },
+          {
+            "description": "Predicted class using u band photometry.",
+            "mode": "NULLABLE",
+            "name": "u_label",
+            "type": "STRING"
+          },
+          {
+            "description": "Predicted class using g band photometry.",
+            "mode": "NULLABLE",
+            "name": "g_label",
+            "type": "STRING"
+          },
+          {
+            "description": "Predicted class using r band photometry.",
+            "mode": "NULLABLE",
+            "name": "r_label",
+            "type": "STRING"
+          },
+          {
+            "description": "Predicted class using i band photometry.",
+            "mode": "NULLABLE",
+            "name": "i_label",
+            "type": "STRING"
+          },
+          {
+            "description": "Predicted class using z band photometry.",
+            "mode": "NULLABLE",
+            "name": "z_label",
+            "type": "STRING"
+          },
+          {
+            "description": "Predicted class using y band photometry.",
+            "mode": "NULLABLE",
+            "name": "y_label",
+            "type": "STRING"
+          },
+          {
+            "description": "Class probability for u_label.",
+            "mode": "NULLABLE",
+            "name": "u_probability",
+            "type": "FLOAT"
+          },
+          {
+            "description": "Class probability for g_label.",
+            "mode": "NULLABLE",
+            "name": "g_probability",
+            "type": "FLOAT"
+          },
+          {
+            "description": "Class probability for r_label.",
+            "mode": "NULLABLE",
+            "name": "r_probability",
+            "type": "FLOAT"
+          },
+          {
+            "description": "Class probability for i_label.",
+            "mode": "NULLABLE",
+            "name": "i_probability",
+            "type": "FLOAT"
+          },
+          {
+            "description": "Class probability for z_label.",
+            "mode": "NULLABLE",
+            "name": "z_probability",
+            "type": "FLOAT"
+          },
+          {
+            "description": "Class probability for y_label.",
+            "mode": "NULLABLE",
+            "name": "y_probability",
+            "type": "FLOAT"
+          },
+          {
+            "description": "u band flag. 0 if classification is successful, 1 if the period_SNR is lower than 20, or if the period is in the range of period alias",
+            "mode": "NULLABLE",
+            "name": "u_flag",
+            "type": "INTEGER"
+          },
+          {
+            "description": "g band flag. 0 if classification is successful, 1 if the period_SNR is lower than 20, or if the period is in the range of period alias",
+            "mode": "NULLABLE",
+            "name": "g_flag",
+            "type": "INTEGER"
+          },
+          {
+            "description": "r band flag. 0 if classification is successful, 1 if the period_SNR is lower than 20, or if the period is in the range of period alias",
+            "mode": "NULLABLE",
+            "name": "r_flag",
+            "type": "INTEGER"
+          },
+          {
+            "description": "i band flag. 0 if classification is successful, 1 if the period_SNR is lower than 20, or if the period is in the range of period alias",
+            "mode": "NULLABLE",
+            "name": "i_flag",
+            "type": "INTEGER"
+          },
+          {
+            "description": "z band flag. 0 if classification is successful, 1 if the period_SNR is lower than 20, or if the period is in the range of period alias",
+            "mode": "NULLABLE",
+            "name": "z_flag",
+            "type": "INTEGER"
+          },
+          {
+            "description": "y band flag. 0 if classification is successful, 1 if the period_SNR is lower than 20, or if the period is in the range of period alias",
+            "mode": "NULLABLE",
+            "name": "y_flag",
+            "type": "INTEGER"
+          }
+      ],
+      "mode": "REQUIRED",
+      "name": "upsilon",
+      "type": "RECORD"
+    }
+]
