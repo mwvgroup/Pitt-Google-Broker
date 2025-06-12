@@ -207,7 +207,7 @@ echo "Configuring Cloud Functions..."
     cd .. && cd .. && cd .. && cd cloud_run
 
     #--- variability Cloud Run service
-    cd ztf
+    cd ztf && cd variability
     ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
 
 ) || exit
