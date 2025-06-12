@@ -75,7 +75,7 @@ def run():
 
     TOPIC.publish(
         pittgoogle.Alert.from_dict(
-            {**alert_lite.dict, "variability": stetsonj_stats},
+            {"alert_lite": alert_lite.dict, "variability": stetsonj_stats},
             attributes={**alert_lite.attributes, **pg_variable},
             schema_name="default",
         )
@@ -92,24 +92,22 @@ def _calculate_stetsonJ_statistics(alert_lite: pittgoogle.Alert) -> Dict:
     """
     alert_lite_dict = alert_lite.dict
     alert_df = _create_dataframe(alert_lite_dict)
-    bands = alert_df["fid"].map(pittgoogle.utils.ztf_fid_names()).unique()
+    bands = alert_df["filter"].map(pittgoogle.utils.ztf_fid_names()).unique()
     outgoing_dict = {
         "objectId": alert_lite.dict["alertIds"]["objectId"],
-        "candid": alert_lite.dict["alertIds"]["candid"],
+        "sourceId": alert_lite.dict["alertIds"]["sourceId"],
     }
 
     # filter diaSource(s) in alert_df based on the filter(s) used
     for band in bands:
-        filter_diaSources = alert_df[alert_df["fid"].map(pittgoogle.utils.ztf_fid_names()) == band]
-        flux, flux_err = mag_to_flux(
-            filter_diaSources["mag"],
-            filter_diaSources["magzp"],
-            filter_diaSources["magerr"],
-        )
+        filter_diaSources = alert_df[
+            alert_df["filter"].map(pittgoogle.utils.ztf_fid_names()) == band
+        ]
         tmp_df = filter_diaSources[
             ~np.logical_or(
-                np.isnan(flux),
-                np.isnan(flux_err),
+                np.isnan(filter_diaSources["mag"]),
+                np.isnan(filter_diaSources["magerr"]),
+                np.isnan(filter_diaSources["magzp"]),
             )
         ]
 
@@ -118,15 +116,18 @@ def _calculate_stetsonJ_statistics(alert_lite: pittgoogle.Alert) -> Dict:
             outgoing_dict[f"{band}_psfFluxStetsonJ"] = np.nan
             continue
 
-        fluxes = tmp_df[flux].to_numpy()
-        errors = tmp_df[flux_err].to_numpy()
+        fluxes, errors = _mag_to_flux(
+            tmp_df["mag"],
+            tmp_df["magzp"],
+            tmp_df["magerr"],
+        )
         outgoing_dict[f"n_detections_{band}_band"] = len(tmp_df)
-        outgoing_dict[f"{band}_psfFluxStetsonJ"] = _stetson_J(fluxes, errors)
+        outgoing_dict[f"{band}_psfFluxStetsonJ"] = _stetson_J(fluxes.to_numpy(), errors.to_numpy())
 
     return outgoing_dict
 
 
-def _create_dataframe(alert_dict: dict) -> "pd.DataFrame":
+def _create_dataframe(alert_dict: dict) -> pd.DataFrame:
     """Return a pandas DataFrame containing the source detections."""
 
     # sources and previous sources are expected to have the same fields
@@ -140,7 +141,7 @@ def _create_dataframe(alert_dict: dict) -> "pd.DataFrame":
     return _dataframe
 
 
-def mag_to_flux(mag: float, zeropoint: float, magerr: float) -> Tuple[float, float]:
+def _mag_to_flux(mag: float, zeropoint: float, magerr: float) -> Tuple[float, float]:
     """Convert an AB magnitude and its error to fluxes."""
     flux = 10 ** ((zeropoint - mag) / 2.5)
     fluxerr = flux * magerr * np.log(10 / 2.5)
