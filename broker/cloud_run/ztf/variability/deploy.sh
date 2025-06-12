@@ -39,7 +39,7 @@ cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}")  # lower case 
 ps_input_subscrip=$(define_GCP_resources "${survey}-${MODULE_NAME}") # pub/sub subscription used to trigger cloud run module
 ps_output_topic=$(define_GCP_resources "${survey}-${MODULE_NAME}")
 runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
-trigger_topic=$(define_GCP_resources "${survey}-lite")
+trigger_topic=$(define_GCP_resources "${survey}-tagged")
 # topics and subscriptions involved in writing data to BigQuery
 bq_subscription=$(define_GCP_resources "${survey}-${MODULE_NAME}-bigquery-import") # BigQuery subscription
 ps_deadletter_topic=$(define_GCP_resources "${survey}-${MODULE_NAME}-bigquery-import-deadletter")
