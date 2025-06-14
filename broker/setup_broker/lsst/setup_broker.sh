@@ -68,6 +68,7 @@ deadletter_subscription_bigquery_import="${deadletter_topic_bigquery_import}"
 
 alerts_table="alerts_${versiontag}"
 supernnova_table="SuperNNova"
+variability_table="variability"
 upsilon_table="upsilon"
 
 # function used to create (or delete) GCP resources
@@ -80,12 +81,14 @@ manage_resources() {
     fi
 
     if [ "$mode" = "setup" ]; then
-        # create BigQuery dataset and table
+        # create BigQuery datasets and tables
         bq --location="${region}" mk --dataset "${bq_dataset_alerts}"
         bq --location="${region}" mk --dataset "${bq_dataset_value_added}"
         (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset_alerts}.${alerts_table}" "bq_${survey}_${alerts_table}_schema.json") || exit 5
         (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset_value_added}.${supernnova_table}" "bq_${survey}_value_added_${supernnova_table}_schema.json") || exit 5
+        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset_value_added}.${variability_table}" "bq_${survey}_value_added_${variability_table}_schema.json") || exit 5
         (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset_value_added}.${upsilon_table}" "bq_${survey}_value_added_${upsilon_table}_schema.json") || exit 5
+
         bq update --description "Alert data from LSST. This table is an archive of the lsst-alerts Pub/Sub stream. It has the same schema as the original alert bytes, including nested and repeated fields." "${PROJECT_ID}:${bq_dataset_alerts}.${alerts_table}"
         bq update --description "Binary classification results from SuperNNova." "${PROJECT_ID}:${bq_dataset_value_added}.${supernnova_table}"
 
@@ -210,10 +213,13 @@ echo "Configuring Cloud Run services..."
     #--- lite Cloud Run service
     cd .. && cd lite
     ./deploy.sh "$testid" "$teardown" "$survey" "$region"
-
+    
     #--- classify_snn Cloud Run service
     cd .. && cd classify_snn
     ./deploy.sh "$testid" "$teardown" "$survey" "$region"
+
+    #--- variability Cloud Run service
+    cd .. && cd variability
 
     #--- classify_upsilon Cloud Run service
     cd .. && cd classify_upsilon
