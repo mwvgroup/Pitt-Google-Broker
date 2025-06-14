@@ -1,0 +1,23 @@
+pandas==1.5.1
+numpy==1.23.3
+google-cloud-functions
+google-cloud-logging
+pittgoogle-client>=0.3.15
+
+# for Cloud Run
+# https://cloud.google.com/run/docs/quickstarts/build-and-deploy/deploy-python-service
+Flask
+gunicorn
+Werkzeug
+
+# for SuperNNova
+colorama
+h5py
+natsort
+scikit-learn
+seaborn
+supernnova
+tqdm
+# install torch from wheel because cloud fncs don't support GPUs
+# https://stackoverflow.com/questions/55449313/google-cloud-function-python-3-7-requirements-txt-makes-deploy-fail
+https://download.pytorch.org/whl/cpu/torch-2.2.0%2Bcpu-cp311-cp311-linux_x86_64.whl#sha256=2a8ff4440c1f024ad7982018c378470d2ae0a72f2bc269a22b1a677e09bdd3b1

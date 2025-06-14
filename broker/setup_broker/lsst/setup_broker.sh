@@ -67,6 +67,7 @@ deadletter_topic_bigquery_import=$(define_GCP_resources "${survey}-bigquery-impo
 deadletter_subscription_bigquery_import="${deadletter_topic_bigquery_import}"
 
 alerts_table="alerts_${versiontag}"
+supernnova_table="SuperNNova"
 variability_table="variability"
 upsilon_table="upsilon"
 
@@ -84,10 +85,12 @@ manage_resources() {
         bq --location="${region}" mk --dataset "${bq_dataset_alerts}"
         bq --location="${region}" mk --dataset "${bq_dataset_value_added}"
         (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset_alerts}.${alerts_table}" "bq_${survey}_${alerts_table}_schema.json") || exit 5
+        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset_value_added}.${supernnova_table}" "bq_${survey}_value_added_${supernnova_table}_schema.json") || exit 5
         (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset_value_added}.${variability_table}" "bq_${survey}_value_added_${variability_table}_schema.json") || exit 5
         (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset_value_added}.${upsilon_table}" "bq_${survey}_value_added_${upsilon_table}_schema.json") || exit 5
 
         bq update --description "Alert data from LSST. This table is an archive of the lsst-alerts Pub/Sub stream. It has the same schema as the original alert bytes, including nested and repeated fields." "${PROJECT_ID}:${bq_dataset_alerts}.${alerts_table}"
+        bq update --description "Binary classification results from SuperNNova." "${PROJECT_ID}:${bq_dataset_value_added}.${supernnova_table}"
 
         # create broker bucket and upload files
         echo
@@ -112,8 +115,11 @@ manage_resources() {
         gcloud pubsub topics create "${topic_alerts}"
         gcloud pubsub topics create "${topic_alerts_json}"
         gcloud pubsub topics create "${deadletter_topic_bigquery_import}"
-        gcloud pubsub subscriptions create "${subscription_reservoir}" --topic="${topic_alerts}"
-        gcloud pubsub subscriptions create "${deadletter_subscription_bigquery_import}" --topic="${deadletter_topic_bigquery_import}"
+        gcloud pubsub subscriptions create "${deadletter_subscription_bigquery_import}" \
+            --topic="${deadletter_topic_bigquery_import}"
+        gcloud pubsub subscriptions create "${subscription_reservoir}" \
+            --topic="${topic_alerts}"
+
         # in order to create BigQuery subscriptions, ensure that the following service account:
         # service-<project number>@gcp-sa-pubsub.iam.gserviceaccount.com" has the
         # bigquery.dataEditor role for each table
@@ -206,6 +212,10 @@ echo "Configuring Cloud Run services..."
 
     #--- lite Cloud Run service
     cd .. && cd lite
+    ./deploy.sh "$testid" "$teardown" "$survey" "$region"
+    
+    #--- classify_snn Cloud Run service
+    cd .. && cd classify_snn
     ./deploy.sh "$testid" "$teardown" "$survey" "$region"
 
     #--- variability Cloud Run service
