@@ -10,7 +10,9 @@ Updated June 2025 - Author: Christopher Hernández
 
 ## Overview
 
-Swift is a MidEx class mission operated by NASA in partnership with agencies in Italy and the United Kingdom. BAT autonomously detects gamma-ray transients, and Swift autonomously begins a sequence of follow-up observations with XRT and UVOT. All three instruments provide alerts to GCN autonomously upon the detection of transients.
+Swift is a MidEx class mission operated by NASA in partnership with agencies in Italy and the United Kingdom. BAT
+autonomously detects gamma-ray transients, and Swift autonomously begins a sequence of follow-up observations with XRT
+and UVOT. All three instruments provide alerts to GCN autonomously upon the detection of transients.
 Here are some links which were used as a reference to set this up:
 
 - [Start streaming GCN Notices quick start quide](https://gcn.nasa.gov/quickstart)
