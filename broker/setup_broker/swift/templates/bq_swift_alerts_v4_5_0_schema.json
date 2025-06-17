@@ -1,0 +1,275 @@
+[
+    {
+        "name": "follow_up_event",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "Name or trigger time of the external trigger that launched the search."
+    },
+    {
+        "name": "follow_up_type",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "Type of external trigger that launched the search, eg GW, neutrino, etc."
+    },
+    {
+        "name": "alert_datetime",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "Date and time of notice creation [UTC, ISO 8601], ex YYYY-MM-DDTHH:MM:SS.ssssssZ."
+    },
+    {
+        "name": "alert_tense",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "Indication of whether this alert refers to a recent observation (current), re-analysis of archival data (archival), a planned observation in the future (planned), a signal injection (injection), commanded trigger (commanded) or a test trigger (test)."
+    },
+    {
+        "name": "alert_type",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "Indication of alert sequence if multiple of the same type are sent. Alert sequence: initial refers to the detection, followed by subsequent alerts for recurrent detections of the same source. Updates and retractions come from further analysis."
+    },
+    {
+        "name": "event_name",
+        "type": "STRING",
+        "mode": "REPEATED",
+        "description": "Name of the event (ex: GRB 170817A) or multiple names of the same event (ex: GRB 170817A, GW170817, AT2017gfo, SSS 17a)."
+    },
+    {
+        "name": "id",
+        "type": "STRING",
+        "mode": "REPEATED",
+        "description": "Instrument-specific trigger ID (ex: bn230313485 (Fermi), 1159327 (Swift)) or alternate ID"
+    },
+    {
+        "name": "data_archive_page",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "URL of archived data files."
+    },
+    {
+        "name": "trigger_time",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "Time of the trigger [ISO 8601], ex YYYY-MM-DDTHH:MM:SS.ssssssZ."
+    },
+    {
+        "name": "trigger_time_error",
+        "type": "FLOAT",
+        "mode": "REPEATED",
+        "description": "Trigger time uncertainty [s, 1-sigma], with symmetric uncertainty."
+    },
+    {
+        "name": "observation_start",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "Start time of the observation [ISO 8601]."
+    },
+    {
+        "name": "observation_stop",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "Stop time of the observation [ISO 8601]."
+    },
+    {
+        "name": "observation_livetime",
+        "type": "FLOAT",
+        "mode": "NULLABLE",
+        "description": "Livetime of the observation [s]."
+    },
+    {
+        "name": "ra",
+        "type": "FLOAT",
+        "mode": "NULLABLE",
+        "description": "ICRS right ascension [deg], utilizes the J2000 epoch and an equatorial coordinate system."
+    },
+    {
+        "name": "dec",
+        "type": "FLOAT",
+        "mode": "NULLABLE",
+        "description": "ICRS declination [deg], utilizes the J2000 epoch and an equatorial coordinate system."
+    },
+    {
+        "name": "ra_dec_error",
+        "type": "FLOAT",
+        "mode": "REPEATED",
+        "description": "An array of up to three values that describe the localization region as an ellipse: length of the semi-major axis, length of the semi-minor axis (default is the same as the semi-major axis), and astronomical position angle of the semi-major axis (measured from North through East, default is zero)."
+    },
+    {
+        "name": "containment_probability",
+        "type": "FLOAT",
+        "mode": "NULLABLE",
+        "description": "Containment probability [dimensionless, 0-1]; if absent, default is 0.9."
+    },
+    {
+        "name": "systematic_included",
+        "type": "BOOLEAN",
+        "mode": "NULLABLE",
+        "description": "Contains true when the systematic error is included and false when the systematic error is not included."
+    },
+    {
+        "name": "instrument_phi",
+        "type": "FLOAT",
+        "mode": "NULLABLE",
+        "description": "Instrument phi [deg]."
+    },
+    {
+        "name": "instrument_theta",
+        "type": "FLOAT",
+        "mode": "NULLABLE",
+        "description": "Instrument theta [deg]."
+    },
+    {
+        "name": "instrument_semimajor_angle",
+        "type": "FLOAT",
+        "mode": "NULLABLE",
+        "description": "Position angle of semi-major axis in instrument coordinates [deg]."
+    },
+    {
+        "name": "healpix_url",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "URL of HEALPix localization probability file."
+    },
+    {
+        "name": "healpix_file",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "Base 64 encoded content of a FITS file."
+    },
+    {
+        "name": "far",
+        "type": "FLOAT",
+        "mode": "NULLABLE",
+        "description": "False alarm rate: the rate of occurrence of non-astrophysical events that are of the same intensity or significance as the current event [Hz]."
+    },
+    {
+        "name": "trigger_type",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "Type of trigger algorithm used to identify the transient event."
+    },
+    {
+        "name": "net_count_rate",
+        "type": "FLOAT",
+        "mode": "NULLABLE",
+        "description": "Net count rate of the transient above the background [counts/s] over rate_duration and rate_energy_range. Do specify rate_duration and rate_energy_range with net_count_rate property."
+    },
+    {
+        "name": "backgound_count_rate",
+        "type": "FLOAT",
+        "mode": "NULLABLE",
+        "description": "Count rate of the background during the transient [counts/s] over same rate_duration and rate_energy_range used for net_count_rate."
+    },
+    {
+        "name": "rate_snr",
+        "type": "FLOAT",
+        "mode": "NULLABLE",
+        "description": "Rate signal to noise ratio [dimensionless]."
+    },
+    {
+        "name": "rate_duration",
+        "type": "FLOAT",
+        "mode": "NULLABLE",
+        "description": "Interval over rate signal to noise ratio calculation [s]."
+    },
+    {
+        "name": "rate_energy_range",
+        "type": "FLOAT",
+        "mode": "REPEATED",
+        "description": "Low and High energy bounds used in rate signal to noise ratio calculation, if not parsed in Reporter.schema.json, default unit is keV."
+    },
+    {
+        "name": "image_snr",
+        "type": "FLOAT",
+        "mode": "NULLABLE",
+        "description": "Image signal to noise ratio [dimensionless]."
+    },
+    {
+        "name": "image_duration",
+        "type": "FLOAT",
+        "mode": "NULLABLE",
+        "description": "Interval over image signal to noise ratio calculation [s]."
+    },
+    {
+        "name": "image_energy_range",
+        "type": "FLOAT",
+        "mode": "REPEATED",
+        "description": "Low and High energy bounds used in image signal to noise ratio calculation, if not parsed in Reporter.schema.json, default unit is keV."
+    },
+    {
+        "name": "p_astro",
+        "type": "FLOAT",
+        "mode": "NULLABLE",
+        "description": "Probability [dimensionless, 0-1] that source is of astrophysical origin."
+    },
+    {
+        "name": "classification",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+            { "name": "BNS", "type": "FLOAT", "mode": "NULLABLE" },
+            { "name": "NSBH", "type": "FLOAT", "mode": "NULLABLE" },
+            { "name": "BBH", "type": "FLOAT", "mode": "NULLABLE" }
+        ],
+        "description": "Dictionary mapping mutually exclusive source classes to probabilities between 0 and 1, the sum of all values must be 1. e.g. ({'BNS', 0.9}, {'NSBH', 0.05}, {'BBH', 0.05})."
+    },
+    {
+        "name": "properties",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+            { "name": "NS", "type": "FLOAT", "mode": "NULLABLE" },
+            { "name": "REMNANT", "type": "FLOAT", "mode": "NULLABLE" }
+        ],
+        "description": "Dictionary of binary classifiers, each entry is between 0 and 1. e.g. ({'NS', 0.95}, {'REMNANT', 0.3})."
+    },
+    {
+        "name": "mission",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "Name of Mission or Telescope reporting the event."
+    },
+    {
+        "name": "instrument",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "Name of the Instrument reporting the event."
+    },
+    {
+        "name": "record_number",
+        "type": "FLOAT",
+        "mode": "NULLABLE",
+        "description": "Incremental number for messages from the instrument during a given trigger (ex: 1, 2, 3)."
+    },
+    {
+        "name": "messenger",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "Messenger of report; EM, GW or Neutrino."
+    },
+    {
+        "name": "spectral_band",
+        "type": "FLOAT",
+        "mode": "REPEATED",
+        "description": "Observed spectral band, expressed in the specified 'units' field."
+    },
+    {
+        "name": "units",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "Units for the spectral data; default unit is keV."
+    },
+    {
+        "name": "filter",
+        "type": "STRING",
+        "mode": "REPEATED",
+        "description": "Optional filter name, as used in optical observations."
+    },
+    {
+        "name": "additional_info",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "Additional information about the event."
+    }
+]
