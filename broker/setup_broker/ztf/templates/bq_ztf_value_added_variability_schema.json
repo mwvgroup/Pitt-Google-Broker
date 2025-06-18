@@ -33,19 +33,19 @@
             "type": "FLOAT"
           },
           {
-            "description": "Number of detections of this DiaObject in the g band.",
+            "description": "Number of detections of this object in the g band.",
             "mode": "NULLABLE",
             "name": "n_detections_g_band",
             "type": "INTEGER"
           },
           {
-            "description": "Number of detections of this DiaObject in the r band.",
+            "description": "Number of detections of this object in the r band.",
             "mode": "NULLABLE",
             "name": "n_detections_r_band",
             "type": "INTEGER"
           },
           {
-            "description": "Number of detections of this DiaObject in the i band.",
+            "description": "Number of detections of this object in the i band.",
             "mode": "NULLABLE",
             "name": "n_detections_i_band",
             "type": "INTEGER"
