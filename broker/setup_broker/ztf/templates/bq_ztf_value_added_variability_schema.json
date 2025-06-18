@@ -3,13 +3,13 @@
       "description": "Relevant variability statistics.",
       "fields": [
           {
-            "description": "Unique identifier of this DiaObject.",
+            "description": "object identifier or name.",
             "mode": "REQUIRED",
             "name": "objectId",
-            "type": "FLOAT"
+            "type": "STRING"
           },
           {
-            "description": "Unique identifier of this DiaSource.",
+            "description": "Candidate ID from operations DB.",
             "mode": "REQUIRED",
             "name": "sourceId",
             "type": "INTEGER"
