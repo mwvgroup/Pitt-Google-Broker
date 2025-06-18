@@ -81,11 +81,12 @@ def run():
     # announce to Pub/Sub
     TOPIC.publish(
         pittgoogle.Alert.from_dict(
-            payload={**alert_lite.dict, "SuperNNova": snn_dict},
+            payload={"alert_lite": alert_lite.dict, "SuperNNova": snn_dict},
             attributes={
                 **alert_lite.attributes,
                 "pg_supernnova_class": snn_dict["predicted_class"],
             },
+            schema_name="default",
         )
     )
 
@@ -94,16 +95,16 @@ def run():
         [
             {
                 "objectId": alert_lite.dict["alertIds"]["objectId"],
-                "candid": alert_lite.dict["alertIds"]["candid"],
-            },
-            snn_dict,
+                "candid": alert_lite.dict["alertIds"]["sourceId"],
+                **snn_dict,
+            }
         ]
     )
     TABLE_CLASSIFICATIONS.insert_rows(
         [
             {
                 "objectId": alert_lite.dict["alertIds"]["objectId"],
-                "candid": alert_lite.dict["alertIds"]["candid"],
+                "candid": alert_lite.dict["alertIds"]["sourceId"],
                 "classifier": "purity",
                 "classifier_version": CLASSIFIER_VERSION,
                 "class": snn_dict["predicted_class"],
@@ -147,7 +148,7 @@ def _format_for_snn(alert_lite: pittgoogle.Alert) -> pd.DataFrame:
     snn_df = pd.DataFrame(
         data={
             "SNID": [alert_lite.dict["alertIds"]["objectId"]] * len(alert_df.index),
-            "FLT": alert_df["fid"].map(pittgoogle.utils.ztf_fid_names()),
+            "FLT": alert_df["filter"].map(pittgoogle.utils.ztf_fid_names()),
             "MJD": jd_to_mjd(alert_df["jd"].loc[0]),
             "FLUXCAL": fluxcal,
             "FLUXCALERR": fluxcalerr,

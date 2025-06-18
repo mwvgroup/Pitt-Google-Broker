@@ -190,18 +190,11 @@ fi
 echo
 echo "Configuring Cloud Functions..."
 (
-    # navigate to the Cloud Run directory
-    cd .. && cd .. && cd cloud_run && cd ztf
-
-    #--- classify with SNN cloud function
-    cd classify_snn
-    ./deploy.sh "$testid" "$teardown" "$survey" "$region"
-
     #--- navigate to the Cloud Run Functions directory
-    cd .. && cd .. && cd .. && cd cloud_functions && cd ztf
+    cd .. && cd .. && cd cloud_functions
 
     #--- alerts-lite cloud function
-    cd lite
+    cd ztf && cd lite
     ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
 
     #--- Pub/Sub -> Cloud Storage Avro cloud function
@@ -221,6 +214,10 @@ echo "Configuring Cloud Functions..."
 
     #--- variability Cloud Run service
     cd ztf && cd variability
-    ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
+    ./deploy.sh "$testid" "$teardown" "$survey" "$region"
+
+    #--- classify with SNN Cloud Run service
+    cd .. && cd classify_snn
+    ./deploy.sh "$testid" "$teardown" "$survey" "$region"
 
 ) || exit
