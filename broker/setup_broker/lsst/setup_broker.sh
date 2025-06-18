@@ -213,13 +213,14 @@ echo "Configuring Cloud Run services..."
     #--- lite Cloud Run service
     cd .. && cd lite
     ./deploy.sh "$testid" "$teardown" "$survey" "$region"
-    
+
     #--- classify_snn Cloud Run service
     cd .. && cd classify_snn
     ./deploy.sh "$testid" "$teardown" "$survey" "$region"
 
     #--- variability Cloud Run service
     cd .. && cd variability
+    ./deploy.sh "$testid" "$teardown" "$survey" "$region"
 
     #--- classify_upsilon Cloud Run service
     cd .. && cd classify_upsilon
