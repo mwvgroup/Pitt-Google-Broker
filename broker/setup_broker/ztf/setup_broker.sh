@@ -44,7 +44,7 @@ define_GCP_resources() {
     local testid_suffix=""
 
     if [ "$testid" != "False" ]; then
-        if [ "$base_name" = "$survey" ]; then
+        if [ "$base_name" = "${survey}" ] || [ "$base_name" = "${survey}_value_added" ]; then
             testid_suffix="_${testid}"  # complies with BigQuery naming conventions
         else
             testid_suffix="-${testid}"
@@ -58,6 +58,7 @@ define_GCP_resources() {
 artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
 broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
 bq_dataset=$(define_GCP_resources "${survey}")
+bq_dataset_value_added=$(define_GCP_resources "${survey}_value_added")
 # topics and subscriptions involved in writing alert data to BigQuery
 topic_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import")
 subscription_bigquery_import="${topic_bigquery_import}" # BigQuery subscription
@@ -65,6 +66,7 @@ deadletter_topic_bigquery_import=$(define_GCP_resources "${survey}-bigquery-impo
 deadletter_subscription_bigquery_import="${deadletter_topic_bigquery_import}"
 
 alerts_table="alerts_${versiontag}"
+variability_table="variability"
 
 # function used to create (or delete) GCP resources
 manage_resources() {
@@ -76,6 +78,9 @@ manage_resources() {
     fi
 
     if [ "$mode" = "setup" ]; then
+        bq --location="${region}" mk --dataset "${bq_dataset_value_added}"
+        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset_value_added}.${variability_table}" "bq_${survey}_value_added_${variability_table}_schema.json") || exit 5
+
         # setup resources
         python3 setup_gcp.py --survey="$survey" --testid="$testid" --confirmed --region="${region}" --versiontag="${versiontag}"
         # the following resources are not created/deleted by setup_gcp.py
@@ -115,6 +120,7 @@ manage_resources() {
     else
         if [ "$environment_type" = "testing" ]; then
             # delete testing resources
+            bq rm -r -f "${PROJECT_ID}:${bq_dataset_value_added}"
             python3 setup_gcp.py --survey="$survey" --testid="$testid" --teardown --confirmed --versiontag="${versiontag}"
             gcloud pubsub topics delete "${topic_bigquery_import}"
             gcloud pubsub topics delete "${deadletter_topic_bigquery_import}"
@@ -209,4 +215,12 @@ echo "Configuring Cloud Functions..."
     #--- tag alerts cloud function
     cd .. && cd tag
     ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
+
+    # navigate to the Cloud Run directory
+    cd .. && cd .. && cd .. && cd cloud_run
+
+    #--- variability Cloud Run service
+    cd ztf && cd variability
+    ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
+
 ) || exit
