@@ -95,7 +95,7 @@ def _calculate_stetsonJ_statistics(alert_lite: pittgoogle.Alert) -> Dict:
     bands = alert_df["filter"].map(pittgoogle.utils.ztf_fid_names()).unique()
     outgoing_dict = {
         "objectId": alert_lite.dict["alertIds"]["objectId"],
-        "sourceId": alert_lite.dict["alertIds"]["sourceId"],
+        "candid": alert_lite.dict["alertIds"]["sourceId"],
     }
 
     # filter diaSource(s) in alert_df based on the filter(s) used

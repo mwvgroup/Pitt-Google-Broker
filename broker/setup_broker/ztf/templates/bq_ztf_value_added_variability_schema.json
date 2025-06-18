@@ -11,7 +11,7 @@
           {
             "description": "Candidate ID from operations DB.",
             "mode": "REQUIRED",
-            "name": "sourceId",
+            "name": "candid",
             "type": "INTEGER"
           },
           {
