@@ -1,0 +1,94 @@
+[
+    {
+      "description": "Relevant variability statistics.",
+      "fields": [
+          {
+            "description": "Unique identifier of this DiaObject.",
+            "mode": "REQUIRED",
+            "name": "diaObjectId",
+            "type": "FLOAT"
+          },
+          {
+            "description": "Unique identifier of this DiaSource.",
+            "mode": "REQUIRED",
+            "name": "diaSourceId",
+            "type": "INTEGER"
+          },
+          {
+            "description": "StetsonJ statistic on the DIA point source fluxes for the u band",
+            "mode": "NULLABLE",
+            "name": "u_psfFluxStetsonJ",
+            "type": "FLOAT"
+          },
+          {
+            "description": "StetsonJ statistic on the DIA point source fluxes for the g band",
+            "mode": "NULLABLE",
+            "name": "g_psfFluxStetsonJ",
+            "type": "FLOAT"
+          },
+          {
+            "description": "StetsonJ statistic on the DIA point source fluxes for the r band",
+            "mode": "NULLABLE",
+            "name": "r_psfFluxStetsonJ",
+            "type": "FLOAT"
+          },
+          {
+            "description": "StetsonJ statistic on the DIA point source fluxes for the i band",
+            "mode": "NULLABLE",
+            "name": "i_psfFluxStetsonJ",
+            "type": "FLOAT"
+          },
+          {
+            "description": "StetsonJ statistic on the DIA point source fluxes for the z band",
+            "mode": "NULLABLE",
+            "name": "z_psfFluxStetsonJ",
+            "type": "FLOAT"
+          },
+          {
+            "description": "StetsonJ statistic on the DIA point source fluxes for the y band",
+            "mode": "NULLABLE",
+            "name": "y_psfFluxStetsonJ",
+            "type": "FLOAT"
+          },
+          {
+            "description": "Number of detections of this DiaObject in the u band.",
+            "mode": "NULLABLE",
+            "name": "n_detections_u_band",
+            "type": "INTEGER"
+          },
+          {
+            "description": "Number of detections of this DiaObject in the g band.",
+            "mode": "NULLABLE",
+            "name": "n_detections_g_band",
+            "type": "INTEGER"
+          },
+          {
+            "description": "Number of detections of this DiaObject in the r band.",
+            "mode": "NULLABLE",
+            "name": "n_detections_r_band",
+            "type": "INTEGER"
+          },
+          {
+            "description": "Number of detections of this DiaObject in the i band.",
+            "mode": "NULLABLE",
+            "name": "n_detections_i_band",
+            "type": "INTEGER"
+          },
+          {
+            "description": "Number of detections of this DiaObject in the z band.",
+            "mode": "NULLABLE",
+            "name": "n_detections_z_band",
+            "type": "INTEGER"
+          },
+          {
+            "description": "Number of detections of this DiaObject in the y band.",
+            "mode": "NULLABLE",
+            "name": "n_detections_y_band",
+            "type": "INTEGER"
+          }
+      ],
+      "mode": "REQUIRED",
+      "name": "variability",
+      "type": "RECORD"
+    }
+]
