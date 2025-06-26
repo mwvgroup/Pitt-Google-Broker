@@ -1,0 +1,29 @@
+# https://cloud.google.com/build/docs/deploying-builds/deploy-cloud-run
+# containerize the module and deploy it to Cloud Run
+steps:
+# Build the image
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_MODULE_IMAGE_NAME}', '.']
+# Push the image to Artifact Registry
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_MODULE_IMAGE_NAME}']
+# Deploy image to Cloud Run
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args: ['run', 'deploy', '${_MODULE_NAME}', '--image', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_MODULE_IMAGE_NAME}', '--region', '${_REGION}', '--set-env-vars', '${_ENV_VARS}']
+images:
+- '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_MODULE_IMAGE_NAME}'
+substitutions:
+    _SURVEY: 'swift'
+    _TESTID: 'testid'
+    _MODULE_NAME: '${_SURVEY}-alerts-to-storage-${_TESTID}'
+    _MODULE_IMAGE_NAME: 'gcr.io/${PROJECT_ID}/${_REPOSITORY}/${_MODULE_NAME}'
+    _REPOSITORY: 'cloud-run-services'
+    # cloud functions automatically sets the projectid env var using the name "GCP_PROJECT"
+    # use the same name here for consistency
+    # [TODO] PROJECT_ID is set in setup.sh. this is confusing and we should revisit the decision.
+    # i (Raen) think i didn't make it a substitution because i didn't want to set a default for it.
+    _ENV_VARS: 'GCP_PROJECT=${PROJECT_ID},SURVEY=${_SURVEY},TESTID=${_TESTID}'
+    _REGION: 'us-central1'
+options:
+    dynamic_substitutions: true
