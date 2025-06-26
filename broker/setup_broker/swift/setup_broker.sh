@@ -86,7 +86,8 @@ manage_resources() {
         #--- Assign IAM roles to the Pub/Sub service account
         echo
         echo "Assigning IAM roles to the Pub/Sub service account..."
-        roleids="roles/bigquery.dataEditor"
+        roleid="roles/bigquery.dataEditor"
+        service_account="service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com"
         gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
             --member="serviceAccount:${service_account}" \
             --role="${roleid}"
@@ -97,9 +98,7 @@ manage_resources() {
         gcloud pubsub topics create "${topic_alerts}"
         gcloud pubsub topics create "${topic_alerts_raw}"
         gcloud pubsub topics create "${deadletter_topic_bigquery_import}"
-        gcloud pubsub topics create "${deadletter_topic_gcs_import}"
         gcloud pubsub subscriptions create "${deadletter_subscription_bigquery_import}" --topic="${deadletter_topic_bigquery_import}"
-        gcloud pubsub subscriptions create "${deadletter_subscription_gcs_import}" --topic="${deadletter_topic_gcs_import}"
         gcloud pubsub subscriptions create "${subscription_alerts_reservoir}" --topic="${topic_alerts}"
         gcloud pubsub subscriptions create "${subscription_bigquery_import}" \
             --topic="${topic_alerts}" \
