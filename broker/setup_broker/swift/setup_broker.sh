@@ -14,6 +14,7 @@ region="${5:-us-central1}"
 zone="${region}-a"  # just use zone "a" instead of adding another script arg
 
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT # get the environment variable
+PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format="value(projectNumber)")
 
 #--- Make the user confirm the settings
 echo
@@ -37,30 +38,27 @@ fi
 
 define_GCP_resources() {
     local base_name="$1"
+    local separator="$2"
     local testid_suffix=""
 
-    if [ "$testid" != "False" ]; then
-        if [ "$base_name" = "${survey}_alerts" ]; then
-            testid_suffix="_${testid}"  # complies with BigQuery naming conventions
-        else
-            testid_suffix="-${testid}"
-        fi
+    if [ "$testid" != "False" ] && [ -n "$testid" ]; then
+        testid_suffix="${separator}${testid}"
     fi
 
     echo "${base_name}${testid_suffix}"
 }
 
 #--- GCP resources used directly in this script
-broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
-bq_dataset_alerts=$(define_GCP_resources "${survey}_alerts")
-# topics and subscriptions involved in writing alert data to BigQuery
-topic_alerts=$(define_GCP_resources "${survey}-alerts")
-subscription_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import") # BigQuery subscription
-subscription_alerts_reservoir=$(define_GCP_resources "${survey}-alerts-reservoir")
-deadletter_topic_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import-deadletter")
-deadletter_subscription_bigquery_import="${deadletter_topic_bigquery_import}"
-
 alerts_table="alerts_${versiontag}"
+bq_dataset_alerts=$(define_GCP_resources "${survey}" "_")
+broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files" "-")
+# topics and subscriptions involved in writing alert data to BigQuery
+deadletter_topic_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import-deadletter" "-")
+deadletter_subscription_bigquery_import="${deadletter_topic_bigquery_import}"
+subscription_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import-${versiontag}" "-") # BigQuery subscription
+subscription_alerts_reservoir=$(define_GCP_resources "${survey}-alerts-reservoir" "-")
+topic_alerts=$(define_GCP_resources "${survey}-alerts" "-")
+topic_alerts_raw=$(define_GCP_resources "${survey}-alerts_raw" "-")
 
 # function used to create (or delete) GCP resources
 manage_resources() {
@@ -72,30 +70,37 @@ manage_resources() {
     fi
 
     if [ "$mode" = "setup" ]; then
-        # create BigQuery dataset and table
+        #--- Create BigQuery dataset and table
         echo
         echo "Creating BigQuery dataset and table..."
         bq --location="${region}" mk --dataset "${bq_dataset_alerts}"
-
         (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset_alerts}.${alerts_table}" "bq_${survey}_${alerts_table}_schema.json") || exit 5
         bq update --description "Alert data from Swift/BAT-GUANO. This table is an archive of the swift-alerts Pub/Sub stream. It has the same schema as the original alert bytes, including nested and repeated fields." "${PROJECT_ID}:${bq_dataset_alerts}.${alerts_table}"
 
-        # create broker bucket and upload files
+        #--- Create GCS buckets
         echo
-        echo "Creating broker_bucket and uploading files..."
+        echo "Creating broker_bucket and uploading files..." # create broker bucket and upload files
         gsutil mb -b on -l "${region}" "gs://${broker_bucket}"
         ./upload_broker_bucket.sh "${broker_bucket}"
 
-        # create Pub/Sub
+        #--- Assign IAM roles to the Pub/Sub service account
+        echo
+        echo "Assigning IAM roles to the Pub/Sub service account..."
+        roleids="roles/bigquery.dataEditor"
+        gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+            --member="serviceAccount:${service_account}" \
+            --role="${roleid}"
+
+        #--- Create Pub/Sub topics and subscriptions
         echo
         echo "Configuring Pub/Sub resources..."
         gcloud pubsub topics create "${topic_alerts}"
+        gcloud pubsub topics create "${topic_alerts_raw}"
         gcloud pubsub topics create "${deadletter_topic_bigquery_import}"
+        gcloud pubsub topics create "${deadletter_topic_gcs_import}"
         gcloud pubsub subscriptions create "${deadletter_subscription_bigquery_import}" --topic="${deadletter_topic_bigquery_import}"
+        gcloud pubsub subscriptions create "${deadletter_subscription_gcs_import}" --topic="${deadletter_topic_gcs_import}"
         gcloud pubsub subscriptions create "${subscription_alerts_reservoir}" --topic="${topic_alerts}"
-        # in order to create BigQuery subscriptions, ensure that the following service account:
-        # service-<project number>@gcp-sa-pubsub.iam.gserviceaccount.com" has the
-        # bigquery.dataEditor role for each table
         gcloud pubsub subscriptions create "${subscription_bigquery_import}" \
             --topic="${topic_alerts}" \
             --bigquery-table="${PROJECT_ID}:${bq_dataset_alerts}.${alerts_table}" \
@@ -113,14 +118,22 @@ manage_resources() {
     else
         if [ "$environment_type" = "testing" ]; then
             # delete testing resources
+            # Note: create_vm.sh will delete the VM instance
             o="GSUtil:parallel_process_count=1" # disable multiprocessing for Macs
             gsutil -m -o "${o}" rm -r "gs://${broker_bucket}"
             bq rm -r -f "${PROJECT_ID}:${bq_dataset_alerts}"
             gcloud pubsub topics delete "${topic_alerts}"
+            gcloud pubsub topics delete "${topic_alerts_raw}"
             gcloud pubsub topics delete "${deadletter_topic_bigquery_import}"
             gcloud pubsub subscriptions delete "${subscription_alerts_reservoir}"
             gcloud pubsub subscriptions delete "${deadletter_subscription_bigquery_import}"
             gcloud pubsub subscriptions delete "${subscription_bigquery_import}"
+        else
+            echo 'ERROR: No testid supplied.'
+            echo 'To avoid accidents, this script will not delete production resources.'
+            echo 'If that is your intention, you must delete them manually.'
+            echo 'Otherwise, please supply a testid.'
+            exit 1
         fi
     fi
 }
@@ -134,7 +147,7 @@ else
     manage_resources "setup"
 fi
 
-#--- Create VM instances
+#--- Create (or delete) VM instance
 echo
-echo "Configuring VMs..."
+echo "Configuring VM..."
 ./create_vm.sh "${broker_bucket}" "${testid}" "${teardown}" "${survey}" "${zone}"
