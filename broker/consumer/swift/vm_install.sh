@@ -1,6 +1,6 @@
 #! /bin/bash
 # Installs the software required to run the Kafka Consumer.
-# Assumes a Debian 10 OS.
+# Assumes a Debian 12 OS.
 
 #--- Get metadata attributes
 baseurl="http://metadata.google.internal/computeMetadata/v1"
@@ -33,7 +33,7 @@ snap install core
 snap install yq
 
 #--- Install Java and the dev kit
-# see https://www.digitalocean.com/community/tutorials/how-to-install-java-with-apt-on-debian-10
+# see https://www.digitalocean.com/community/tutorials/how-to-install-java-with-apt-on-debian-11
 apt update
 echo "Installing Java..."
 apt install -y default-jre
@@ -61,7 +61,7 @@ echo "Done installing Confluent Platform."
 echo "Installing the Kafka -> Pub/Sub connector"
 (
     plugindir=/usr/local/share/kafka/plugins
-    CONNECTOR_RELEASE="1.1.0"
+    CONNECTOR_RELEASE="1.3.2"
     mkdir -p ${plugindir}
     #- install the connector
     cd ${plugindir}
