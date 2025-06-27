@@ -50,6 +50,7 @@ define_GCP_resources() {
 
 #--- GCP resources used directly in this script
 alerts_table="alerts_${versiontag}"
+artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services" "-")
 bq_dataset=$(define_GCP_resources "${survey}" "_")
 broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files" "-")
 subscription_alerts_reservoir=$(define_GCP_resources "${survey}-alerts-json-reservoir" "-")
@@ -121,7 +122,14 @@ manage_resources() {
         # set IAM policies on resources
         user="allUsers"
         roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/userPublic"
-        gcloud pubsub topics add-iam-policy-binding "${topic_alerts}" --member="${user}" --role="${roleid}"
+        gcloud pubsub topics add-iam-policy-binding "${topic_alerts_json}" --member="${user}" --role="${roleid}"
+
+        #--- Create Artifact Registry Repository
+        echo
+        echo "Configuring Artifact Registry..."
+        gcloud artifacts repositories create "${artifact_registry_repo}" --repository-format=docker \
+            --location="${region}" --description="Docker repository for Cloud Run services" \
+            --project="${PROJECT_ID}"
 
     else
         if [ "$environment_type" = "testing" ]; then
@@ -136,6 +144,7 @@ manage_resources() {
             gcloud pubsub subscriptions delete "${subscription_alerts_reservoir}"
             gcloud pubsub subscriptions delete "${deadletter_subscription_bigquery_import}"
             gcloud pubsub subscriptions delete "${subscription_bigquery_import}"
+            gcloud artifacts repositories delete "${artifact_registry_repo}" --location="${region}"
         else
             echo 'ERROR: No testid supplied.'
             echo 'To avoid accidents, this script will not delete production resources.'
@@ -158,7 +167,7 @@ fi
 #--- Create (or delete) VM instance
 echo
 echo "Configuring VM..."
-./create_vm.sh "${broker_bucket}" "${testid}" "${teardown}" "${survey}" "${zone}"
+./create_vm.sh "${broker_bucket}" "${testid}" "${teardown}" "${survey}" "${zone}" "${PROJECT_ID}"
 
 #--- Deploy Cloud Run services
 echo
@@ -169,5 +178,5 @@ echo "Configuring Cloud Run services..."
 
     #--- ps_to_storage Cloud Run service
     cd ps_to_storage
-    #./deploy.sh "$testid" "$teardown" "$survey" "$region"
+    ./deploy.sh "$testid" "$teardown" "$survey" "$region"
 )
