@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-"""This module stores Swift/BAT-GUANO alert data as an Avro file in Cloud Storage."""
+"""This module stores Swift/BAT-GUANO alert data as a JSON file in Cloud Storage."""
 
 import os
 import flask
