@@ -80,6 +80,8 @@ manage_resources() {
             echo "${bq_dataset} already exists."
         fi
         (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${alerts_table}" "bq_${survey}_${alerts_table}_schema.json") || exit 5
+        # grant public access to the dataset; for more information, see:
+        # https://cloud.google.com/bigquery/docs/control-access-to-resources-iam#grant_access_to_a_dataset
         (cd templates && bq update --source "bq_${survey}_policy.json" "${PROJECT_ID}:${bq_dataset}") || exit 5
         bq update --description "Alert data from Swift/BAT-GUANO. This table is an archive of the swift-alerts Pub/Sub stream. It has the same schema as the original alert bytes, including repeated fields." "${PROJECT_ID}:${bq_dataset}.${alerts_table}"
 
