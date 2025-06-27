@@ -37,7 +37,6 @@ ps_input_subscrip=$(define_GCP_resources "${survey}-alerts_raw") # pub/sub subsc
 runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
 trigger_topic=$(define_GCP_resources "${survey}-alerts_raw")
 
-
 if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources
     if [ "${testid}" != "False" ]; then
@@ -47,16 +46,20 @@ if [ "${teardown}" = "True" ]; then
         gcloud pubsub subscriptions delete "${ps_input_subscrip}"
         gcloud run services delete "${cr_module_name}" --region "${region}"
     fi
-
-else # Deploy the Cloud Run service
-
-    #--- Create the bucket that will store the alerts
-    gsutil mb -l "${region}" "gs://${avro_bucket}"
-    gsutil uniformbucketlevelaccess set on "gs://${avro_bucket}"
-    gsutil requesterpays set on "gs://${avro_bucket}"
-    gcloud storage buckets add-iam-policy-binding "gs://${avro_bucket}" \
-        --member="allUsers" \
-        --role="roles/storage.objectViewer"
+else
+    echo
+    echo "Creating avro_bucket..."
+    if ! gsutil ls -b "gs://${avro_bucket}" >/dev/null 2>&1; then
+        #--- Create the bucket that will store the alerts
+        gsutil mb -l "${region}" "gs://${avro_bucket}"
+        gsutil uniformbucketlevelaccess set on "gs://${avro_bucket}"
+        gsutil requesterpays set on "gs://${avro_bucket}"
+        gcloud storage buckets add-iam-policy-binding "gs://${avro_bucket}" \
+            --member="allUsers" \
+            --role="roles/storage.objectViewer"
+    else
+        echo "${avro_bucket} already exists."
+    fi
 
     #--- Setup the Pub/Sub notifications on the Avro storage bucket
     echo
@@ -70,8 +73,7 @@ else # Deploy the Cloud Run service
         "gs://${avro_bucket}"
     gcloud pubsub subscriptions create "${avro_subscription}" --topic="${avro_topic}"
 
-
-#--- Deploy Cloud Run
+    #--- Deploy the Cloud Run service
     echo "Creating container image and deploying to Cloud Run..."
     moduledir="."  # assumes deploying what's in our current directory
     config="${moduledir}/cloudbuild.yaml"
