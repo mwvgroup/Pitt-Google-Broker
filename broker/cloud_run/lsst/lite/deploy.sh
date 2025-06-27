@@ -1,6 +1,6 @@
 #! /bin/bash
-# Deploys or deletes broker Cloud Functions
-# This script will not delete Cloud Functions that are in production
+# Deploys or deletes broker Cloud Run service
+# This script will not delete Cloud Run services that are in production
 
 # "False" uses production resources
 # any other string will be appended to the names of all resources
@@ -10,31 +10,31 @@ teardown="${2:-False}"
 # name of the survey this broker instance will ingest
 survey="${3:-lsst}"
 region="${4:-us-central1}"
-PROJECT_ID=$GOOGLE_CLOUD_PROJECT # get the environment variable
+# get the environment variable
+PROJECT_ID=$GOOGLE_CLOUD_PROJECT
 
 MODULE_NAME="lite"  # lower case required by cloud run
 ROUTE_RUN="/"  # url route that will trigger main.run()
 
-# function used to define GCP resources; appends testid if needed
 define_GCP_resources() {
     local base_name="$1"
+    local separator="$2"
     local testid_suffix=""
 
-    if [ "$testid" != "False" ]; then
-        testid_suffix="-${testid}"
+    if [ "$testid" != "False" ] && [ -n "$testid" ]; then
+        testid_suffix="${separator}${testid}"
     fi
 
     echo "${base_name}${testid_suffix}"
 }
 
 #--- GCP resources used in this script
-artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
-cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}")  # lower case required by cloud run
-ps_input_subscrip=$(define_GCP_resources "${survey}-alerts") # pub/sub subscription used to trigger cloud run module
-ps_output_topic=$(define_GCP_resources "${survey}-lite")
+artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services" "-")
+cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}" "-")  # lower case required by cloud run
+ps_input_subscrip=$(define_GCP_resources "${survey}-alerts" "-") # pub/sub subscription used to trigger cloud run module
+ps_output_topic=$(define_GCP_resources "${survey}-lite" "-")
 runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
-trigger_topic=$(define_GCP_resources "${survey}-alerts")
-
+trigger_topic=$(define_GCP_resources "${survey}-alerts" "-")
 
 if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources
@@ -44,13 +44,12 @@ if [ "${teardown}" = "True" ]; then
         gcloud run services delete "${cr_module_name}" --region "${region}"
     fi
 
-else # Deploy the Cloud Run service
-
-#--- Deploy Cloud Run
+else
+    #--- Deploy Cloud Run
     gcloud pubsub topics create "${ps_output_topic}"
 
     echo "Creating container image and deploying to Cloud Run..."
-    moduledir="."  # assumes deploying what's in our current directory
+    moduledir="."  # deploys what's in our current directory
     config="${moduledir}/cloudbuild.yaml"
     url=$(gcloud builds submit --config="${config}" \
         --substitutions="_SURVEY=${survey},_TESTID=${testid},_MODULE_NAME=${cr_module_name},_REPOSITORY=${artifact_registry_repo}" \

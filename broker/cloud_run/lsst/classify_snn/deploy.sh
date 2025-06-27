@@ -10,43 +10,37 @@ teardown="${2:-False}"
 # name of the survey this broker instance will ingest
 survey="${3:-lsst}"
 region="${4:-us-central1}"
-# get environment variables
+# get the environment variable
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT
-PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format="value(projectNumber)")
 
 MODULE_NAME="supernnova"  # lower case required by cloud run
 ROUTE_RUN="/"  # url route that will trigger main.run()
 
-# function used to define GCP resources; appends testid if needed
 define_GCP_resources() {
     local base_name="$1"
+    local separator="$2"
     local testid_suffix=""
 
-    if [ "$testid" != "False" ]; then
-        if [ "$base_name" = "${survey}_alerts" ] || [ "$base_name" = "${survey}_value_added" ]; then
-            testid_suffix="_${testid}"  # complies with BigQuery naming conventions
-        else
-            testid_suffix="-${testid}"
-        fi
+    if [ "$testid" != "False" ] && [ -n "$testid" ]; then
+        testid_suffix="${separator}${testid}"
     fi
 
     echo "${base_name}${testid_suffix}"
 }
 
 #--- GCP resources used in this script
-artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
-bq_dataset=$(define_GCP_resources "${survey}_value_added")
+artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services" "-")
+bq_dataset=$(define_GCP_resources "${survey}" "_")
 bq_table="SuperNNova"
-cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}")  # lower case required by cloud run
-ps_input_subscrip=$(define_GCP_resources "${survey}-SuperNNova") # pub/sub subscription used to trigger cloud run module
-ps_output_topic=$(define_GCP_resources "${survey}-SuperNNova")
+cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}" "-")  # lower case required by cloud run
+ps_input_subscrip=$(define_GCP_resources "${survey}-SuperNNova" "-") # pub/sub subscription used to trigger cloud run module
+ps_output_topic=$(define_GCP_resources "${survey}-SuperNNova" "-")
 runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
-trigger_topic=$(define_GCP_resources "${survey}-lite")
+trigger_topic=$(define_GCP_resources "${survey}-lite" "-")
 # topics and subscriptions involved in writing data to BigQuery
-bq_subscription=$(define_GCP_resources "${survey}-${MODULE_NAME}-bigquery-import") # BigQuery subscription
-ps_deadletter_topic=$(define_GCP_resources "${survey}-${MODULE_NAME}-bigquery-import-deadletter")
+bq_subscription=$(define_GCP_resources "${survey}-${MODULE_NAME}-bigquery-import" "-") # BigQuery subscription
+ps_deadletter_topic=$(define_GCP_resources "${survey}-${MODULE_NAME}-bigquery-import-deadletter" "-")
 ps_deadletter_subscription="${ps_deadletter_topic}"
-
 
 if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources
@@ -59,23 +53,12 @@ if [ "${teardown}" = "True" ]; then
         gcloud run services delete "${cr_module_name}" --region "${region}"
     fi
 
-else # Deploy the Cloud Run service
-
-#--- Deploy Cloud Run service
+else
+    #--- Deploy Cloud Run service
     echo "Configuring Pub/Sub resources for classify_snn Cloud Run service..."
     gcloud pubsub topics create "${ps_output_topic}"
     gcloud pubsub topics create "${ps_deadletter_topic}"
     gcloud pubsub subscriptions create "${ps_deadletter_subscription}" --topic="${ps_deadletter_topic}"
-
-    # in order to create BigQuery subscriptions, ensure that the following service account:
-    # service-<project number>@gcp-sa-pubsub.iam.gserviceaccount.com" has the
-    # bigquery.dataEditor role for each table
-    PUBSUB_SERVICE_ACCOUNT="service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com"
-    roleid="roles/bigquery.dataEditor"
-    bq add-iam-policy-binding \
-        --member="serviceAccount:${PUBSUB_SERVICE_ACCOUNT}" \
-        --role="${roleid}" \
-        --table=true "${PROJECT_ID}:${bq_dataset}.${bq_table}"
     gcloud pubsub subscriptions create "${bq_subscription}" \
         --topic="${ps_output_topic}" \
         --bigquery-table="${PROJECT_ID}:${bq_dataset}.${bq_table}" \
@@ -85,15 +68,6 @@ else # Deploy the Cloud Run service
         --max-delivery-attempts=5 \
         --dead-letter-topic-project="${PROJECT_ID}"
 
-    # this allows dead-lettered messages to be forwarded from the BigQuery subscription to the dead letter topic
-    # and it allows dead-lettered messages to be published to the dead letter topic.
-    gcloud pubsub topics add-iam-policy-binding "${ps_deadletter_topic}" \
-        --member="serviceAccount:$PUBSUB_SERVICE_ACCOUNT"\
-        --role="roles/pubsub.publisher"
-    gcloud pubsub subscriptions add-iam-policy-binding "${ps_deadletter_subscription}" \
-        --member="serviceAccount:$PUBSUB_SERVICE_ACCOUNT"\
-        --role="roles/pubsub.subscriber"
-
     echo "Creating container image and deploying to Cloud Run..."
     moduledir="."  # deploys what's in our current directory
     config="${moduledir}/cloudbuild.yaml"
@@ -101,12 +75,6 @@ else # Deploy the Cloud Run service
         --substitutions="_SURVEY=${survey},_TESTID=${testid},_MODULE_NAME=${cr_module_name},_REPOSITORY=${artifact_registry_repo}" \
         --region="${region}" \
         "${moduledir}" | sed -n 's/^Step #2: Service URL: \(.*\)$/\1/p')
-
-    # ensure the Cloud Run service has the necessary permisions
-    role="roles/run.invoker"
-    gcloud run services add-iam-policy-binding "${cr_module_name}" \
-        --member="serviceAccount:${runinvoker_svcact}" \
-        --role="${role}"
 
     echo "Creating trigger subscription for Cloud Run..."
     # WARNING:  This is set to retry failed deliveries. If there is a bug in main.py this will

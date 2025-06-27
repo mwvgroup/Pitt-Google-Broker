@@ -1,6 +1,6 @@
 #! /bin/bash
-# Deploys or deletes broker Cloud Functions
-# This script will not delete Cloud Functions that are in production
+# Deploys or deletes broker Cloud Run service
+# This script will not delete Cloud Run services that are in production
 
 # "False" uses production resources
 # any other string will be appended to the names of all resources
@@ -10,33 +10,33 @@ teardown="${2:-False}"
 # name of the survey this broker instance will ingest
 survey="${3:-lsst}"
 region="${4:-us-central1}"
-PROJECT_ID=$GOOGLE_CLOUD_PROJECT # get the environment variable
+# get the environment variable
+PROJECT_ID=$GOOGLE_CLOUD_PROJECT
 
 MODULE_NAME="alerts-to-storage"  # lower case required by cloud run
 ROUTE_RUN="/"  # url route that will trigger main.run()
 
-# function used to define GCP resources; appends testid if needed
 define_GCP_resources() {
     local base_name="$1"
+    local separator="$2"
     local testid_suffix=""
 
-    if [ "$testid" != "False" ]; then
-        testid_suffix="-${testid}"
+    if [ "$testid" != "False" ] && [ -n "$testid" ]; then
+        testid_suffix="${separator}${testid}"
     fi
 
     echo "${base_name}${testid_suffix}"
 }
 
 #--- GCP resources used in this script
-artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
-avro_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}_alerts")
-avro_topic=$(define_GCP_resources "projects/${PROJECT_ID}/topics/${survey}-alert_avros")
-avro_subscription=$(define_GCP_resources "${survey}-alert_avros-counter")
-cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}")  # lower case required by cloud run
-ps_input_subscrip=$(define_GCP_resources "${survey}-alerts_raw") # pub/sub subscription used to trigger cloud run module
+artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services" "-")
+avro_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}_alerts" "-")
+avro_topic=$(define_GCP_resources "projects/${PROJECT_ID}/topics/${survey}-alert_avros" "-")
+avro_subscription=$(define_GCP_resources "${survey}-alert_avros-counter" "-")
+cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}" "-")  # lower case required by cloud run
+ps_input_subscrip=$(define_GCP_resources "${survey}-alerts_raw" "-") # pub/sub subscription used to trigger cloud run module
 runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
-trigger_topic=$(define_GCP_resources "${survey}-alerts_raw")
-
+trigger_topic=$(define_GCP_resources "${survey}-alerts_raw" "-")
 
 if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources
@@ -48,17 +48,21 @@ if [ "${teardown}" = "True" ]; then
         gcloud run services delete "${cr_module_name}" --region "${region}"
     fi
 
-else # Deploy the Cloud Run service
+else
+    #--- Deploy Cloud Run
+    echo
+    echo "Creating avro_bucket and uploading files..."
+    if ! gsutil ls -b "gs://${avro_bucket}" >/dev/null 2>&1; then
+        gsutil mb -b on -l "${region}" "gs://${avro_bucket}"
+        gsutil uniformbucketlevelaccess set on "gs://${avro_bucket}"
+        gsutil requesterpays set on "gs://${avro_bucket}"
+        gcloud storage buckets add-iam-policy-binding "gs://${avro_bucket}" \
+            --member="allUsers" \
+            --role="roles/storage.objectViewer"
+    else
+        echo "${avro_bucket} already exists."
+    fi
 
-    #--- Create the bucket that will store the alerts
-    gsutil mb -l "${region}" "gs://${avro_bucket}"
-    gsutil uniformbucketlevelaccess set on "gs://${avro_bucket}"
-    gsutil requesterpays set on "gs://${avro_bucket}"
-    gcloud storage buckets add-iam-policy-binding "gs://${avro_bucket}" \
-        --member="allUsers" \
-        --role="roles/storage.objectViewer"
-
-    #--- Setup the Pub/Sub notifications on the Avro storage bucket
     echo
     echo "Configuring Pub/Sub notifications on GCS bucket..."
     trigger_event=OBJECT_FINALIZE
@@ -70,8 +74,6 @@ else # Deploy the Cloud Run service
         "gs://${avro_bucket}"
     gcloud pubsub subscriptions create "${avro_subscription}" --topic="${avro_topic}"
 
-
-#--- Deploy Cloud Run
     echo "Creating container image and deploying to Cloud Run..."
     moduledir="."  # assumes deploying what's in our current directory
     config="${moduledir}/cloudbuild.yaml"
