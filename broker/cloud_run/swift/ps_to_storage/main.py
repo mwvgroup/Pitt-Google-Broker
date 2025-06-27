@@ -86,12 +86,12 @@ def run():
 
 def _create_file_metadata(alert: pittgoogle.Alert, event_id: str) -> dict:
     """Return key/value pairs to be attached to the file as metadata."""
-
+    # https://github.com/nasa-gcn/gcn-schema/blob/main/gcn/notices/swift/bat/Guano.example.json
     metadata = {"file_origin_message_id": event_id}
+    metadata["_".join("alert_datetime")] = alert.dict["alert_datetime"]
     metadata["_".join("alert_type")] = alert.dict["alert_type"]
+    metadata["_".join("classification")] = alert.dict["classification"]
     metadata["_".join("id")] = alert.dict["id"]
-    metadata["_".join("ra")] = alert.dict["ra"]
-    metadata["_".join("dec")] = alert.dict["dec"]
 
     return metadata
 
@@ -102,6 +102,6 @@ def _name_in_bucket(alert: pittgoogle.Alert) -> str:
     # https://github.com/nasa-gcn/gcn-schema/blob/main/gcn/notices/swift/bat/Guano.example.json
     _date = alert.dict["alert_datetime"][0:10]
     _alert_type = alert.dict["alert_type"]
-    _id = alert.dict["id"]
+    _id = alert.dict["id"][0]
 
     return f"{_date}/{_alert_type}/{_id}.json"
