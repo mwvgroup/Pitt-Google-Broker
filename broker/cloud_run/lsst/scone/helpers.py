@@ -1,5 +1,4 @@
 #
-import tensorflow as tf
 import numpy as np
 from scipy.optimize import minimize
 from functools import partial
@@ -14,7 +13,7 @@ def get_band_to_wave(survey):
 
     band_to_wave = None
 
-    if survey == "LSST" or survey == "DES":
+    if survey == 'old_LSST' or survey == 'DES':
         # Jun 2024 RK-comment: these <lam> are for 2017-era LSST bands without atmos-trans.
         #    They are quite off for DES (4828, 6435, 7828, 9181). I am NOT fixing it now
         #    to ensure that LEGACY scone behaves the same as before, and it is fine if
@@ -27,12 +26,22 @@ def get_band_to_wave(survey):
             "r": 6223.24,
             "i": 7545.98,
             "z": 8590.90,
-            "Y": 9710.28,
+            "y": 9710.28
+        }
+    elif survey == 'LSST':
+        # Updated June 2025 https://rubinobservatory.org/for-scientists/rubin-101/instruments
+        band_to_wave = {
+            "u": 3724,
+            "g": 4807,
+            "r": 6221,
+            "i": 7559,
+            "z": 8680,
+            "y": 9753
         }
 
     if band_to_wave is None:
         raise ValueError(
-            f"survey {survey} not registered for LEGACY scone! " f"contact helenqu@sas.upenn.edu"
+            f"survey {survey} not registered for LEGACY scone!"
         )
 
     return band_to_wave
@@ -84,27 +93,11 @@ def build_gp(guess_length_scale, sn_data, bands):
 
     return gaussian_process
 
-
-def image_example(image_string):
-    def _bytes_feature(value):
-        """Returns a bytes_list from a string / byte."""
-        if isinstance(value, type(tf.constant(0))):
-            value = value.numpy()  # BytesList won't unpack a string from an EagerTensor.
-        return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
-
-    feature = {
-        "image_raw": _bytes_feature(image_string),
-    }
-
-    example_proto = tf.train.Example(features=tf.train.Features(feature=feature))
-    return example_proto.SerializeToString()
-
-
 def get_extinction(ebv, wave):
     avu = 3.1 * ebv
 
     x = 10000.0 / wave  # inverse wavelength in microns   - creates a numpy array
-    xv = 1.82
+    # xv = 1.82
     y = x - 1.82  # another numpy array
 
     # Creating empty arrays in which to store the final data

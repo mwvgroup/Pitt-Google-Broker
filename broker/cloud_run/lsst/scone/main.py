@@ -12,11 +12,10 @@ import flask  # Manage the HTTP request containing the alert
 import pittgoogle  # Manipulate the alert and interact with cloud resources
 
 import google.cloud.logging
-import numpy as np
-import pandas as pd
+from astropy.table import Table
 
-from model_utils import *
-from base import CreateHeatmapsBase
+from model_utils import SconeClassifier
+from base import CreateHeatmaps
 
 # [FIXME] Make this helpful or else delete it.
 # Connect the python logger to the google cloud logger.
@@ -38,42 +37,6 @@ MODULE_VERSION = 0.1
 model_dir_name = ""
 model_file_name = ""
 MODEL_PATH = Path(__file__).resolve().parent / model_dir_name / model_file_name
-scone_config = {
-    "metadata_paths": ["/path/to/data/metadata_0.csv", "/path/to/data/metadata_1.csv"],
-    "lcdata_paths": ["~/path/to/data/lcdata_0.csv", "~/path/to/data/lcdata_1.csv"],
-    "ids_path": "/path/to/output/dir/0_5_Ia_split_heatmaps_ids.hdf5",
-    "output_path": "/path/to/output/dir",
-    "num_wavelength_bins": 32,
-    "num_mjd_bins": 180,
-    "Ia_fraction": None,
-    "categorical_min_per_type": 200,
-    "categorical_max_per_type": 2000,
-    "save_to_json": True,
-    "from_json": False,
-    "sn_type_id_to_name": {
-        42: "SNII",
-        52: "SNIax",
-        62: "SNIbc",
-        67: "SNIa-91bg",
-        64: "KN",
-        90: "SNIa",
-        95: "SLSN-1",
-    },
-    "mode": "predict",
-    "trained_model": MODEL_PATH,
-    "class_balanced": True,
-    "categorical": False,
-    "batch_size": 32,
-    "num_epochs": 400,
-    "train_proportion": 0.8,
-    "val_proportion": 0.1,
-    "has_ids": True,
-    "with_z": False,
-    "output_path_orig": "/path/to/output/dir",
-    "trained_model_orig": "/path/to/trained/model",
-    "heatmaps_paths": "/path/to/heatmaps",
-    "survey": SURVEY,
-}
 
 # Variables for incoming data
 # A url route is used in setup.sh when the trigger subscription is created.
@@ -125,10 +88,17 @@ def run():
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
+    metadata = {
+        'mwebv': 1, # milkyway extinction parameter
+        'survey': 'LSST',
+        'wavelength_bins': 32,
+        'mjd_bins': 180
+    }
+
     # create heatmap and classify
     input_data = _format_for_classifier(alert)
-    heatmap = CreateHeatmapsManager().run(scone_config, input_data)
-    scone_classification = SconeClassifier(scone_config).run(heatmap)
+    heatmap = CreateHeatmaps(metadata, input_data).create_heatmaps()
+    scone_classification = SconeClassifier(heatmap, MODEL_PATH)
 
     # publish
     TOPIC.publish(_create_outgoing_alert(scone_classification), serializer="json")
@@ -136,42 +106,17 @@ def run():
     return "", HTTP_204
 
 
-def _format_for_classifier(alert: pittgoogle.Alert) -> pd.DataFrame:
+def _format_for_classifier(alert: pittgoogle.Alert) -> Table:
     """Create a DataFrame for input to SCONE."""
+    # select a subset of columns and rename them for SCONE
+    # get_key returns the name that the survey uses for a given field
+    # for the full mapping, see alert.schema.map
     alert_df = alert.dataframe
-    scone_df = pd.DataFrame(
-        data={
-            # select a subset of columns and rename them for SCONE
-            # get_key returns the name that the survey uses for a given field
-            # for the full mapping, see alert.schema.map
-            "object_id": [alert.objectid] * len(alert_df.index),
-            "mjd": alert_df[alert.get_key("mjd")[1]],
-            "flux": alert_df[alert.get_key("flux")[1]],
-            "flux_err": alert_df[alert.get_key("flux_err")[1]],
-            "passband": alert_df[alert.get_key("filter")[1]],
-        },
-        index=alert_df.index,
-    )
-
-    return scone_df
-
-
-class CreateHeatmapsManager:
-    def run(self, config, input_data):
-        create_heatmaps_object = CreateHeatmapsFull(config)
-        return create_heatmaps_object.run(input_data)
-
-
-class CreateHeatmapsFull(CreateHeatmapsBase):
-    def run(self, input_data):
-        heatmap = self.create_heatmaps(input_data)
-        return heatmap
-
-    @staticmethod
-    def _calculate_mjd_range(sn_data):
-        mjd_range = [np.min(sn_data["mjd"]), np.max(sn_data["mjd"])]
-        return mjd_range
-
+    return Table([alert_df[alert.get_key("mjd")[1]],
+                  alert_df[alert.get_key("flux")[1]],
+                  alert_df[alert.get_key("flux_err")[1]],
+                  alert_df[alert.get_key("filter")[1]]],
+                  names=('mjd', 'flux', 'flux_err', 'passband'))
 
 def _create_outgoing_alert(scone_classification):
     return pittgoogle.Alert.from_dict(scone_classification)
