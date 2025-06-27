@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-"""This module stores LSST alert data as an Avro file in Cloud Storage."""
+"""This module stores Swift/BAT-GUANO alert data as an Avro file in Cloud Storage."""
 
 import os
 import flask
@@ -30,9 +30,6 @@ HTTP_204 = 204  # HTTP code: Success
 HTTP_400 = 400  # HTTP code: Bad Request
 
 # GCP resources used in this module
-TOPIC_ALERTS = pittgoogle.Topic.from_cloud(
-    "alerts", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
-)
 TOPIC_ALERTS_JSON = pittgoogle.Topic.from_cloud(
     "alerts-json", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
 )
@@ -70,7 +67,7 @@ def run():
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
-    blob = bucket.blob(alert.name_in_bucket)
+    blob = bucket.blob(_name_in_bucket(alert))
     blob.metadata = _create_file_metadata(alert, event_id=envelope["message"]["messageId"])
 
     # raise a PreconditionFailed exception if filename already exists in the bucket using "if_generation_match=0"
@@ -81,10 +78,8 @@ def run():
         # this alert is a duplicate. drop it.
         return "", HTTP_204
 
-    # publish the same alert as Confluent Wire Avro.
-    TOPIC_ALERTS.publish(alert)
-    # publish the same alert as JSON. Data will be coerced to valid JSON by pittgoogle.
-    TOPIC_ALERTS_JSON.publish(alert, serializer="json")
+    # publish the same alert as JSON
+    TOPIC_ALERTS_JSON.publish(alert)
 
     return "", HTTP_204
 
@@ -93,9 +88,20 @@ def _create_file_metadata(alert: pittgoogle.Alert, event_id: str) -> dict:
     """Return key/value pairs to be attached to the file as metadata."""
 
     metadata = {"file_origin_message_id": event_id}
-    metadata["_".join("event_name")] = alert.dict["event_name"]
-    metadata["_".join("trigger_type")] = alert.dict["trigger_type"]
+    metadata["_".join("alert_type")] = alert.dict["alert_type"]
+    metadata["_".join("id")] = alert.dict["id"]
     metadata["_".join("ra")] = alert.dict["ra"]
     metadata["_".join("dec")] = alert.dict["dec"]
 
     return metadata
+
+
+def _name_in_bucket(alert: pittgoogle.Alert) -> str:
+    """Return the name of the file in the bucket."""
+    # not easily able to extract schema version, see:
+    # https://github.com/nasa-gcn/gcn-schema/blob/main/gcn/notices/swift/bat/Guano.example.json
+    _date = alert.dict["alert_datetime"][0:10]
+    _alert_type = alert.dict["alert_type"]
+    _id = alert.dict["id"]
+
+    return f"{_date}/{_alert_type}/{_id}.json"
