@@ -100,7 +100,7 @@ manage_resources() {
         else
             echo "${gcs_broker_bucket} already exists."
         fi
-        ./upload_gcs_broker_bucket.sh "${gcs_broker_bucket}"
+        ./upload_broker_bucket.sh "${gcs_broker_bucket}"
 
         #--- Assign IAM roles to the Pub/Sub service account
         echo
