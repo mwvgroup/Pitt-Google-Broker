@@ -94,7 +94,7 @@ manage_resources() {
 
         #--- Create GCS bucket
         echo
-        echo "Creating gcs_broker_bucket and uploading files..."
+        echo "Creating broker_bucket and uploading files..."
         if ! gsutil ls -b "gs://${gcs_broker_bucket}" >/dev/null 2>&1; then
             gsutil mb -b on -l "${region}" "gs://${gcs_broker_bucket}"
         else
@@ -190,19 +190,19 @@ else
     manage_resources "setup"
 fi
 
-#--- Create VM instances
+#--- Create (or delete) VM instance
 echo
 echo "Configuring VMs..."
 ./create_vm.sh "${gcs_broker_bucket}" "${testid}" "${teardown}" "${survey}" "${zone}" "${firewallrule}"
 
-#--- Deploy Cloud Run services
+#--- Create (or delete) Cloud Run services
 echo
 echo "Configuring Cloud Run services..."
 (
-    # navigate to the Cloud Run directory
+    # navigate to the Cloud Run directory for LSST
     cd .. && cd .. && cd cloud_run && cd lsst
 
-    #--- ps_to_storage Cloud Run service
+    #--- alerts-to-storage Cloud Run service
     cd ps_to_storage
     ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}"
 
@@ -210,7 +210,7 @@ echo "Configuring Cloud Run services..."
     cd .. && cd lite
     ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}"
 
-    #--- classify_snn Cloud Run service
+    #--- supernnova Cloud Run service
     cd .. && cd classify_snn
     ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}"
 
@@ -218,7 +218,7 @@ echo "Configuring Cloud Run services..."
     cd .. && cd variability
     ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}"
 
-    #--- classify_upsilon Cloud Run service
+    #--- upsilon Cloud Run service
     cd .. && cd classify_upsilon
     ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}"
 ) || exit

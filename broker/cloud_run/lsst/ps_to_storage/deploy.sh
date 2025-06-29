@@ -40,6 +40,8 @@ runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
 if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources
     if [ "${testid}" != "False" ]; then
+        echo
+        echo "Deleting resources for ${MODULE_NAME} module..."
         gsutil rm -r "gs://${gcs_avro_bucket}"
         gcloud pubsub topics delete "${ps_topic_avro}"
         gcloud pubsub subscriptions delete "${ps_subscription_avro}"
@@ -72,14 +74,15 @@ else
     gcloud pubsub subscriptions create "${ps_subscription_avro}" --topic="${ps_topic_avro}"
 
     #--- Deploy Cloud Run service
-    echo "Creating container image and deploying to Cloud Run..."
+    echo
+    echo "Creating container image for ${MODULE_NAME} module and deploying to Cloud Run..."
     moduledir="."  # assumes deploying what's in our current directory
     config="${moduledir}/cloudbuild.yaml"
     url=$(gcloud builds submit --config="${config}" \
         --substitutions="_SURVEY=${survey},_TESTID=${testid},_MODULE_NAME=${cr_module_name},_REPOSITORY=${artifact_registry_repo}" \
         "${moduledir}" | sed -n 's/^Step #2: Service URL: \(.*\)$/\1/p')
-
-    echo "Creating trigger subscription for Cloud Run..."
+    echo
+    echo "Creating trigger subscription for ${MODULE_NAME} Cloud Run service..."
     # WARNING:  This is set to retry failed deliveries. If there is a bug in main.py this will
     # retry indefinitely, until the message is delete manually.
     gcloud pubsub subscriptions create "${ps_input_subscrip}" \
