@@ -24,7 +24,6 @@ define_GCP_resources() {
     if [ "$testid" != "False" ] && [ -n "$testid" ]; then
         testid_suffix="${separator}${testid}"
     fi
-
     echo "${base_name}${testid_suffix}"
 }
 
@@ -33,8 +32,8 @@ artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services" "-"
 cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}" "-")  # lower case required by cloud run
 ps_input_subscrip=$(define_GCP_resources "${survey}-alerts" "-") # pub/sub subscription used to trigger cloud run module
 ps_output_topic=$(define_GCP_resources "${survey}-lite" "-")
+ps_trigger_topic=$(define_GCP_resources "${survey}-alerts" "-")
 runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
-trigger_topic=$(define_GCP_resources "${survey}-alerts" "-")
 
 if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources
@@ -43,11 +42,17 @@ if [ "${teardown}" = "True" ]; then
         gcloud pubsub subscriptions delete "${ps_input_subscrip}"
         gcloud run services delete "${cr_module_name}" --region "${region}"
     fi
-
 else
-    #--- Deploy Cloud Run
+    echo "Configuring Pub/Sub resources..."
     gcloud pubsub topics create "${ps_output_topic}"
+    # set IAM policies on public Pub/Sub resources
+    if [ "$testid" = "False" ]; then
+        user="allUsers"
+        roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/userPublic"
+        gcloud pubsub topics add-iam-policy-binding "${ps_output_topic}" --member="${user}" --role="${roleid}"
+    fi
 
+    #--- Deploy Cloud Run service
     echo "Creating container image and deploying to Cloud Run..."
     moduledir="."  # deploys what's in our current directory
     config="${moduledir}/cloudbuild.yaml"
@@ -59,7 +64,7 @@ else
     # WARNING:  This is set to retry failed deliveries. If there is a bug in main.py this will
     # retry indefinitely, until the message is delete manually.
     gcloud pubsub subscriptions create "${ps_input_subscrip}" \
-        --topic "${trigger_topic}" \
+        --topic "${ps_trigger_topic}" \
         --topic-project "${PROJECT_ID}" \
         --ack-deadline=600 \
         --push-endpoint="${url}${ROUTE_RUN}" \

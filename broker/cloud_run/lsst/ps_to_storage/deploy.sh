@@ -24,43 +24,40 @@ define_GCP_resources() {
     if [ "$testid" != "False" ] && [ -n "$testid" ]; then
         testid_suffix="${separator}${testid}"
     fi
-
     echo "${base_name}${testid_suffix}"
 }
 
 #--- GCP resources used in this script
 artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services" "-")
-avro_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}_alerts" "-")
-avro_topic=$(define_GCP_resources "projects/${PROJECT_ID}/topics/${survey}-alert_avros" "-")
-avro_subscription=$(define_GCP_resources "${survey}-alert_avros-counter" "-")
 cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}" "-")  # lower case required by cloud run
+gcs_avro_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}_alerts" "-")
 ps_input_subscrip=$(define_GCP_resources "${survey}-alerts_raw" "-") # pub/sub subscription used to trigger cloud run module
+ps_subscription_avro=$(define_GCP_resources "${survey}-alert_avros-counter" "-")
+ps_topic_avro=$(define_GCP_resources "projects/${PROJECT_ID}/topics/${survey}-alert_avros" "-")
+ps_trigger_topic=$(define_GCP_resources "${survey}-alerts_raw" "-")
 runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
-trigger_topic=$(define_GCP_resources "${survey}-alerts_raw" "-")
 
 if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources
     if [ "${testid}" != "False" ]; then
-        gsutil rm -r "gs://${avro_bucket}"
-        gcloud pubsub topics delete "${avro_topic}"
-        gcloud pubsub subscriptions delete "${avro_subscription}"
+        gsutil rm -r "gs://${gcs_avro_bucket}"
+        gcloud pubsub topics delete "${ps_topic_avro}"
+        gcloud pubsub subscriptions delete "${ps_subscription_avro}"
         gcloud pubsub subscriptions delete "${ps_input_subscrip}"
         gcloud run services delete "${cr_module_name}" --region "${region}"
     fi
-
 else
-    #--- Deploy Cloud Run
     echo
-    echo "Creating avro_bucket and uploading files..."
-    if ! gsutil ls -b "gs://${avro_bucket}" >/dev/null 2>&1; then
-        gsutil mb -b on -l "${region}" "gs://${avro_bucket}"
-        gsutil uniformbucketlevelaccess set on "gs://${avro_bucket}"
-        gsutil requesterpays set on "gs://${avro_bucket}"
-        gcloud storage buckets add-iam-policy-binding "gs://${avro_bucket}" \
+    echo "Creating gcs_avro_bucket and uploading files..."
+    if ! gsutil ls -b "gs://${gcs_avro_bucket}" >/dev/null 2>&1; then
+        gsutil mb -b on -l "${region}" "gs://${gcs_avro_bucket}"
+        gsutil uniformbucketlevelaccess set on "gs://${gcs_avro_bucket}"
+        gsutil requesterpays set on "gs://${gcs_avro_bucket}"
+        gcloud storage buckets add-iam-policy-binding "gs://${gcs_avro_bucket}" \
             --member="allUsers" \
             --role="roles/storage.objectViewer"
     else
-        echo "${avro_bucket} already exists."
+        echo "${gcs_avro_bucket} already exists."
     fi
 
     echo
@@ -68,12 +65,13 @@ else
     trigger_event=OBJECT_FINALIZE
     format=json  # json or none; if json, file metadata sent in message body
     gsutil notification create \
-        -t "$avro_topic" \
+        -t "$ps_topic_avro" \
         -e "$trigger_event" \
         -f "$format" \
-        "gs://${avro_bucket}"
-    gcloud pubsub subscriptions create "${avro_subscription}" --topic="${avro_topic}"
+        "gs://${gcs_avro_bucket}"
+    gcloud pubsub subscriptions create "${ps_subscription_avro}" --topic="${ps_topic_avro}"
 
+    #--- Deploy Cloud Run service
     echo "Creating container image and deploying to Cloud Run..."
     moduledir="."  # assumes deploying what's in our current directory
     config="${moduledir}/cloudbuild.yaml"
@@ -85,7 +83,7 @@ else
     # WARNING:  This is set to retry failed deliveries. If there is a bug in main.py this will
     # retry indefinitely, until the message is delete manually.
     gcloud pubsub subscriptions create "${ps_input_subscrip}" \
-        --topic "${trigger_topic}" \
+        --topic "${ps_trigger_topic}" \
         --topic-project "${PROJECT_ID}" \
         --ack-deadline=600 \
         --push-endpoint="${url}${ROUTE_RUN}" \

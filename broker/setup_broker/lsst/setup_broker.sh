@@ -44,27 +44,25 @@ define_GCP_resources() {
     if [ "$testid" != "False" ] && [ -n "$testid" ]; then
         testid_suffix="${separator}${testid}"
     fi
-
     echo "${base_name}${testid_suffix}"
 }
 
 #--- GCP resources used directly in this script
-alerts_table="alerts_${versiontag}"
 artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services" "-")
-broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files" "-")
 bq_dataset=$(define_GCP_resources "${survey}" "_")
-bq_dataset=$(define_GCP_resources "${survey}_value_added" "-")
-subscription_reservoir=$(define_GCP_resources "${survey}-alerts-reservoir" "-")
-supernnova_table="SuperNNova"
-topic_alerts_raw=$(define_GCP_resources "${survey}-alerts_raw" "-")
-topic_alerts=$(define_GCP_resources "${survey}-alerts" "-")
-topic_alerts_json=$(define_GCP_resources "${survey}-alerts-json" "-")
-upsilon_table="upsilon"
-variability_table="variability"
+bq_table_alerts="alerts_${versiontag}"
+bq_table_supernnova="SuperNNova"
+bq_table_upsilon="upsilon"
+bq_table_variability="variability"
+gcs_broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files" "-")
+ps_subscription_reservoir=$(define_GCP_resources "${survey}-alerts-reservoir" "-")
+ps_topic_alerts_raw=$(define_GCP_resources "${survey}-alerts_raw" "-")
+ps_topic_alerts=$(define_GCP_resources "${survey}-alerts" "-")
+ps_topic_alerts_json=$(define_GCP_resources "${survey}-alerts-json" "-")
 # topics and subscriptions involved in writing alert data to BigQuery
-deadletter_topic_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import-deadletter-${versiontag}" "-")
-deadletter_subscription_bigquery_import="${deadletter_topic_bigquery_import}"
-subscription_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import-${versiontag}" "-") # BigQuery subscription
+ps_bigquery_subscription=$(define_GCP_resources "${survey}-bigquery-import-${versiontag}" "-")
+ps_deadletter_subscription=$(define_GCP_resources "${survey}-bigquery-import-deadletter-${versiontag}" "-")
+ps_deadletter_topic="${ps_deadletter_subscription}"
 
 # function used to create (or delete) GCP resources
 manage_resources() {
@@ -87,22 +85,22 @@ manage_resources() {
         else
             echo "${bq_dataset} already exists."
         fi
-        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${alerts_table}" "bq_${survey}_${alerts_table}_schema.json") || exit 5
-        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${supernnova_table}" "bq_${survey}_${supernnova_table}_schema.json") || exit 5
-        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${variability_table}" "bq_${survey}_${variability_table}_schema.json") || exit 5
-        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${upsilon_table}" "bq_${survey}_${upsilon_table}_schema.json") || exit 5
-        bq update --description "Alert data from LSST. This table is an archive of the lsst-alerts Pub/Sub stream. It has the same schema as the original alert bytes, including nested and repeated fields." "${PROJECT_ID}:${bq_dataset}.${alerts_table}"
-        bq update --description "Binary classification results from SuperNNova." "${PROJECT_ID}:${bq_dataset}.${supernnova_table}"
+        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}" "bq_${survey}_${bq_table_alerts}_schema.json") || exit 5
+        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${bq_table_supernnova}" "bq_${survey}_${bq_table_supernnova}_schema.json") || exit 5
+        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${bq_table_variability}" "bq_${survey}_${bq_table_variability}_schema.json") || exit 5
+        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${bq_table_upsilon}" "bq_${survey}_${bq_table_upsilon}_schema.json") || exit 5
+        bq update --description "Alert data from LSST. This table is an archive of the lsst-alerts Pub/Sub stream. It has the same schema as the original alert bytes, including nested and repeated fields." "${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}"
+        bq update --description "Binary classification results from SuperNNova." "${PROJECT_ID}:${bq_dataset}.${bq_table_supernnova}"
 
-        #--- Create GCS buckets
+        #--- Create GCS bucket
         echo
-        echo "Creating broker_bucket and uploading files..."
-        if ! gsutil ls -b "gs://${broker_bucket}" >/dev/null 2>&1; then
-            gsutil mb -b on -l "${region}" "gs://${broker_bucket}"
+        echo "Creating gcs_broker_bucket and uploading files..."
+        if ! gsutil ls -b "gs://${gcs_broker_bucket}" >/dev/null 2>&1; then
+            gsutil mb -b on -l "${region}" "gs://${gcs_broker_bucket}"
         else
-            echo "${broker_bucket} already exists."
+            echo "${gcs_broker_bucket} already exists."
         fi
-        ./upload_broker_bucket.sh "${broker_bucket}"
+        ./upload_gcs_broker_bucket.sh "${gcs_broker_bucket}"
 
         #--- Assign IAM roles to the Pub/Sub service account
         echo
@@ -124,31 +122,31 @@ manage_resources() {
             --direction=INGRESS \
             --enable-logging
 
-        # create Pub/Sub
+        #--- Create Pub/Sub
         echo "Configuring Pub/Sub resources..."
-        gcloud pubsub topics create "${topic_alerts_raw}"
-        gcloud pubsub topics create "${topic_alerts}"
-        gcloud pubsub topics create "${topic_alerts_json}"
-        gcloud pubsub topics create "${deadletter_topic_bigquery_import}"
-        gcloud pubsub subscriptions create "${deadletter_subscription_bigquery_import}" \
-            --topic="${deadletter_topic_bigquery_import}"
-        gcloud pubsub subscriptions create "${subscription_reservoir}" \
-            --topic="${topic_alerts}"
-        gcloud pubsub subscriptions create "${subscription_bigquery_import}" \
-            --topic="${topic_alerts_json}" \
-            --bigquery-table="${PROJECT_ID}:${bq_dataset}.${alerts_table}" \
+        gcloud pubsub topics create "${ps_topic_alerts_raw}"
+        gcloud pubsub topics create "${ps_topic_alerts}"
+        gcloud pubsub topics create "${ps_topic_alerts_json}"
+        gcloud pubsub topics create "${ps_deadletter_topic}"
+        gcloud pubsub subscriptions create "${ps_deadletter_subscription}" \
+            --topic="${ps_deadletter_topic}"
+        gcloud pubsub subscriptions create "${ps_subscription_reservoir}" \
+            --topic="${ps_topic_alerts}"
+        gcloud pubsub subscriptions create "${ps_bigquery_subscription}" \
+            --topic="${ps_topic_alerts_json}" \
+            --bigquery-table="${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}" \
             --use-table-schema \
             --drop-unknown-fields \
-            --dead-letter-topic="${deadletter_topic_bigquery_import}" \
+            --dead-letter-topic="${ps_deadletter_topic}" \
             --max-delivery-attempts=5 \
             --dead-letter-topic-project="${PROJECT_ID}" \
             --message-filter='attributes.schema_version = "'"${versiontag}"'"'
-
-        # set IAM policies on resources
+        # set IAM policies on public Pub/Sub resources
         if [ "$testid" = "False" ]; then
             user="allUsers"
             roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/userPublic"
-            gcloud pubsub topics add-iam-policy-binding "${topic_alerts}" --member="${user}" --role="${roleid}"
+            gcloud pubsub topics add-iam-policy-binding "${ps_topic_alerts}" --member="${user}" --role="${roleid}"
+            gcloud pubsub topics add-iam-policy-binding "${ps_topic_alerts_json}" --member="${user}" --role="${roleid}"
         fi
 
         #--- Create Artifact Registry Repository
@@ -163,15 +161,15 @@ manage_resources() {
             # delete testing resources
             # Note: create_vm.sh will delete the VM instance
             o="GSUtil:parallel_process_count=1" # disable multiprocessing for Macs
-            gsutil -m -o "${o}" rm -r "gs://${broker_bucket}"
+            gsutil -m -o "${o}" rm -r "gs://${gcs_broker_bucket}"
             bq rm -r -f "${PROJECT_ID}:${bq_dataset}"
-            gcloud pubsub topics delete "${topic_alerts_raw}"
-            gcloud pubsub topics delete "${topic_alerts}"
-            gcloud pubsub topics delete "${topic_alerts_json}"
-            gcloud pubsub topics delete "${deadletter_topic_bigquery_import}"
-            gcloud pubsub subscriptions delete "${subscription_reservoir}"
-            gcloud pubsub subscriptions delete "${deadletter_subscription_bigquery_import}"
-            gcloud pubsub subscriptions delete "${subscription_bigquery_import}"
+            gcloud pubsub topics delete "${ps_topic_alerts_raw}"
+            gcloud pubsub topics delete "${ps_topic_alerts}"
+            gcloud pubsub topics delete "${ps_topic_alerts_json}"
+            gcloud pubsub topics delete "${ps_deadletter_topic}"
+            gcloud pubsub subscriptions delete "${ps_subscription_reservoir}"
+            gcloud pubsub subscriptions delete "${ps_deadletter_subscription}"
+            gcloud pubsub subscriptions delete "${ps_bigquery_subscription}"
             gcloud artifacts repositories delete "${artifact_registry_repo}" --location="${region}"
         else
             echo 'ERROR: No testid supplied.'
@@ -195,32 +193,32 @@ fi
 #--- Create VM instances
 echo
 echo "Configuring VMs..."
-./create_vm.sh "${broker_bucket}" "${testid}" "${teardown}" "${survey}" "${zone}" "${firewallrule}"
+./create_vm.sh "${gcs_broker_bucket}" "${testid}" "${teardown}" "${survey}" "${zone}" "${firewallrule}"
 
 #--- Deploy Cloud Run services
 echo
 echo "Configuring Cloud Run services..."
 (
-    # navigate to the correct directory
+    # navigate to the Cloud Run directory
     cd .. && cd .. && cd cloud_run && cd lsst
 
     #--- ps_to_storage Cloud Run service
     cd ps_to_storage
-    ./deploy.sh "$testid" "$teardown" "$survey" "$region"
+    ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}"
 
     #--- lite Cloud Run service
     cd .. && cd lite
-    ./deploy.sh "$testid" "$teardown" "$survey" "$region"
+    ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}"
 
     #--- classify_snn Cloud Run service
     cd .. && cd classify_snn
-    ./deploy.sh "$testid" "$teardown" "$survey" "$region"
+    ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}"
 
     #--- variability Cloud Run service
     cd .. && cd variability
-    ./deploy.sh "$testid" "$teardown" "$survey" "$region"
+    ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}"
 
     #--- classify_upsilon Cloud Run service
     cd .. && cd classify_upsilon
-    ./deploy.sh "$testid" "$teardown" "$survey" "$region"
+    ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}"
 ) || exit
