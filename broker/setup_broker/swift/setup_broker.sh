@@ -44,22 +44,21 @@ define_GCP_resources() {
     if [ "$testid" != "False" ] && [ -n "$testid" ]; then
         testid_suffix="${separator}${testid}"
     fi
-
     echo "${base_name}${testid_suffix}"
 }
 
 #--- GCP resources used directly in this script
-alerts_table="alerts_${versiontag}"
 artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services" "-")
 bq_dataset=$(define_GCP_resources "${survey}" "_")
-broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files" "-")
-subscription_alerts_reservoir=$(define_GCP_resources "${survey}-alerts-json-reservoir" "-")
-topic_alerts_json=$(define_GCP_resources "${survey}-alerts-json" "-")
-topic_alerts_raw=$(define_GCP_resources "${survey}-alerts_raw" "-")
+bq_table_alerts="alerts_${versiontag}"
+gcs_broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files" "-")
+ps_subscription_alerts_reservoir=$(define_GCP_resources "${survey}-alerts-json-reservoir" "-")
+ps_topic_alerts_json=$(define_GCP_resources "${survey}-alerts-json" "-")
+ps_topic_alerts_raw=$(define_GCP_resources "${survey}-alerts_raw" "-")
 # topics and subscriptions involved in writing alert data to BigQuery
-deadletter_topic_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import-deadletter" "-")
-deadletter_subscription_bigquery_import="${deadletter_topic_bigquery_import}"
-subscription_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import-${versiontag}" "-") # BigQuery subscription
+ps_bigquery_subscription=$(define_GCP_resources "${survey}-bigquery-import-${versiontag}" "-")
+ps_deadletter_subscription=$(define_GCP_resources "${survey}-bigquery-import-deadletter" "-")
+ps_deadletter_topic="${ps_deadletter_subscription}"
 
 # function used to create (or delete) GCP resources
 manage_resources() {
@@ -79,21 +78,21 @@ manage_resources() {
         else
             echo "${bq_dataset} already exists."
         fi
-        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${alerts_table}" "bq_${survey}_${alerts_table}_schema.json") || exit 5
+        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}" "bq_${survey}_${bq_table_alerts}_schema.json") || exit 5
         # grant public access to the dataset; for more information, see:
         # https://cloud.google.com/bigquery/docs/control-access-to-resources-iam#grant_access_to_a_dataset
         (cd templates && bq update --source "bq_${survey}_policy.json" "${PROJECT_ID}:${bq_dataset}") || exit 5
-        bq update --description "Alert data from Swift/BAT-GUANO. This table is an archive of the swift-alerts Pub/Sub stream. It has the same schema as the original alert bytes, including repeated fields." "${PROJECT_ID}:${bq_dataset}.${alerts_table}"
+        bq update --description "Alert data from Swift/BAT-GUANO. This table is an archive of the swift-alerts Pub/Sub stream. It has the same schema as the original alert bytes, including repeated fields." "${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}"
 
         #--- Create GCS buckets
         echo
         echo "Creating broker_bucket and uploading files..."
-        if ! gsutil ls -b "gs://${broker_bucket}" >/dev/null 2>&1; then
-            gsutil mb -b on -l "${region}" "gs://${broker_bucket}"
+        if ! gsutil ls -b "gs://${gcs_broker_bucket}" >/dev/null 2>&1; then
+            gsutil mb -b on -l "${region}" "gs://${gcs_broker_bucket}"
         else
-            echo "${broker_bucket} already exists."
+            echo "${gcs_broker_bucket} already exists."
         fi
-        ./upload_broker_bucket.sh "${broker_bucket}" # upload files
+        ./upload_broker_bucket.sh "${gcs_broker_bucket}"
 
         #--- Assign IAM roles to the Pub/Sub service account
         echo
@@ -107,24 +106,23 @@ manage_resources() {
         #--- Create Pub/Sub topics and subscriptions
         echo
         echo "Configuring Pub/Sub resources..."
-        gcloud pubsub topics create "${topic_alerts_json}"
-        gcloud pubsub topics create "${topic_alerts_raw}"
-        gcloud pubsub topics create "${deadletter_topic_bigquery_import}"
-        gcloud pubsub subscriptions create "${deadletter_subscription_bigquery_import}" --topic="${deadletter_topic_bigquery_import}"
-        gcloud pubsub subscriptions create "${subscription_alerts_reservoir}" --topic="${topic_alerts_json}"
-        gcloud pubsub subscriptions create "${subscription_bigquery_import}" \
-            --topic="${topic_alerts_json}" \
-            --bigquery-table="${PROJECT_ID}:${bq_dataset}.${alerts_table}" \
+        gcloud pubsub topics create "${ps_topic_alerts_json}"
+        gcloud pubsub topics create "${ps_topic_alerts_raw}"
+        gcloud pubsub topics create "${ps_deadletter_topic}"
+        gcloud pubsub subscriptions create "${ps_deadletter_subscription}" --topic="${ps_deadletter_topic}"
+        gcloud pubsub subscriptions create "${ps_subscription_alerts_reservoir}" --topic="${ps_topic_alerts_json}"
+        gcloud pubsub subscriptions create "${ps_bigquery_subscription}" \
+            --topic="${ps_topic_alerts_json}" \
+            --bigquery-table="${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}" \
             --use-table-schema \
             --drop-unknown-fields \
-            --dead-letter-topic="${deadletter_topic_bigquery_import}" \
+            --dead-letter-topic="${ps_deadletter_topic}" \
             --max-delivery-attempts=5 \
             --dead-letter-topic-project="${PROJECT_ID}"
-
         # set IAM policies on resources
         user="allUsers"
         roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/userPublic"
-        gcloud pubsub topics add-iam-policy-binding "${topic_alerts_json}" --member="${user}" --role="${roleid}"
+        gcloud pubsub topics add-iam-policy-binding "${ps_topic_alerts_json}" --member="${user}" --role="${roleid}"
 
         #--- Create Artifact Registry Repository
         echo
@@ -138,14 +136,14 @@ manage_resources() {
             # delete testing resources
             # Note: create_vm.sh will delete the VM instance
             o="GSUtil:parallel_process_count=1" # disable multiprocessing for Macs
-            gsutil -m -o "${o}" rm -r "gs://${broker_bucket}"
+            gsutil -m -o "${o}" rm -r "gs://${gcs_broker_bucket}"
             bq rm -r -f "${PROJECT_ID}:${bq_dataset}"
-            gcloud pubsub topics delete "${topic_alerts_json}"
-            gcloud pubsub topics delete "${topic_alerts_raw}"
-            gcloud pubsub topics delete "${deadletter_topic_bigquery_import}"
-            gcloud pubsub subscriptions delete "${subscription_alerts_reservoir}"
-            gcloud pubsub subscriptions delete "${deadletter_subscription_bigquery_import}"
-            gcloud pubsub subscriptions delete "${subscription_bigquery_import}"
+            gcloud pubsub topics delete "${ps_topic_alerts_json}"
+            gcloud pubsub topics delete "${ps_topic_alerts_raw}"
+            gcloud pubsub topics delete "${ps_deadletter_topic}"
+            gcloud pubsub subscriptions delete "${ps_subscription_alerts_reservoir}"
+            gcloud pubsub subscriptions delete "${ps_deadletter_subscription}"
+            gcloud pubsub subscriptions delete "${ps_bigquery_subscription}"
             gcloud artifacts repositories delete "${artifact_registry_repo}" --location="${region}"
         else
             echo 'ERROR: No testid supplied.'
@@ -169,16 +167,16 @@ fi
 #--- Create (or delete) VM instance
 echo
 echo "Configuring VM..."
-./create_vm.sh "${broker_bucket}" "${testid}" "${teardown}" "${survey}" "${zone}" "${PROJECT_ID}"
+./create_vm.sh "${gcs_broker_bucket}" "${testid}" "${teardown}" "${survey}" "${zone}" "${PROJECT_ID}"
 
-#--- Deploy Cloud Run services
+#--- Create (or delete) Cloud Run services
 echo
 echo "Configuring Cloud Run services..."
 (
-    # navigate to the correct directory
+    # navigate to the Cloud Run directory for Swift/BAT-GUANO
     cd .. && cd .. && cd cloud_run && cd swift
 
-    #--- ps_to_storage Cloud Run service
+    #--- alerts-to-storage Cloud Run service
     cd ps_to_storage
     ./deploy.sh "$testid" "$teardown" "$survey" "$region"
 ) || exit

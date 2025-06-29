@@ -2,14 +2,15 @@
 # Creates or deletes the GCP VM instances needed by the broker.
 # This script will not delete VMs that are in production
 
-
-broker_bucket=$1 # name of GCS bucket where broker files are staged
+# name of GCS bucket where broker files are staged
+gcs_broker_bucket=$1
+# "False" uses production resources
+# any other string will be appended to the names of all resources
 testid="${2:-test}"
-#   "False" uses production resources
-#   any other string will be appended to the names of all resources
-teardown="${3:-False}" # "True" tearsdown/deletes resources, else setup
-survey="${4:-swift}"
+# "True" tearsdown/deletes resources, else setup
+teardown="${3:-False}"
 # name of the survey this broker instance will ingest
+survey="${4:-swift}"
 zone="${5:-us-central1-a}"
 project_id="${6:-PROJECT_ID}"
 
@@ -26,23 +27,22 @@ if [ "$teardown" = "True" ]; then
     if [ "$testid" != "False" ]; then
         gcloud compute instances delete "$consumerVM" --zone="$zone"
     fi
-
-
+#--- Create VM if it does not exist
 else
-#--- Consumer VM
     if ! gcloud compute instances describe "${consumerVM}" --zone="${zone}" --project="${project_id}" >/dev/null 2>&1; then
-        #--- Create VM
         machinetype=e2-custom-1-5632
         # metadata
         googlelogging="google-logging-enabled=true"
-        startupscript="startup-script-url=gs://${broker_bucket}/${survey}/vm_install.sh"
-        shutdownscript="shutdown-script-url=gs://${broker_bucket}/${survey}/vm_shutdown.sh"
+        startupscript="startup-script-url=gs://${gcs_broker_bucket}/${survey}/vm_install.sh"
+        shutdownscript="shutdown-script-url=gs://${gcs_broker_bucket}/${survey}/vm_shutdown.sh"
+        #--- Create VM
         gcloud compute instances create "$consumerVM" \
             --zone="$zone" \
             --machine-type="$machinetype" \
             --scopes=cloud-platform \
             --metadata="${googlelogging},${startupscript},${shutdownscript}"
     else
+        echo
         echo "VM instance ${consumerVM} already exists in zone ${zone}."
     fi
 fi
