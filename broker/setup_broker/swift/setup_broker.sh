@@ -12,8 +12,8 @@ schema_version="${4:-4.5.0}"
 versiontag=v$(echo "${schema_version}" | tr . _) # 1.0.0 -> v1_0_0
 region="${5:-us-central1}"
 zone="${region}-a"  # just use zone "a" instead of adding another script arg
-
-PROJECT_ID=$GOOGLE_CLOUD_PROJECT # get the environment variable
+# get the environment variables
+PROJECT_ID=$GOOGLE_CLOUD_PROJECT
 PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format="value(projectNumber)")
 
 #--- Make the user confirm the settings
@@ -75,14 +75,14 @@ manage_resources() {
         echo "Creating BigQuery dataset and table..."
         if ! bq ls "${PROJECT_ID}:${bq_dataset}" >/dev/null 2>&1; then
             bq --location="${region}" mk --dataset "${bq_dataset}"
+            # grant public access to the dataset; for more information, see:
+            # https://cloud.google.com/bigquery/docs/control-access-to-resources-iam#grant_access_to_a_dataset
+            (cd templates && bq update --source "bq_${survey}_policy.json" "${PROJECT_ID}:${bq_dataset}") || exit 5
+            bq update --description "Alert data from Swift/BAT-GUANO. This table is an archive of the swift-alerts Pub/Sub stream. It has the same schema as the original alert bytes, including repeated fields." "${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}"
         else
             echo "${bq_dataset} already exists."
         fi
         (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}" "bq_${survey}_${bq_table_alerts}_schema.json") || exit 5
-        # grant public access to the dataset; for more information, see:
-        # https://cloud.google.com/bigquery/docs/control-access-to-resources-iam#grant_access_to_a_dataset
-        (cd templates && bq update --source "bq_${survey}_policy.json" "${PROJECT_ID}:${bq_dataset}") || exit 5
-        bq update --description "Alert data from Swift/BAT-GUANO. This table is an archive of the swift-alerts Pub/Sub stream. It has the same schema as the original alert bytes, including repeated fields." "${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}"
 
         #--- Create GCS buckets
         echo
@@ -119,10 +119,12 @@ manage_resources() {
             --dead-letter-topic="${ps_deadletter_topic}" \
             --max-delivery-attempts=5 \
             --dead-letter-topic-project="${PROJECT_ID}"
-        # set IAM policies on resources
-        user="allUsers"
-        roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/userPublic"
-        gcloud pubsub topics add-iam-policy-binding "${ps_topic_alerts_json}" --member="${user}" --role="${roleid}"
+        # set IAM policies on public Pub/Sub resources
+        if [ "$testid" = "False" ]; then
+            user="allUsers"
+            roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/userPublic"
+            gcloud pubsub topics add-iam-policy-binding "${ps_topic_alerts_json}" --member="${user}" --role="${roleid}"
+        fi
 
         #--- Create Artifact Registry Repository
         echo
@@ -178,5 +180,5 @@ echo "Configuring Cloud Run services..."
 
     #--- alerts-to-storage Cloud Run service
     cd ps_to_storage
-    ./deploy.sh "$testid" "$teardown" "$survey" "$region"
+    ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}"
 ) || exit

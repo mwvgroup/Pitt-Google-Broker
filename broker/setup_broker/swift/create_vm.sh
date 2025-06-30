@@ -27,7 +27,7 @@ if [ "$teardown" = "True" ]; then
     if [ "$testid" != "False" ]; then
         gcloud compute instances delete "$consumerVM" --zone="$zone"
     fi
-#--- Create VM if it does not exist
+#--- Setup resources if they do not exist
 else
     if ! gcloud compute instances describe "${consumerVM}" --zone="${zone}" --project="${project_id}" >/dev/null 2>&1; then
         machinetype=e2-custom-1-5632
