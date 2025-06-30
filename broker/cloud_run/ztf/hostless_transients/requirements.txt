@@ -1,0 +1,13 @@
+# As explained here
+# https://cloud.google.com/functions/docs/writing/specifying-dependencies-python
+# dependencies for a Cloud Function must be specified in a `requirements.txt`
+# file (or packaged with the function) in the same directory as `main.py`
+
+google-cloud-logging
+pittgoogle-client>=0.3.15
+
+# for Cloud Run
+# https://cloud.google.com/run/docs/quickstarts/build-and-deploy/deploy-python-service
+Flask
+gunicorn
+Werkzeug
