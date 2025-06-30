@@ -21,16 +21,16 @@ PROJECT_ID = os.getenv("GCP_PROJECT")
 TESTID = os.getenv("TESTID")
 SURVEY = os.getenv("SURVEY")
 
-# Variables for incoming data
+# ---Variables for incoming data
 # A url route is used in setup.sh when the trigger subscription is created.
 # It is possible to define multiple routes in a single module and trigger them using different subscriptions.
 ROUTE_RUN = "/"  # HTTP route that will trigger run(). Must match deploy.sh
 
-# Variables for outgoing data
+# ---Variables for outgoing data
 HTTP_204 = 204  # HTTP code: Success
 HTTP_400 = 400  # HTTP code: Bad Request
 
-# GCP resources used in this module
+# ---GCP resources used in this module
 TOPIC = pittgoogle.Topic.from_cloud("upsilon", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID)
 
 app = flask.Flask(__name__)
@@ -59,12 +59,12 @@ def run() -> tuple[str, int]:
         return str(exc), HTTP_400
 
     # UPSILoN recommends using light curves with more than ~80 data points
-    has_min_detections_in_any_filter = any(
-        alert_lite.dict["variability"].get(f"n_detections_{filter}_band", 0) >= 80
-        for filter in ["g", "r", "i"]
+    has_min_detections_in_any_band = any(
+        alert_lite.dict["variability"].get(f"n_detections_{band}_band", 0) >= 80
+        for band in ["g", "r", "i"]
     )
 
-    if has_min_detections_in_any_filter:
+    if has_min_detections_in_any_band:
         # classify and publish results
         alert_lite_df = _create_lite_dataframe(alert_lite.dict["alert_lite"])
         upsilon_dict = _classify_with_upsilon(alert_lite_df)
