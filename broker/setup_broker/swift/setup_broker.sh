@@ -83,7 +83,7 @@ manage_resources() {
         fi
         (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}" "bq_${survey}_${bq_table_alerts}_schema.json") || exit 5
         bq update --description "Alert data from Swift/BAT-GUANO. This table is an archive of the swift-alerts Pub/Sub stream. It has the same schema as the original alert bytes, including repeated fields." "${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}"
-        #--- Create GCS buckets
+        #--- Create GCS bucket
         echo
         echo "Creating broker_bucket and uploading files..."
         if ! gsutil ls -b "gs://${gcs_broker_bucket}" >/dev/null 2>&1; then
@@ -136,8 +136,14 @@ manage_resources() {
         if [ "$environment_type" = "testing" ]; then
             # delete testing resources
             # Note: create_vm.sh will delete the VM instance
+            #--- Delete GCS bucket
+            echo
+            echo "Deleting broker_bucket..."
             o="GSUtil:parallel_process_count=1" # disable multiprocessing for Macs
             gsutil -m -o "${o}" rm -r "gs://${gcs_broker_bucket}"
+            #--- Delete BigQuery dataset and Pub/Sub topics/subscriptions
+            echo
+            echo "Configuring BigQuery and Pub/Sub resources..."
             bq rm -r -f "${PROJECT_ID}:${bq_dataset}"
             gcloud pubsub topics delete "${ps_topic_alerts_json}"
             gcloud pubsub topics delete "${ps_topic_alerts_raw}"
@@ -145,6 +151,7 @@ manage_resources() {
             gcloud pubsub subscriptions delete "${ps_subscription_alerts_reservoir}"
             gcloud pubsub subscriptions delete "${ps_deadletter_subscription}"
             gcloud pubsub subscriptions delete "${ps_bigquery_subscription}"
+            echo
             gcloud artifacts repositories delete "${artifact_registry_repo}" --location="${region}"
         else
             echo 'ERROR: No testid supplied.'
