@@ -96,18 +96,18 @@ def run() -> tuple[str, int]:
 
 def _classify_with_upsilon(alert_lite_df: pd.Dataframe) -> dict:
     upsilon_dict = {}
-    filters = alert_lite_df["filter"].map(pittgoogle.utils.ztf_fid_names()).unique()
+    bands = alert_lite_df["filter"].map(pittgoogle.utils.ztf_fid_names()).unique()
     rf_model = upsilon.load_rf_model()  # load UPSILoN's classification model
-    for filter in filters:
+    for band in bands:
         # ---Extract data
-        filter_diaSources = alert_lite_df[alert_lite_df["filter"] == filter]
+        filter_diaSources = alert_lite_df[alert_lite_df["filter"] == band]
         mag_gt_zero = filter_diaSources["mag"].to_numpy() > 0
-        # set output to None if data is absent or there are too few data points for this filter
+        # set output to None if data is absent or there are too few data points for this band
         # limit recommended by UPSILoN
         if filter_diaSources.empty or mag_gt_zero.sum() <= 80:
-            upsilon_dict[f"{filter}_label"] = None
-            upsilon_dict[f"{filter}_probability"] = None
-            upsilon_dict[f"{filter}_flag"] = None
+            upsilon_dict[f"{band}_label"] = None
+            upsilon_dict[f"{band}_probability"] = None
+            upsilon_dict[f"{band}_flag"] = None
             continue
 
         # ---Extract features
@@ -120,9 +120,9 @@ def _classify_with_upsilon(alert_lite_df: pd.Dataframe) -> dict:
 
         # ---Classify
         label, probability, flag = upsilon.predict(rf_model, features)
-        upsilon_dict[f"{filter}_label"] = label
-        upsilon_dict[f"{filter}_probability"] = probability
-        upsilon_dict[f"{filter}_flag"] = flag
+        upsilon_dict[f"{band}_label"] = label
+        upsilon_dict[f"{band}_probability"] = probability
+        upsilon_dict[f"{band}_flag"] = flag
 
     return upsilon_dict
 
