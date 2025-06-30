@@ -209,6 +209,10 @@ echo "Configuring Cloud Functions..."
     cd .. && cd store_BigQuery
     ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
 
+    #--- tag alerts cloud function
+    cd .. && cd tag
+    ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
+
     # navigate to the Cloud Run directory for ZTF
     cd .. && cd .. && cd .. && cd cloud_run && cd ztf
 
