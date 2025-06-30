@@ -4,13 +4,12 @@
 """This module uses the "value-added" tag alert stream to identify hostless transient candidates."""
 
 import os
+import io
 from typing import Dict
 from astropy.io import fits
 from astropy.stats import sigma_clip
 import numpy as np
-import pandas as pd
 from google.cloud import logging
-import io
 import flask
 import pittgoogle
 
