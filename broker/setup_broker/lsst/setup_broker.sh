@@ -38,7 +38,7 @@ fi
 
 define_GCP_resources() {
     local base_name="$1"
-    local separator="$2"
+    local separator="${2:-}"
     local testid_suffix=""
 
     if [ "$testid" != "False" ] && [ -n "$testid" ]; then
@@ -48,20 +48,20 @@ define_GCP_resources() {
 }
 
 #--- GCP resources used directly in this script
-artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services" "-")
+artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
 bq_dataset=$(define_GCP_resources "${survey}" "_")
 bq_table_alerts="alerts_${versiontag}"
 bq_table_supernnova="SuperNNova"
 bq_table_upsilon="upsilon"
 bq_table_variability="variability"
-gcs_broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files" "-")
-ps_subscription_reservoir=$(define_GCP_resources "${survey}-alerts-reservoir" "-")
-ps_topic_alerts_raw=$(define_GCP_resources "${survey}-alerts_raw" "-")
-ps_topic_alerts=$(define_GCP_resources "${survey}-alerts" "-")
-ps_topic_alerts_json=$(define_GCP_resources "${survey}-alerts-json" "-")
+gcs_broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
+ps_subscription_reservoir=$(define_GCP_resources "${survey}-alerts-reservoir")
+ps_topic_alerts_raw=$(define_GCP_resources "${survey}-alerts_raw")
+ps_topic_alerts=$(define_GCP_resources "${survey}-alerts")
+ps_topic_alerts_json=$(define_GCP_resources "${survey}-alerts-json")
 # topics and subscriptions involved in writing alert data to BigQuery
-ps_bigquery_subscription=$(define_GCP_resources "${survey}-bigquery-import-${versiontag}" "-")
-ps_deadletter_subscription=$(define_GCP_resources "${survey}-bigquery-import-deadletter-${versiontag}" "-")
+ps_bigquery_subscription=$(define_GCP_resources "${survey}-bigquery-import-${versiontag}")
+ps_deadletter_subscription=$(define_GCP_resources "${survey}-bigquery-import-deadletter-${versiontag}")
 ps_deadletter_topic="${ps_deadletter_subscription}"
 
 # function used to create (or delete) GCP resources
