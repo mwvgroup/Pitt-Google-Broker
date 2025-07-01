@@ -62,7 +62,7 @@ else
         --member="serviceAccount:${runinvoker_svcact}" \
         --role="${role}"
     echo
-    echo "Creating trigger subscription for Cloud Run..."
+    echo "Creating trigger subscription for ${MODULE_NAME} Cloud Run service..."
     # WARNING:  This is set to retry failed deliveries. If there is a bug in main.py this will
     # retry indefinitely, until the message is delete manually.
     gcloud pubsub subscriptions create "${ps_input_subscrip}" \
