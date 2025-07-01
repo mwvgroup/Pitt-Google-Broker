@@ -1,14 +1,14 @@
 #! /bin/bash
 # Create and configure GCP resources needed to run the nightly broker.
 
-testid="${1:-test}"
 # "False" uses production resources
 # any other string will be appended to the names of all resources
-teardown="${2:-False}"
+testid="${1:-test}"
 # "True" tearsdown/deletes resources, else setup
-survey="${3:-ztf}"
+teardown="${2:-False}"
 # name of the survey this broker instance will ingest
 # 'ztf' or 'decat'
+survey="${3:-ztf}"
 schema_version="${4:-4.02}"
 versiontag=v$(echo "${schema_version}" | tr . _)  # 4.02 -> v4_02
 use_authentication="${5:-false}"  # whether the consumer VM should use an authenticated connection
@@ -38,35 +38,29 @@ if [ "$continue_with_setup" != "y" ]; then
     exit
 fi
 
-# function used to define GCP resources; appends testid if needed
 define_GCP_resources() {
     local base_name="$1"
+    local separator="${2:--}"
     local testid_suffix=""
 
-    if [ "$testid" != "False" ]; then
-        if [ "$base_name" = "${survey}" ] || [ "$base_name" = "${survey}_value_added" ]; then
-            testid_suffix="_${testid}"  # complies with BigQuery naming conventions
-        else
-            testid_suffix="-${testid}"
-        fi
+    if [ "$testid" != "False" ] && [ -n "$testid" ]; then
+        testid_suffix="${separator}${testid}"
     fi
-
     echo "${base_name}${testid_suffix}"
 }
 
 #--- GCP resources used directly in this script
+alerts_table="alerts_${versiontag}"
 artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
 broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
 bq_dataset=$(define_GCP_resources "${survey}")
 bq_dataset_value_added=$(define_GCP_resources "${survey}_value_added")
-# topics and subscriptions involved in writing alert data to BigQuery
-topic_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import")
-subscription_bigquery_import="${topic_bigquery_import}" # BigQuery subscription
-deadletter_topic_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import-deadletter")
-deadletter_subscription_bigquery_import="${deadletter_topic_bigquery_import}"
-
-alerts_table="alerts_${versiontag}"
 variability_table="variability"
+# topics and subscriptions involved in writing alert data to BigQuery
+ps_bigquery_subscription=$(define_GCP_resources "${survey}-bigquery-import-${versiontag}")
+ps_deadletter_subscription=$(define_GCP_resources "${survey}-bigquery-import-deadletter-${versiontag}")
+ps_deadletter_topic="${ps_deadletter_subscription}"
+ps_topic_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import")
 
 # function used to create (or delete) GCP resources
 manage_resources() {
@@ -85,28 +79,28 @@ manage_resources() {
         python3 setup_gcp.py --survey="$survey" --testid="$testid" --confirmed --region="${region}" --versiontag="${versiontag}"
         # the following resources are not created/deleted by setup_gcp.py
         # will eventually migrate away from using setup_gcp.py altogether
-        gcloud pubsub topics create "${topic_bigquery_import}"
-        gcloud pubsub topics create "${deadletter_topic_bigquery_import}"
-        gcloud pubsub subscriptions create "${deadletter_subscription_bigquery_import}" --topic="${deadletter_topic_bigquery_import}"
+        gcloud pubsub topics create "${ps_topic_bigquery_import}"
+        gcloud pubsub topics create "${ps_deadletter_topic}"
+        gcloud pubsub subscriptions create "${ps_deadletter_subscription}" --topic="${ps_deadletter_topic}"
         # in order to create BigQuery subscriptions, ensure that the following service account:
         # service-<project number>@gcp-sa-pubsub.iam.gserviceaccount.com" has the
         # bigquery.dataEditor role for each table
-        gcloud pubsub subscriptions create "${subscription_bigquery_import}" \
-            --topic="${topic_bigquery_import}" \
+        gcloud pubsub subscriptions create "${ps_bigquery_subscription}" \
+            --topic="${ps_topic_bigquery_import}" \
             --bigquery-table="${PROJECT_ID}:${bq_dataset}.${alerts_table}" \
             --use-table-schema \
             --drop-unknown-fields \
-            --dead-letter-topic="${deadletter_topic_bigquery_import}" \
+            --dead-letter-topic="${ps_deadletter_topic}" \
             --max-delivery-attempts=5 \
             --dead-letter-topic-project="${PROJECT_ID}"
         # assign required permissions to the Pub/Sub service account
         # this allows dead-lettered messages to be forwarded from the BigQuery subscription to the dead letter topic
         # and it allows dead-lettered messages to be published to the dead letter topic.
         PUBSUB_SERVICE_ACCOUNT="service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com"
-        gcloud pubsub topics add-iam-policy-binding "${deadletter_topic_bigquery_import}" \
+        gcloud pubsub topics add-iam-policy-binding "${ps_deadletter_topic}" \
             --member="serviceAccount:$PUBSUB_SERVICE_ACCOUNT"\
             --role="roles/pubsub.publisher"
-        gcloud pubsub subscriptions add-iam-policy-binding "${subscription_bigquery_import}" \
+        gcloud pubsub subscriptions add-iam-policy-binding "${ps_bigquery_subscription}" \
             --member="serviceAccount:$PUBSUB_SERVICE_ACCOUNT"\
             --role="roles/pubsub.subscriber"
 
@@ -122,10 +116,10 @@ manage_resources() {
             # delete testing resources
             bq rm -r -f "${PROJECT_ID}:${bq_dataset_value_added}"
             python3 setup_gcp.py --survey="$survey" --testid="$testid" --teardown --confirmed --versiontag="${versiontag}"
-            gcloud pubsub topics delete "${topic_bigquery_import}"
-            gcloud pubsub topics delete "${deadletter_topic_bigquery_import}"
-            gcloud pubsub subscriptions delete "${deadletter_subscription_bigquery_import}"
-            gcloud pubsub subscriptions delete "${subscription_bigquery_import}"
+            gcloud pubsub topics delete "${ps_topic_bigquery_import}"
+            gcloud pubsub topics delete "${ps_deadletter_topic}"
+            gcloud pubsub subscriptions delete "${ps_deadletter_subscription}"
+            gcloud pubsub subscriptions delete "${ps_bigquery_subscription}"
             gcloud artifacts repositories delete "${artifact_registry_repo}" --location="${region}"
         else
             echo 'ERROR: No testid supplied.'
