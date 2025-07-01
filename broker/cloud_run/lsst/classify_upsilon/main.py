@@ -60,7 +60,7 @@ def run() -> tuple[str, int]:
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
-    # UPSILoN recommends using light curves with more than ~80 data points
+    # UPSILoN recommends using light curves with more than 80 data points
     has_min_detections_in_any_band = any(
         alert_lite.dict["variability"].get(f"n_detections_{band}_band", 0) >= 80
         for band in survey_bands
