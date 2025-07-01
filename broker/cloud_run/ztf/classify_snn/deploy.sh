@@ -16,28 +16,21 @@ PROJECT_ID=$GOOGLE_CLOUD_PROJECT
 MODULE_NAME="supernnova"  # lower case required by cloud run
 ROUTE_RUN="/"  # url route that will trigger main.run()
 
-# function used to define GCP resources; appends testid if needed
 define_GCP_resources() {
     local base_name="$1"
+    local separator="${2:--}"
     local testid_suffix=""
 
-    if [ "$testid" != "False" ]; then
-        if [ "$base_name" = "$survey" ]; then
-            testid_suffix="_${testid}"  # complies with BigQuery naming conventions
-        else
-            testid_suffix="-${testid}"
-        fi
+    if [ "$testid" != "False" ] && [ -n "$testid" ]; then
+        testid_suffix="${separator}${testid}"
     fi
-
     echo "${base_name}${testid_suffix}"
 }
 
-
 #--- GCP resources used in this script
 artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
-trigger_topic=$(define_GCP_resources "${survey}-tagged")
 ps_input_subscrip=$(define_GCP_resources "${survey}-SuperNNova") # Pub/Sub subscription used to trigger Cloud Run service
-ps_output_topic=$(define_GCP_resources "${survey}-SuperNNova")
+ps_trigger_topic=$(define_GCP_resources "${survey}-tagged")
 
 # additional GCP resources & variables used in this script
 cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}")  # lower case required by Cloud Run
@@ -46,18 +39,16 @@ runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
 if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources
     if [ "${testid}" != "False" ]; then
-        gcloud pubsub topics delete "${ps_output_topic}"
+        echo
+        echo "Deleting resources for ${MODULE_NAME} module..."
         gcloud pubsub subscriptions delete "${ps_input_subscrip}"
         gcloud run services delete "${cr_module_name}" --region "${region}"
     fi
 
 else
-
-#--- Deploy Cloud Run service
-    echo "Configuring Pub/Sub resources for classify_snn Cloud Run service..."
-    gcloud pubsub topics create "${ps_output_topic}"
-
-    echo "Creating container image and deploying to Cloud Run..."
+    #--- Deploy Cloud Run
+    echo
+    echo "Creating container image for ${MODULE_NAME} module and deploying to Cloud Run..."
     moduledir="."  # deploys what's in our current directory
     config="${moduledir}/cloudbuild.yaml"
     url=$(gcloud builds submit --config="${config}" \
@@ -70,12 +61,12 @@ else
     gcloud run services add-iam-policy-binding "${cr_module_name}" \
         --member="serviceAccount:${runinvoker_svcact}" \
         --role="${role}"
-
+    echo
     echo "Creating trigger subscription for Cloud Run..."
     # WARNING:  This is set to retry failed deliveries. If there is a bug in main.py this will
     # retry indefinitely, until the message is delete manually.
     gcloud pubsub subscriptions create "${ps_input_subscrip}" \
-        --topic "${trigger_topic}" \
+        --topic "${ps_trigger_topic}" \
         --topic-project "${PROJECT_ID}" \
         --ack-deadline=600 \
         --push-endpoint="${url}${ROUTE_RUN}" \
