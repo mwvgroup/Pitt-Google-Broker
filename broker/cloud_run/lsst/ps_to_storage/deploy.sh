@@ -18,7 +18,7 @@ ROUTE_RUN="/"  # url route that will trigger main.run()
 
 define_GCP_resources() {
     local base_name="$1"
-    local separator="$2"
+    local separator="${2:--}"
     local testid_suffix=""
 
     if [ "$testid" != "False" ] && [ -n "$testid" ]; then
@@ -28,13 +28,13 @@ define_GCP_resources() {
 }
 
 #--- GCP resources used in this script
-artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services" "-")
-cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}" "-")  # lower case required by cloud run
-gcs_avro_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}_alerts" "-")
-ps_input_subscrip=$(define_GCP_resources "${survey}-alerts_raw" "-") # pub/sub subscription used to trigger cloud run module
-ps_subscription_avro=$(define_GCP_resources "${survey}-alert_avros-counter" "-")
-ps_topic_avro=$(define_GCP_resources "projects/${PROJECT_ID}/topics/${survey}-alert_avros" "-")
-ps_trigger_topic=$(define_GCP_resources "${survey}-alerts_raw" "-")
+artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
+cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}")  # lower case required by cloud run
+gcs_avro_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}_alerts")
+ps_input_subscrip=$(define_GCP_resources "${survey}-alerts_raw") # pub/sub subscription used to trigger cloud run module
+ps_subscription_avro=$(define_GCP_resources "${survey}-alert_avros-counter")
+ps_topic_avro=$(define_GCP_resources "projects/${PROJECT_ID}/topics/${survey}-alert_avros")
+ps_trigger_topic=$(define_GCP_resources "${survey}-alerts_raw")
 runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
 
 if [ "${teardown}" = "True" ]; then

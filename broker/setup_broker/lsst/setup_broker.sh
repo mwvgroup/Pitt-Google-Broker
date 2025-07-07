@@ -38,7 +38,7 @@ fi
 
 define_GCP_resources() {
     local base_name="$1"
-    local separator="${2:-}"
+    local separator="${2:--}"
     local testid_suffix=""
 
     if [ "$testid" != "False" ] && [ -n "$testid" ]; then
