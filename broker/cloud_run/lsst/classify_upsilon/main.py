@@ -26,7 +26,7 @@ SURVEY = os.getenv("SURVEY")
 # A url route is used in setup.sh when the trigger subscription is created.
 # It is possible to define multiple routes in a single module and trigger them using different subscriptions.
 ROUTE_RUN = "/"  # HTTP route that will trigger run(). Must match deploy.sh
-survey_bands = ["u", "g", "r", "i", "z", "y"]
+SURVEY_BANDS = ["u", "g", "r", "i", "z", "y"]
 
 # ---Variables for outgoing data
 HTTP_204 = 204  # HTTP code: Success
@@ -36,6 +36,7 @@ HTTP_400 = 400  # HTTP code: Bad Request
 TOPIC = pittgoogle.Topic.from_cloud("upsilon", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID)
 
 app = flask.Flask(__name__)
+rf_model = upsilon.load_rf_model()  # load UPSILoN's classification model
 
 
 @app.route(ROUTE_RUN, methods=["POST"])
@@ -60,57 +61,55 @@ def run() -> tuple[str, int]:
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
-    # UPSILoN recommends using light curves with more than 80 data points
+    alert_lite_df = _create_lite_dataframe(alert_lite.dict["alert_lite"])
+    upsilon_dict = _classify_with_upsilon(alert_lite_df)
     has_min_detections_in_any_band = any(
         alert_lite.dict["variability"].get(f"n_detections_{band}_band", 0) >= 80
-        for band in survey_bands
+        for band in SURVEY_BANDS
     )
-
-    if has_min_detections_in_any_band:
-        alert_lite_df = _create_lite_dataframe(alert_lite.dict["alert_lite"])
-        upsilon_dict = _classify_with_upsilon(alert_lite_df)
-        TOPIC.publish(
-            pittgoogle.Alert.from_dict(
-                {
-                    "alert_lite": alert_lite.dict,
-                    "upsilon": {
-                        "diaObjectId": alert_lite.dict["diaObject"]["diaObjectId"],
-                        "diaSourceId": alert_lite.dict["diaSource"]["diaSourceId"],
-                        **upsilon_dict,
-                    },
+    TOPIC.publish(
+        pittgoogle.Alert.from_dict(
+            {
+                "alert_lite": alert_lite.dict["alert_lite"],
+                "variability": alert_lite.dict["variability"],
+                "upsilon": {
+                    "diaObjectId": alert_lite.dict["diaObject"]["diaObjectId"],
+                    "diaSourceId": alert_lite.dict["diaSource"]["diaSourceId"],
+                    **upsilon_dict,
                 },
-                attributes={
-                    **alert_lite.attributes,
-                    "pg_upsilon_u_label": upsilon_dict["u_label"],
-                    "pg_upsilon_u_flag": upsilon_dict["u_flag"],
-                    "pg_upsilon_g_label": upsilon_dict["g_label"],
-                    "pg_upsilon_g_flag": upsilon_dict["g_flag"],
-                    "pg_upsilon_r_label": upsilon_dict["r_label"],
-                    "pg_upsilon_r_flag": upsilon_dict["r_flag"],
-                    "pg_upsilon_i_label": upsilon_dict["i_label"],
-                    "pg_upsilon_i_flag": upsilon_dict["i_flag"],
-                    "pg_upsilon_z_label": upsilon_dict["z_label"],
-                    "pg_upsilon_z_flag": upsilon_dict["z_flag"],
-                    "pg_upsilon_y_label": upsilon_dict["y_label"],
-                    "pg_upsilon_y_flag": upsilon_dict["y_flag"],
-                },
-                schema_name="default",
-            )
+            },
+            attributes={
+                **alert_lite.attributes,
+                "pg_upsilon_u_label": upsilon_dict["u_label"],
+                "pg_upsilon_u_flag": upsilon_dict["u_flag"],
+                "pg_upsilon_g_label": upsilon_dict["g_label"],
+                "pg_upsilon_g_flag": upsilon_dict["g_flag"],
+                "pg_upsilon_r_label": upsilon_dict["r_label"],
+                "pg_upsilon_r_flag": upsilon_dict["r_flag"],
+                "pg_upsilon_i_label": upsilon_dict["i_label"],
+                "pg_upsilon_i_flag": upsilon_dict["i_flag"],
+                "pg_upsilon_z_label": upsilon_dict["z_label"],
+                "pg_upsilon_z_flag": upsilon_dict["z_flag"],
+                "pg_upsilon_y_label": upsilon_dict["y_label"],
+                "pg_upsilon_y_flag": upsilon_dict["y_flag"],
+                "pg_has_min_detections": int(has_min_detections_in_any_band),
+            },
+            schema_name="default",
         )
+    )
 
     return "", HTTP_204
 
 
 def _classify_with_upsilon(alert_lite_df: pd.DataFrame) -> dict:
     upsilon_dict = {}
-    rf_model = upsilon.load_rf_model()  # load UPSILoN's classification model
-    for band in survey_bands:
+    for band in SURVEY_BANDS:
         # ---Extract data
         filter_diaSources = alert_lite_df[alert_lite_df["band"] == band]
         flux_gt_zero = filter_diaSources["psfFlux"].to_numpy() > 0
         # set output to None if data is absent or there are too few data points for this band
         # limit recommended by UPSILoN
-        if filter_diaSources.empty or flux_gt_zero.sum() <= 80:
+        if filter_diaSources.empty or flux_gt_zero.sum() <= 7:
             upsilon_dict[f"{band}_label"] = None
             upsilon_dict[f"{band}_probability"] = None
             upsilon_dict[f"{band}_flag"] = None
@@ -135,7 +134,7 @@ def _classify_with_upsilon(alert_lite_df: pd.DataFrame) -> dict:
     return upsilon_dict
 
 
-def _create_lite_dataframe(alert_dict: pittgoogle.Alert) -> pd.DataFrame:
+def _create_lite_dataframe(alert_dict: dict) -> pd.DataFrame:
     """Return a pandas DataFrame containing the source detections."""
 
     # sources and previous sources are expected to have the same fields
