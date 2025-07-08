@@ -86,7 +86,7 @@ def run() -> tuple[str, int]:
                 "pg_upsilon_r_flag": upsilon_dict["r_flag"],
                 "pg_upsilon_i_label": upsilon_dict["i_label"],
                 "pg_upsilon_i_flag": upsilon_dict["i_flag"],
-                "pg_has_min_detections": has_min_detections_in_any_band,
+                "pg_has_min_detections": int(has_min_detections_in_any_band),
             },
             schema_name="default",
         )
