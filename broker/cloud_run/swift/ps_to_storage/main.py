@@ -31,7 +31,7 @@ HTTP_400 = 400  # HTTP code: Bad Request
 
 # GCP resources used in this module
 TOPIC_ALERTS_JSON = pittgoogle.Topic.from_cloud(
-    "alerts-json", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
+    "alerts", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
 )
 bucket_name = f"{PROJECT_ID}-{SURVEY}_alerts"
 if TESTID != "False":
@@ -44,7 +44,7 @@ app = flask.Flask(__name__)
 
 
 @app.route(ROUTE_RUN, methods=["POST"])
-def run():
+def run() -> tuple[str, int]:
     """Uploads alert data to a GCS bucket. Publishes a de-duplicated JSON-serialized "alerts" stream
     (${survey}-alerts-json) containing the original alert bytes. A BigQuery subscription is used to write alert data to
     the appropriate BigQuery table.
@@ -71,7 +71,6 @@ def run():
     blob.metadata = _create_file_metadata(alert, event_id=envelope["message"]["messageId"])
 
     # raise a PreconditionFailed exception if filename already exists in the bucket using "if_generation_match=0"
-    # let it raise. the message will be dropped.
     try:
         blob.upload_from_string(alert.msg.data, if_generation_match=0)
     except PreconditionFailed:
