@@ -121,6 +121,42 @@
             "mode": "NULLABLE",
             "name": "y_flag",
             "type": "INTEGER"
+          },
+          {
+            "description": "Number of photometric data points in the u band used to make a classification. UPSILoN recommends using light curves with more than ~80 data points for the best classification quality.",
+            "mode": "NULLABLE",
+            "name": "n_data_points_u_band",
+            "type": "INTEGER"
+          },
+          {
+            "description": "Number of photometric data points in the g band used to make a classification. UPSILoN recommends using light curves with more than ~80 data points for the best classification quality.",
+            "mode": "NULLABLE",
+            "name": "n_data_points_g_band",
+            "type": "INTEGER"
+          },
+          {
+            "description": "Number of photometric data points in the r band used to make a classification. UPSILoN recommends using light curves with more than ~80 data points for the best classification quality.",
+            "mode": "NULLABLE",
+            "name": "n_data_points_r_band",
+            "type": "INTEGER"
+          },
+          {
+            "description": "Number of photometric data points in the i band used to make a classification. UPSILoN recommends using light curves with more than ~80 data points for the best classification quality.",
+            "mode": "NULLABLE",
+            "name": "n_data_points_i_band",
+            "type": "INTEGER"
+          },
+          {
+            "description": "Number of photometric data points in the z band used to make a classification. UPSILoN recommends using light curves with more than ~80 data points for the best classification quality.",
+            "mode": "NULLABLE",
+            "name": "n_data_points_z_band",
+            "type": "INTEGER"
+          },
+          {
+            "description": "Number of photometric data points in the y band used to make a classification. UPSILoN recommends using light curves with more than ~80 data points for the best classification quality.",
+            "mode": "NULLABLE",
+            "name": "n_data_points_y_band",
+            "type": "INTEGER"
           }
       ],
       "mode": "REQUIRED",
