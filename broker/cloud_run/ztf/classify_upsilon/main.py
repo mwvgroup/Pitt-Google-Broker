@@ -80,13 +80,13 @@ def run() -> tuple[str, int]:
             },
             attributes={
                 **alert_lite.attributes,
-                "pg_has_min_detections": has_min_detections_in_any_band,
                 "pg_upsilon_g_label": upsilon_dict["g_label"],
                 "pg_upsilon_g_flag": upsilon_dict["g_flag"],
                 "pg_upsilon_r_label": upsilon_dict["r_label"],
                 "pg_upsilon_r_flag": upsilon_dict["r_flag"],
                 "pg_upsilon_i_label": upsilon_dict["i_label"],
                 "pg_upsilon_i_flag": upsilon_dict["i_flag"],
+                "pg_has_min_detections": has_min_detections_in_any_band,
             },
             schema_name="default",
         )
@@ -100,13 +100,7 @@ def _classify_with_upsilon(alert_lite_df: pd.DataFrame) -> dict:
 
     fid_to_band_name_map = pittgoogle.utils.ztf_fid_names()
     upsilon_dict = {}
-    for band_name in fid_to_band_name_map.values():
-        upsilon_dict[f"n_data_points_{band_name}_band"] = 0
-        upsilon_dict[f"{band_name}_label"] = None
-        upsilon_dict[f"{band_name}_probability"] = None
-        upsilon_dict[f"{band_name}_flag"] = None
-
-    for fid in alert_lite_df["filter"].unique():
+    for fid in fid_to_band_name_map.keys():
         band_name = fid_to_band_name_map.get(fid)
         # ---Extract data
         filter_candids = alert_lite_df[alert_lite_df["filter"] == fid]
@@ -116,6 +110,9 @@ def _classify_with_upsilon(alert_lite_df: pd.DataFrame) -> dict:
         # to avoid scipy's leastsq error: ("input vector length N=7 must not exceed output length M"), we require
         # that mag_gt_zero.sum() > 7
         if filter_candids.empty or mag_gt_zero.sum() <= 7:
+            upsilon_dict[f"{band_name}_label"] = None
+            upsilon_dict[f"{band_name}_probability"] = None
+            upsilon_dict[f"{band_name}_flag"] = None
             continue
         # ---Extract features
         date = filter_candids["jd"].to_numpy()[mag_gt_zero]
