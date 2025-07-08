@@ -29,10 +29,9 @@ define_GCP_resources() {
 #--- GCP resources used in this script
 artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
 cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}")  # lower case required by cloud run
-gcs_avro_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}_alerts")
+gcs_json_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}_alerts")
 ps_input_subscrip=$(define_GCP_resources "${survey}-alerts_raw") # pub/sub subscription used to trigger cloud run module
-ps_subscription_avro=$(define_GCP_resources "${survey}-alert_avros-counter")
-ps_topic_avro=$(define_GCP_resources "projects/${PROJECT_ID}/topics/${survey}-alert_avros")
+ps_topic_alert_in_bucket=$(define_GCP_resources "projects/${PROJECT_ID}/topics/${survey}-alert_in_bucket")
 ps_trigger_topic=$(define_GCP_resources "${survey}-alerts_raw")
 runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
 
@@ -41,38 +40,39 @@ if [ "${teardown}" = "True" ]; then
     if [ "${testid}" != "False" ]; then
         echo
         echo "Deleting resources for ${MODULE_NAME} module..."
-        gsutil rm -r "gs://${gcs_avro_bucket}"
-        gcloud pubsub topics delete "${ps_topic_avro}"
-        gcloud pubsub subscriptions delete "${ps_subscription_avro}"
+        gsutil rm -r "gs://${gcs_json_bucket}"
+        gcloud pubsub topics delete "${ps_topic_alert_in_bucket}"
         gcloud pubsub subscriptions delete "${ps_input_subscrip}"
         gcloud run services delete "${cr_module_name}" --region "${region}"
     fi
 else
     echo
-    echo "Creating avro_bucket..."
-    if ! gsutil ls -b "gs://${gcs_avro_bucket}" >/dev/null 2>&1; then
+    echo "Creating json_bucket..."
+    if ! gsutil ls -b "gs://${gcs_json_bucket}" >/dev/null 2>&1; then
         #--- Create the bucket that will store the alerts
-        gsutil mb -l "${region}" "gs://${gcs_avro_bucket}"
-        gsutil uniformbucketlevelaccess set on "gs://${gcs_avro_bucket}"
-        gsutil requesterpays set on "gs://${gcs_avro_bucket}"
-        gcloud storage buckets add-iam-policy-binding "gs://${gcs_avro_bucket}" \
-            --member="allUsers" \
-            --role="roles/storage.objectViewer"
+        gsutil mb -l "${region}" "gs://${gcs_json_bucket}"
+        gsutil uniformbucketlevelaccess set on "gs://${gcs_json_bucket}"
+        gsutil requesterpays set on "gs://${gcs_json_bucket}"
+        # set IAM policies on public GCP resources
+        if [ "$testid" = "False" ]; then
+            gcloud storage buckets add-iam-policy-binding "gs://${gcs_json_bucket}" \
+                --member="allUsers" \
+                --role="roles/storage.objectViewer"
+        fi
     else
-        echo "${gcs_avro_bucket} already exists."
+        echo "${gcs_json_bucket} already exists."
     fi
 
-    #--- Setup the Pub/Sub notifications on the Avro storage bucket
+    #--- Setup the Pub/Sub notifications on the JSON storage bucket
     echo
     echo "Configuring Pub/Sub notifications on GCS bucket..."
     trigger_event=OBJECT_FINALIZE
     format=json  # json or none; if json, file metadata sent in message body
     gsutil notification create \
-        -t "$ps_topic_avro" \
+        -t "$ps_topic_alert_in_bucket" \
         -e "$trigger_event" \
         -f "$format" \
-        "gs://${gcs_avro_bucket}"
-    gcloud pubsub subscriptions create "${ps_subscription_avro}" --topic="${ps_topic_avro}"
+        "gs://${gcs_json_bucket}"
 
     #--- Deploy the Cloud Run service
     echo
