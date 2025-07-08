@@ -34,7 +34,7 @@ bq_table="upsilon"
 cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}")  # lower case required by cloud run
 ps_input_subscrip=$(define_GCP_resources "${survey}-upsilon") # pub/sub subscription used to trigger cloud run module
 ps_output_topic=$(define_GCP_resources "${survey}-upsilon")
-ps_trigger_topic=$(define_GCP_resources "${survey}-variability")
+ps_trigger_topic=$(define_GCP_resources "${survey}-lite")
 runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
 # topics and subscriptions involved in writing data to BigQuery
 ps_bigquery_subscription=$(define_GCP_resources "${survey}-${MODULE_NAME}-bigquery-import") # BigQuery subscription
