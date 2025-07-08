@@ -64,14 +64,12 @@ def run() -> tuple[str, int]:
     alert_lite_df = _create_lite_dataframe(alert_lite.dict["alert_lite"])
     upsilon_dict = _classify_with_upsilon(alert_lite_df)
     has_min_detections_in_any_band = any(
-        alert_lite.dict["variability"].get(f"n_detections_{band}_band", 0) >= 80
-        for band in SURVEY_BANDS
+        upsilon_dict.get(f"n_data_points_{band}_band") >= 80 for band in SURVEY_BANDS
     )
     TOPIC.publish(
         pittgoogle.Alert.from_dict(
             {
                 "alert_lite": alert_lite.dict["alert_lite"],
-                "variability": alert_lite.dict["variability"],
                 "upsilon": {
                     "diaObjectId": alert_lite.dict["diaObject"]["diaObjectId"],
                     "diaSourceId": alert_lite.dict["diaSource"]["diaSourceId"],
@@ -107,14 +105,15 @@ def _classify_with_upsilon(alert_lite_df: pd.DataFrame) -> dict:
         # ---Extract data
         filter_diaSources = alert_lite_df[alert_lite_df["band"] == band]
         flux_gt_zero = filter_diaSources["psfFlux"].to_numpy() > 0
-        # set output to None if data is absent or there are too few data points for this band
-        # limit recommended by UPSILoN
+        upsilon_dict[f"n_data_points_{band}_band"] = flux_gt_zero.sum()
+        # skip band if no detections or too few valid data points.
+        # to avoid scipy's leastsq error: ("input vector length N=7 must not exceed output length M"), we require
+        # that flux_gt_zero.sum() > 7
         if filter_diaSources.empty or flux_gt_zero.sum() <= 7:
             upsilon_dict[f"{band}_label"] = None
             upsilon_dict[f"{band}_probability"] = None
             upsilon_dict[f"{band}_flag"] = None
             continue
-
         # ---Extract features
         flux = filter_diaSources["psfFlux"].to_numpy()[flux_gt_zero]
         flux_err = filter_diaSources["psfFluxErr"].to_numpy()[flux_gt_zero]
@@ -124,7 +123,6 @@ def _classify_with_upsilon(alert_lite_df: pd.DataFrame) -> dict:
         e_features = upsilon.ExtractFeatures(date, mag, mag_err)
         e_features.run()
         features = e_features.get_features()
-
         # ---Classify
         label, probability, flag = upsilon.predict(rf_model, features)
         upsilon_dict[f"{band}_label"] = label
