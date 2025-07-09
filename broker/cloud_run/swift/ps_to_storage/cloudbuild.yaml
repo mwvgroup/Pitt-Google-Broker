@@ -23,7 +23,7 @@ substitutions:
     # use the same name here for consistency
     # [TODO] PROJECT_ID is set in setup.sh. this is confusing and we should revisit the decision.
     # i (Raen) think i didn't make it a substitution because i didn't want to set a default for it.
-    _ENV_VARS: 'GCP_PROJECT=${PROJECT_ID},SURVEY=${_SURVEY},TESTID=${_TESTID}'
+    _ENV_VARS: 'GCP_PROJECT=${PROJECT_ID},SURVEY=${_SURVEY},TESTID=${_TESTID},VERSIONTAG=${_VERSIONTAG}'
     _REGION: 'us-central1'
 options:
     dynamic_substitutions: true

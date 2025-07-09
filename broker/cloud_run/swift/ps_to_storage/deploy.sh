@@ -10,6 +10,7 @@ teardown="${2:-False}"
 # name of the survey this broker instance will ingest
 survey="${3:-swift}"
 region="${4:-us-central1}"
+versiontag="${5:-v4_5_0}"
 # get the environment variable
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT
 
@@ -80,7 +81,7 @@ else
     moduledir="."  # assumes deploying what's in our current directory
     config="${moduledir}/cloudbuild.yaml"
     url=$(gcloud builds submit --config="${config}" \
-        --substitutions="_SURVEY=${survey},_TESTID=${testid},_MODULE_NAME=${cr_module_name},_REPOSITORY=${artifact_registry_repo}" \
+        --substitutions="_SURVEY=${survey},_TESTID=${testid},_MODULE_NAME=${cr_module_name},_REPOSITORY=${artifact_registry_repo},_VERSIONTAG=${versiontag}" \
         "${moduledir}" | sed -n 's/^Step #2: Service URL: \(.*\)$/\1/p')
     echo
     echo "Creating trigger subscription for ${MODULE_NAME} Cloud Run service..."

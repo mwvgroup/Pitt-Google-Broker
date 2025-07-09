@@ -19,6 +19,7 @@ logging.Client().setup_logging()
 PROJECT_ID = os.getenv("GCP_PROJECT")
 TESTID = os.getenv("TESTID")
 SURVEY = os.getenv("SURVEY")
+VERSIONTAG = os.getenv("VERSIONTAG")
 
 # Variables for incoming data
 # A url route is used in setup.sh when the trigger subscription is created.
@@ -103,4 +104,4 @@ def _name_in_bucket(alert: pittgoogle.Alert) -> str:
     _alert_type = alert.dict["alert_type"]
     _id = alert.dict["id"][0]
 
-    return f"{_date}/{_alert_type}/{_id}.json"
+    return f"{VERSIONTAG}/{_date}/{_alert_type}/{_id}.json"
