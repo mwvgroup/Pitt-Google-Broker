@@ -38,7 +38,7 @@ fi
 
 define_GCP_resources() {
     local base_name="$1"
-    local separator="$2"
+    local separator="${2:--}"
     local testid_suffix=""
 
     if [ "$testid" != "False" ] && [ -n "$testid" ]; then
@@ -48,16 +48,16 @@ define_GCP_resources() {
 }
 
 #--- GCP resources used directly in this script
-artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services" "-")
+artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
 bq_dataset=$(define_GCP_resources "${survey}" "_")
 bq_table_alerts="alerts_${versiontag}"
-gcs_broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files" "-")
-ps_subscription_alerts_reservoir=$(define_GCP_resources "${survey}-alerts-json-reservoir" "-")
-ps_topic_alerts_json=$(define_GCP_resources "${survey}-alerts-json" "-")
-ps_topic_alerts_raw=$(define_GCP_resources "${survey}-alerts_raw" "-")
+gcs_broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
+ps_subscription_alerts_reservoir=$(define_GCP_resources "${survey}-alerts-json-reservoir")
+ps_topic_alerts=$(define_GCP_resources "${survey}-alerts")
+ps_topic_alerts_raw=$(define_GCP_resources "${survey}-alerts_raw")
 # topics and subscriptions involved in writing alert data to BigQuery
-ps_bigquery_subscription=$(define_GCP_resources "${survey}-bigquery-import-${versiontag}" "-")
-ps_deadletter_subscription=$(define_GCP_resources "${survey}-bigquery-import-deadletter" "-")
+ps_bigquery_subscription=$(define_GCP_resources "${survey}-bigquery-import-${versiontag}")
+ps_deadletter_subscription=$(define_GCP_resources "${survey}-bigquery-import-deadletter")
 ps_deadletter_topic="${ps_deadletter_subscription}"
 
 # function used to create (or delete) GCP resources
@@ -75,9 +75,6 @@ manage_resources() {
         echo "Creating BigQuery dataset and table..."
         if ! bq ls "${PROJECT_ID}:${bq_dataset}" >/dev/null 2>&1; then
             bq --location="${region}" mk --dataset "${bq_dataset}"
-            # grant public access to the dataset; for more information, see:
-            # https://cloud.google.com/bigquery/docs/control-access-to-resources-iam#grant_access_to_a_dataset
-            (cd templates && bq update --source "bq_${survey}_policy.json" "${PROJECT_ID}:${bq_dataset}") || exit 5
         else
             echo "${bq_dataset} already exists."
         fi
@@ -105,13 +102,13 @@ manage_resources() {
         #--- Create Pub/Sub topics and subscriptions
         echo
         echo "Configuring Pub/Sub resources..."
-        gcloud pubsub topics create "${ps_topic_alerts_json}"
+        gcloud pubsub topics create "${ps_topic_alerts}"
         gcloud pubsub topics create "${ps_topic_alerts_raw}"
         gcloud pubsub topics create "${ps_deadletter_topic}"
         gcloud pubsub subscriptions create "${ps_deadletter_subscription}" --topic="${ps_deadletter_topic}"
-        gcloud pubsub subscriptions create "${ps_subscription_alerts_reservoir}" --topic="${ps_topic_alerts_json}"
+        gcloud pubsub subscriptions create "${ps_subscription_alerts_reservoir}" --topic="${ps_topic_alerts}"
         gcloud pubsub subscriptions create "${ps_bigquery_subscription}" \
-            --topic="${ps_topic_alerts_json}" \
+            --topic="${ps_topic_alerts}" \
             --bigquery-table="${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}" \
             --use-table-schema \
             --drop-unknown-fields \
@@ -122,7 +119,11 @@ manage_resources() {
         if [ "$testid" = "False" ]; then
             user="allUsers"
             roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/userPublic"
-            gcloud pubsub topics add-iam-policy-binding "${ps_topic_alerts_json}" --member="${user}" --role="${roleid}"
+            gcloud pubsub topics add-iam-policy-binding "${ps_topic_alerts}" --member="${user}" --role="${roleid}"
+            gcloud pubsub topics add-iam-policy-binding "${ps_topic_alerts_raw}" --member="${user}" --role="${roleid}"
+            # grant public access to the dataset; for more information, see:
+            # https://cloud.google.com/bigquery/docs/control-access-to-resources-iam#grant_access_to_a_dataset
+            (cd templates && bq update --source "bq_${survey}_policy.json" "${PROJECT_ID}:${bq_dataset}") || exit 5
         fi
 
         #--- Create Artifact Registry Repository
@@ -145,7 +146,7 @@ manage_resources() {
             echo
             echo "Configuring BigQuery and Pub/Sub resources..."
             bq rm -r -f "${PROJECT_ID}:${bq_dataset}"
-            gcloud pubsub topics delete "${ps_topic_alerts_json}"
+            gcloud pubsub topics delete "${ps_topic_alerts}"
             gcloud pubsub topics delete "${ps_topic_alerts_raw}"
             gcloud pubsub topics delete "${ps_deadletter_topic}"
             gcloud pubsub subscriptions delete "${ps_subscription_alerts_reservoir}"
@@ -175,7 +176,7 @@ fi
 #--- Create (or delete) VM instance
 echo
 echo "Configuring VM..."
-./create_vm.sh "${gcs_broker_bucket}" "${testid}" "${teardown}" "${survey}" "${zone}" "${PROJECT_ID}"
+./create_vm.sh "${gcs_broker_bucket}" "${testid}" "${teardown}" "${survey}" "${zone}"
 
 #--- Create (or delete) Cloud Run services
 echo
