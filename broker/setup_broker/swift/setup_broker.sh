@@ -52,7 +52,7 @@ artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
 bq_dataset=$(define_GCP_resources "${survey}" "_")
 bq_table_alerts="alerts_${versiontag}"
 gcs_broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
-ps_subscription_alerts_reservoir=$(define_GCP_resources "${survey}-alerts-json-reservoir")
+ps_subscription_alerts_reservoir=$(define_GCP_resources "${survey}-alerts-reservoir")
 ps_topic_alerts=$(define_GCP_resources "${survey}-alerts")
 ps_topic_alerts_raw=$(define_GCP_resources "${survey}-alerts_raw")
 # topics and subscriptions involved in writing alert data to BigQuery
