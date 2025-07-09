@@ -12,7 +12,6 @@ teardown="${3:-False}"
 # name of the survey this broker instance will ingest
 survey="${4:-swift}"
 zone="${5:-us-central1-a}"
-project_id="${6:-PROJECT_ID}"
 
 #--- GCP resources used in this script
 consumerVM="${survey}-consumer"
@@ -29,7 +28,7 @@ if [ "$teardown" = "True" ]; then
     fi
 #--- Setup resources if they do not exist
 else
-    if ! gcloud compute instances describe "${consumerVM}" --zone="${zone}" --project="${project_id}" >/dev/null 2>&1; then
+    if ! gcloud compute instances describe "${consumerVM}" --zone="${zone}" --project="${PROJECT_ID}" >/dev/null 2>&1; then
         machinetype=e2-custom-1-5632
         # metadata
         googlelogging="google-logging-enabled=true"
