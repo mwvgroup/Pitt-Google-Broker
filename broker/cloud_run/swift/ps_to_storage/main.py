@@ -46,7 +46,7 @@ app = flask.Flask(__name__)
 @app.route(ROUTE_RUN, methods=["POST"])
 def run() -> tuple[str, int]:
     """Uploads alert data to a GCS bucket. Publishes a de-duplicated JSON-serialized "alerts" stream
-    (${survey}-alerts-json) containing the original alert bytes. A BigQuery subscription is used to write alert data to
+    (${survey}-alerts) containing the original alert bytes. A BigQuery subscription is used to write alert data to
     the appropriate BigQuery table.
 
     This module is intended to be deployed as a Cloud Run service. It will operate as an HTTP endpoint
