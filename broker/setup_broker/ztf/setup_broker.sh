@@ -188,10 +188,6 @@ echo "Configuring Cloud Functions..."
     #--- navigate to the Cloud Run Functions directory for ZTF
     cd .. && cd .. && cd cloud_functions && cd ztf
 
-    #--- alerts-lite cloud function
-    cd lite
-    ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
-
     #--- Pub/Sub -> Cloud Storage Avro cloud function
     cd .. && cd ps_to_gcs
     ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag" "$region"
@@ -200,15 +196,19 @@ echo "Configuring Cloud Functions..."
     cd .. && cd store_BigQuery
     ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
 
-    #--- tag alerts cloud function
-    cd .. && cd tag
-    ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
-
     # navigate to the Cloud Run directory for ZTF
     cd .. && cd .. && cd .. && cd cloud_run && cd ztf
 
+    #--- tag alerts cloud function
+    cd tag
+    ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
+
+    #--- alerts-lite cloud function
+    cd .. && cd lite
+    ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
+
     #--- variability Cloud Run service
-    cd variability
+    cd .. && cd variability
     ./deploy.sh "$testid" "$teardown" "$survey" "$region"
 
     #--- supernnova Cloud Run service
