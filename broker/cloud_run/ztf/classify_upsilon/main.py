@@ -59,8 +59,9 @@ def run() -> tuple[str, int]:
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
+    alert_lite_dict = alert_lite.dict["alert_lite"]
     alert_lite_df = pd.DataFrame(
-        [alert_lite.dict.get("source")] + (alert_lite.dict.get("prvSources") or [])
+        [alert_lite_dict.get("candidate")] + (alert_lite_dict.get("prev_candidates") or [])
     )
 
     # classify and publish results
@@ -71,10 +72,10 @@ def run() -> tuple[str, int]:
     TOPIC.publish(
         pittgoogle.Alert.from_dict(
             {
-                "alert_lite": alert_lite.dict,
+                "alert_lite": alert_lite_dict,
                 "upsilon": {
-                    "objectId": alert_lite.dict["alertIds"]["objectId"],
-                    "candid": alert_lite.dict["alertIds"]["sourceId"],
+                    "objectId": alert_lite_dict["objectId"],
+                    "candid": alert_lite_dict["candid"],
                     **upsilon_dict,
                 },
             },
@@ -103,8 +104,8 @@ def _classify_with_upsilon(alert_lite_df: pd.DataFrame) -> dict:
     for fid in fid_to_band_name_map.keys():
         band_name = fid_to_band_name_map.get(fid)
         # ---Extract data
-        filter_candids = alert_lite_df[alert_lite_df["filter"] == fid]
-        mag_gt_zero = filter_candids["mag"].to_numpy() > 0
+        filter_candids = alert_lite_df[alert_lite_df["fid"] == fid]
+        mag_gt_zero = filter_candids["magpsf"].to_numpy() > 0
         upsilon_dict[f"n_data_points_{band_name}_band"] = mag_gt_zero.sum()
         # skip band if no detections or too few valid data points.
         # to avoid scipy's leastsq error: ("input vector length N=7 must not exceed output length M"), we require
@@ -116,8 +117,8 @@ def _classify_with_upsilon(alert_lite_df: pd.DataFrame) -> dict:
             continue
         # ---Extract features
         date = filter_candids["jd"].to_numpy()[mag_gt_zero]
-        mag = filter_candids["mag"].to_numpy()[mag_gt_zero]
-        mag_err = filter_candids["magerr"].to_numpy()[mag_gt_zero]
+        mag = filter_candids["magpsf"].to_numpy()[mag_gt_zero]
+        mag_err = filter_candids["sigmapsf"].to_numpy()[mag_gt_zero]
         e_features = upsilon.ExtractFeatures(date, mag, mag_err)
         e_features.run()
         features = e_features.get_features()
