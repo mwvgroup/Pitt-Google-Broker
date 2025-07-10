@@ -40,6 +40,7 @@ runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
 ps_bigquery_subscription=$(define_GCP_resources "${survey}-${MODULE_NAME}-bigquery-import") # BigQuery subscription
 ps_deadletter_subscription=$(define_GCP_resources "${survey}-${MODULE_NAME}-bigquery-import-deadletter")
 ps_deadletter_topic="${ps_deadletter_subscription}"
+ps_deadletter_topic_input_subscrip=$(define_GCP_resources "${survey}-upsilon-deadletter")
 
 if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources
@@ -48,6 +49,7 @@ if [ "${teardown}" = "True" ]; then
         echo "Deleting resources for ${MODULE_NAME} module..."
         gcloud pubsub topics delete "${ps_output_topic}"
         gcloud pubsub topics delete "${ps_deadletter_topic}"
+        gcloud pubsub topics delete "${ps_deadletter_topic_input_subscrip}"
         gcloud pubsub subscriptions delete "${ps_bigquery_subscription}"
         gcloud pubsub subscriptions delete "${ps_deadletter_subscription}"
         gcloud pubsub subscriptions delete "${ps_input_subscrip}"
@@ -58,6 +60,7 @@ else
     echo "Configuring Pub/Sub resources..."
     gcloud pubsub topics create "${ps_output_topic}"
     gcloud pubsub topics create "${ps_deadletter_topic}"
+    gcloud pubsub topics create "${ps_deadletter_topic_input_subscrip}"
     gcloud pubsub subscriptions create "${ps_deadletter_subscription}" --topic="${ps_deadletter_topic}"
     gcloud pubsub subscriptions create "${ps_bigquery_subscription}" \
         --topic="${ps_output_topic}" \
@@ -93,5 +96,7 @@ else
         --topic-project "${PROJECT_ID}" \
         --ack-deadline=600 \
         --push-endpoint="${url}${ROUTE_RUN}" \
-        --push-auth-service-account="${runinvoker_svcact}"
+        --push-auth-service-account="${runinvoker_svcact}" \
+        --dead-letter-topic="${ps_deadletter_topic_input_subscrip}" \
+        --max-delivery-attempts=5
 fi
