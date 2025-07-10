@@ -40,7 +40,7 @@ runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
 ps_bigquery_subscription=$(define_GCP_resources "${survey}-${MODULE_NAME}-bigquery-import") # BigQuery subscription
 ps_deadletter_subscription=$(define_GCP_resources "${survey}-${MODULE_NAME}-bigquery-import-deadletter")
 ps_deadletter_topic="${ps_deadletter_subscription}"
-ps_deadletter_topic_input_subscrip=$(define_GCP_resources "${survey}-upsilon-deadletter")
+ps_deadletter_topic_input_subscrip=$(define_GCP_resources "${survey}-${MODULE_NAME}-deadletter")
 
 if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources
