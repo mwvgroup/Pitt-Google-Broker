@@ -67,9 +67,9 @@ def run():
         payload=alert.dict,
         attributes={
             **alert.attributes,
-            **{k: str(v) for k, v in purity_reason_dict.items()},
-            **{k: str(v) for k, v in extragalactic_dict.items()},
-            "fid": str(alert.get("source")["fid"]),
+            **{k: v for k, v in purity_reason_dict.items()},
+            **{k: v for k, v in extragalactic_dict.items()},
+            "fid": alert.get("source")["fid"],
         },
         schema_name="ztf",
     )
