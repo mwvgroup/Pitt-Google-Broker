@@ -30,7 +30,7 @@ define_GCP_resources() {
 #--- GCP resources used in this script
 artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
 ps_input_subscrip=$(define_GCP_resources "${survey}-SuperNNova") # Pub/Sub subscription used to trigger Cloud Run service
-ps_trigger_topic=$(define_GCP_resources "${survey}-tagged")
+ps_trigger_topic=$(define_GCP_resources "${survey}-lite")
 
 # additional GCP resources & variables used in this script
 cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}")  # lower case required by Cloud Run

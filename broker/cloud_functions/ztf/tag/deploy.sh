@@ -12,7 +12,7 @@ survey="${3:-ztf}"
 versiontag="${4:-v4_02}"
 
 #--- GCP resources used in this script
-tag_trigger_topic="${survey}-lite"
+tag_trigger_topic="${survey}-alerts"
 tag_CF_name="${survey}-tag"
 
 # use test resources, if requested

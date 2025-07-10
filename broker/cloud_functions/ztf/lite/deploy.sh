@@ -18,7 +18,7 @@ if [ -z "${GOOGLE_CLOUD_PROJECT}" ]; then
 fi
 
 #--- GCP resources used in this script
-lite_trigger_topic="${survey}-alerts"
+lite_trigger_topic="${survey}-tagged"
 lite_CF_name="${survey}-lite"
 
 # use test resources, if requested
