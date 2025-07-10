@@ -10,8 +10,15 @@ teardown="${2:-False}"
 # name of the survey this broker instance will ingest
 survey="${3:-ztf}"
 versiontag="${4:-v4_02}"
-# get the environment variable
-PROJECT_ID=$GOOGLE_CLOUD_PROJECT
+
+# The deployed module will rely on this env var.
+if [ -z "${GOOGLE_CLOUD_PROJECT}" ]; then
+    echo "Error: GOOGLE_CLOUD_PROJECT environment variable is not set."
+    exit 1
+else
+    # get the environment variable
+    PROJECT_ID=$GOOGLE_CLOUD_PROJECT
+fi
 
 MODULE_NAME="tag"  # lower case required by cloud run
 ROUTE_RUN="/"  # url route that will trigger main.run()
