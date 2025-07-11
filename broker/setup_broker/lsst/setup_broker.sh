@@ -61,7 +61,7 @@ ps_topic_alerts=$(define_GCP_resources "${survey}-alerts")
 ps_topic_alerts_json=$(define_GCP_resources "${survey}-alerts-json")
 # topics and subscriptions involved in writing alert data to BigQuery
 ps_bigquery_subscription=$(define_GCP_resources "${survey}-bigquery-import-${versiontag}")
-ps_deadletter_subscription=$(define_GCP_resources "${survey}-bigquery-import-deadletter-${versiontag}")
+ps_deadletter_subscription=$(define_GCP_resources "${survey}-deadletter")
 ps_deadletter_topic="${ps_deadletter_subscription}"
 
 # function used to create (or delete) GCP resources
