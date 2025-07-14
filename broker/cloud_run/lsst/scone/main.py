@@ -84,7 +84,7 @@ def run():
 
     # unpack the alert. raises a `BadRequest` if the envelope does not contain a valid message
     try:
-        alert = pittgoogle.Alert.from_cloud_run(envelope, "lsst")
+        alert_lite = pittgoogle.Alert.from_cloud_run(envelope, "lsst")
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
@@ -96,12 +96,28 @@ def run():
     }
 
     # create heatmap and classify
-    input_data = _format_for_classifier(alert)
+    input_data = _format_for_classifier(alert_lite)
     heatmap = CreateHeatmaps(metadata, input_data).create_heatmaps()
     scone_classification = SconeClassifier(heatmap, MODEL_PATH)
 
     # publish
-    TOPIC.publish(_create_outgoing_alert(scone_classification), serializer="json")
+    outpt_dict = {
+        "diaObjectId": alert_lite.dict["alert_lite"]["diaObject"]["diaObjectId"],
+        "diaSourceId": alert_lite.dict["alert_lite"]["diaSource"]["diaSourceId"],
+        "prob": scone_classification,
+        "predicted_class": round(scone_classification),
+    }
+
+    TOPIC.publish(
+        pittgoogle.Alert.from_dict(
+            payload={"alert_lite": alert_lite.dict, "SCONE": outpt_dict},
+            attributes={
+                **alert_lite.attributes,
+                "pg_scone_class": outpt_dict["predicted_class"],
+            },
+            schema_name="default",
+        )
+    )
 
     return "", HTTP_204
 
@@ -119,6 +135,3 @@ def _format_for_classifier(alert: pittgoogle.Alert) -> Table:
         source_subset_dict[i] = {key[1]: source_dict[i][key[0]] for key in keys}
     
     return Table(rows=source_subset_dict, names=(alert.get_key('mjd'), alert.get_key('flux'), alert.get_key('flux_err'), 'passband'))
-
-def _create_outgoing_alert(scone_classification):
-    return pittgoogle.Alert.from_dict(scone_classification)
