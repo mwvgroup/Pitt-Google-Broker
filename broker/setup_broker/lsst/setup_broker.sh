@@ -59,6 +59,7 @@ ps_subscription_reservoir=$(define_GCP_resources "${survey}-alerts-reservoir")
 ps_topic_alerts_raw=$(define_GCP_resources "${survey}-alerts_raw")
 ps_topic_alerts=$(define_GCP_resources "${survey}-alerts")
 ps_topic_alerts_json=$(define_GCP_resources "${survey}-alerts-json")
+ps_topic_alerts_lite=$(define_GCP_resources "${survey}-lite")
 # topics and subscriptions involved in writing alert data to BigQuery
 ps_bigquery_subscription=$(define_GCP_resources "${survey}-bigquery-import-${versiontag}")
 ps_deadletter_subscription=$(define_GCP_resources "${survey}-bigquery-import-deadletter-${versiontag}")
@@ -127,6 +128,8 @@ manage_resources() {
         gcloud pubsub topics create "${ps_topic_alerts_raw}"
         gcloud pubsub topics create "${ps_topic_alerts}"
         gcloud pubsub topics create "${ps_topic_alerts_json}"
+        gcloud pubsub topics create "${ps_topic_alerts_lite}" \
+            --message-transforms-file=templates/ps_lsst_lite_smt.yaml
         gcloud pubsub topics create "${ps_deadletter_topic}"
         gcloud pubsub subscriptions create "${ps_deadletter_subscription}" \
             --topic="${ps_deadletter_topic}"
@@ -147,6 +150,7 @@ manage_resources() {
             roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/userPublic"
             gcloud pubsub topics add-iam-policy-binding "${ps_topic_alerts}" --member="${user}" --role="${roleid}"
             gcloud pubsub topics add-iam-policy-binding "${ps_topic_alerts_json}" --member="${user}" --role="${roleid}"
+            gcloud pubsub topics add-iam-policy-binding "${ps_topic_alerts_lite}" --member="${user}" --role="${roleid}"
         fi
 
         #--- Create Artifact Registry Repository
@@ -167,6 +171,7 @@ manage_resources() {
             gcloud pubsub topics delete "${ps_topic_alerts}"
             gcloud pubsub topics delete "${ps_topic_alerts_json}"
             gcloud pubsub topics delete "${ps_deadletter_topic}"
+            gcloud pubsub topics delete "${ps_topic_alerts_lite}"
             gcloud pubsub subscriptions delete "${ps_subscription_reservoir}"
             gcloud pubsub subscriptions delete "${ps_deadletter_subscription}"
             gcloud pubsub subscriptions delete "${ps_bigquery_subscription}"
