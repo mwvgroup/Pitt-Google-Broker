@@ -62,7 +62,7 @@
           delete alertLite["cutoutTemplate"];
 
           // Keep prv_forced_sources and prv_nondetect_limits unchanged
-          data["alertLite"] = alertLite;
+          data["alert_lite"] = alertLite;
           message.data = JSON.stringify(data);
           return message;
         }
