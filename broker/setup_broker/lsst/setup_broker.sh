@@ -211,10 +211,6 @@ echo "Configuring Cloud Run services..."
     cd ps_to_storage
     ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}"
 
-    #--- lite Cloud Run service
-    cd .. && cd lite
-    ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}"
-
     #--- supernnova Cloud Run service
     cd .. && cd classify_snn
     ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}"
