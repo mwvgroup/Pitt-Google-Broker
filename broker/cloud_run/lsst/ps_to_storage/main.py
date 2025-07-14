@@ -88,7 +88,12 @@ def run():
     TOPIC_ALERTS.publish(alert)
     # publish the same alert as JSON. Data will be coerced to valid JSON by pittgoogle.
     TOPIC_ALERTS_JSON.publish(alert, serializer="json")
-    TOPIC_LITE.publish(alert, serializer="json")
+    # add top-level key for lite stream
+    alert_lite = pittgoogle.Alert.from_dict(
+        payload={"alert_lite": alert.dict},
+        attributes={**alert.attributes},
+    )
+    TOPIC_LITE.publish(alert_lite, serializer="json")
 
     return "", HTTP_204
 
