@@ -36,6 +36,9 @@ TOPIC_ALERTS = pittgoogle.Topic.from_cloud(
 TOPIC_ALERTS_JSON = pittgoogle.Topic.from_cloud(
     "alerts-json", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
 )
+TOPIC_LITE = pittgoogle.Topic.from_cloud(
+    "lite", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
+)
 bucket_name = f"{PROJECT_ID}-{SURVEY}_alerts"
 if TESTID != "False":
     bucket_name = f"{bucket_name}-{TESTID}"
@@ -85,6 +88,7 @@ def run():
     TOPIC_ALERTS.publish(alert)
     # publish the same alert as JSON. Data will be coerced to valid JSON by pittgoogle.
     TOPIC_ALERTS_JSON.publish(alert, serializer="json")
+    TOPIC_LITE.publish(alert, serializer="json")
 
     return "", HTTP_204
 
