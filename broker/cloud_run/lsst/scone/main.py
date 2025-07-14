@@ -34,8 +34,8 @@ MODULE_NAME = "SCONE"
 MODULE_VERSION = 0.1
 
 # classifier variables
-model_dir_name = ""
-model_file_name = ""
+model_dir_name = "./"
+model_file_name = "temp_model"
 MODEL_PATH = Path(__file__).resolve().parent / model_dir_name / model_file_name
 
 # Variables for incoming data
@@ -107,16 +107,18 @@ def run():
 
 
 def _format_for_classifier(alert: pittgoogle.Alert) -> Table:
-    """Create a DataFrame for input to SCONE."""
-    # select a subset of columns and rename them for SCONE
-    # get_key returns the name that the survey uses for a given field
-    # for the full mapping, see alert.schema.map
-    alert_df = alert.dataframe
-    return Table([alert_df[alert.get_key("mjd")[1]],
-                  alert_df[alert.get_key("flux")[1]],
-                  alert_df[alert.get_key("flux_err")[1]],
-                  alert_df[alert.get_key("filter")[1]]],
-                  names=('mjd', 'flux', 'flux_err', 'passband'))
+    """Create a Table for input to SCONE."""
+    alert_dict = alert.dict['alert_lite']
+    
+    source_dict = [alert_dict['diaSource']] + alert_dict['prvDiaSources'] + alert_dict['prvDiaForcedSources']
+
+    # rename columns and select the ones we need 
+    keys = [('midpointMjdTai',alert.get_key('mjd')), ('psfFlux',alert.get_key('flux')), ('psfFluxErr',alert.get_key('flux_err')), ('band','passband')]
+    source_subset_dict = [None] * len(source_dict)
+    for i in range(len(source_dict)):
+        source_subset_dict[i] = {key[1]: source_dict[i][key[0]] for key in keys}
+    
+    return Table(rows=source_subset_dict, names=(alert.get_key('mjd'), alert.get_key('flux'), alert.get_key('flux_err'), 'passband'))
 
 def _create_outgoing_alert(scone_classification):
     return pittgoogle.Alert.from_dict(scone_classification)
