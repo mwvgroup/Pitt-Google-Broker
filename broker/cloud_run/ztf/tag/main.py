@@ -34,6 +34,10 @@ TABLE_CLASSIFICATIONS = pittgoogle.Table.from_cloud(
 )
 TABLE_TAGS = pittgoogle.Table.from_cloud("tags", survey=SURVEY, testid=TESTID)
 TOPIC = pittgoogle.Topic.from_cloud("tagged", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID)
+TOPIC_LITE = pittgoogle.Topic.from_cloud(
+    "lite", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
+)
+
 
 app = flask.Flask(__name__)
 
@@ -73,8 +77,14 @@ def run():
         },
         schema_name="ztf",
     )
+    # add top-level key for lite stream
+    alert_lite = pittgoogle.Alert.from_dict(
+        payload={"alert_lite": alert.dict},
+        attributes={**alert.attributes},
+    )
 
     TOPIC.publish(tagged_alert)
+    TOPIC_LITE.publish(alert_lite, serializer="json")
 
     # store in BigQuery
     TABLE_TAGS.insert_rows(
