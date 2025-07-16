@@ -203,7 +203,7 @@ echo "Configuring Cloud Functions..."
     cd .. && cd .. && cd cloud_functions && cd ztf
 
     #--- Pub/Sub -> Cloud Storage Avro cloud function
-    cd .. && cd ps_to_gcs
+    cd ps_to_gcs
     ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag" "$region"
 
     #--- BigQuery storage cloud function
