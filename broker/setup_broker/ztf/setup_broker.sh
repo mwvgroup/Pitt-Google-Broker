@@ -64,6 +64,7 @@ alerts_table="alerts_${versiontag}"
 variability_table="variability"
 upsilon_table="upsilon"
 hostless_table="hostless"
+euclid_table="euclid_crossmatch"
 
 # function used to create (or delete) GCP resources
 manage_resources() {
@@ -79,6 +80,7 @@ manage_resources() {
         (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset_value_added}.${variability_table}" "bq_${survey}_value_added_${variability_table}_schema.json") || exit 5
         (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${upsilon_table}" "bq_${survey}_${upsilon_table}_schema.json") || exit 5
         (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${hostless_table}" "bq_${survey}_${hostless_table}_schema.json") || exit 5
+        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${euclid_table}" "bq_${survey}_${euclid_table}_schema.json") || exit 5
         # setup resources
         python3 setup_gcp.py --survey="$survey" --testid="$testid" --confirmed --region="${region}" --versiontag="${versiontag}"
         # the following resources are not created/deleted by setup_gcp.py
@@ -224,6 +226,9 @@ echo "Configuring Cloud Functions..."
 
     #--- hostless-transients Cloud Run service
     cd .. && cd hostless_transients
-    ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
+    ./deploy.sh "$testid" "$teardown" "$survey" "$region"
+
+    cd .. && cd euclid
+    ./deploy.sh "$testid" "$teardown" "$survey" "$region"
 
 ) || exit
