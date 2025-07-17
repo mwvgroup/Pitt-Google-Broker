@@ -225,10 +225,10 @@ echo "Configuring Cloud Functions..."
     ./deploy.sh "$testid" "$teardown" "$survey" "$region"
 
     #--- hostless-transients Cloud Run service
-    cd .. && cd hostless_transients
+    cd .. && cd hostless_detection
     ./deploy.sh "$testid" "$teardown" "$survey" "$region"
 
-    cd .. && cd euclid
+    cd .. && cd crossmatch
     ./deploy.sh "$testid" "$teardown" "$survey" "$region"
 
 ) || exit
