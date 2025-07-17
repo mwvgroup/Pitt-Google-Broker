@@ -71,14 +71,7 @@ def run() -> tuple[str, int]:
     )
     TOPIC.publish(
         pittgoogle.Alert.from_dict(
-            {
-                "alert_lite": alert_lite_dict,
-                "upsilon": {
-                    "objectId": alert_lite_dict["objectId"],
-                    "candid": alert_lite_dict["candid"],
-                    **upsilon_dict,
-                },
-            },
+            {"alert_lite": alert_lite_dict, "upsilon": upsilon_dict},
             attributes={
                 **alert_lite.attributes,
                 "pg_upsilon_g_label": upsilon_dict["g_label"],
