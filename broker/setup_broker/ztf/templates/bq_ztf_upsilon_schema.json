@@ -3,15 +3,15 @@
       "description": "Unique identifiers from the semantically compressed alert packet.",
       "fields": [
           {
-            "description": "Unique identifier of this DiaObject.",
+            "description": "Object identifier or name.",
             "mode": "REQUIRED",
-            "name": "diaObjectId",
-            "type": "FLOAT"
+            "name": "objectId",
+            "type": "STRING"
           },
           {
-            "description": "Unique identifier of this DiaSource.",
+            "description": "Candidate ID from operations DB.",
             "mode": "REQUIRED",
-            "name": "diaSourceId",
+            "name": "candid",
             "type": "INTEGER"
           }
       ],
@@ -22,12 +22,6 @@
     {
       "description": "Classification results using UPSILoN (Kim & Bailer-Jones 2015).",
       "fields": [
-          {
-            "description": "Predicted class using u band photometry.",
-            "mode": "NULLABLE",
-            "name": "u_label",
-            "type": "STRING"
-          },
           {
             "description": "Predicted class using g band photometry.",
             "mode": "NULLABLE",
@@ -45,24 +39,6 @@
             "mode": "NULLABLE",
             "name": "i_label",
             "type": "STRING"
-          },
-          {
-            "description": "Predicted class using z band photometry.",
-            "mode": "NULLABLE",
-            "name": "z_label",
-            "type": "STRING"
-          },
-          {
-            "description": "Predicted class using y band photometry.",
-            "mode": "NULLABLE",
-            "name": "y_label",
-            "type": "STRING"
-          },
-          {
-            "description": "Class probability for u_label.",
-            "mode": "NULLABLE",
-            "name": "u_probability",
-            "type": "FLOAT"
           },
           {
             "description": "Class probability for g_label.",
@@ -83,24 +59,6 @@
             "type": "FLOAT"
           },
           {
-            "description": "Class probability for z_label.",
-            "mode": "NULLABLE",
-            "name": "z_probability",
-            "type": "FLOAT"
-          },
-          {
-            "description": "Class probability for y_label.",
-            "mode": "NULLABLE",
-            "name": "y_probability",
-            "type": "FLOAT"
-          },
-          {
-            "description": "u band flag. 0 if classification is successful, 1 if the period_SNR is lower than 20, or if the period is in the range of period alias",
-            "mode": "NULLABLE",
-            "name": "u_flag",
-            "type": "INTEGER"
-          },
-          {
             "description": "g band flag. 0 if classification is successful, 1 if the period_SNR is lower than 20, or if the period is in the range of period alias",
             "mode": "NULLABLE",
             "name": "g_flag",
@@ -119,24 +77,6 @@
             "type": "INTEGER"
           },
           {
-            "description": "z band flag. 0 if classification is successful, 1 if the period_SNR is lower than 20, or if the period is in the range of period alias",
-            "mode": "NULLABLE",
-            "name": "z_flag",
-            "type": "INTEGER"
-          },
-          {
-            "description": "y band flag. 0 if classification is successful, 1 if the period_SNR is lower than 20, or if the period is in the range of period alias",
-            "mode": "NULLABLE",
-            "name": "y_flag",
-            "type": "INTEGER"
-          },
-          {
-            "description": "Number of photometric data points in the u band used to make a classification. UPSILoN recommends using light curves with more than ~80 data points for the best classification quality.",
-            "mode": "NULLABLE",
-            "name": "n_data_points_u_band",
-            "type": "INTEGER"
-          },
-          {
             "description": "Number of photometric data points in the g band used to make a classification. UPSILoN recommends using light curves with more than ~80 data points for the best classification quality.",
             "mode": "NULLABLE",
             "name": "n_data_points_g_band",
@@ -152,18 +92,6 @@
             "description": "Number of photometric data points in the i band used to make a classification. UPSILoN recommends using light curves with more than ~80 data points for the best classification quality.",
             "mode": "NULLABLE",
             "name": "n_data_points_i_band",
-            "type": "INTEGER"
-          },
-          {
-            "description": "Number of photometric data points in the z band used to make a classification. UPSILoN recommends using light curves with more than ~80 data points for the best classification quality.",
-            "mode": "NULLABLE",
-            "name": "n_data_points_z_band",
-            "type": "INTEGER"
-          },
-          {
-            "description": "Number of photometric data points in the y band used to make a classification. UPSILoN recommends using light curves with more than ~80 data points for the best classification quality.",
-            "mode": "NULLABLE",
-            "name": "n_data_points_y_band",
             "type": "INTEGER"
           }
       ],

@@ -18,7 +18,7 @@ ROUTE_RUN="/"  # url route that will trigger main.run()
 
 define_GCP_resources() {
     local base_name="$1"
-    local separator="$2"
+    local separator="${2:--}"
     local testid_suffix=""
 
     if [ "$testid" != "False" ] && [ -n "$testid" ]; then
@@ -28,18 +28,19 @@ define_GCP_resources() {
 }
 
 #--- GCP resources used in this script
-artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services" "-")
+artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
 bq_dataset=$(define_GCP_resources "${survey}" "_")
 bq_table="upsilon"
-cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}" "-")  # lower case required by cloud run
-ps_input_subscrip=$(define_GCP_resources "${survey}-upsilon" "-") # pub/sub subscription used to trigger cloud run module
-ps_output_topic=$(define_GCP_resources "${survey}-upsilon" "-")
-ps_trigger_topic=$(define_GCP_resources "${survey}-lite" "-")
+cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}")  # lower case required by cloud run
+ps_input_subscrip=$(define_GCP_resources "${survey}-upsilon") # pub/sub subscription used to trigger cloud run module
+ps_output_topic=$(define_GCP_resources "${survey}-upsilon")
+ps_trigger_topic=$(define_GCP_resources "${survey}-lite")
 runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
 # topics and subscriptions involved in writing data to BigQuery
-ps_bigquery_subscription=$(define_GCP_resources "${survey}-${MODULE_NAME}-bigquery-import" "-") # BigQuery subscription
-ps_deadletter_subscription=$(define_GCP_resources "${survey}-${MODULE_NAME}-bigquery-import-deadletter" "-")
+ps_bigquery_subscription=$(define_GCP_resources "${survey}-${MODULE_NAME}-bigquery-import") # BigQuery subscription
+ps_deadletter_subscription=$(define_GCP_resources "${survey}-${MODULE_NAME}-bigquery-import-deadletter")
 ps_deadletter_topic="${ps_deadletter_subscription}"
+ps_deadletter_topic_input_subscrip=$(define_GCP_resources "${survey}-${MODULE_NAME}-deadletter")
 
 if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources
@@ -48,6 +49,7 @@ if [ "${teardown}" = "True" ]; then
         echo "Deleting resources for ${MODULE_NAME} module..."
         gcloud pubsub topics delete "${ps_output_topic}"
         gcloud pubsub topics delete "${ps_deadletter_topic}"
+        gcloud pubsub topics delete "${ps_deadletter_topic_input_subscrip}"
         gcloud pubsub subscriptions delete "${ps_bigquery_subscription}"
         gcloud pubsub subscriptions delete "${ps_deadletter_subscription}"
         gcloud pubsub subscriptions delete "${ps_input_subscrip}"
@@ -58,6 +60,7 @@ else
     echo "Configuring Pub/Sub resources..."
     gcloud pubsub topics create "${ps_output_topic}"
     gcloud pubsub topics create "${ps_deadletter_topic}"
+    gcloud pubsub topics create "${ps_deadletter_topic_input_subscrip}"
     gcloud pubsub subscriptions create "${ps_deadletter_subscription}" --topic="${ps_deadletter_topic}"
     gcloud pubsub subscriptions create "${ps_bigquery_subscription}" \
         --topic="${ps_output_topic}" \
@@ -93,5 +96,7 @@ else
         --topic-project "${PROJECT_ID}" \
         --ack-deadline=600 \
         --push-endpoint="${url}${ROUTE_RUN}" \
-        --push-auth-service-account="${runinvoker_svcact}"
+        --push-auth-service-account="${runinvoker_svcact}" \
+        --dead-letter-topic="${ps_deadletter_topic_input_subscrip}" \
+        --max-delivery-attempts=5
 fi
