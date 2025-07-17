@@ -75,7 +75,7 @@ def run():
 
     TOPIC.publish(
         pittgoogle.Alert.from_dict(
-            {"alert_lite": alert_lite.dict, "variability": stetsonj_stats},
+            {"alert_lite": alert_lite.dict["alert_lite"], "variability": stetsonj_stats},
             attributes={**alert_lite.attributes, **pg_variable},
             schema_name="default",
         )

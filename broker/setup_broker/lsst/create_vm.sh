@@ -3,7 +3,7 @@
 # This script will not delete VMs that are in production
 
 # name of GCS bucket where broker files are staged
-broker_bucket=$1
+gcs_broker_bucket=$1
 # "False" uses production resources
 # any other string will be appended to the names of all resources
 testid="${2:-test}"
@@ -27,16 +27,14 @@ if [ "$teardown" = "True" ]; then
     if [ "$testid" != "False" ]; then
         gcloud compute instances delete "$consumerVM" --zone="$zone"
     fi
-
 #--- Create resources
 else
-#--- Consumer VM
-    # create VM
     machinetype=e2-standard-2
     # metadata
     googlelogging="google-logging-enabled=true"
-    startupscript="startup-script-url=gs://${broker_bucket}/${survey}/vm_install.sh"
-    shutdownscript="shutdown-script-url=gs://${broker_bucket}/${survey}/vm_shutdown.sh"
+    startupscript="startup-script-url=gs://${gcs_broker_bucket}/${survey}/vm_install.sh"
+    shutdownscript="shutdown-script-url=gs://${gcs_broker_bucket}/${survey}/vm_shutdown.sh"
+    #--- Create consumer VM
     gcloud compute instances create "${consumerVM}" \
         --zone="${zone}" \
         --machine-type="${machinetype}" \
