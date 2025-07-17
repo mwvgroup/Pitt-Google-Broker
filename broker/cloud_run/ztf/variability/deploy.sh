@@ -42,17 +42,13 @@ runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
 trigger_topic=$(define_GCP_resources "${survey}-tagged")
 # topics and subscriptions involved in writing data to BigQuery
 bq_subscription=$(define_GCP_resources "${survey}-${MODULE_NAME}-bigquery-import") # BigQuery subscription
-ps_deadletter_topic=$(define_GCP_resources "${survey}-${MODULE_NAME}-bigquery-import-deadletter")
-ps_deadletter_subscription="${ps_deadletter_topic}"
-
+ps_deadletter_topic=$(define_GCP_resources "${survey}-deadletter")
 
 if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources
     if [ "${testid}" != "False" ]; then
         gcloud pubsub topics delete "${ps_output_topic}"
-        gcloud pubsub topics delete "${ps_deadletter_topic}"
         gcloud pubsub subscriptions delete "${bq_subscription}"
-        gcloud pubsub subscriptions delete "${ps_deadletter_subscription}"
         gcloud pubsub subscriptions delete "${ps_input_subscrip}"
         gcloud run services delete "${cr_module_name}" --region "${region}"
     fi
@@ -61,8 +57,6 @@ else # Deploy the Cloud Run service
 
 #--- Deploy Cloud Run
     gcloud pubsub topics create "${ps_output_topic}"
-    gcloud pubsub topics create "${ps_deadletter_topic}"
-    gcloud pubsub subscriptions create "${ps_deadletter_subscription}" --topic="${ps_deadletter_topic}"
     gcloud pubsub subscriptions create "${bq_subscription}" \
         --topic="${ps_output_topic}" \
         --bigquery-table="${PROJECT_ID}:${bq_dataset}.${bq_table}" \
@@ -81,12 +75,12 @@ else # Deploy the Cloud Run service
         "${moduledir}" | sed -n 's/^Step #2: Service URL: \(.*\)$/\1/p')
 
     echo "Creating trigger subscription for Cloud Run..."
-    # WARNING:  This is set to retry failed deliveries. If there is a bug in main.py this will
-    # retry indefinitely, until the message is delete manually.
     gcloud pubsub subscriptions create "${ps_input_subscrip}" \
         --topic "${trigger_topic}" \
         --topic-project "${PROJECT_ID}" \
         --ack-deadline=600 \
         --push-endpoint="${url}${ROUTE_RUN}" \
-        --push-auth-service-account="${runinvoker_svcact}"
+        --push-auth-service-account="${runinvoker_svcact}" \
+        --dead-letter-topic="${ps_deadletter_topic}" \
+        --max-delivery-attempts=5
 fi
