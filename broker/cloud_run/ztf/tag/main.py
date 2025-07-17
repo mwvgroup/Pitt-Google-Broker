@@ -67,20 +67,21 @@ def run():
 
     purity_reason_dict = _is_pure(alert)
     extragalactic_dict = _is_extragalactic_transient(alert)
+    attrs = {
+        **alert.attributes,
+        **{k: v for k, v in purity_reason_dict.items()},
+        **{k: v for k, v in extragalactic_dict.items()},
+        "fid": alert.get("source")["fid"],
+    }
     tagged_alert = pittgoogle.Alert.from_dict(
         payload=alert.dict,
-        attributes={
-            **alert.attributes,
-            **{k: v for k, v in purity_reason_dict.items()},
-            **{k: v for k, v in extragalactic_dict.items()},
-            "fid": alert.get("source")["fid"],
-        },
+        attributes=attrs,
         schema_name="ztf",
     )
     # add top-level key for lite stream
     alert_lite = pittgoogle.Alert.from_dict(
         payload={"alert_lite": alert.dict},
-        attributes={**alert.attributes},
+        attributes=attrs,
     )
 
     TOPIC.publish(tagged_alert)
