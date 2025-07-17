@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-"""This module uses the "value-added" tag alert stream to identify hostless transient candidates."""
+"""This module uses the lite alert stream to identify hostless transient candidates."""
 
 import os
 import io
@@ -64,7 +64,6 @@ def run():
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
-    # define configs
     configs = {
         "sigma_clipping_kwargs": {"sigma": 3, "maxiters": 10},
         "hostless_detection_with_clipping": {
@@ -73,22 +72,35 @@ def run():
             "min_number_of_pixels_clipped": 3,
         },
     }
+    hostless_dict = {
+        "likely_extragalactic_transient": int(alert_lite.attributes["is_extragalactic_transient"]),
+        "likely_hostless_transient": 0,
+    }
 
+    alert_lite_dict = alert_lite.dict["alert_lite"]
     if _is_candidate(alert_lite, configs):
-        TOPIC.publish(
-            pittgoogle.Alert.from_dict(
-                {"alert": alert_lite.dict},
-                attributes={**alert_lite.attributes, **{"pg_hostless_transient": "likely"}},
-                schema_name="default",
-            )
+        hostless_dict["likely_hostless_transient"] = 1
+
+    # publish results to Pub/Sub
+    TOPIC.publish(
+        pittgoogle.Alert.from_dict(
+            {"alert_lite": alert_lite_dict, **hostless_dict},
+            attributes={
+                **alert_lite.attributes,
+                **{
+                    "pg_likely_hostless_transient": int(hostless_dict["likely_hostless_transient"])
+                },
+            },
+            schema_name="default",
         )
+    )
     return "", HTTP_204
 
 
 def _is_candidate(alert_lite: pittgoogle.Alert, configs: Dict) -> bool:
-    # apply sigma clipping to the bytes data for each stamp
     cutouts = ["Template", "Science"]
     template_stamp, science_stamp = [alert_lite.dict.get(f"cutout{cutout}") for cutout in cutouts]
+    # apply sigma clipping to the bytes data for each stamp
     template_stamp_clipped = sigma_clip(
         _read_stamp_data(template_stamp), **configs["sigma_clipping_kwargs"]
     )
