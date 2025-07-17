@@ -62,6 +62,7 @@ deadletter_subscription_bigquery_import="${deadletter_topic_bigquery_import}"
 
 alerts_table="alerts_${versiontag}"
 variability_table="variability"
+upsilon_table="upsilon"
 
 # function used to create (or delete) GCP resources
 manage_resources() {
@@ -75,7 +76,7 @@ manage_resources() {
     if [ "$mode" = "setup" ]; then
         bq --location="${region}" mk --dataset "${bq_dataset_value_added}"
         (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset_value_added}.${variability_table}" "bq_${survey}_value_added_${variability_table}_schema.json") || exit 5
-
+        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${upsilon_table}" "bq_${survey}_${upsilon_table}_schema.json") || exit 5
         # setup resources
         python3 setup_gcp.py --survey="$survey" --testid="$testid" --confirmed --region="${region}" --versiontag="${versiontag}"
         # the following resources are not created/deleted by setup_gcp.py
@@ -209,6 +210,10 @@ echo "Configuring Cloud Functions..."
 
     #--- variability Cloud Run service
     cd variability
+    ./deploy.sh "$testid" "$teardown" "$survey" "$region"
+
+    #--- upsilon Cloud Run service
+    cd .. && cd classify_upsilon
     ./deploy.sh "$testid" "$teardown" "$survey" "$region"
 
     #--- supernnova Cloud Run service
