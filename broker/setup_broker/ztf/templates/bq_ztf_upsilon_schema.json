@@ -1,6 +1,6 @@
 [
     {
-      "description": "Classification results using UPSILoN (Kim & Bailer-Jones 2015).",
+      "description": "Unique identifiers from the semantically compressed alert packet.",
       "fields": [
           {
             "description": "Object identifier or name.",
@@ -13,7 +13,15 @@
             "mode": "REQUIRED",
             "name": "candid",
             "type": "INTEGER"
-          },
+          }
+      ],
+      "mode": "REQUIRED",
+      "name": "alert_lite",
+      "type": "RECORD"
+    },
+    {
+      "description": "Classification results using UPSILoN (Kim & Bailer-Jones 2015).",
+      "fields": [
           {
             "description": "Predicted class using g band photometry.",
             "mode": "NULLABLE",
