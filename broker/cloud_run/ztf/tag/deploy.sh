@@ -9,7 +9,7 @@ testid="${1:-test}"
 teardown="${2:-False}"
 # name of the survey this broker instance will ingest
 survey="${3:-ztf}"
-versiontag="${4:-v4_02}"
+region="${4:-us-central1}"
 
 # The deployed module will rely on this env var.
 if [ -z "${GOOGLE_CLOUD_PROJECT}" ]; then
@@ -38,7 +38,6 @@ define_GCP_resources() {
 artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
 cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}")  # lower case required by cloud run
 ps_input_subscription=$(define_GCP_resources "${survey}-${MODULE_NAME}") # pub/sub subscription used to trigger cloud run module
-ps_output_topic=$(define_GCP_resources "${survey}-tagged")
 ps_trigger_topic=$(define_GCP_resources "${survey}-alerts")
 runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
 

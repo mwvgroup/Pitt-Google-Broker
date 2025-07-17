@@ -215,7 +215,7 @@ echo "Configuring Cloud Functions..."
 
     #--- tag alerts cloud function
     cd tag
-    ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
+    ./deploy.sh "$testid" "$teardown" "$survey" "$region"
 
     #--- variability Cloud Run service
     cd .. && cd variability

@@ -4,8 +4,8 @@
 """Identify basic categorizations; publish results to BigQuery and as Pub/Sub messsage attributes."""
 
 import os
-import numpy as np
 from typing import Dict
+import numpy as np
 from astropy import units as u
 from google.cloud import logging
 import pittgoogle
@@ -69,8 +69,8 @@ def run():
     extragalactic_dict = _is_extragalactic_transient(alert)
     attrs = {
         **alert.attributes,
-        **{k: v for k, v in purity_reason_dict.items()},
-        **{k: v for k, v in extragalactic_dict.items()},
+        **purity_reason_dict,
+        **extragalactic_dict,
         "fid": alert.get("source")["fid"],
     }
     tagged_alert = pittgoogle.Alert.from_dict(
