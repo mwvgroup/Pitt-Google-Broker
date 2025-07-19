@@ -1,6 +1,6 @@
 [
     {
-      "description": "Relevant variability statistics.",
+      "description": "Unique identifiers from the semantically compressed alert packet.",
       "fields": [
           {
             "description": "Unique identifier of this DiaObject.",
@@ -13,7 +13,15 @@
             "mode": "REQUIRED",
             "name": "diaSourceId",
             "type": "INTEGER"
-          },
+          }
+      ],
+      "mode": "REQUIRED",
+      "name": "alert_lite",
+      "type": "RECORD"
+    },
+    {
+      "description": "Relevant variability statistics.",
+      "fields": [
           {
             "description": "StetsonJ statistic on the DIA point source fluxes for the u band",
             "mode": "NULLABLE",
