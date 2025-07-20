@@ -1,18 +1,34 @@
 [
     {
       "description": "Unique identifiers from the semantically compressed alert packet.",
-      "fields": [
+      "fields":[
           {
-            "description": "Unique identifier of this DiaObject.",
+            "description": "diaSource",
+            "fields": [
+                {
+                  "description": "Unique identifier of this diaSource.",
+                  "mode": "REQUIRED",
+                  "name": "diaSourceId",
+                  "type": "INTEGER"
+                }
+            ],
             "mode": "REQUIRED",
-            "name": "diaObjectId",
-            "type": "FLOAT"
+            "name": "diaSource",
+            "type": "RECORD"
           },
           {
-            "description": "Unique identifier of this DiaSource.",
+            "description": "diaObject",
+            "fields": [
+                {
+                  "description": "Unique identifier of this diaObject.",
+                  "mode": "REQUIRED",
+                  "name": "diaObjectId",
+                  "type": "INTEGER"
+                }
+            ],
             "mode": "REQUIRED",
-            "name": "diaSourceId",
-            "type": "INTEGER"
+            "name": "diaObject",
+            "type": "RECORD"
           }
       ],
       "mode": "REQUIRED",
