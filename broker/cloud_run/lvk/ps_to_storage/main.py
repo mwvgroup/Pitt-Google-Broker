@@ -97,7 +97,7 @@ def _create_file_metadata(alert: pittgoogle.Alert, event_id: str) -> dict:
 
 def _name_in_bucket(alert: pittgoogle.Alert) -> str:
     """Return the name of the file in the bucket."""
-    _date = alert.dict["time_created"]
+    _date = alert.dict["time_created"][0:10]
     _alert_type = alert.dict["alert_type"]
     _id = alert.dict["superevent_id"]
 
