@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-"""This module stores LSST alert data as an Avro file in Cloud Storage."""
+"""This module stores LVK alert data as a JSON file in Cloud Storage."""
 
 import os
 import flask
@@ -19,6 +19,7 @@ logging.Client().setup_logging()
 PROJECT_ID = os.getenv("GCP_PROJECT")
 TESTID = os.getenv("TESTID")
 SURVEY = os.getenv("SURVEY")
+VERSIONTAG = os.getenv("VERSIONTAG")
 
 # Variables for incoming data
 # A url route is used in setup.sh when the trigger subscription is created.
@@ -33,12 +34,6 @@ HTTP_400 = 400  # HTTP code: Bad Request
 TOPIC_ALERTS = pittgoogle.Topic.from_cloud(
     "alerts", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
 )
-TOPIC_ALERTS_JSON = pittgoogle.Topic.from_cloud(
-    "alerts-json", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
-)
-TOPIC_LITE = pittgoogle.Topic.from_cloud(
-    "lite", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
-)
 bucket_name = f"{PROJECT_ID}-{SURVEY}_alerts"
 if TESTID != "False":
     bucket_name = f"{bucket_name}-{TESTID}"
@@ -51,9 +46,9 @@ app = flask.Flask(__name__)
 
 @app.route(ROUTE_RUN, methods=["POST"])
 def run():
-    """Uploads alert data to a GCS bucket. Publishes a de-duplicated "alerts" stream (${survey}-alerts) containing the
-    original alert bytes and publishes an additional JSON message stream (${survey}-bigquery-import) in which a
-    BigQuery subscription is used to write alert data to the appropriate BigQuery table.
+    """Uploads alert data to a GCS bucket. Publishes a de-duplicated JSON-serialized "alerts" stream
+    (${survey}-alerts) containing the original alert bytes. A BigQuery subscription is used to write alert data to
+    the appropriate BigQuery table.
 
     This module is intended to be deployed as a Cloud Run service. It will operate as an HTTP endpoint
     triggered by Pub/Sub messages. This function will be called once for every message sent to this route.
@@ -69,42 +64,41 @@ def run():
     # this contains a single Pub/Sub message with the alert to be processed
     envelope = flask.request.get_json()
     try:
-        alert = pittgoogle.Alert.from_cloud_run(envelope, "lsst")
+        alert = pittgoogle.Alert.from_cloud_run(envelope, "lvk")
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
-    blob = bucket.blob(alert.name_in_bucket)
+    blob = bucket.blob(_name_in_bucket(alert))
     blob.metadata = _create_file_metadata(alert, event_id=envelope["message"]["messageId"])
 
     # raise a PreconditionFailed exception if filename already exists in the bucket using "if_generation_match=0"
-    # let it raise. the message will be dropped.
     try:
         blob.upload_from_string(alert.msg.data, if_generation_match=0)
     except PreconditionFailed:
         # this alert is a duplicate. drop it.
         return "", HTTP_204
 
-    # publish the same alert as Confluent Wire Avro.
+    # publish the same alert as JSON
     TOPIC_ALERTS.publish(alert)
-    # publish the same alert as JSON. Data will be coerced to valid JSON by pittgoogle.
-    TOPIC_ALERTS_JSON.publish(alert, serializer="json")
-    # add top-level key for lite stream
-    alert_lite = pittgoogle.Alert.from_dict(
-        payload={"alert_lite": alert.dict},
-        attributes={**alert.attributes},
-    )
-    TOPIC_LITE.publish(alert_lite, serializer="json")
 
     return "", HTTP_204
 
 
 def _create_file_metadata(alert: pittgoogle.Alert, event_id: str) -> dict:
     """Return key/value pairs to be attached to the file as metadata."""
-
+    # https://git.ligo.org/emfollow/igwn-gwalert-schema/-/blob/main/igwn.alerts.v1_0.Alert.schema.json
     metadata = {"file_origin_message_id": event_id}
-    metadata["_".join(alert.get_key("objectid"))] = alert.objectid
-    metadata["_".join(alert.get_key("sourceid"))] = alert.sourceid
-    metadata["_".join(alert.get_key("ra"))] = alert.ra
-    metadata["_".join(alert.get_key("dec"))] = alert.dec
+    metadata["_".join("time_created")] = alert.dict["time_created"]
+    metadata["_".join("alert_type")] = alert.dict["alert_type"]
+    metadata["_".join("id")] = alert.dict["superevent_id"]
 
     return metadata
+
+
+def _name_in_bucket(alert: pittgoogle.Alert) -> str:
+    """Return the name of the file in the bucket."""
+    _date = alert.dict["time_created"]
+    _alert_type = alert.dict["alert_type"]
+    _id = alert.dict["superevent_id"]
+
+    return f"{VERSIONTAG}/{_date}/{_alert_type}/{_id}.json"
