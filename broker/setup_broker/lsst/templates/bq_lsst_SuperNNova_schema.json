@@ -1,19 +1,43 @@
 [
     {
+      "description": "Unique identifiers from the semantically compressed alert packet.",
+      "fields":[
+          {
+            "description": "diaSource",
+            "fields": [
+                {
+                  "description": "Unique identifier of this diaSource.",
+                  "mode": "REQUIRED",
+                  "name": "diaSourceId",
+                  "type": "INTEGER"
+                }
+            ],
+            "mode": "REQUIRED",
+            "name": "diaSource",
+            "type": "RECORD"
+          },
+          {
+            "description": "diaObject",
+            "fields": [
+                {
+                  "description": "Unique identifier of this diaObject.",
+                  "mode": "REQUIRED",
+                  "name": "diaObjectId",
+                  "type": "INTEGER"
+                }
+            ],
+            "mode": "REQUIRED",
+            "name": "diaObject",
+            "type": "RECORD"
+          }
+      ],
+      "mode": "REQUIRED",
+      "name": "alert_lite",
+      "type": "RECORD"
+    },
+    {
       "description": "Classification results using SuperNNova (Möller & de Boissière 2019).",
       "fields": [
-          {
-            "description": "Id of the diaObject this source was associated with",
-            "mode": "REQUIRED",
-            "name": "diaObjectId",
-            "type": "INTEGER"
-          },
-          {
-            "description": "Unique identifier of this DiaSource",
-            "mode": "REQUIRED",
-            "name": "diaSourceId",
-            "type": "INTEGER"
-          },
           {
             "description": "probability object is a type Ia supernova",
             "mode": "NULLABLE",
