@@ -180,5 +180,5 @@ echo "Configuring Cloud Run services..."
 
     #--- alerts-to-storage Cloud Run service
     cd ps_to_storage
-    ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}"
+    ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}" "${versiontag}"
 ) || exit
