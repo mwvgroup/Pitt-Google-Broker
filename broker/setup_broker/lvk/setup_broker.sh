@@ -12,8 +12,9 @@ schema_version="${4:-1.0}"
 versiontag=v$(echo "${schema_version}" | tr . _) # 1.0 -> v1_0
 region="${5:-us-central1}"
 zone="${region}-a"  # just use zone "a" instead of adding another script arg
-
-PROJECT_ID=$GOOGLE_CLOUD_PROJECT # get the environment variable
+# get the environment variable
+PROJECT_ID=$GOOGLE_CLOUD_PROJECT
+PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format="value(projectNumber)")
 
 #--- Make the user confirm the settings
 echo
@@ -37,30 +38,27 @@ fi
 
 define_GCP_resources() {
     local base_name="$1"
+    local separator="${2:--}"
     local testid_suffix=""
 
-    if [ "$testid" != "False" ]; then
-        if [ "$base_name" = "$survey" ]; then
-            testid_suffix="_${testid}"  # complies with BigQuery naming conventions
-        else
-            testid_suffix="-${testid}"
-        fi
+    if [ "$testid" != "False" ] && [ -n "$testid" ]; then
+        testid_suffix="${separator}${testid}"
     fi
-
     echo "${base_name}${testid_suffix}"
 }
 
 #--- GCP resources used directly in this script
-broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
-bq_dataset=$(define_GCP_resources "${survey}")
+artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
+bq_dataset=$(define_GCP_resources "${survey}" "_")
+bq_table_alerts="alerts_${versiontag}"
+gcs_broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
+ps_topic_alerts_raw=$(define_GCP_resources "${survey}-alerts_raw")
+ps_topic_alerts=$(define_GCP_resources "${survey}-alerts")
+ps_subscription_reservoir=$(define_GCP_resources "${survey}-alerts-reservoir")
 # topics and subscriptions involved in writing alert data to BigQuery
-topic_alerts=$(define_GCP_resources "${survey}-alerts")
-subscription_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import") # BigQuery subscription
-subscription_alerts_reservoir=$(define_GCP_resources "${survey}-alerts-reservoir")
-deadletter_topic_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import-deadletter")
-deadletter_subscription_bigquery_import="${deadletter_topic_bigquery_import}"
-
-alerts_table="alerts_${versiontag}"
+ps_bigquery_subscription=$(define_GCP_resources "${survey}-bigquery-import-${versiontag}")
+ps_deadletter_subscription=$(define_GCP_resources "${survey}-deadletter")
+ps_deadletter_topic="${ps_deadletter_subscription}"
 
 # function used to create (or delete) GCP resources
 manage_resources() {
@@ -72,55 +70,89 @@ manage_resources() {
     fi
 
     if [ "$mode" = "setup" ]; then
-        # create BigQuery dataset and table
+        #--- Create BigQuery dataset and table
         echo
         echo "Creating BigQuery dataset and table..."
-        bq --location="${region}" mk --dataset "${bq_dataset}"
+        if ! bq ls "${PROJECT_ID}:${bq_dataset}" >/dev/null 2>&1; then
+            bq --location="${region}" mk --dataset "${bq_dataset}"
+            # grant public access to the dataset; for more information, see:
+            # https://cloud.google.com/bigquery/docs/control-access-to-resources-iam#grant_access_to_a_dataset
+            (cd templates && bq update --source "bq_${survey}_policy.json" "${PROJECT_ID}:${bq_dataset}") || exit 5
+        else
+            echo "${bq_dataset} already exists."
+        fi
+        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}" "bq_${survey}_${bq_table_alerts}_schema.json") || exit 5
+        bq update --description "Alert data from LIGO/Virgo/KAGRA. This table is an archive of the lvk-alerts Pub/Sub stream. It has the same schema (excluding skymaps) as the original alert bytes, including nested and repeated fields." "${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}"
 
-        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${alerts_table}" "bq_${survey}_${alerts_table}_schema.json") || exit 5
-        bq update --description "Alert data from LIGO/Virgo/KAGRA. This table is an archive of the lvk-alerts Pub/Sub stream. It has the same schema (excluding skymaps) as the original alert bytes, including nested and repeated fields." "${PROJECT_ID}:${bq_dataset}.${alerts_table}"
-
-        # create broker bucket and upload files
+        #--- Create GCS bucket
         echo
         echo "Creating broker_bucket and uploading files..."
-        gsutil mb -b on -l "${region}" "gs://${broker_bucket}"
-        ./upload_broker_bucket.sh "${broker_bucket}"
+        if ! gsutil ls -b "gs://${gcs_broker_bucket}" >/dev/null 2>&1; then
+            gsutil mb -b on -l "${region}" "gs://${gcs_broker_bucket}"
+        else
+            echo "${gcs_broker_bucket} already exists."
+        fi
+        ./upload_broker_bucket.sh "${gcs_broker_bucket}"
 
-        # create Pub/Sub
+        #--- Assign IAM roles to the Pub/Sub service account
+        echo
+        echo "Assigning IAM roles to the Pub/Sub service account..."
+        roleid="roles/bigquery.dataEditor"
+        service_account="service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com"
+        gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+            --member="serviceAccount:${service_account}" \
+            --role="${roleid}"
+
+       #--- Create Pub/Sub
         echo
         echo "Configuring Pub/Sub resources..."
-        gcloud pubsub topics create "${topic_alerts}"
-        gcloud pubsub topics create "${deadletter_topic_bigquery_import}"
-        gcloud pubsub subscriptions create "${deadletter_subscription_bigquery_import}" --topic="${deadletter_topic_bigquery_import}"
-        gcloud pubsub subscriptions create "${subscription_alerts_reservoir}" --topic="${topic_alerts}"
-        # in order to create BigQuery subscriptions, ensure that the following service account:
-        # service-<project number>@gcp-sa-pubsub.iam.gserviceaccount.com" has the
-        # bigquery.dataEditor role for each table
-        gcloud pubsub subscriptions create "${subscription_bigquery_import}" \
-            --topic="${topic_alerts}" \
-            --bigquery-table="${PROJECT_ID}:${bq_dataset}.${alerts_table}" \
+        gcloud pubsub topics create "${ps_topic_alerts_raw}"
+        gcloud pubsub topics create "${ps_topic_alerts}"
+        gcloud pubsub topics create "${ps_deadletter_topic}"
+        gcloud pubsub subscriptions create "${ps_deadletter_subscription}" \
+            --topic="${ps_deadletter_topic}"
+        gcloud pubsub subscriptions create "${ps_subscription_reservoir}" \
+            --topic="${ps_topic_alerts}"
+        gcloud pubsub subscriptions create "${ps_bigquery_subscription}" \
+            --topic="${ps_topic_alerts_json}" \
+            --bigquery-table="${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}" \
             --use-table-schema \
             --drop-unknown-fields \
-            --dead-letter-topic="${deadletter_topic_bigquery_import}" \
+            --dead-letter-topic="${ps_deadletter_topic}" \
             --max-delivery-attempts=5 \
             --dead-letter-topic-project="${PROJECT_ID}"
 
         # set IAM policies on resources
         user="allUsers"
         roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/userPublic"
-        gcloud pubsub topics add-iam-policy-binding "${topic_alerts}" --member="${user}" --role="${roleid}"
+        gcloud pubsub topics add-iam-policy-binding "${ps_topic_alerts}" --member="${user}" --role="${roleid}"
 
+        #--- Create Artifact Registry Repository
+        echo
+        echo "Configuring Artifact Registry..."
+        gcloud artifacts repositories create "${artifact_registry_repo}" --repository-format=docker \
+            --location="${region}" --description="Docker repository for Cloud Run services" \
+            --project="${PROJECT_ID}"
     else
         if [ "$environment_type" = "testing" ]; then
             # delete testing resources
+            # Note: create_vm.sh will delete the VM instance
             o="GSUtil:parallel_process_count=1" # disable multiprocessing for Macs
-            gsutil -m -o "${o}" rm -r "gs://${broker_bucket}"
+            gsutil -m -o "${o}" rm -r "gs://${gcs_broker_bucket}"
             bq rm -r -f "${PROJECT_ID}:${bq_dataset}"
-            gcloud pubsub topics delete "${topic_alerts}"
-            gcloud pubsub topics delete "${deadletter_topic_bigquery_import}"
-            gcloud pubsub subscriptions delete "${subscription_alerts_reservoir}"
-            gcloud pubsub subscriptions delete "${deadletter_subscription_bigquery_import}"
-            gcloud pubsub subscriptions delete "${subscription_bigquery_import}"
+            gcloud pubsub topics delete "${ps_topic_alerts_raw}"
+            gcloud pubsub topics delete "${ps_topic_alerts}"
+            gcloud pubsub topics delete "${ps_deadletter_topic}"
+            gcloud pubsub subscriptions delete "${ps_subscription_reservoir}"
+            gcloud pubsub subscriptions delete "${ps_deadletter_subscription}"
+            gcloud pubsub subscriptions delete "${ps_bigquery_subscription}"
+            gcloud artifacts repositories delete "${artifact_registry_repo}" --location="${region}"
+        else
+            echo 'ERROR: No testid supplied.'
+            echo 'To avoid accidents, this script will not delete production resources.'
+            echo 'If that is your intention, you must delete them manually.'
+            echo 'Otherwise, please supply a testid.'
+            exit 1
         fi
     fi
 }
@@ -137,4 +169,16 @@ fi
 #--- Create VM instances
 echo
 echo "Configuring VMs..."
-./create_vm.sh "${broker_bucket}" "${testid}" "${teardown}" "${survey}" "${zone}"
+./create_vm.sh "${gcs_broker_bucket}" "${testid}" "${teardown}" "${survey}" "${zone}"
+
+#--- Create (or delete) Cloud Run services
+echo
+echo "Configuring Cloud Run services..."
+(
+    # navigate to the Cloud Run directory for LVK
+    cd .. && cd .. && cd cloud_run && cd lvk
+
+    #--- alerts-to-storage Cloud Run service
+    cd ps_to_storage
+    ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}"
+) || exit
