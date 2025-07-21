@@ -114,7 +114,7 @@ manage_resources() {
         gcloud pubsub subscriptions create "${ps_subscription_reservoir}" \
             --topic="${ps_topic_alerts}"
         gcloud pubsub subscriptions create "${ps_bigquery_subscription}" \
-            --topic="${ps_topic_alerts_json}" \
+            --topic="${ps_topic_alerts}" \
             --bigquery-table="${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}" \
             --use-table-schema \
             --drop-unknown-fields \
