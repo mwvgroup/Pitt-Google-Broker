@@ -34,6 +34,7 @@ cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}")  # lower case 
 gcs_json_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}_alerts")
 ps_deadletter_topic=$(define_GCP_resources "${survey}-deadletter")
 ps_input_subscrip=$(define_GCP_resources "${survey}-alerts_raw") # pub/sub subscription used to trigger cloud run module
+ps_topic_alert_in_bucket=$(define_GCP_resources "${survey}-alert_in_bucket")
 ps_trigger_topic=$(define_GCP_resources "${survey}-alerts_raw")
 runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
 
@@ -44,6 +45,7 @@ if [ "${teardown}" = "True" ]; then
         echo "Deleting resources for ${MODULE_NAME} module..."
         gsutil rm -r "gs://${gcs_json_bucket}"
         gcloud pubsub subscriptions delete "${ps_input_subscrip}"
+        gcloud pubsub topics delete "${ps_topic_alert_in_bucket}"
         gcloud run services delete "${cr_module_name}" --region "${region}"
     fi
 else
@@ -65,7 +67,7 @@ else
     trigger_event=OBJECT_FINALIZE
     format=json  # json or none; if json, file metadata sent in message body
     gsutil notification create \
-        -t "$ps_topic_json" \
+        -t "$ps_topic_alert_in_bucket" \
         -e "$trigger_event" \
         -f "$format" \
         "gs://${gcs_json_bucket}"
