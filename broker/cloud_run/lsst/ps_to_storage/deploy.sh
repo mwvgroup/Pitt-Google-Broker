@@ -31,6 +31,7 @@ define_GCP_resources() {
 artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
 cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}")  # lower case required by cloud run
 gcs_avro_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}_alerts")
+ps_deadletter_topic=$(define_GCP_resources "${survey}-deadletter")
 ps_input_subscrip=$(define_GCP_resources "${survey}-alerts_raw") # pub/sub subscription used to trigger cloud run module
 ps_subscription_avro=$(define_GCP_resources "${survey}-alert_avros-counter")
 ps_topic_avro=$(define_GCP_resources "projects/${PROJECT_ID}/topics/${survey}-alert_avros")
@@ -83,12 +84,12 @@ else
         "${moduledir}" | sed -n 's/^Step #2: Service URL: \(.*\)$/\1/p')
     echo
     echo "Creating trigger subscription for ${MODULE_NAME} Cloud Run service..."
-    # WARNING:  This is set to retry failed deliveries. If there is a bug in main.py this will
-    # retry indefinitely, until the message is delete manually.
     gcloud pubsub subscriptions create "${ps_input_subscrip}" \
         --topic "${ps_trigger_topic}" \
         --topic-project "${PROJECT_ID}" \
         --ack-deadline=600 \
         --push-endpoint="${url}${ROUTE_RUN}" \
-        --push-auth-service-account="${runinvoker_svcact}"
+        --push-auth-service-account="${runinvoker_svcact}" \
+        --dead-letter-topic="${ps_deadletter_topic}" \
+        --max-delivery-attempts=5
 fi

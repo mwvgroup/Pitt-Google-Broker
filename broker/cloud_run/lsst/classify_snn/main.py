@@ -109,8 +109,6 @@ def _classify(alert_lite: pittgoogle.Alert) -> dict:
     # use `.item()` to convert numpy -> python types for later serialization
     pred_probs = pred_probs.flatten()
     snn_dict = {
-        "diaObjectId": alert_lite.dict["alert_lite"]["diaObject"]["diaObjectId"],
-        "diaSourceId": alert_lite.dict["alert_lite"]["diaSource"]["diaSourceId"],
         "prob_class0": pred_probs[0].item(),
         "prob_class1": pred_probs[1].item(),
         "predicted_class": np.argmax(pred_probs).item(),

@@ -57,10 +57,10 @@ broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
 ps_subscription_alerts_lite=$(define_GCP_resources "${survey}-lite-counter")
 ps_topic_alerts_lite=$(define_GCP_resources "${survey}-lite")
 # topics and subscriptions involved in writing alert data to BigQuery
+ps_deadletter_subscription=$(define_GCP_resources "${survey}-deadletter")
+ps_deadletter_topic="${ps_deadletter_subscription}"
 topic_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import")
-subscription_bigquery_import="${topic_bigquery_import}" # BigQuery subscription
-deadletter_topic_bigquery_import=$(define_GCP_resources "${survey}-bigquery-import-deadletter")
-deadletter_subscription_bigquery_import="${deadletter_topic_bigquery_import}"
+subscription_bigquery_import="${topic_bigquery_import}"
 
 alerts_table="alerts_${versiontag}"
 variability_table="variability"
@@ -86,8 +86,8 @@ manage_resources() {
         gcloud pubsub topics create "${ps_topic_alerts_lite}" \
             --message-transforms-file=templates/ps_ztf_lite_smt.yaml
         gcloud pubsub topics create "${topic_bigquery_import}"
-        gcloud pubsub topics create "${deadletter_topic_bigquery_import}"
-        gcloud pubsub subscriptions create "${deadletter_subscription_bigquery_import}" --topic="${deadletter_topic_bigquery_import}"
+        gcloud pubsub topics create "${ps_deadletter_topic}"
+        gcloud pubsub subscriptions create "${ps_deadletter_subscription}" --topic="${ps_deadletter_topic}"
         # in order to create BigQuery subscriptions, ensure that the following service account:
         # service-<project number>@gcp-sa-pubsub.iam.gserviceaccount.com" has the
         # bigquery.dataEditor role for each table
@@ -98,7 +98,7 @@ manage_resources() {
             --bigquery-table="${PROJECT_ID}:${bq_dataset}.${alerts_table}" \
             --use-table-schema \
             --drop-unknown-fields \
-            --dead-letter-topic="${deadletter_topic_bigquery_import}" \
+            --dead-letter-topic="${ps_deadletter_topic}" \
             --max-delivery-attempts=5 \
             --dead-letter-topic-project="${PROJECT_ID}"
         # set IAM policies on public Pub/Sub resources
@@ -111,7 +111,7 @@ manage_resources() {
         # this allows dead-lettered messages to be forwarded from the BigQuery subscription to the dead letter topic
         # and it allows dead-lettered messages to be published to the dead letter topic.
         PUBSUB_SERVICE_ACCOUNT="service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com"
-        gcloud pubsub topics add-iam-policy-binding "${deadletter_topic_bigquery_import}" \
+        gcloud pubsub topics add-iam-policy-binding "${ps_deadletter_topic}" \
             --member="serviceAccount:$PUBSUB_SERVICE_ACCOUNT"\
             --role="roles/pubsub.publisher"
         gcloud pubsub subscriptions add-iam-policy-binding "${subscription_bigquery_import}" \
@@ -132,9 +132,8 @@ manage_resources() {
             python3 setup_gcp.py --survey="$survey" --testid="$testid" --teardown --confirmed --versiontag="${versiontag}"
             gcloud pubsub topics delete "${ps_topic_alerts_lite}"
             gcloud pubsub topics delete "${topic_bigquery_import}"
-            gcloud pubsub topics delete "${deadletter_topic_bigquery_import}"
-            gcloud pubsub subscriptions delete "${ps_subscription_alerts_lite}"
-            gcloud pubsub subscriptions delete "${deadletter_subscription_bigquery_import}"
+            gcloud pubsub topics delete "${ps_deadletter_topic}"
+            gcloud pubsub subscriptions delete "${ps_deadletter_subscription}"
             gcloud pubsub subscriptions delete "${subscription_bigquery_import}"
             gcloud artifacts repositories delete "${artifact_registry_repo}" --location="${region}"
         else

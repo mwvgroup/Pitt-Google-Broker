@@ -29,6 +29,7 @@ define_GCP_resources() {
 
 #--- GCP resources used in this script
 artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
+ps_deadletter_topic=$(define_GCP_resources "${survey}-deadletter")
 ps_input_subscrip=$(define_GCP_resources "${survey}-SuperNNova") # Pub/Sub subscription used to trigger Cloud Run service
 ps_trigger_topic=$(define_GCP_resources "${survey}-lite")
 
@@ -70,5 +71,7 @@ else
         --topic-project "${PROJECT_ID}" \
         --ack-deadline=600 \
         --push-endpoint="${url}${ROUTE_RUN}" \
-        --push-auth-service-account="${runinvoker_svcact}"
+        --push-auth-service-account="${runinvoker_svcact}" \
+        --dead-letter-topic="${ps_deadletter_topic}" \
+        --max-delivery-attempts=5
 fi

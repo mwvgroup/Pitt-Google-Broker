@@ -41,7 +41,6 @@ ps_bq_subscription=$(define_GCP_resources "${survey}-${MODULE_NAME}-bigquery-imp
 ps_deadletter_subscription=$(define_GCP_resources "${survey}-${MODULE_NAME}-bigquery-import-deadletter")
 ps_deadletter_topic="${ps_deadletter_subscription}"
 
-
 if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources
     if [ "${testid}" != "False" ]; then
@@ -84,12 +83,12 @@ else
         "${moduledir}" | sed -n 's/^Step #2: Service URL: \(.*\)$/\1/p')
     echo
     echo "Creating trigger subscription for Cloud Run..."
-    # WARNING:  This is set to retry failed deliveries. If there is a bug in main.py this will
-    # retry indefinitely, until the message is delete manually.
     gcloud pubsub subscriptions create "${ps_input_subscrip}" \
         --topic "${ps_trigger_topic}" \
         --topic-project "${PROJECT_ID}" \
         --ack-deadline=600 \
         --push-endpoint="${url}${ROUTE_RUN}" \
-        --push-auth-service-account="${runinvoker_svcact}"
+        --push-auth-service-account="${runinvoker_svcact}" \
+        --dead-letter-topic="${ps_deadletter_topic}" \
+        --max-delivery-attempts=5
 fi

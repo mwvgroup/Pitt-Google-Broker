@@ -98,7 +98,7 @@ def _classify_with_upsilon(alert_lite_df: pd.DataFrame) -> dict:
         # ---Extract data
         filter_diaSources = alert_lite_df[alert_lite_df["band"] == band]
         flux_gt_zero = filter_diaSources["psfFlux"].to_numpy() > 0
-        upsilon_dict[f"n_data_points_{band}_band"] = flux_gt_zero.sum()
+        upsilon_dict[f"n_data_points_{band}_band"] = flux_gt_zero.sum().item()
         # skip band if no detections or too few valid data points.
         # to avoid scipy's leastsq error: ("input vector length N=7 must not exceed output length M"), we require
         # that flux_gt_zero.sum() > 7
