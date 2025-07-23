@@ -52,13 +52,6 @@ HTTP_400 = 400  # HTTP code: Bad Request
 TOPIC = pittgoogle.Topic.from_cloud(
     MODULE_NAME, survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
 )
-TOPIC_BIGQUERY_IMPORT_SUPERNNOVA = pittgoogle.Topic.from_cloud(
-    "bigquery-import-SCONE", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
-)
-
-TOPIC_BIGQUERY_IMPORT_CLASSIFICATIONS = pittgoogle.Topic.from_cloud(
-    "bigquery-import-classifications", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
-)
 
 app = flask.Flask(__name__)
 
