@@ -117,6 +117,10 @@ def run():
 
 def _format_for_classifier(alert: pittgoogle.Alert) -> Table:
     """Create a Table for input to SCONE."""
+    # select a subset of columns and rename them for SCONE  
+    # get_key returns the name that the survey uses for a given field  
+    # for the full mapping, see alert.schema.map  
+    
     alert_dict = alert.dict['alert_lite']
     
     source_dict = [alert_dict['diaSource']] + alert_dict['prvDiaSources'] + alert_dict['prvDiaForcedSources']
