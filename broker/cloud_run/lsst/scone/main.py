@@ -77,7 +77,7 @@ def run():
 
     # unpack the alert. raises a `BadRequest` if the envelope does not contain a valid message
     try:
-        alert_lite = pittgoogle.Alert.from_cloud_run(envelope, "lsst")
+        alert_lite = pittgoogle.Alert.from_cloud_run(envelope, "default")
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
