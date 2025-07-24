@@ -83,24 +83,34 @@ def run():
     model_lite = ORACLE_lite(MODEL_PATH)
     oracle_classification = model_lite.predict([_format_for_classifier(alert_lite)]).to_dict(orient='records')[0]
 
+    level_1_class = _most_likely_class(oracle_classification, ['Transient', 'Variable'])
+    level_2_class = _most_likely_class(oracle_classification, ['SN', 'Fast', 'Long',    # Transient
+                                                               'Periodic', 'AGN'])      # Variable
+    leaf_class = _most_likely_class(oracle_classification, ['SNIa', 'SNIb/c', 'SNIax', 'SNI91bg', 'SNII',   # SN
+                                                            'KN', 'Dwarf Novae', 'uLens', 'M-dwarf Flare',  # Fast
+                                                            'SLSN', 'TDE', 'ILOT', 'CART', 'PISN',          # Long
+                                                            'Cepheid', 'RR Lyrae', 'Delta Scuti', 'EB',     # Periodic
+                                                            'AGN'])                                         # AGN
+
     # publish
     outpt_dict = {
-        "diaObjectId": alert_lite.dict["alert_lite"]["diaObject"]["diaObjectId"],
-        "diaSourceId": alert_lite.dict["alert_lite"]["diaSource"]["diaSourceId"],
         "output": oracle_classification,
-        "predicted_level_1": round(oracle_classification),
-        "predicted_level_2": round(oracle_classification),
-        "predicted_leaf": round(oracle_classification),
+        "predicted_level_1": level_1_class[0],
+        "predicted_level_1_prob": level_1_class[1],
+        "predicted_level_2": level_2_class[0],
+        "predicted_level_2_prob": level_2_class[1],
+        "predicted_leaf": leaf_class[0],
+        "predicted_leaf_prob": leaf_class[1]
     }
 
     TOPIC.publish(
         pittgoogle.Alert.from_dict(
-            payload={"alert_lite": alert_lite.dict, "SCONE": outpt_dict},
+            payload={'alert_lite': alert_lite.dict['alert_lite'], 'ORACLE': outpt_dict},
             attributes={
                 **alert_lite.attributes,
-                "pg_scone_class": outpt_dict["predicted_class"],
+                'pg_oracle_class': outpt_dict['predicted_leaf'],
             },
-            schema_name="default",
+            schema_name='default',
         )
     )
 
@@ -111,6 +121,7 @@ def y_to_Y(band):
         return 'Y'
     return band
 
+# this could use improvement
 def get_photflag(flux):
     if flux[1] > 5*abs(flux[0]):
         return 1024
@@ -120,7 +131,7 @@ def get_photflag(flux):
         return 4096
 
 def _format_for_classifier(alert: pittgoogle.Alert) -> pd.DataFrame:
-    """Create a DataFrame for input to SCONE."""
+    """Create a DataFrame for input to ORACLE."""
     alert_df = alert.dataframe
     t = Table([alert_df[alert.get_key("mjd")[1]],
                alert_df[alert.get_key("filter")[1]],
@@ -134,3 +145,12 @@ def _format_for_classifier(alert: pittgoogle.Alert) -> pd.DataFrame:
     t['MJD'] = [MJD - MJD_min for MJD in t['MJD']]
     t.sort('MJD')
     return t.to_pandas()
+
+def _most_likely_class(probability_dict: dict, keys: list) -> tuple[str, float]:
+    max_val = 0
+    max_class = None
+    for key in keys:
+        if max_val < probability_dict[key]:
+            max_val = probability_dict[key]
+            max_class = key
+    return (max_class, max_val)
