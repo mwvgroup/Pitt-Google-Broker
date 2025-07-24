@@ -115,13 +115,13 @@ def run():
 
     return "", HTTP_204
 
-def y_to_Y(band):
+def _y_to_Y(band):
     if band == 'y':
         return 'Y'
     return band
 
 # this could use improvement
-def get_photflag(flux, flux_err):
+def _get_photflag(flux, flux_err):
     if flux_err > 5*abs(flux):
         return 1024
     elif abs(flux) < max(100, flux_err):
@@ -129,17 +129,17 @@ def get_photflag(flux, flux_err):
     else:
         return 4096
 
-def _format_for_classifier(alert: pittgoogle.Alert) -> pd.DataFrame:
+def _format_for_classifier(alert_lite: pittgoogle.Alert) -> pd.DataFrame:
     """Create a DataFrame for input to ORACLE."""
-    alert_dict = alert.dict['alert_lite']
-    source_dicts = [alert_dict['diaSource']] + alert_dict['prvDiaSources'] + alert_dict['prvDiaForcedSources']
+    alert_lite_dict = alert_lite.dict['alert_lite']
+    source_dicts = [alert_lite_dict['diaSource']] + alert_lite_dict['prvDiaSources'] + alert_lite_dict['prvDiaForcedSources']
    
     MJD_min = min([source_dict['midpointMjdTai'] for source_dict in source_dicts])
     df = pd.DataFrame({'MJD': [source_dict['midpointMjdTai'] - MJD_min for source_dict in source_dicts],    # start dates at 0
-                       'BAND': [y_to_Y(source_dict['band']) for source_dict in source_dicts],               # ORACLE wants Y band to be capital
+                       'BAND': [_y_to_Y(source_dict['band']) for source_dict in source_dicts],               # ORACLE wants Y band to be capital
                        'FLUXCAL': [source_dict['psfFlux'] for source_dict in source_dicts],
                        'FLUXCALERR': [source_dict['psfFluxErr'] for source_dict in source_dicts],
-                       'PHOTFLAG': [get_photflag(source_dict['psfFlux'], source_dict['psfFluxErr']) for source_dict in source_dicts]})
+                       'PHOTFLAG': [_get_photflag(source_dict['psfFlux'], source_dict['psfFluxErr']) for source_dict in source_dicts]})
     return df.sort_values(by=['MJD'])
 
 def _most_likely_class(probability_dict: dict, keys: list) -> tuple[str, float]:
