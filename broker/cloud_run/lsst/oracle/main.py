@@ -12,7 +12,6 @@ import flask  # Manage the HTTP request containing the alert
 import pittgoogle  # Manipulate the alert and interact with cloud resources
 
 import pandas as pd
-from astropy.table import Table
 from astroOracle.pretrained_models import ORACLE_lite
 
 import google.cloud.logging
@@ -122,29 +121,26 @@ def y_to_Y(band):
     return band
 
 # this could use improvement
-def get_photflag(flux):
-    if flux[1] > 5*abs(flux[0]):
+def get_photflag(flux, flux_err):
+    if flux_err > 5*abs(flux):
         return 1024
-    elif abs(flux[0]) < max(100, flux[1]):
+    elif abs(flux) < max(100, flux_err):
         return 0
     else:
         return 4096
 
 def _format_for_classifier(alert: pittgoogle.Alert) -> pd.DataFrame:
     """Create a DataFrame for input to ORACLE."""
-    alert_df = alert.dataframe
-    t = Table([alert_df[alert.get_key("mjd")[1]],
-               alert_df[alert.get_key("filter")[1]],
-               alert_df[alert.get_key("flux")[1]],
-               alert_df[alert.get_key("flux_err")[1]]],
-               names=('MJD', 'BAND', 'FLUXCAL', 'FLUXCALERR'))
-    
-    t['PHOTFLAG'] = [get_photflag(flux) for flux in zip(t['FLUXCAL'], t['FLUXCALERR'])]
-    t['BAND'] = [y_to_Y(band) for band in t['BAND']]
-    MJD_min = min(t['MJD'])
-    t['MJD'] = [MJD - MJD_min for MJD in t['MJD']]
-    t.sort('MJD')
-    return t.to_pandas()
+    alert_dict = alert.dict['alert_lite']
+    source_dicts = [alert_dict['diaSource']] + alert_dict['prvDiaSources'] + alert_dict['prvDiaForcedSources']
+   
+    MJD_min = min([source_dict['midpointMjdTai'] for source_dict in source_dicts])
+    df = pd.DataFrame({'MJD': [source_dict['midpointMjdTai'] - MJD_min for source_dict in source_dicts],    # start dates at 0
+                       'BAND': [y_to_Y(source_dict['band']) for source_dict in source_dicts],               # ORACLE wants Y band to be capital
+                       'FLUXCAL': [source_dict['psfFlux'] for source_dict in source_dicts],
+                       'FLUXCALERR': [source_dict['psfFluxErr'] for source_dict in source_dicts],
+                       'PHOTFLAG': [get_photflag(source_dict['psfFlux'], source_dict['psfFluxErr']) for source_dict in source_dicts]})
+    return df.sort_values(by=['MJD'])
 
 def _most_likely_class(probability_dict: dict, keys: list) -> tuple[str, float]:
     max_val = 0
