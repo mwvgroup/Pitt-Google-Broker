@@ -95,15 +95,13 @@ def run():
 
     # publish
     outpt_dict = {
-        "diaObjectId": alert_lite.dict["alert_lite"]["diaObject"]["diaObjectId"],
-        "diaSourceId": alert_lite.dict["alert_lite"]["diaSource"]["diaSourceId"],
         "prob": scone_classification,
         "predicted_class": round(scone_classification),
     }
 
     TOPIC.publish(
         pittgoogle.Alert.from_dict(
-            payload={"alert_lite": alert_lite.dict, "SCONE": outpt_dict},
+            payload={"alert_lite": alert_lite.dict['alert_lite'], "SCONE": outpt_dict},
             attributes={
                 **alert_lite.attributes,
                 "pg_scone_class": outpt_dict["predicted_class"],
