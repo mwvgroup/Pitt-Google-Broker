@@ -1,5 +1,9 @@
 # docs/source/working-notes/troyraen/v0.5.0/stream-looper.md
 
+> [!WARNING]
+> This page describes an old implementation of the stream-looper and will not be updated.
+> For the current implementation, see [../stream-looper/README.md](../stream-looper/README.md).
+
 ## Setup stream-looper VM and topic
 
 ### Create the Pub/Sub topic and allow public subscriptions
