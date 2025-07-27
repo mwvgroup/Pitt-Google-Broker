@@ -22,22 +22,21 @@ PROJECT_ID = os.getenv("GCP_PROJECT")
 TESTID = os.getenv("TESTID")
 SURVEY = os.getenv("SURVEY")
 
-# Variables for incoming data
+# ---Variables for incoming data
 # A url route is used in setup.sh when the trigger subscription is created.
 # It is possible to define multiple routes in a single module and trigger them using different subscriptions.
 ROUTE_RUN = "/"  # HTTP route that will trigger run(). Must match deploy.sh
+SURVEY_BANDS = ["u", "g", "r", "i", "z", "y"]
 
-# Variables for outgoing data
+# ---Variables for outgoing data
 HTTP_204 = 204  # HTTP code: Success
 HTTP_400 = 400  # HTTP code: Bad Request
 
-# GCP resources used in this module
+# ---GCP resources used in this module
 TOPIC = pittgoogle.Topic.from_cloud("upsilon", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID)
 
 app = flask.Flask(__name__)
-
-# load UPSILoN's classification model
-rf_model = upsilon.load_rf_model()
+rf_model = upsilon.load_rf_model()  # load UPSILoN's classification model
 
 
 @app.route(ROUTE_RUN, methods=["POST"])
@@ -62,11 +61,14 @@ def run() -> tuple[str, int]:
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
-    upsilon_dict = _classify_with_upsilon(alert_lite)
-
+    alert_lite_df = _create_lite_dataframe(alert_lite.dict["alert_lite"])
+    upsilon_dict = _classify_with_upsilon(alert_lite_df)
+    has_min_detections_in_any_band = any(
+        upsilon_dict.get(f"n_data_points_{band}_band") >= 80 for band in SURVEY_BANDS
+    )
     TOPIC.publish(
         pittgoogle.Alert.from_dict(
-            {"alert_lite": alert_lite.dict, "upsilon": upsilon_dict},
+            {"alert_lite": alert_lite.dict["alert_lite"], "upsilon": upsilon_dict},
             attributes={
                 **alert_lite.attributes,
                 "pg_upsilon_u_label": upsilon_dict["u_label"],
@@ -81,6 +83,7 @@ def run() -> tuple[str, int]:
                 "pg_upsilon_z_flag": upsilon_dict["z_flag"],
                 "pg_upsilon_y_label": upsilon_dict["y_label"],
                 "pg_upsilon_y_flag": upsilon_dict["y_flag"],
+                "pg_has_min_detections": int(has_min_detections_in_any_band),
             },
             schema_name="default",
         )
@@ -89,51 +92,40 @@ def run() -> tuple[str, int]:
     return "", HTTP_204
 
 
-def _classify_with_upsilon(alert_lite: pittgoogle.Alert) -> dict:
-    # extract the alert
-    alert_lite_dict = alert_lite.dict["alert_lite"]
-    alert_df = _create_dataframe(alert_lite_dict)
-    bands = ["u", "g", "r", "i", "z", "y"]
-    outgoing_dict = {
-        "diaObjectId": alert_lite_dict["diaObject"]["diaObjectId"],
-        "diaSourceId": alert_lite_dict["diaSource"]["diaSourceId"],
-    }
-
-    for band in bands:
-        # define parameters for feature extractions
-        filter_diaSources = alert_df[alert_df["band"] == band]
+def _classify_with_upsilon(alert_lite_df: pd.DataFrame) -> dict:
+    upsilon_dict = {}
+    for band in SURVEY_BANDS:
+        # ---Extract data
+        filter_diaSources = alert_lite_df[alert_lite_df["band"] == band]
         flux_gt_zero = filter_diaSources["psfFlux"].to_numpy() > 0
-
-        # set output to None if data is absent or there are too few data points for this band; limit set by UPSILoN
-        if filter_diaSources.empty or flux_gt_zero.sum() < 7:
-            outgoing_dict[f"{band}_label"] = None
-            outgoing_dict[f"{band}_probability"] = None
-            outgoing_dict[f"{band}_flag"] = None
+        upsilon_dict[f"n_data_points_{band}_band"] = flux_gt_zero.sum().item()
+        # skip band if no detections or too few valid data points.
+        # to avoid scipy's leastsq error: ("input vector length N=7 must not exceed output length M"), we require
+        # that flux_gt_zero.sum() > 7
+        if filter_diaSources.empty or flux_gt_zero.sum() <= 7:
+            upsilon_dict[f"{band}_label"] = None
+            upsilon_dict[f"{band}_probability"] = None
+            upsilon_dict[f"{band}_flag"] = None
             continue
-
+        # ---Extract features
         flux = filter_diaSources["psfFlux"].to_numpy()[flux_gt_zero]
         flux_err = filter_diaSources["psfFluxErr"].to_numpy()[flux_gt_zero]
-
-        # UPSILoN requires three features to make a prediction, define them below:
         date = filter_diaSources["midpointMjdTai"].to_numpy()[flux_gt_zero]
         mag = _convert_flux_to_mag(flux)
         mag_err = _calculate_mag_err(flux, flux_err)
-
-        # extract features
         e_features = upsilon.ExtractFeatures(date, mag, mag_err)
         e_features.run()
         features = e_features.get_features()
-
-        # classify
+        # ---Classify
         label, probability, flag = upsilon.predict(rf_model, features)
-        outgoing_dict[f"{band}_label"] = label
-        outgoing_dict[f"{band}_probability"] = probability
-        outgoing_dict[f"{band}_flag"] = flag
+        upsilon_dict[f"{band}_label"] = label
+        upsilon_dict[f"{band}_probability"] = probability
+        upsilon_dict[f"{band}_flag"] = flag
 
-    return outgoing_dict
+    return upsilon_dict
 
 
-def _create_dataframe(alert_dict: pittgoogle.Alert) -> pd.DataFrame:
+def _create_lite_dataframe(alert_dict: dict) -> pd.DataFrame:
     """Return a pandas DataFrame containing the source detections."""
 
     # sources and previous sources are expected to have the same fields
