@@ -88,9 +88,9 @@ def _create_file_metadata(alert: pittgoogle.Alert, event_id: str) -> dict:
     """Return key/value pairs to be attached to the file as metadata."""
     # https://git.ligo.org/emfollow/igwn-gwalert-schema/-/blob/main/igwn.alerts.v1_0.Alert.schema.json
     metadata = {"file_origin_message_id": event_id}
-    metadata["_".join("time_created")] = alert.dict["time_created"]
-    metadata["_".join("alert_type")] = alert.dict["alert_type"]
-    metadata["_".join("id")] = alert.dict["superevent_id"]
+    metadata["time_created"] = alert.dict["time_created"]
+    metadata["alert_type"] = alert.dict["alert_type"]
+    metadata["superevent_id"] = alert.dict["superevent_id"]
 
     return metadata
 
