@@ -51,14 +51,15 @@ define_GCP_resources() {
 artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
 bq_dataset=$(define_GCP_resources "${survey}" "_")
 bq_table_alerts="alerts_${versiontag}"
+gcs_alerts_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}_alerts")
 gcs_broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
 ps_subscription_alerts_reservoir=$(define_GCP_resources "${survey}-alerts-reservoir")
 ps_topic_alerts=$(define_GCP_resources "${survey}-alerts")
 ps_topic_alerts_raw=$(define_GCP_resources "${survey}-alerts_raw")
 # topics and subscriptions involved in writing alert data to BigQuery
 ps_bigquery_subscription=$(define_GCP_resources "${survey}-bigquery-import-${versiontag}")
-ps_deadletter_subscription=$(define_GCP_resources "${survey}-deadletter")
-ps_deadletter_topic="${ps_deadletter_subscription}"
+ps_deadletter_topic=$(define_GCP_resources "${survey}-deadletter")
+ps_deadletter_subscription="${ps_deadletter_topic}"
 
 # function used to create (or delete) GCP resources
 manage_resources() {
@@ -79,7 +80,7 @@ manage_resources() {
             echo "${bq_dataset} already exists."
         fi
         (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}" "bq_${survey}_${bq_table_alerts}_schema.json") || exit 5
-        bq update --description "Alert data from Swift/BAT-GUANO. This table is an archive of the swift-alerts Pub/Sub stream. It has the same schema as the original alert bytes, including repeated fields." "${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}"
+        bq update --description "Swift/BAT-GUANO alerts with schema version v${schema_version}. This table is an archive of the swift-alerts Pub/Sub stream. It has the same schema as the original alert bytes, including repeated fields. Original alerts can be retrieved from the Cloud Storage bucket ${gcs_alerts_bucket}." "${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}"
         #--- Create GCS bucket
         echo
         echo "Creating broker_bucket and uploading files..."
