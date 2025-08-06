@@ -58,16 +58,21 @@ else
     echo
     echo "Creating gcs_alerts_bucket and setting permissions..."
     if ! gsutil ls -b "gs://${gcs_alerts_bucket}" >/dev/null 2>&1; then
+        #--- Create the bucket that will store the alerts
         gsutil mb -b on -l "${region}" "gs://${gcs_alerts_bucket}"
         gsutil uniformbucketlevelaccess set on "gs://${gcs_alerts_bucket}"
         gsutil requesterpays set on "gs://${gcs_alerts_bucket}"
-        gcloud storage buckets add-iam-policy-binding "gs://${gcs_alerts_bucket}" \
-            --member="allUsers" \
-            --role="roles/storage.objectViewer"
+        # set IAM policies on public GCP resources
+        if [ "$testid" = "False" ]; then
+            gcloud storage buckets add-iam-policy-binding "gs://${gcs_alerts_bucket}" \
+                --member="allUsers" \
+                --role="roles/storage.objectViewer"
+        fi
     else
         echo "${gcs_alerts_bucket} already exists."
     fi
 
+    #--- Setup the Pub/Sub notifications on the JSON storage bucket
     echo
     echo "Configuring Pub/Sub notifications on GCS bucket..."
     trigger_event=OBJECT_FINALIZE
