@@ -1,0 +1,2282 @@
+[
+  {
+    "description": "Identifier of the triggering DiaSource",
+    "mode": "REQUIRED",
+    "name": "diaSourceId",
+    "type": "INTEGER"
+  },
+  {
+    "description": "Scheduler reason for the image containing this diaSource.",
+    "mode": "NULLABLE",
+    "name": "observation_reason",
+    "type": "STRING"
+  },
+  {
+    "description": "Scheduler target for the image containing this diaSource.",
+    "mode": "NULLABLE",
+    "name": "target_name",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "REQUIRED",
+    "name": "diaSource",
+    "type": "RECORD",
+    "fields": [
+      {
+        "description": "Unique identifier of this DiaSource.",
+        "mode": "REQUIRED",
+        "name": "diaSourceId",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Id of the visit where this diaSource was measured.",
+        "mode": "REQUIRED",
+        "name": "visit",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Id of the detector where this diaSource was measured. Datatype short instead of byte because of DB concerns about unsigned bytes.",
+        "mode": "REQUIRED",
+        "name": "detector",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Id of the diaObject this source was associated with, if any. If not, it is set to NULL (each diaSource will be associated with either a diaObject or ssObject).",
+        "mode": "NULLABLE",
+        "name": "diaObjectId",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Id of the ssObject this source was associated with, if any. If not, it is set to NULL (each diaSource will be associated with either a diaObject or ssObject).",
+        "mode": "NULLABLE",
+        "name": "ssObjectId",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Id of the parent diaSource this diaSource has been deblended from, if any.",
+        "mode": "NULLABLE",
+        "name": "parentDiaSourceId",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Effective mid-visit time for this diaSource, expressed as Modified Julian Date, International Atomic Time.",
+        "mode": "REQUIRED",
+        "name": "midpointMjdTai",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Right ascension coordinate of the center of this diaSource.",
+        "mode": "REQUIRED",
+        "name": "ra",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Uncertainty of ra.",
+        "mode": "NULLABLE",
+        "name": "raErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Declination coordinate of the center of this diaSource.",
+        "mode": "REQUIRED",
+        "name": "dec",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Uncertainty of dec.",
+        "mode": "NULLABLE",
+        "name": "decErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Covariance between ra and dec.",
+        "mode": "NULLABLE",
+        "name": "ra_dec_Cov",
+        "type": "FLOAT"
+      },
+      {
+        "description": "x position computed by a centroiding algorithm.",
+        "mode": "REQUIRED",
+        "name": "x",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Uncertainty of x.",
+        "mode": "NULLABLE",
+        "name": "xErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "y position computed by a centroiding algorithm.",
+        "mode": "REQUIRED",
+        "name": "y",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Uncertainty of y.",
+        "mode": "NULLABLE",
+        "name": "yErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "General centroid algorithm failure flag; set if anything went wrong when fitting the centroid. Another centroid flag field should also be set to provide more information.",
+        "mode": "NULLABLE",
+        "name": "centroid_flag",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Flux in a 12 pixel radius aperture on the difference image.",
+        "mode": "NULLABLE",
+        "name": "apFlux",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Estimated uncertainty of apFlux.",
+        "mode": "NULLABLE",
+        "name": "apFluxErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "General aperture flux algorithm failure flag; set if anything went wrong when measuring aperture fluxes. Another apFlux flag field should also be set to provide more information.",
+        "mode": "NULLABLE",
+        "name": "apFlux_flag",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Aperture did not fit within measurement image.",
+        "mode": "NULLABLE",
+        "name": "apFlux_flag_apertureTruncated",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Source was detected as significantly negative.",
+        "mode": "NULLABLE",
+        "name": "is_negative",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "The signal-to-noise ratio at which this source was detected in the difference image.",
+        "mode": "NULLABLE",
+        "name": "snr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Flux for Point Source model. Note this actually measures the flux difference between the template and the visit image.",
+        "mode": "NULLABLE",
+        "name": "psfFlux",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Uncertainty of psfFlux.",
+        "mode": "NULLABLE",
+        "name": "psfFluxErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Natural log likelihood of the observed data given the point source model.",
+        "mode": "NULLABLE",
+        "name": "psfLnL",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Chi^2 statistic of the point source model fit.",
+        "mode": "NULLABLE",
+        "name": "psfChi2",
+        "type": "FLOAT"
+      },
+      {
+        "description": "The number of data points (pixels) used to fit the point source model.",
+        "mode": "NULLABLE",
+        "name": "psfNdata",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Failure to derive linear least-squares fit of psf model. Another psfFlux flag field should also be set to provide more information.",
+        "mode": "NULLABLE",
+        "name": "psfFlux_flag",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Object was too close to the edge of the image to use the full PSF model.",
+        "mode": "NULLABLE",
+        "name": "psfFlux_flag_edge",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Not enough non-rejected pixels in data to attempt the fit.",
+        "mode": "NULLABLE",
+        "name": "psfFlux_flag_noGoodPixels",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Flux for a trailed source model. Note this actually measures the flux difference between the template and the visit image.",
+        "mode": "NULLABLE",
+        "name": "trailFlux",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Uncertainty of trailFlux.",
+        "mode": "NULLABLE",
+        "name": "trailFluxErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Right ascension coordinate of centroid for trailed source model.",
+        "mode": "NULLABLE",
+        "name": "trailRa",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Uncertainty of trailRa.",
+        "mode": "NULLABLE",
+        "name": "trailRaErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Declination coordinate of centroid for trailed source model.",
+        "mode": "NULLABLE",
+        "name": "trailDec",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Uncertainty of trailDec.",
+        "mode": "NULLABLE",
+        "name": "trailDecErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Maximum likelihood fit of trail length.",
+        "mode": "NULLABLE",
+        "name": "trailLength",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Uncertainty of trailLength.",
+        "mode": "NULLABLE",
+        "name": "trailLengthErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Maximum likelihood fit of the angle between the meridian through the centroid and the trail direction (bearing).",
+        "mode": "NULLABLE",
+        "name": "trailAngle",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Uncertainty of trailAngle.",
+        "mode": "NULLABLE",
+        "name": "trailAngleErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Chi^2 statistic of the trailed source model fit.",
+        "mode": "NULLABLE",
+        "name": "trailChi2",
+        "type": "FLOAT"
+      },
+      {
+        "description": "The number of data points (pixels) used to fit the trailed source model.",
+        "mode": "NULLABLE",
+        "name": "trailNdata",
+        "type": "INTEGER"
+      },
+      {
+        "description": "This flag is set if a trailed source extends onto or past edge pixels.",
+        "mode": "NULLABLE",
+        "name": "trail_flag_edge",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Maximum likelihood value for the mean absolute flux of the two lobes for a dipole model.",
+        "mode": "NULLABLE",
+        "name": "dipoleMeanFlux",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Uncertainty of dipoleMeanFlux.",
+        "mode": "NULLABLE",
+        "name": "dipoleMeanFluxErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Maximum likelihood value for the difference of absolute fluxes of the two lobes for a dipole model.",
+        "mode": "NULLABLE",
+        "name": "dipoleFluxDiff",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Uncertainty of dipoleFluxDiff.",
+        "mode": "NULLABLE",
+        "name": "dipoleFluxDiffErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Maximum likelihood value for the lobe separation in dipole model.",
+        "mode": "NULLABLE",
+        "name": "dipoleLength",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Maximum likelihood fit of the angle between the meridian through the centroid and the dipole direction (bearing, from negative to positive lobe).",
+        "mode": "NULLABLE",
+        "name": "dipoleAngle",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Chi^2 statistic of the model fit.",
+        "mode": "NULLABLE",
+        "name": "dipoleChi2",
+        "type": "FLOAT"
+      },
+      {
+        "description": "The number of data points (pixels) used to fit the model.",
+        "mode": "NULLABLE",
+        "name": "dipoleNdata",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Forced photometry flux for a point source model measured on the visit image centered at DiaSource position.",
+        "mode": "NULLABLE",
+        "name": "scienceFlux",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Estimated uncertainty of scienceFlux.",
+        "mode": "NULLABLE",
+        "name": "scienceFluxErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Forced PSF photometry on science image failed. Another forced_PsfFlux flag field should also be set to provide more information.",
+        "mode": "NULLABLE",
+        "name": "forced_PsfFlux_flag",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Forced PSF flux on science image was too close to the edge of the image to use the full PSF model.",
+        "mode": "NULLABLE",
+        "name": "forced_PsfFlux_flag_edge",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Forced PSF flux not enough non-rejected pixels in data to attempt the fit.",
+        "mode": "NULLABLE",
+        "name": "forced_PsfFlux_flag_noGoodPixels",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Forced photometry flux for a point source model measured on the template image centered at the DiaObject position.",
+        "mode": "NULLABLE",
+        "name": "templateFlux",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Uncertainty of templateFlux.",
+        "mode": "NULLABLE",
+        "name": "templateFluxErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Adaptive second moment of the source intensity.",
+        "mode": "NULLABLE",
+        "name": "ixx",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Adaptive second moment of the source intensity.",
+        "mode": "NULLABLE",
+        "name": "iyy",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Adaptive second moment of the source intensity.",
+        "mode": "NULLABLE",
+        "name": "ixy",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Adaptive second moment for the PSF.",
+        "mode": "NULLABLE",
+        "name": "ixxPSF",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Adaptive second moment for the PSF.",
+        "mode": "NULLABLE",
+        "name": "iyyPSF",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Adaptive second moment for the PSF.",
+        "mode": "NULLABLE",
+        "name": "ixyPSF",
+        "type": "FLOAT"
+      },
+      {
+        "description": "General source shape algorithm failure flag; set if anything went wrong when measuring the shape. Another shape flag field should also be set to provide more information.",
+        "mode": "NULLABLE",
+        "name": "shape_flag",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "No pixels to measure shape.",
+        "mode": "NULLABLE",
+        "name": "shape_flag_no_pixels",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Center not contained in footprint bounding box.",
+        "mode": "NULLABLE",
+        "name": "shape_flag_not_contained",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "This source is a parent source; we should only be measuring on deblended children in difference imaging.",
+        "mode": "NULLABLE",
+        "name": "shape_flag_parent_source",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "A measure of extendedness, computed by comparing an object's moment-based traced radius to the PSF moments. extendedness = 1 implies a high degree of confidence that the source is extended. extendedness = 0 implies a high degree of confidence that the source is point-like.",
+        "mode": "NULLABLE",
+        "name": "extendedness",
+        "type": "FLOAT"
+      },
+      {
+        "description": "A measure of reliability, computed using information from the source and image characterization, as well as the information on the Telescope and Camera system (e.g., ghost maps, defect maps, etc.).",
+        "mode": "NULLABLE",
+        "name": "reliability",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Filter band this source was observed with.",
+        "mode": "NULLABLE",
+        "name": "band",
+        "type": "STRING"
+      },
+      {
+        "description": "Source well fit by a dipole.",
+        "mode": "NULLABLE",
+        "name": "is_dipole",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Attempted to fit a dipole model to this source.",
+        "mode": "NULLABLE",
+        "name": "dipoleFitAttempted",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Time when the image was processed and this DiaSource record was generated.",
+        "mode": "REQUIRED",
+        "name": "time_processed",
+        "type": "TIMESTAMP"
+      },
+      {
+        "description": "",
+        "mode": "NULLABLE",
+        "name": "bboxSize",
+        "type": "INTEGER"
+      },
+      {
+        "description": "General pixel flags failure; set if anything went wrong when setting pixels flags from this footprint's mask. This implies that some pixelFlags for this source may be incorrectly set to False.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Bad pixel in the DiaSource footprint.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_bad",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Cosmic ray in the DiaSource footprint.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_cr",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Cosmic ray in the 3x3 region around the centroid.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_crCenter",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Some of the source footprint is outside usable exposure region (masked EDGE or centroid off image).",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_edge",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "NO_DATA pixel in the source footprint.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_nodata",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "NO_DATA pixel in the 3x3 region around the centroid.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_nodataCenter",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Interpolated pixel in the DiaSource footprint.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_interpolated",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Interpolated pixel in the 3x3 region around the centroid.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_interpolatedCenter",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "DiaSource center is off image.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_offimage",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Saturated pixel in the DiaSource footprint.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_saturated",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Saturated pixel in the 3x3 region around the centroid.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_saturatedCenter",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "DiaSource's footprint includes suspect pixels.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_suspect",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Suspect pixel in the 3x3 region around the centroid.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_suspectCenter",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Streak in the DiaSource footprint.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_streak",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Streak in the 3x3 region around the centroid.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_streakCenter",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Injection in the DiaSource footprint.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_injected",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Injection in the 3x3 region around the centroid.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_injectedCenter",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Template injection in the DiaSource footprint.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_injected_template",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Template injection in the 3x3 region around the centroid.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_injected_templateCenter",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "This flag is set if the source is part of a glint trail.",
+        "mode": "NULLABLE",
+        "name": "glint_trail",
+        "type": "BOOLEAN"
+      }
+    ]
+  },
+  {
+    "description": "",
+    "mode": "REPEATED",
+    "name": "prvDiaSources",
+    "type": "RECORD",
+    "fields": [
+      {
+        "description": "Unique identifier of this DiaSource.",
+        "mode": "REQUIRED",
+        "name": "diaSourceId",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Id of the visit where this diaSource was measured.",
+        "mode": "REQUIRED",
+        "name": "visit",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Id of the detector where this diaSource was measured. Datatype short instead of byte because of DB concerns about unsigned bytes.",
+        "mode": "REQUIRED",
+        "name": "detector",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Id of the diaObject this source was associated with, if any. If not, it is set to NULL (each diaSource will be associated with either a diaObject or ssObject).",
+        "mode": "NULLABLE",
+        "name": "diaObjectId",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Id of the ssObject this source was associated with, if any. If not, it is set to NULL (each diaSource will be associated with either a diaObject or ssObject).",
+        "mode": "NULLABLE",
+        "name": "ssObjectId",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Id of the parent diaSource this diaSource has been deblended from, if any.",
+        "mode": "NULLABLE",
+        "name": "parentDiaSourceId",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Effective mid-visit time for this diaSource, expressed as Modified Julian Date, International Atomic Time.",
+        "mode": "REQUIRED",
+        "name": "midpointMjdTai",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Right ascension coordinate of the center of this diaSource.",
+        "mode": "REQUIRED",
+        "name": "ra",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Uncertainty of ra.",
+        "mode": "NULLABLE",
+        "name": "raErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Declination coordinate of the center of this diaSource.",
+        "mode": "REQUIRED",
+        "name": "dec",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Uncertainty of dec.",
+        "mode": "NULLABLE",
+        "name": "decErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Covariance between ra and dec.",
+        "mode": "NULLABLE",
+        "name": "ra_dec_Cov",
+        "type": "FLOAT"
+      },
+      {
+        "description": "x position computed by a centroiding algorithm.",
+        "mode": "REQUIRED",
+        "name": "x",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Uncertainty of x.",
+        "mode": "NULLABLE",
+        "name": "xErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "y position computed by a centroiding algorithm.",
+        "mode": "REQUIRED",
+        "name": "y",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Uncertainty of y.",
+        "mode": "NULLABLE",
+        "name": "yErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "General centroid algorithm failure flag; set if anything went wrong when fitting the centroid. Another centroid flag field should also be set to provide more information.",
+        "mode": "NULLABLE",
+        "name": "centroid_flag",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Flux in a 12 pixel radius aperture on the difference image.",
+        "mode": "NULLABLE",
+        "name": "apFlux",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Estimated uncertainty of apFlux.",
+        "mode": "NULLABLE",
+        "name": "apFluxErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "General aperture flux algorithm failure flag; set if anything went wrong when measuring aperture fluxes. Another apFlux flag field should also be set to provide more information.",
+        "mode": "NULLABLE",
+        "name": "apFlux_flag",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Aperture did not fit within measurement image.",
+        "mode": "NULLABLE",
+        "name": "apFlux_flag_apertureTruncated",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Source was detected as significantly negative.",
+        "mode": "NULLABLE",
+        "name": "is_negative",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "The signal-to-noise ratio at which this source was detected in the difference image.",
+        "mode": "NULLABLE",
+        "name": "snr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Flux for Point Source model. Note this actually measures the flux difference between the template and the visit image.",
+        "mode": "NULLABLE",
+        "name": "psfFlux",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Uncertainty of psfFlux.",
+        "mode": "NULLABLE",
+        "name": "psfFluxErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Natural log likelihood of the observed data given the point source model.",
+        "mode": "NULLABLE",
+        "name": "psfLnL",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Chi^2 statistic of the point source model fit.",
+        "mode": "NULLABLE",
+        "name": "psfChi2",
+        "type": "FLOAT"
+      },
+      {
+        "description": "The number of data points (pixels) used to fit the point source model.",
+        "mode": "NULLABLE",
+        "name": "psfNdata",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Failure to derive linear least-squares fit of psf model. Another psfFlux flag field should also be set to provide more information.",
+        "mode": "NULLABLE",
+        "name": "psfFlux_flag",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Object was too close to the edge of the image to use the full PSF model.",
+        "mode": "NULLABLE",
+        "name": "psfFlux_flag_edge",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Not enough non-rejected pixels in data to attempt the fit.",
+        "mode": "NULLABLE",
+        "name": "psfFlux_flag_noGoodPixels",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Flux for a trailed source model. Note this actually measures the flux difference between the template and the visit image.",
+        "mode": "NULLABLE",
+        "name": "trailFlux",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Uncertainty of trailFlux.",
+        "mode": "NULLABLE",
+        "name": "trailFluxErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Right ascension coordinate of centroid for trailed source model.",
+        "mode": "NULLABLE",
+        "name": "trailRa",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Uncertainty of trailRa.",
+        "mode": "NULLABLE",
+        "name": "trailRaErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Declination coordinate of centroid for trailed source model.",
+        "mode": "NULLABLE",
+        "name": "trailDec",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Uncertainty of trailDec.",
+        "mode": "NULLABLE",
+        "name": "trailDecErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Maximum likelihood fit of trail length.",
+        "mode": "NULLABLE",
+        "name": "trailLength",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Uncertainty of trailLength.",
+        "mode": "NULLABLE",
+        "name": "trailLengthErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Maximum likelihood fit of the angle between the meridian through the centroid and the trail direction (bearing).",
+        "mode": "NULLABLE",
+        "name": "trailAngle",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Uncertainty of trailAngle.",
+        "mode": "NULLABLE",
+        "name": "trailAngleErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Chi^2 statistic of the trailed source model fit.",
+        "mode": "NULLABLE",
+        "name": "trailChi2",
+        "type": "FLOAT"
+      },
+      {
+        "description": "The number of data points (pixels) used to fit the trailed source model.",
+        "mode": "NULLABLE",
+        "name": "trailNdata",
+        "type": "INTEGER"
+      },
+      {
+        "description": "This flag is set if a trailed source extends onto or past edge pixels.",
+        "mode": "NULLABLE",
+        "name": "trail_flag_edge",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Maximum likelihood value for the mean absolute flux of the two lobes for a dipole model.",
+        "mode": "NULLABLE",
+        "name": "dipoleMeanFlux",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Uncertainty of dipoleMeanFlux.",
+        "mode": "NULLABLE",
+        "name": "dipoleMeanFluxErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Maximum likelihood value for the difference of absolute fluxes of the two lobes for a dipole model.",
+        "mode": "NULLABLE",
+        "name": "dipoleFluxDiff",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Uncertainty of dipoleFluxDiff.",
+        "mode": "NULLABLE",
+        "name": "dipoleFluxDiffErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Maximum likelihood value for the lobe separation in dipole model.",
+        "mode": "NULLABLE",
+        "name": "dipoleLength",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Maximum likelihood fit of the angle between the meridian through the centroid and the dipole direction (bearing, from negative to positive lobe).",
+        "mode": "NULLABLE",
+        "name": "dipoleAngle",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Chi^2 statistic of the model fit.",
+        "mode": "NULLABLE",
+        "name": "dipoleChi2",
+        "type": "FLOAT"
+      },
+      {
+        "description": "The number of data points (pixels) used to fit the model.",
+        "mode": "NULLABLE",
+        "name": "dipoleNdata",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Forced photometry flux for a point source model measured on the visit image centered at DiaSource position.",
+        "mode": "NULLABLE",
+        "name": "scienceFlux",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Estimated uncertainty of scienceFlux.",
+        "mode": "NULLABLE",
+        "name": "scienceFluxErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Forced PSF photometry on science image failed. Another forced_PsfFlux flag field should also be set to provide more information.",
+        "mode": "NULLABLE",
+        "name": "forced_PsfFlux_flag",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Forced PSF flux on science image was too close to the edge of the image to use the full PSF model.",
+        "mode": "NULLABLE",
+        "name": "forced_PsfFlux_flag_edge",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Forced PSF flux not enough non-rejected pixels in data to attempt the fit.",
+        "mode": "NULLABLE",
+        "name": "forced_PsfFlux_flag_noGoodPixels",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Forced photometry flux for a point source model measured on the template image centered at the DiaObject position.",
+        "mode": "NULLABLE",
+        "name": "templateFlux",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Uncertainty of templateFlux.",
+        "mode": "NULLABLE",
+        "name": "templateFluxErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Adaptive second moment of the source intensity.",
+        "mode": "NULLABLE",
+        "name": "ixx",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Adaptive second moment of the source intensity.",
+        "mode": "NULLABLE",
+        "name": "iyy",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Adaptive second moment of the source intensity.",
+        "mode": "NULLABLE",
+        "name": "ixy",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Adaptive second moment for the PSF.",
+        "mode": "NULLABLE",
+        "name": "ixxPSF",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Adaptive second moment for the PSF.",
+        "mode": "NULLABLE",
+        "name": "iyyPSF",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Adaptive second moment for the PSF.",
+        "mode": "NULLABLE",
+        "name": "ixyPSF",
+        "type": "FLOAT"
+      },
+      {
+        "description": "General source shape algorithm failure flag; set if anything went wrong when measuring the shape. Another shape flag field should also be set to provide more information.",
+        "mode": "NULLABLE",
+        "name": "shape_flag",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "No pixels to measure shape.",
+        "mode": "NULLABLE",
+        "name": "shape_flag_no_pixels",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Center not contained in footprint bounding box.",
+        "mode": "NULLABLE",
+        "name": "shape_flag_not_contained",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "This source is a parent source; we should only be measuring on deblended children in difference imaging.",
+        "mode": "NULLABLE",
+        "name": "shape_flag_parent_source",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "A measure of extendedness, computed by comparing an object's moment-based traced radius to the PSF moments. extendedness = 1 implies a high degree of confidence that the source is extended. extendedness = 0 implies a high degree of confidence that the source is point-like.",
+        "mode": "NULLABLE",
+        "name": "extendedness",
+        "type": "FLOAT"
+      },
+      {
+        "description": "A measure of reliability, computed using information from the source and image characterization, as well as the information on the Telescope and Camera system (e.g., ghost maps, defect maps, etc.).",
+        "mode": "NULLABLE",
+        "name": "reliability",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Filter band this source was observed with.",
+        "mode": "NULLABLE",
+        "name": "band",
+        "type": "STRING"
+      },
+      {
+        "description": "Source well fit by a dipole.",
+        "mode": "NULLABLE",
+        "name": "is_dipole",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Attempted to fit a dipole model to this source.",
+        "mode": "NULLABLE",
+        "name": "dipoleFitAttempted",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Time when the image was processed and this DiaSource record was generated.",
+        "mode": "REQUIRED",
+        "name": "time_processed",
+        "type": "TIMESTAMP"
+      },
+      {
+        "description": "",
+        "mode": "NULLABLE",
+        "name": "bboxSize",
+        "type": "INTEGER"
+      },
+      {
+        "description": "General pixel flags failure; set if anything went wrong when setting pixels flags from this footprint's mask. This implies that some pixelFlags for this source may be incorrectly set to False.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Bad pixel in the DiaSource footprint.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_bad",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Cosmic ray in the DiaSource footprint.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_cr",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Cosmic ray in the 3x3 region around the centroid.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_crCenter",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Some of the source footprint is outside usable exposure region (masked EDGE or centroid off image).",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_edge",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "NO_DATA pixel in the source footprint.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_nodata",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "NO_DATA pixel in the 3x3 region around the centroid.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_nodataCenter",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Interpolated pixel in the DiaSource footprint.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_interpolated",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Interpolated pixel in the 3x3 region around the centroid.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_interpolatedCenter",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "DiaSource center is off image.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_offimage",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Saturated pixel in the DiaSource footprint.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_saturated",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Saturated pixel in the 3x3 region around the centroid.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_saturatedCenter",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "DiaSource's footprint includes suspect pixels.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_suspect",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Suspect pixel in the 3x3 region around the centroid.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_suspectCenter",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Streak in the DiaSource footprint.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_streak",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Streak in the 3x3 region around the centroid.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_streakCenter",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Injection in the DiaSource footprint.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_injected",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Injection in the 3x3 region around the centroid.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_injectedCenter",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Template injection in the DiaSource footprint.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_injected_template",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Template injection in the 3x3 region around the centroid.",
+        "mode": "NULLABLE",
+        "name": "pixelFlags_injected_templateCenter",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "This flag is set if the source is part of a glint trail.",
+        "mode": "NULLABLE",
+        "name": "glint_trail",
+        "type": "BOOLEAN"
+      }
+    ]
+  },
+  {
+    "description": "",
+    "mode": "REPEATED",
+    "name": "prvDiaForcedSources",
+    "type": "RECORD",
+    "fields": [
+      {
+        "description": "Unique id.",
+        "mode": "REQUIRED",
+        "name": "diaForcedSourceId",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Id of the DiaObject that this DiaForcedSource was associated with.",
+        "mode": "REQUIRED",
+        "name": "diaObjectId",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Right ascension coordinate of the position of the DiaObject.",
+        "mode": "REQUIRED",
+        "name": "ra",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Declination coordinate of the position of the DiaObject.",
+        "mode": "REQUIRED",
+        "name": "dec",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Id of the visit where this forcedSource was measured.",
+        "mode": "REQUIRED",
+        "name": "visit",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Id of the detector where this forcedSource was measured. Datatype short instead of byte because of DB concerns about unsigned bytes.",
+        "mode": "REQUIRED",
+        "name": "detector",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Point Source model flux.",
+        "mode": "NULLABLE",
+        "name": "psfFlux",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Uncertainty of psfFlux.",
+        "mode": "NULLABLE",
+        "name": "psfFluxErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Effective mid-visit time for this diaForcedSource, expressed as Modified Julian Date, International Atomic Time.",
+        "mode": "REQUIRED",
+        "name": "midpointMjdTai",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Forced photometry flux for a point source model measured on the visit image centered at the DiaObject position.",
+        "mode": "NULLABLE",
+        "name": "scienceFlux",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Uncertainty of scienceFlux.",
+        "mode": "NULLABLE",
+        "name": "scienceFluxErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Filter band this source was observed with.",
+        "mode": "NULLABLE",
+        "name": "band",
+        "type": "STRING"
+      },
+      {
+        "description": "Time when this record was generated.",
+        "mode": "REQUIRED",
+        "name": "time_processed",
+        "type": "TIMESTAMP"
+      }
+    ]
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "diaObject",
+    "type": "RECORD",
+    "fields": [
+      {
+        "description": "Unique identifier of this DiaObject.",
+        "mode": "REQUIRED",
+        "name": "diaObjectId",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Processing time when validity of this diaObject starts.",
+        "mode": "REQUIRED",
+        "name": "validityStart",
+        "type": "TIMESTAMP"
+      },
+      {
+        "description": "Right ascension coordinate of the position of the object.",
+        "mode": "REQUIRED",
+        "name": "ra",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Uncertainty of ra.",
+        "mode": "NULLABLE",
+        "name": "raErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Declination coordinate of the position of the object.",
+        "mode": "REQUIRED",
+        "name": "dec",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Uncertainty of dec.",
+        "mode": "NULLABLE",
+        "name": "decErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Covariance between ra and dec.",
+        "mode": "NULLABLE",
+        "name": "ra_dec_Cov",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Weighted mean point-source model magnitude for u filter.",
+        "mode": "NULLABLE",
+        "name": "u_psfFluxMean",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Standard error of u_psfFluxMean.",
+        "mode": "NULLABLE",
+        "name": "u_psfFluxMeanErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Standard deviation of the distribution of u_psfFlux.",
+        "mode": "NULLABLE",
+        "name": "u_psfFluxSigma",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Chi^2 statistic for the scatter of u_psfFlux around u_psfFluxMean.",
+        "mode": "NULLABLE",
+        "name": "u_psfFluxChi2",
+        "type": "FLOAT"
+      },
+      {
+        "description": "The number of data points used to compute u_psfFluxChi2.",
+        "mode": "NULLABLE",
+        "name": "u_psfFluxNdata",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Weighted mean forced photometry flux for u filter.",
+        "mode": "NULLABLE",
+        "name": "u_fpFluxMean",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Standard error of u_fpFluxMean.",
+        "mode": "NULLABLE",
+        "name": "u_fpFluxMeanErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Weighted mean point-source model magnitude for g filter.",
+        "mode": "NULLABLE",
+        "name": "g_psfFluxMean",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Standard error of g_psfFluxMean.",
+        "mode": "NULLABLE",
+        "name": "g_psfFluxMeanErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Standard deviation of the distribution of g_psfFlux.",
+        "mode": "NULLABLE",
+        "name": "g_psfFluxSigma",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Chi^2 statistic for the scatter of g_psfFlux around g_psfFluxMean.",
+        "mode": "NULLABLE",
+        "name": "g_psfFluxChi2",
+        "type": "FLOAT"
+      },
+      {
+        "description": "The number of data points used to compute g_psfFluxChi2.",
+        "mode": "NULLABLE",
+        "name": "g_psfFluxNdata",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Weighted mean forced photometry flux for g filter.",
+        "mode": "NULLABLE",
+        "name": "g_fpFluxMean",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Standard error of g_fpFluxMean.",
+        "mode": "NULLABLE",
+        "name": "g_fpFluxMeanErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Weighted mean point-source model magnitude for r filter.",
+        "mode": "NULLABLE",
+        "name": "r_psfFluxMean",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Standard error of r_psfFluxMean.",
+        "mode": "NULLABLE",
+        "name": "r_psfFluxMeanErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Standard deviation of the distribution of r_psfFlux.",
+        "mode": "NULLABLE",
+        "name": "r_psfFluxSigma",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Chi^2 statistic for the scatter of r_psfFlux around r_psfFluxMean.",
+        "mode": "NULLABLE",
+        "name": "r_psfFluxChi2",
+        "type": "FLOAT"
+      },
+      {
+        "description": "The number of data points used to compute r_psfFluxChi2.",
+        "mode": "NULLABLE",
+        "name": "r_psfFluxNdata",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Weighted mean forced photometry flux for r filter.",
+        "mode": "NULLABLE",
+        "name": "r_fpFluxMean",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Standard error of r_fpFluxMean.",
+        "mode": "NULLABLE",
+        "name": "r_fpFluxMeanErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Weighted mean point-source model magnitude for i filter.",
+        "mode": "NULLABLE",
+        "name": "i_psfFluxMean",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Standard error of i_psfFluxMean.",
+        "mode": "NULLABLE",
+        "name": "i_psfFluxMeanErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Standard deviation of the distribution of i_psfFlux.",
+        "mode": "NULLABLE",
+        "name": "i_psfFluxSigma",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Chi^2 statistic for the scatter of i_psfFlux around i_psfFluxMean.",
+        "mode": "NULLABLE",
+        "name": "i_psfFluxChi2",
+        "type": "FLOAT"
+      },
+      {
+        "description": "The number of data points used to compute i_psfFluxChi2.",
+        "mode": "NULLABLE",
+        "name": "i_psfFluxNdata",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Weighted mean forced photometry flux for i filter.",
+        "mode": "NULLABLE",
+        "name": "i_fpFluxMean",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Standard error of i_fpFluxMean.",
+        "mode": "NULLABLE",
+        "name": "i_fpFluxMeanErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Weighted mean point-source model magnitude for z filter.",
+        "mode": "NULLABLE",
+        "name": "z_psfFluxMean",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Standard error of z_psfFluxMean.",
+        "mode": "NULLABLE",
+        "name": "z_psfFluxMeanErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Standard deviation of the distribution of z_psfFlux.",
+        "mode": "NULLABLE",
+        "name": "z_psfFluxSigma",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Chi^2 statistic for the scatter of z_psfFlux around z_psfFluxMean.",
+        "mode": "NULLABLE",
+        "name": "z_psfFluxChi2",
+        "type": "FLOAT"
+      },
+      {
+        "description": "The number of data points used to compute z_psfFluxChi2.",
+        "mode": "NULLABLE",
+        "name": "z_psfFluxNdata",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Weighted mean forced photometry flux for z filter.",
+        "mode": "NULLABLE",
+        "name": "z_fpFluxMean",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Standard error of z_fpFluxMean.",
+        "mode": "NULLABLE",
+        "name": "z_fpFluxMeanErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Weighted mean point-source model magnitude for y filter.",
+        "mode": "NULLABLE",
+        "name": "y_psfFluxMean",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Standard error of y_psfFluxMean.",
+        "mode": "NULLABLE",
+        "name": "y_psfFluxMeanErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Standard deviation of the distribution of y_psfFlux.",
+        "mode": "NULLABLE",
+        "name": "y_psfFluxSigma",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Chi^2 statistic for the scatter of y_psfFlux around y_psfFluxMean.",
+        "mode": "NULLABLE",
+        "name": "y_psfFluxChi2",
+        "type": "FLOAT"
+      },
+      {
+        "description": "The number of data points used to compute y_psfFluxChi2.",
+        "mode": "NULLABLE",
+        "name": "y_psfFluxNdata",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Weighted mean forced photometry flux for y filter.",
+        "mode": "NULLABLE",
+        "name": "y_fpFluxMean",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Standard error of y_fpFluxMean.",
+        "mode": "NULLABLE",
+        "name": "y_fpFluxMeanErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Weighted mean forced photometry flux for u filter.",
+        "mode": "NULLABLE",
+        "name": "u_scienceFluxMean",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Standard error of u_scienceFluxMean.",
+        "mode": "NULLABLE",
+        "name": "u_scienceFluxMeanErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Standard deviation of the distribution of u_scienceFlux.",
+        "mode": "NULLABLE",
+        "name": "u_scienceFluxSigma",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Weighted mean forced photometry flux for g filter.",
+        "mode": "NULLABLE",
+        "name": "g_scienceFluxMean",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Standard error of g_scienceFluxMean.",
+        "mode": "NULLABLE",
+        "name": "g_scienceFluxMeanErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Standard deviation of the distribution of g_scienceFlux.",
+        "mode": "NULLABLE",
+        "name": "g_scienceFluxSigma",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Weighted mean forced photometry flux for r filter.",
+        "mode": "NULLABLE",
+        "name": "r_scienceFluxMean",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Standard error of r_scienceFluxMean.",
+        "mode": "NULLABLE",
+        "name": "r_scienceFluxMeanErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Standard deviation of the distribution of r_scienceFlux.",
+        "mode": "NULLABLE",
+        "name": "r_scienceFluxSigma",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Weighted mean forced photometry flux for i filter.",
+        "mode": "NULLABLE",
+        "name": "i_scienceFluxMean",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Standard error of i_scienceFluxMean.",
+        "mode": "NULLABLE",
+        "name": "i_scienceFluxMeanErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Standard deviation of the distribution of i_scienceFlux.",
+        "mode": "NULLABLE",
+        "name": "i_scienceFluxSigma",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Weighted mean forced photometry flux for z filter.",
+        "mode": "NULLABLE",
+        "name": "z_scienceFluxMean",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Standard error of z_scienceFluxMean.",
+        "mode": "NULLABLE",
+        "name": "z_scienceFluxMeanErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Standard deviation of the distribution of z_scienceFlux.",
+        "mode": "NULLABLE",
+        "name": "z_scienceFluxSigma",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Weighted mean forced photometry flux for y filter.",
+        "mode": "NULLABLE",
+        "name": "y_scienceFluxMean",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Standard error of y_scienceFluxMean.",
+        "mode": "NULLABLE",
+        "name": "y_scienceFluxMeanErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Standard deviation of the distribution of y_scienceFlux.",
+        "mode": "NULLABLE",
+        "name": "y_scienceFluxSigma",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Skewness of the u band fluxes.",
+        "mode": "NULLABLE",
+        "name": "u_psfFluxSkew",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Minimum observed u band fluxes.",
+        "mode": "NULLABLE",
+        "name": "u_psfFluxMin",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Maximum observed u band fluxes.",
+        "mode": "NULLABLE",
+        "name": "u_psfFluxMax",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Maximum slope between u band flux obsevations max(delta_flux/delta_time).",
+        "mode": "NULLABLE",
+        "name": "u_psfFluxMaxSlope",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Mean of the u band flux errors.",
+        "mode": "NULLABLE",
+        "name": "u_psfFluxErrMean",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Skewness of the g band fluxes.",
+        "mode": "NULLABLE",
+        "name": "g_psfFluxSkew",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Minimum observed g band fluxes.",
+        "mode": "NULLABLE",
+        "name": "g_psfFluxMin",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Maximum observed g band fluxes.",
+        "mode": "NULLABLE",
+        "name": "g_psfFluxMax",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Maximum slope between g band flux obsevations max(delta_flux/delta_time).",
+        "mode": "NULLABLE",
+        "name": "g_psfFluxMaxSlope",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Mean of the g band flux errors.",
+        "mode": "NULLABLE",
+        "name": "g_psfFluxErrMean",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Skewness of the r band fluxes.",
+        "mode": "NULLABLE",
+        "name": "r_psfFluxSkew",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Minimum observed r band fluxes.",
+        "mode": "NULLABLE",
+        "name": "r_psfFluxMin",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Maximum observed r band fluxes.",
+        "mode": "NULLABLE",
+        "name": "r_psfFluxMax",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Maximum slope between r band flux obsevations max(delta_flux/delta_time).",
+        "mode": "NULLABLE",
+        "name": "r_psfFluxMaxSlope",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Mean of the r band flux errors.",
+        "mode": "NULLABLE",
+        "name": "r_psfFluxErrMean",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Skewness of the i band fluxes.",
+        "mode": "NULLABLE",
+        "name": "i_psfFluxSkew",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Minimum observed i band fluxes.",
+        "mode": "NULLABLE",
+        "name": "i_psfFluxMin",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Maximum observed i band fluxes.",
+        "mode": "NULLABLE",
+        "name": "i_psfFluxMax",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Maximum slope between i band flux obsevations max(delta_flux/delta_time).",
+        "mode": "NULLABLE",
+        "name": "i_psfFluxMaxSlope",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Mean of the i band flux errors.",
+        "mode": "NULLABLE",
+        "name": "i_psfFluxErrMean",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Skewness of the z band fluxes.",
+        "mode": "NULLABLE",
+        "name": "z_psfFluxSkew",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Minimum observed z band fluxes.",
+        "mode": "NULLABLE",
+        "name": "z_psfFluxMin",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Maximum observed z band fluxes.",
+        "mode": "NULLABLE",
+        "name": "z_psfFluxMax",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Maximum slope between z band flux obsevations max(delta_flux/delta_time).",
+        "mode": "NULLABLE",
+        "name": "z_psfFluxMaxSlope",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Mean of the z band flux errors.",
+        "mode": "NULLABLE",
+        "name": "z_psfFluxErrMean",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Skewness of the y band fluxes.",
+        "mode": "NULLABLE",
+        "name": "y_psfFluxSkew",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Minimum observed y band fluxes.",
+        "mode": "NULLABLE",
+        "name": "y_psfFluxMin",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Maximum observed y band fluxes.",
+        "mode": "NULLABLE",
+        "name": "y_psfFluxMax",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Maximum slope between y band flux obsevations max(delta_flux/delta_time).",
+        "mode": "NULLABLE",
+        "name": "y_psfFluxMaxSlope",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Mean of the y band flux errors.",
+        "mode": "NULLABLE",
+        "name": "y_psfFluxErrMean",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Last time when non-forced DIASource was seen for this object.",
+        "mode": "REQUIRED",
+        "name": "lastNonForcedSource",
+        "type": "TIMESTAMP"
+      },
+      {
+        "description": "Time of the first diaSource, expressed as Modified Julian Date, International Atomic Time.",
+        "mode": "REQUIRED",
+        "name": "firstDiaSourceMjdTai",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Total number of DiaSources associated with this DiaObject.",
+        "mode": "REQUIRED",
+        "name": "nDiaSources",
+        "type": "INTEGER"
+      }
+    ]
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "ssSource",
+    "type": "RECORD",
+    "fields": [
+      {
+        "description": "Unique identifier of the object.",
+        "mode": "NULLABLE",
+        "name": "ssObjectId",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Unique identifier of the observation.",
+        "mode": "NULLABLE",
+        "name": "diaSourceId",
+        "type": "INTEGER"
+      },
+      {
+        "description": "MPC unique identifier of the observation.",
+        "mode": "NULLABLE",
+        "name": "mpcUniqueId",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Closest Objects (3 stars and 3 galaxies) in Level 2 database.",
+        "mode": "NULLABLE",
+        "name": "nearbyObj1",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Closest Objects (3 stars and 3 galaxies) in Level 2 database.",
+        "mode": "NULLABLE",
+        "name": "nearbyObj2",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Closest Objects (3 stars and 3 galaxies) in Level 2 database.",
+        "mode": "NULLABLE",
+        "name": "nearbyObj3",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Closest Objects (3 stars and 3 galaxies) in Level 2 database.",
+        "mode": "NULLABLE",
+        "name": "nearbyObj4",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Closest Objects (3 stars and 3 galaxies) in Level 2 database.",
+        "mode": "NULLABLE",
+        "name": "nearbyObj5",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Closest Objects (3 stars and 3 galaxies) in Level 2 database.",
+        "mode": "NULLABLE",
+        "name": "nearbyObj6",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Distances to nearbyObj.",
+        "mode": "NULLABLE",
+        "name": "nearbyObjDist1",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Distances to nearbyObj.",
+        "mode": "NULLABLE",
+        "name": "nearbyObjDist2",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Distances to nearbyObj.",
+        "mode": "NULLABLE",
+        "name": "nearbyObjDist3",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Distances to nearbyObj.",
+        "mode": "NULLABLE",
+        "name": "nearbyObjDist4",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Distances to nearbyObj.",
+        "mode": "NULLABLE",
+        "name": "nearbyObjDist5",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Distances to nearbyObj.",
+        "mode": "NULLABLE",
+        "name": "nearbyObjDist6",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Natural log of the probability that the observed DIAObject is the same as the nearby Object.",
+        "mode": "NULLABLE",
+        "name": "nearbyObjLnP1",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Natural log of the probability that the observed DIAObject is the same as the nearby Object.",
+        "mode": "NULLABLE",
+        "name": "nearbyObjLnP2",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Natural log of the probability that the observed DIAObject is the same as the nearby Object.",
+        "mode": "NULLABLE",
+        "name": "nearbyObjLnP3",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Natural log of the probability that the observed DIAObject is the same as the nearby Object.",
+        "mode": "NULLABLE",
+        "name": "nearbyObjLnP4",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Natural log of the probability that the observed DIAObject is the same as the nearby Object.",
+        "mode": "NULLABLE",
+        "name": "nearbyObjLnP5",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Natural log of the probability that the observed DIAObject is the same as the nearby Object.",
+        "mode": "NULLABLE",
+        "name": "nearbyObjLnP6",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Ecliptic longitude.",
+        "mode": "NULLABLE",
+        "name": "eclipticLambda",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Ecliptic latitude.",
+        "mode": "NULLABLE",
+        "name": "eclipticBeta",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Galactic longitude.",
+        "mode": "NULLABLE",
+        "name": "galacticL",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Galactic latitute.",
+        "mode": "NULLABLE",
+        "name": "galacticB",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Phase angle.",
+        "mode": "NULLABLE",
+        "name": "phaseAngle",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Heliocentric distance.",
+        "mode": "NULLABLE",
+        "name": "heliocentricDist",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Topocentric distace.",
+        "mode": "NULLABLE",
+        "name": "topocentricDist",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Predicted magnitude.",
+        "mode": "NULLABLE",
+        "name": "predictedMagnitude",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Prediction uncertainty (1-sigma).",
+        "mode": "NULLABLE",
+        "name": "predictedMagnitudeSigma",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Residual R.A. vs. ephemeris.",
+        "mode": "NULLABLE",
+        "name": "residualRa",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Residual Dec vs. ephemeris.",
+        "mode": "NULLABLE",
+        "name": "residualDec",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Predicted R.A. uncertainty.",
+        "mode": "NULLABLE",
+        "name": "predictedRaSigma",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Predicted Dec uncertainty.",
+        "mode": "NULLABLE",
+        "name": "predictedDecSigma",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Predicted R.A./Dec covariance.",
+        "mode": "NULLABLE",
+        "name": "predictedRaDecCov",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Cartesian heliocentric X coordinate (at the emit time).",
+        "mode": "NULLABLE",
+        "name": "heliocentricX",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Cartesian heliocentric Y coordinate (at the emit time).",
+        "mode": "NULLABLE",
+        "name": "heliocentricY",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Cartesian heliocentric Z coordinate (at the emit time).",
+        "mode": "NULLABLE",
+        "name": "heliocentricZ",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Cartesian heliocentric X velocity (at the emit time).",
+        "mode": "NULLABLE",
+        "name": "heliocentricVX",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Cartesian heliocentric Y velocity (at the emit time).",
+        "mode": "NULLABLE",
+        "name": "heliocentricVY",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Cartesian heliocentric Z velocity (at the emit time).",
+        "mode": "NULLABLE",
+        "name": "heliocentricVZ",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Cartesian topocentric X coordinate (at the emit time).",
+        "mode": "NULLABLE",
+        "name": "topocentricX",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Cartesian topocentric Y coordinate (at the emit time).",
+        "mode": "NULLABLE",
+        "name": "topocentricY",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Cartesian topocentric Z coordinate (at the emit time).",
+        "mode": "NULLABLE",
+        "name": "topocentricZ",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Cartesian topocentric X velocity (at the emit time).",
+        "mode": "NULLABLE",
+        "name": "topocentricVX",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Cartesian topocentric Y velocity (at the emit time).",
+        "mode": "NULLABLE",
+        "name": "topocentricVY",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Cartesian topocentric Z velocity (at the emit time).",
+        "mode": "NULLABLE",
+        "name": "topocentricVZ",
+        "type": "FLOAT"
+      }
+    ]
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "MPCORB",
+    "type": "RECORD",
+    "fields": [
+      {
+        "description": "Number or provisional designation (in packed form).",
+        "mode": "NULLABLE",
+        "name": "mpcDesignation",
+        "type": "STRING"
+      },
+      {
+        "description": "LSST unique identifier (if observed by LSST).",
+        "mode": "NULLABLE",
+        "name": "ssObjectId",
+        "type": "INTEGER"
+      },
+      {
+        "description": "Absolute magnitude, H.",
+        "mode": "NULLABLE",
+        "name": "mpcH",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Epoch (in MJD, .0 TT).",
+        "mode": "NULLABLE",
+        "name": "epoch",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Mean anomaly at the epoch, in degrees.",
+        "mode": "NULLABLE",
+        "name": "M",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Argument of perihelion, J2000.0 (degrees).",
+        "mode": "NULLABLE",
+        "name": "peri",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Longitude of the ascending node, J2000.0 (degrees).",
+        "mode": "NULLABLE",
+        "name": "node",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Inclination to the ecliptic, J2000.0 (degrees).",
+        "mode": "NULLABLE",
+        "name": "incl",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Orbital eccentricity.",
+        "mode": "NULLABLE",
+        "name": "e",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Semimajor axis (AU).",
+        "mode": "NULLABLE",
+        "name": "a",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Perihelion distance (AU).",
+        "mode": "NULLABLE",
+        "name": "q",
+        "type": "FLOAT"
+      },
+      {
+        "description": "MJD of pericentric passage.",
+        "mode": "NULLABLE",
+        "name": "t_p",
+        "type": "FLOAT"
+      }
+    ]
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "cutoutDifference",
+    "type": "BYTES"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "cutoutScience",
+    "type": "BYTES"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "cutoutTemplate",
+    "type": "BYTES"
+  }
+]
