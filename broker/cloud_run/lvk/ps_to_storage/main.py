@@ -77,7 +77,9 @@ def run():
     except PreconditionFailed:
         # this alert is a duplicate. drop it.
         return "", HTTP_204
-
+    # the schema version is not defined in the schema
+    # add it manually using the environment variable defined in this script
+    alert.attributes["schema_version"] = VERSIONTAG
     # publish the same alert as JSON
     TOPIC_ALERTS.publish(alert)
 
@@ -91,6 +93,7 @@ def _create_file_metadata(alert: pittgoogle.Alert, event_id: str) -> dict:
     metadata["time_created"] = alert.dict["time_created"]
     metadata["alert_type"] = alert.dict["alert_type"]
     metadata["superevent_id"] = alert.dict["superevent_id"]
+    metadata["schema_version"] = VERSIONTAG
 
     return metadata
 
@@ -99,6 +102,6 @@ def _name_in_bucket(alert: pittgoogle.Alert) -> str:
     """Return the name of the file in the bucket."""
     _date = alert.dict["time_created"][0:10]
     _alert_type = alert.dict["alert_type"]
-    _id = alert.dict["superevent_id"]
+    _id = alert.sourceid
 
-    return f"{VERSIONTAG}/{_date}/{_alert_type}/{_id}.json"
+    return f"{VERSIONTAG}/{_id}/{_alert_type}-{_date}.json"
