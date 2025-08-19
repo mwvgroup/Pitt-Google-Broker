@@ -1,5 +1,11 @@
 [
   {
+    "description": "The schema version of the alert.",
+    "mode": "REQUIRED",
+    "name": "schema_version",
+    "type": "STRING"
+  },
+  {
     "description": "The type of alert.",
     "mode": "REQUIRED",
     "name": "alert_type",
