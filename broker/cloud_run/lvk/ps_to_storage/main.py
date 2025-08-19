@@ -6,6 +6,7 @@
 import os
 import flask
 import pittgoogle
+import attrs
 from google.cloud import logging, storage
 from google.cloud.exceptions import PreconditionFailed
 
@@ -68,7 +69,16 @@ def run():
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
-    blob = bucket.blob(_name_in_bucket(alert))
+    # We need to know the schema version for a few different things across the broker,
+    # but it's not included in LVK alerts. Add it now so we never have to worry about it again.
+    msg_data = f'{{"schema_version": "{VERSIONTAG}", '.encode() + alert.msg.data[1:]
+    alert.msg = attrs.evolve(alert.msg, data=msg_data)
+
+    # Force rebuild of alert.dict to include the schema_version field
+    alert._dict = None
+    _ = alert.dict
+
+    blob = bucket.blob(alert.name_in_bucket)
     blob.metadata = _create_file_metadata(alert, event_id=envelope["message"]["messageId"])
 
     # raise a PreconditionFailed exception if filename already exists in the bucket using "if_generation_match=0"
@@ -77,9 +87,7 @@ def run():
     except PreconditionFailed:
         # this alert is a duplicate. drop it.
         return "", HTTP_204
-    # the schema version is not defined in the schema
-    # add it manually using the environment variable defined in this script
-    alert.attributes["schema_version"] = VERSIONTAG
+
     # publish the same alert as JSON
     TOPIC_ALERTS.publish(alert)
 
@@ -93,15 +101,6 @@ def _create_file_metadata(alert: pittgoogle.Alert, event_id: str) -> dict:
     metadata["time_created"] = alert.dict["time_created"]
     metadata["alert_type"] = alert.dict["alert_type"]
     metadata["superevent_id"] = alert.dict["superevent_id"]
-    metadata["schema_version"] = VERSIONTAG
+    metadata["schema_version"] = alert.dict["schema_version"]
 
     return metadata
-
-
-def _name_in_bucket(alert: pittgoogle.Alert) -> str:
-    """Return the name of the file in the bucket."""
-    _date = alert.dict["time_created"][0:10]
-    _alert_type = alert.dict["alert_type"]
-    _id = alert.sourceid
-
-    return f"{VERSIONTAG}/{_id}/{_alert_type}-{_date}.json"
