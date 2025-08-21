@@ -13,23 +13,9 @@
 
           // Whitelist fields for diaObject
           const diaObjectFields = [
-            "diaObjectId", "lastNonForcedSource", "firstDiaSourceMjdTai",
+            "diaObjectId", "lastDiaSourceMjdTai", "firstDiaSourceMjdTai",
             "nDiaSources", "u_psfFluxErrMean", "g_psfFluxErrMean", "r_psfFluxErrMean",
             "i_psfFluxErrMean", "z_psfFluxErrMean", "y_psfFluxErrMean"
-          ];
-
-          // Whitelist fields for ssSource
-          const ssSourceFields = [
-            "ssObjectId", "nearbyObj1", "nearbyObj2", "nearbyObj3",
-            "nearbyObj4", "nearbyObj5", "nearbyObj6", "nearbyObj1Dist",
-            "nearbyObj2Dist", "nearbyObj3Dist", "nearbyObj4Dist",
-            "nearbyObj5Dist", "nearbyObj6Dist", "mpcUniqueId", "nearbyObjLnP1",
-            "nearbyObjLnP2", "nearbyObjLnP3", "nearbyObjLnP4", "nearbyObjLnP5",
-            "nearbyObjLnP6", "eclipticLambda", "eclipticBeta", "galacticL",
-            "galacticB", "phaseAngle", "heliocentricDist", "topocentricDist",
-            "heliocentricX", "heliocentricY", "heliocentricZ", "heliocentricVX",
-            "heliocentricVY", "heliocentricVZ", "topocentricX", "topocentricY",
-            "topocentricZ", "topocentricVX", "topocentricVY", "topocentricVZ"
           ];
 
           // Filter fields
@@ -54,14 +40,13 @@
           alertLite["diaSource"] = filterFields(alertLite["diaSource"], diaSourceFields);
           alertLite["prvDiaSources"] = filterList(alertLite["prvDiaSources"], diaSourceFields);
           alertLite["diaObject"] = filterFields(alertLite["diaObject"], diaObjectFields);
-          alertLite["ssSource"] = filterFields(alertLite["ssSource"], ssSourceFields);
 
           // Remove cutouts
           delete alertLite["cutoutDifference"];
           delete alertLite["cutoutScience"];
           delete alertLite["cutoutTemplate"];
 
-          // Keep observation_reason, target_name, prv_forced_sources and MPCORB unchanged
+          // Keep observation_reason, target_name, prv_forced_sources, ssSource, and MPCORB unchanged
           data["alert_lite"] = alertLite;
           message.data = JSON.stringify(data);
           return message;
