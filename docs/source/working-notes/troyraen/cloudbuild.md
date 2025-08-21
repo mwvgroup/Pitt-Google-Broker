@@ -1,8 +1,10 @@
-# Cloud Build
+# docs/source/working-notes/troyraen/cloudbuild.md
+
+## Cloud Build
 
 - [Overview of Cloud Build](https://cloud.google.com/build/docs/overview)
 - [Build configuration file schema](https://cloud.google.com/build/docs/build-config-file-schema)
-    - [Substituting variable values](https://cloud.google.com/build/docs/configuring-builds/substitute-variable-values) 
+    - [Substituting variable values](https://cloud.google.com/build/docs/configuring-builds/substitute-variable-values)
 
 Example Build config (yaml) file structure:
 

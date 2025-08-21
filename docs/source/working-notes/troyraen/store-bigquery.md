@@ -1,9 +1,11 @@
-# Cloud Function to load alerts to BigQuery tables
+# docs/source/working-notes/troyraen/store-bigquery.md
+
+## Cloud Function to load alerts to BigQuery tables
 
 Skip to [Test the end result](#test-the-end-result)
 
 
-## Test pieces of the cloud fnc
+### Test pieces of the cloud fnc
 
 ```bash
 export GCP_PROJECT=$GOOGLE_CLOUD_PROJECT
@@ -24,7 +26,7 @@ alert_dict = troy.load_alert_file(kwargs)
 gcp_utils.insert_rows_bigquery(table_id, [alert_dict])
 ```
 
-## setup/run/stop/delete the testing instance
+### setup/run/stop/delete the testing instance
 
 Create/delete a broker testing instance
 ```bash
@@ -79,7 +81,7 @@ gcloud pubsub topics publish "$topic" --message="$cue"
 ```
 <!--
 
-## Test the end result
+### Test the end result
 
 ```python
 import os

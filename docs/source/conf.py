@@ -48,6 +48,9 @@ extensions = [
 autosectionlabel_prefix_document = True
 # now can reference pages with :ref:`{path/to/page}:{title-of-section}`
 
+# Combine the class and __init__ docstrings into the main body of an autoclass directive
+autoclass_content = "both"
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 

@@ -1,12 +1,14 @@
-# Lasair Overview
+# docs/source/working-notes/early-dev/competitive_product_survey/Lasair.md
 
-## Primary Goals
+## Lasair Overview
+
+### Primary Goals
 
 1. Ingest the ZTF public alert stream into a relational database
 2. Condense the alerts into possible objects
 3. Produce lightcurves of these objects and reliable cross-matches to star and galaxy catalogs for possible follow-up
 
-## Assorted Info
+### Assorted Info
 
 - Lasair = “flare” or “flash” in Scots and Irish gaelic
 - The transient alerts broker for the LSST: UK collaboration
@@ -21,7 +23,7 @@
   - Ex: nuclear transients and TDE candidates
   - Ex: SNe candidates—all objects NOT classified as a variable star, AGN, or CV and are not coincident with a Pan-STARRS stellar source
 
-## Data Products
+### Data Products
 
 3 SQL tables as data products
 
@@ -45,7 +47,7 @@
     - Orphans: stationary, transient sources that aren’t associated with a cataloged star or galaxy
   - Maintains an up-to-date crossmatch with the IAU Transient Name Server to quickly identify known transients within the ZTF stream
 
-## Searching Lasair
+### Searching Lasair
 
   - Can use SQL SELECT queries to search their provided tables
   - Few different types of search methods:
@@ -61,7 +63,7 @@
     - An interactive AladinLite display of the region of interest
     -  A table with each of the relevant candidates’ info (i.e., each lightcurve point), taken from the *candidates* table
 
-## Sources
+### Sources
 
 1. Smith, K. W., Williams, R. D., Young, R. D., et al. 2019, RNAAS 3:1
 1. [https://github.com/thespacedoctor/sherlock](https://github.com/thespacedoctor/sherlock)

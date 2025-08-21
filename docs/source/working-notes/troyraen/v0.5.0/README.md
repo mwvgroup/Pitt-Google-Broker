@@ -1,12 +1,14 @@
-# v0.5.0
+# docs/source/working-notes/troyraen/v0.5.0/README.md
 
-- [Results Summary](#results-summary)  
+## v0.5.0
+
+- [Results Summary](#results-summary)
 - [Documentation of Changes](#documentation-of-changes)
 - [Test the Changes](#test-the-changes)
 
 ---
 
-## Results Summary
+### Results Summary
 
 Auto-scheduler and cue-response checker appear to be working smoothly.
 
@@ -14,7 +16,7 @@ Documentation is back up on ReadTheDocs.
 
 ---
 
-## Documentation of Changes
+### Documentation of Changes
 
 - PR [#62](https://github.com/mwvgroup/Pitt-Google-Broker/pull/62)
 - Auto-scheduler: [schedule-night-conductor.md](schedule-night-conductor.md)
@@ -27,13 +29,13 @@ Started but didn't finish; TODO in a future version (this is v0.7.0):
 
 ---
 
-## Test the Changes
+### Test the Changes
 
 - [Create/delete a broker instance](#createdelete-a-broker-instance)
 - [Test the broker](#test-the-broker)
 
 <!-- fs -->
-### Create/delete a broker instance
+#### Create/delete a broker instance
 
  Create instance
 ```bash
@@ -72,10 +74,10 @@ sudo mv ~/pitt-reader.user.keytab ${consumerDir}/.
 ```
 
 
-### Test the broker
+#### Test the broker
 
 
-#### Test the auto-scheduler
+##### Test the auto-scheduler
 
 Schedule the broker to ingest a live topic for a few minutes and then shutdown.
 

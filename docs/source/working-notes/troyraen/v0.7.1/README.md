@@ -1,4 +1,6 @@
-# v0.7.1
+# docs/source/working-notes/troyraen/v0.7.1/README.md
+
+## v0.7.1
 
 Starts a system to track metadata for provenance and performance benchmarking.
 - Adds custom metadata attributes to messages in all Pub/Sub streams, except "alerts".
@@ -11,14 +13,14 @@ See [PR \#72](https://github.com/mwvgroup/Pitt-Google-Broker/pull/72)
 Working notes:
 - [process_streams.md](process_streams.md) (setup/test the processing script)
 
-## Test the changes
+### Test the changes
 
 For the results of the tests, see:
 - [logs: process-pubsub-counters](https://console.cloud.google.com/logs/query;query=logName%3D%22projects%2Fardent-cycling-243415%2Flogs%2Fprocess-pubsub-counters%22;timeRange=P7D;cursorTimestamp=2021-08-23T03:06:56.058162537Z?project=ardent-cycling-243415)
 - [BigQuery metadata table](https://console.cloud.google.com/bigquery?project=ardent-cycling-243415&d=ztf_alerts_v071&p=ardent-cycling-243415&t=metadata&page=table&ws=!1m5!1m4!4m3!1sardent-cycling-243415!2sztf_alerts_v071!3smetadata)
 
 
-### Code used to create and run the broker testing instance
+#### Code used to create and run the broker testing instance
 
 Create/delete a broker testing instance
 ```bash

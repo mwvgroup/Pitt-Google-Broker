@@ -1,3 +1,5 @@
+# docs/source/working-notes/troyraen/AbrilCVs/J_MNRAS_492_L40/catalog_condensed.md
+
 ## Create `catalog_condensed.dat`
 
 - Calculate HEALPix indexes of CV catalog.

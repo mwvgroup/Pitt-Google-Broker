@@ -1,0 +1,102 @@
+[
+    {
+      "description": "Unique identifiers from the semantically compressed alert packet.",
+      "fields": [
+          {
+            "description": "Object identifier or name.",
+            "mode": "REQUIRED",
+            "name": "objectId",
+            "type": "STRING"
+          },
+          {
+            "description": "Candidate ID from operations DB.",
+            "mode": "REQUIRED",
+            "name": "candid",
+            "type": "INTEGER"
+          }
+      ],
+      "mode": "REQUIRED",
+      "name": "alert_lite",
+      "type": "RECORD"
+    },
+    {
+      "description": "Classification results using UPSILoN (Kim & Bailer-Jones 2015).",
+      "fields": [
+          {
+            "description": "Predicted class using g band photometry.",
+            "mode": "NULLABLE",
+            "name": "g_label",
+            "type": "STRING"
+          },
+          {
+            "description": "Predicted class using r band photometry.",
+            "mode": "NULLABLE",
+            "name": "r_label",
+            "type": "STRING"
+          },
+          {
+            "description": "Predicted class using i band photometry.",
+            "mode": "NULLABLE",
+            "name": "i_label",
+            "type": "STRING"
+          },
+          {
+            "description": "Class probability for g_label.",
+            "mode": "NULLABLE",
+            "name": "g_probability",
+            "type": "FLOAT"
+          },
+          {
+            "description": "Class probability for r_label.",
+            "mode": "NULLABLE",
+            "name": "r_probability",
+            "type": "FLOAT"
+          },
+          {
+            "description": "Class probability for i_label.",
+            "mode": "NULLABLE",
+            "name": "i_probability",
+            "type": "FLOAT"
+          },
+          {
+            "description": "g band flag. 0 if classification is successful, 1 if the period_SNR is lower than 20, or if the period is in the range of period alias",
+            "mode": "NULLABLE",
+            "name": "g_flag",
+            "type": "INTEGER"
+          },
+          {
+            "description": "r band flag. 0 if classification is successful, 1 if the period_SNR is lower than 20, or if the period is in the range of period alias",
+            "mode": "NULLABLE",
+            "name": "r_flag",
+            "type": "INTEGER"
+          },
+          {
+            "description": "i band flag. 0 if classification is successful, 1 if the period_SNR is lower than 20, or if the period is in the range of period alias",
+            "mode": "NULLABLE",
+            "name": "i_flag",
+            "type": "INTEGER"
+          },
+          {
+            "description": "Number of photometric data points in the g band used to make a classification. UPSILoN recommends using light curves with more than ~80 data points for the best classification quality.",
+            "mode": "NULLABLE",
+            "name": "n_data_points_g_band",
+            "type": "INTEGER"
+          },
+          {
+            "description": "Number of photometric data points in the r band used to make a classification. UPSILoN recommends using light curves with more than ~80 data points for the best classification quality.",
+            "mode": "NULLABLE",
+            "name": "n_data_points_r_band",
+            "type": "INTEGER"
+          },
+          {
+            "description": "Number of photometric data points in the i band used to make a classification. UPSILoN recommends using light curves with more than ~80 data points for the best classification quality.",
+            "mode": "NULLABLE",
+            "name": "n_data_points_i_band",
+            "type": "INTEGER"
+          }
+      ],
+      "mode": "REQUIRED",
+      "name": "upsilon",
+      "type": "RECORD"
+    }
+]

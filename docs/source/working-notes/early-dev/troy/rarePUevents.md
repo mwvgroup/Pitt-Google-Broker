@@ -1,4 +1,6 @@
-# LSST Science Book
+# docs/source/working-notes/early-dev/troy/rarePUevents.md
+
+## LSST Science Book
 "LSST will enable early detection of prototype cases for a number of
 theoretically predicted explosive transients which we’ve already discussed, including orphan GRB
 afterglows, accretion induced collapse events, fall-back and pair-instability supernovae, and the so

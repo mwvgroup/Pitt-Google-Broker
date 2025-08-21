@@ -6,24 +6,9 @@
 Pitt-Google Broker
 ==============================================
 
-The Pitt-Google Broker is a cloud-based alert distribution service designed to provide near real-time processing of data from large-scale astronomical surveys like the `Legacy Survey of Space and Time <https://www.lsst.org/>`_ (LSST). LSST will deliver on order a million real-time alerts each night providing information on astronomical targets within 60 seconds of observation. The Pitt-Google Broker is a scalable broker system being designed to maximize the availability and usefulness of the LSST alert data by combining cloud-based analysis opportunities with value-added data products.
+The Pitt-Google Broker is a cloud-based alert distribution service designed to provide near real-time processing of data from large-scale astronomical surveys like the `Legacy Survey of Space and Time <https://www.lsst.org/>`_ (LSST). LSST will deliver on order 10 million real-time alerts each night providing information on astronomical targets within 60 seconds of observation. The Pitt-Google Broker is a scalable broker system being designed to maximize the availability and usefulness of the LSST alert data by combining cloud-based analysis opportunities with value-added data products.
 
 The Pitt-Google Broker runs on the `Google Cloud Platform <https://cloud.google.com/>`_ (GCP) and is currently focused on processing and serving alerts from the `Zwicky Transient Facility <https://www.ztf.caltech.edu/>`_ (ZTF), and extending broker capabilities using ZTF, the LSST Alert Simulator, and the DECam Alliance for Transients (DECAT) stream.
-
-.. .. toctree::
-..    :hidden:
-..
-..    Overview<self>
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Access Data
-
-   access-data/data-overview
-   access-data/initial-setup
-   access-data/bigquery
-   access-data/cloud-storage
-   access-data/pubsub
 
 .. toctree::
    :hidden:
@@ -36,6 +21,7 @@ The Pitt-Google Broker runs on the `Google Cloud Platform <https://cloud.google.
    broker/components
    broker/setup-ref
    broker/run-a-broker-instance
+   broker/alerts-for-testing
    broker/primers-for-developers
 
 .. toctree::
@@ -43,14 +29,14 @@ The Pitt-Google Broker runs on the `Google Cloud Platform <https://cloud.google.
    :maxdepth: 1
    :caption: API Reference
 
-   api/pgb-utils/bigquery
-   api/pgb-utils/figures
-   api/pgb-utils/pubsub
-   api/pgb-utils/utils
+   api/broker-utils/avro-schemas
    api/broker-utils/consumer-sim
    api/broker-utils/data-utils
    api/broker-utils/gcp-utils
+   api/broker-utils/math
    api/broker-utils/schema-maps
+   api/broker-utils/testing
+   api/broker-utils/types
 
 .. toctree::
    :hidden:
@@ -59,11 +45,3 @@ The Pitt-Google Broker runs on the `Google Cloud Platform <https://cloud.google.
 
    working-notes/early-dev/README
    working-notes/troyraen/index
-
-..
-.. Indices and tables
-.. ==================
-..
-.. * :ref:`genindex`
-.. * :ref:`modindex`
-.. * :ref:`search`

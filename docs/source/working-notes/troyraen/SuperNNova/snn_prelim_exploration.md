@@ -1,4 +1,6 @@
-# SuperNNova preliminary exploration
+# docs/source/working-notes/troyraen/SuperNNova/snn_prelim_exploration.md
+
+## SuperNNova preliminary exploration
 
 (see also: [snn_train_a_model.md](snn_train_a_model.md))
 

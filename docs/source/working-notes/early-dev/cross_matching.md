@@ -1,19 +1,20 @@
+# docs/source/working-notes/early-dev/cross_matching.md
 
-# To Do
+## To Do
 - [ ] Start with [astroquery](https://astroquery.readthedocs.io/en/latest/)
 
 
-# Astroquery
+## Astroquery
 <!-- fs -->
 [astroquery](https://astroquery.readthedocs.io/en/latest/)
 "Astroquery is a set of tools for querying astronomical web forms and databases... All astroquery modules are supposed to follow the same API. In its simplest form, the API involves queries based on coordinates or object names."
 
-## astroquery.xmatch
+### astroquery.xmatch
 [XMatch Getting started](https://astroquery.readthedocs.io/en/latest/xmatch/xmatch.html#module-astroquery.xmatch)
 [XMatchClass](https://astroquery.readthedocs.io/en/latest/api/astroquery.xmatch.XMatchClass.html#astroquery.xmatch.XMatchClass.query)
 XMatch uses the CDS xMatch service: [CDS xMatch service documentation](http://cdsxmatch.u-strasbg.fr/xmatch/doc/)
 
-## install:
+### install:
 ``` bash
 conda install -c astropy astroquery
 ```
@@ -22,13 +23,13 @@ conda install -c astropy astroquery
 
 
 
-# Possible XM Tools
+## Possible XM Tools
 <!-- fs -->
 
 - [ ] Start with [astroquery](https://astroquery.readthedocs.io/en/latest/)
 
 
-## Summary of tools
+### Summary of tools
 
 "Astronomical data fusion tool based on PostgreSQL" would be great, but I can't actually find the software.
 
@@ -42,7 +43,7 @@ Probably the best options (see below for details):
 - [The Large Survey Database (LSD)](http://research.majuric.org/public/project/lsd/) (python)
 
 
-## Tools details
+### Tools details
 <!-- fs -->
 
 - [ ] mcatCS: (multi-band catalog Cross-matching Scheme, 2019)
@@ -85,7 +86,7 @@ Probably the best options (see below for details):
 <!-- fe possible XM tools -->
 
 
-# Notes from paper: Gaia Data Release 1. Cross-match with external catalogues Algorithm and results
+## Notes from paper: Gaia Data Release 1. Cross-match with external catalogues Algorithm and results
 <!-- fs -->
 
 Paper:
@@ -96,7 +97,7 @@ Marrese+17
 
 XM = cross matching
 
-## Possible Features
+### Possible Features
 
 Can match one-to-one, one-to-many, or many-to-one. In the case of identifying host galaxy of supernova we probably want one-to-one?
 
@@ -124,7 +125,7 @@ Important consideration:
 Many of the possible features can improve matching of generic objects at the cost of poor matching for peculiar objects. My guess is that we will deal with many 'peculiar' objects..?
 
 
-## Techniques
+### Techniques
 
 Possible option: http://docs.astropy.org/en/stable/_modules/astropy/coordinates/matching.html
 
@@ -138,7 +139,7 @@ Figure of merit:
 
 <!-- fe notes from Gaia paper -->
 
-## MARS Links
+### MARS Links
 
 [MARS website](https://mars.lco.global/help/)
 [Git Repo](https://github.com/LCOGT/ztf-alert-server)

@@ -13,6 +13,7 @@ pitt-reader.user.keytab
 
 # IDE files
 .idea/
+.vscode/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

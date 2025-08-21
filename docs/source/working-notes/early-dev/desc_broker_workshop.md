@@ -1,11 +1,13 @@
-# DESC Broker Workshop
+# docs/source/working-notes/early-dev/desc_broker_workshop.md
+
+## DESC Broker Workshop
 
 This document provides notes on the LSST-DESC Broker Workshop. [Link to Talks](https://drive.google.com/drive/folders/1sjYXbdwTID3VnzZNAkcjLbjRfpwNaO_n?usp=sharing)
 
 
-## Thursday Session 1: Science Vision and Precursor Surveys
+### Thursday Session 1: Science Vision and Precursor Surveys
 
-### Lessons learned from microlensing follow-up (Rachel Street)
+#### Lessons learned from microlensing follow-up (Rachel Street)
 - Microlensing requires rapid followup (Usually < 10 alerts per day)
 - You need redundancy in followup locations to deal with weather and down time
 - Data should be shared in real time with clear publication guidelines
@@ -18,7 +20,7 @@ This document provides notes on the LSST-DESC Broker Workshop. [Link to Talks](h
 
 
 
-### Black Hole Microlensing with Parallax (Nathan Golovich @ LLNL)
+#### Black Hole Microlensing with Parallax (Nathan Golovich @ LLNL)
 
 - Discussed why this topic is scientifically interesting
 - How will the alert system handel long time scale signals with weak signal to noise?
@@ -27,12 +29,12 @@ This document provides notes on the LSST-DESC Broker Workshop. [Link to Talks](h
 
 
 
-### Microlensing with ZTF: Breaking in Spin with Brokers (Michael Medford @ LBNL)
+#### Microlensing with ZTF: Breaking in Spin with Brokers (Michael Medford @ LBNL)
 
 - **Z**TF **A**lert **P**acket **I**nspection **T**ool
 - Capture
   - Ingest ZTF alert packet data through Kafka consumer
-  - Cross-match detections into long duration light-curves 
+  - Cross-match detections into long duration light-curves
 - Detect
   -  Regularly filter for ongoing and completed microlensing events
   - Remove false positives, mainly variable stars
@@ -51,18 +53,18 @@ This document provides notes on the LSST-DESC Broker Workshop. [Link to Talks](h
 
 
 
-### The ZTF Coadd Facility (Danny Goldstein @ Caltech)
+#### The ZTF Coadd Facility (Danny Goldstein @ Caltech)
 
 - Combines images from multiple observations to create deeper stacks.
 - Reduces functional cadence, but increases the number of discovered objects
 
 
 
-## Thursday Session 2: LSST Prompt Processing Data Products
+### Thursday Session 2: LSST Prompt Processing Data Products
 
 
 
-### LSST Prompt Data Products (Melissa Graham @ U. of Washington)
+#### LSST Prompt Data Products (Melissa Graham @ U. of Washington)
 
 - Online LSST forum for DM [here](https://community.lsst.org/). See [ls.st/dmtn-102](ls.st/dmtn-102) for alert stream numbers.
 - Alert production process:
@@ -73,7 +75,7 @@ This document provides notes on the LSST-DESC Broker Workshop. [Link to Talks](h
   - Alert packet assembled for SNR>5 detections
   - Alert sent to community
 - Alert packet contents for 60s releases:
-  - Difference image source parameters 
+  - Difference image source parameters
     - ID, coordinate, flux, shape, SNR, association with static and moving cataloges
   - Difference image object parameters
     - ~12 month history of proper motion, parallax, mean flux, variability parameters, and ID for the latest Data Release deep stacks
@@ -91,7 +93,7 @@ This document provides notes on the LSST-DESC Broker Workshop. [Link to Talks](h
 
 
 
-### Plans and Policies for LSST Alert Distribution (Eric Bellm @ U. of Washington)
+#### Plans and Policies for LSST Alert Distribution (Eric Bellm @ U. of Washington)
 
 - Key documents:
   - Plans and Policies for Alert Distribution (how will community brokers be chosen?) [ls.st/LDM-612](ls.st/LDM-612)
@@ -108,7 +110,7 @@ This document provides notes on the LSST-DESC Broker Workshop. [Link to Talks](h
   - No requirement to make products world public
   - Will favor proposals that offer these!
 - The selection process has two phases: an open call for Letters of Intent, and an invitational call for full proposals.
-- Brokers must demonstrate adequate resources 
+- Brokers must demonstrate adequate resources
   - Large inbound and outbound network bandwidth (the full alert
     stream is a few TB/night)
   - Petabytes of disk capacity
@@ -141,9 +143,9 @@ This document provides notes on the LSST-DESC Broker Workshop. [Link to Talks](h
 
 
 
-## Thursday Session 3: Broker Components
+### Thursday Session 3: Broker Components
 
-### Connexions between LSST-DESC Broker and Machine Learning (Emille E. O. Ishida @ Université Clermont-Auvergne)
+#### Connexions between LSST-DESC Broker and Machine Learning (Emille E. O. Ishida @ Université Clermont-Auvergne)
 
 - Complete representation is not possible in astronomical training sets for machine learning (ML).
 - One solution is to implement an active learning technique where human inspection is used to supplement the training process.
@@ -154,7 +156,7 @@ This document provides notes on the LSST-DESC Broker Workshop. [Link to Talks](h
 
 
 
-### RAPID - Real-time Automated Photometric IDentification (Daniel Muthukrishna @ University of Cambridge)
+#### RAPID - Real-time Automated Photometric IDentification (Daniel Muthukrishna @ University of Cambridge)
 
 - Trained on PLAsTiCC data set.
 - SN identification is very similar to voice analysis. Quiet followed by a sudden increase in signal on multiple frequencies.
@@ -163,9 +165,9 @@ This document provides notes on the LSST-DESC Broker Workshop. [Link to Talks](h
 
 
 
-## Thursday Session 4: Infrastructure in Development 
+### Thursday Session 4: Infrastructure in Development
 
-### Antares (Gauthem):
+#### Antares (Gauthem):
 
 - Classify objects, provide summary of object properties, and allow users to apply personalized filters
 - Expected to scale easily to LSST
@@ -177,7 +179,7 @@ This document provides notes on the LSST-DESC Broker Workshop. [Link to Talks](h
 
 
 
-### Lasair ()
+#### Lasair ()
 
 - Backend development in place - still building front end api.
 - Running on jupyter hub.
@@ -185,9 +187,9 @@ This document provides notes on the LSST-DESC Broker Workshop. [Link to Talks](h
 
 
 
-## Friday Session 5: Additional Talks and a Group Discussion on “Charting the Course Forward”
+### Friday Session 5: Additional Talks and a Group Discussion on “Charting the Course Forward”
 
-### NERSC support (Debbie Bard @ NERSC)
+#### NERSC support (Debbie Bard @ NERSC)
 
 - Cori is generation NERSC-8. NERSC-9 (Perlmutter) comes online in 2020 and includes the addition of GPUs instead of just CPUs.
 - NERSC 9 is targeted at data applications and simulations
@@ -200,13 +202,13 @@ This document provides notes on the LSST-DESC Broker Workshop. [Link to Talks](h
 
 
 
-### PLAsTiCC update (Renae):
+#### PLAsTiCC update (Renae):
 
 - Data and models will be made public
 
 
 
-### SkyPortal (Stéfan van der Walt @ Berkely)
+#### SkyPortal (Stéfan van der Walt @ Berkely)
 
 - Sky Portal is an open source data access portal
 - Scalable from laptop to cloud services
@@ -216,7 +218,7 @@ This document provides notes on the LSST-DESC Broker Workshop. [Link to Talks](h
 
 
 
-## Random Thoughts
+### Random Thoughts
 
 - Any broker system needs to have redundancies to protect against downtime
 - Don't just build systems in advance - train people to use them in advance

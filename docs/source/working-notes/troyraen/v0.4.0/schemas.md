@@ -1,4 +1,6 @@
-# Schemas
+# docs/source/working-notes/troyraen/v0.4.0/schemas.md
+
+## Schemas
 
 Table of Contents:
 - [Create Schema Maps for `broker_utils`](#create-schema-maps-for-broker_utils)
@@ -8,7 +10,7 @@ Table of Contents:
 
 ---
 
-## Create Schema Maps for `broker_utils`
+### Create Schema Maps for `broker_utils`
 <!-- fs -->
 ```python
 from google.cloud import storage
@@ -83,7 +85,7 @@ for fname in [fztf, fdecat]:
 <!-- fe # Schema Maps -->
 ---
 
-## BigQuery schema json
+### BigQuery schema json
 <!-- fs -->
 We need a:
 - list of dictionaries, each with keys:
@@ -127,7 +129,7 @@ bq rm --table "${projectid}:${dataset}.salt2"
 <!-- fe BigQuery schema json -->
 ---
 
-## Test the changes
+### Test the changes
 <!-- fs -->
 Dashboard snapshots:
 - [DECAT Live](https://console.cloud.google.com/monitoring/dashboards/builder/broker-instance-decat-testschema)
@@ -226,7 +228,7 @@ teardown="True"
 <!-- fe Test the changes -->
 ---
 
-## Download and look at an Avro
+### Download and look at an Avro
 <!-- fs -->
 (Requires that we have already ingested an alert to the `alert_avros` bucket.)
 

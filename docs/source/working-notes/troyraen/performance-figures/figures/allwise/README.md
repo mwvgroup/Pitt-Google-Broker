@@ -1,4 +1,6 @@
-# AllWISE BigQuery cross match
+# docs/source/working-notes/troyraen/performance-figures/figures/allwise/README.md
+
+## AllWISE BigQuery cross match
 
 [billing#billing]()
 
@@ -58,7 +60,7 @@ def plot_proct():
 ```
 
 
-## Billing
+### Billing
 
 <img src="GCPbilling-bigquery-20210926.png" alt="GCPbilling-bigquery-20210926.png" width="800"/>
 

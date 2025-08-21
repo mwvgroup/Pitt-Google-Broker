@@ -1,4 +1,6 @@
-# ZTF Cadence
+# docs/source/working-notes/troyraen/ZTF-cadence/README.md
+
+## ZTF Cadence
 
 Checking the time delta between ZTF observations of an object.
 

@@ -45,7 +45,7 @@ Install broker-utils
 ---------------------
 
 Our broker-utils python library contains many functions that are helpful in working both alerts and GCP services.
-It can be installed using 
+It can be installed using
 (you may want to activate a Conda environment before installing):
 
 .. code-block:: bash

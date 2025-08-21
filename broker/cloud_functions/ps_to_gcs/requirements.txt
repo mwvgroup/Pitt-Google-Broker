@@ -1,9 +1,0 @@
-# As explained here
-# https://cloud.google.com/functions/docs/writing/specifying-dependencies-python
-# dependencies for a Cloud Function must be specified in a `requirements.txt`
-# file (or packaged with the function) in the same directory as `main.py`
-
-fastavro
-google-cloud-logging
-google-cloud-storage==1.38.0
-pgb-broker-utils

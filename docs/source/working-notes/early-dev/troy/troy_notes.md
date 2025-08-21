@@ -1,4 +1,6 @@
-# TOM proposal clustering
+# docs/source/working-notes/early-dev/troy/troy_notes.md
+
+## TOM proposal clustering
 <!-- fs TOM proposal clustering -->
 ```bash
 conda create -n pgb python=3.7
@@ -474,11 +476,11 @@ features = e_features.get_features()
 <!-- fe TOM proposal clustering -->
 
 
-# Use cases
+## Use cases
 <!-- fs use cases -->
 look in to [astrorapid](https://pypi.org/project/astrorapid/) for classification
 
-## SN
+### SN
 <!-- fs SN -->
 What user wants:
     * Prob(SN type...)
@@ -500,7 +502,7 @@ XM features:
     - redshift
 <!-- fe SN -->
 
-## CV (white dwarf with non-degen companion)
+### CV (white dwarf with non-degen companion)
 <!-- fs CV -->
 [Prospects for detection of detached double white dwarf binaries with Gaia, LSST and LISA](arxiv:1703.02555)
 expect periodicity? can we do better than Lomb-Scargle?
@@ -589,14 +591,14 @@ _Datasets._
 <!-- fe use cases -->
 
 
-# Notes and To Do
+## Notes and To Do
 <!-- fs -->
 [Google fellowship](https://ai.google/research/outreach/phd-fellowship/)
 - ? need "Research/dissertation proposal (recommended length 4-5 pages, no longer than 8)"
 
 incorporate Rongpu's DECaLS catalog by end of August
 
-## Chicago talk
+### Chicago talk
 ```python
 import numpy as np
 from matplotlib import pyplot as plt
@@ -613,7 +615,7 @@ for alert in alert_list:
 plt.hist(np.array(sn))
 ```
 
-## Create value_added module
+### Create value_added module
 <!-- fs value added -->
 *Korriban environment not working... delete all PB environments and start from scratch*
 
@@ -693,7 +695,7 @@ predictions = classify.rapid(light_curves, plot=False, use_redshift=True)
 <!-- fe value added -->
 
 
-## Create RAPID module
+### Create RAPID module
 <!-- fs -->
 
 ```python
@@ -733,7 +735,7 @@ Need to:
 
 <!-- fe ## Create RAPID module -->
 
-## July 9
+### July 9
 <!-- fs -->
 1. Have RAPID classifying SN with host galaxy info by July 23rd.
     * write it to accept dictionary as input (AVRO files are priority, but should be able to accept BigQuery input with some wrapper function.)
@@ -746,7 +748,7 @@ Need to:
 
 <!-- fe ## July 9 -->
 
-## Classifications meeting prep (RAPID and SuperNNova)
+### Classifications meeting prep (RAPID and SuperNNova)
 <!-- fs -->
 [RAPID](https://astrorapid.readthedocs.io)
 [ZTF Avro Schemas](https://zwickytransientfacility.github.io/ztf-avro-alert/schema.html)
@@ -761,7 +763,7 @@ Meeting prep:
 <!-- fe ## Classifications meeting prep (RAPID and SuperNNova) -->
 
 
-## Testing pub_sub branch. PASSED.
+### Testing pub_sub branch. PASSED.
 <!-- fs -->
 GCP topic: troy_test_topic
 GCP subscription: troy_test_subscript
@@ -833,38 +835,27 @@ print("Received and acknowledged {} messages. Done.".format(len(ack_ids)))
 <!-- fe # Notes and To Do -->
 
 
-# Info
+## Info
 <!-- fs INFO -->
-# GIT Info
+### GIT Info
 [repo](https://github.com/mwvgroup/Pitt-Google-Broker)
 git@github.com:mwvgroup/Pitt-Google-Broker.git
 [read the docs](https://pitt-broker.readthedocs.io/en/latest/index.html)
 
-# DATA Info
+### DATA Info
 To use data stored on Korriban: in broker/ztf_archive/\_download\_data.py, set the variable:
 ZTF_DATA_DIR = Path('/Users/troyraen/Korriban/Documents/Pitt-Broker/broker/ztf_archive/data')
 
-# ZTF Info
+### ZTF Info
 [alert schema](https://zwickytransientfacility.github.io/ztf-avro-alert/schema.html)
-
-
-# GCP Account Info
-Project name: pitt-google-broker-prototype
-Project ID: ardent-cycling-243415
-Project number: 591409139500
-
-Service Account: tjraen-owner@ardent-cycling-243415.iam.gserviceaccount.com
-project_id = 'ardent-cycling-243415'
-topic_name = 'troy_test_topic'
-subscription_name = 'troy_test_subscript'
 
 <!-- fe INFO -->
 
-# Code
+## Code
 <!-- fs -->
 
 
-## Download ZTF Data
+### Download ZTF Data
 <!-- fs -->
 ```python
 from broker import ztf_archive as ztfa
@@ -879,7 +870,7 @@ for alert in iter_alerts():
 <!-- fe ## Download ZTF Data -->
 
 
-## Astroquery
+### Astroquery
 <!-- fs -->
 ```python
 
@@ -935,7 +926,7 @@ table = XMatch.query(cat1=open(fradec), cat2='vizier:II/246/out', \
 
 
 
-## Download and look at alerts
+### Download and look at alerts
 <!-- fs -->
 ```python
 from matplotlib import pyplot as plt
@@ -977,7 +968,7 @@ plt.show()
 ```
 <!-- fe download and look at alerts -->
 
-## Remove and reinstall Conda environment
+### Remove and reinstall Conda environment
 <!-- fs -->
 ```bash
 conda remove --name pitt_broker --all
@@ -1007,8 +998,9 @@ Beetled59Expounded84crucially18dilemma's55protesting
 <!-- fe # Code -->
 
 
-# Supernovae Handbook
-## Ch 12 Observational and Physical Classification of Supernovae (9/13/19)
+## Supernovae Handbook
+
+### Ch 12 Observational and Physical Classification of Supernovae (9/13/19)
 Classifications based on spectroscopy at peak brightness.
 1st cut: is there hydrogen? yes = Type II, no = Type I
 Type I cut: SiII = Ia, none = 1b (has He) or 1c (no He) (mag ~-19)
@@ -1026,14 +1018,14 @@ Note: 7000-10000 Angstroms, water vapor absorption gets strong
 
 <!-- fs ARCHIVE -->
 
-## 6/11/19
+### 6/11/19
 <!-- fs -->
 travel funding
 use cases
 data studio
 <!-- fe ## 6/4/19 -->
 
-## 6/4/19
+### 6/4/19
 <!-- fs -->
 travel funding
 use cases
@@ -1041,7 +1033,7 @@ data studio
 <!-- fe ## 6/4/19 -->
 
 
-## 5/28/19
+### 5/28/19
 <!-- fs -->
 questions to answer:
 planning to fail with Messier objects (15 arcmin)
@@ -1061,7 +1053,7 @@ user watch list - (galactic variable stars, identified strong lensing systems, )
             - Ia, Ic, variable, AGN, galaxy
 <!-- fe ## 5/28/19 -->
 
-## 5/21/19
+### 5/21/19
 <!-- fs -->
 1. choose a small handful of catalogs to focus on
     - SDSS (photometery and spectroscopy)
@@ -1083,7 +1075,7 @@ user watch list - (galactic variable stars, identified strong lensing systems, )
     - period
 <!-- fe ## 5/21/19 -->
 
-## April-ish 19
+### April-ish 19
 <!-- fs -->
 [SDSS catalog](bruno/users/cnm37/Skyserver_3e5_stars_mags.csv, ~/Korriban/Documents/Pitt-Broker/mock_stream/data/Skyserver_3e5_stars_mags.csv)
 - [x] rsync -avzn -e ssh tjr63@bruno.phyast.pitt.edu:pitt-broker/Skyserver_3e5_stars_mags.csv ~/Korriban/Documents/Pitt-Broker/mock_stream/data/.
@@ -1092,7 +1084,7 @@ moving data dir to Korriban:
 - [x] rsync -avz /Users/troyraen/Documents/Pitt-Broker/mock_stream/data ~/Korriban/Documents/Pitt-Broker/mock_stream/
 <!-- fe ## April-ish 19 -->
 
-# DESC call re: LSST call for brokers (4/10/19)
+## DESC call re: LSST call for brokers (4/10/19)
 <!-- fs -->
 [Official Notes](https://docs.google.com/document/d/1hsQd4JDPgscUkGEw6m8qL_Fxy8JyRvMSBYHzDePXlMc/edit)
 

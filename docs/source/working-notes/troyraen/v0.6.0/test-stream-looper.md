@@ -1,4 +1,6 @@
-# Test pricing and functionality of stream-looper long term
+# docs/source/working-notes/troyraen/v0.6.0/test-stream-looper.md
+
+## Test pricing and functionality of stream-looper long term
 
 Started stream-looper around 11:00 am ET on Aug 7, publishing 1 alert/sec.
 

@@ -71,7 +71,7 @@ See also:
 Cloud Functions
 ----------------
 
-`GCP Console <https://console.cloud.google.com/functions/list?project=ardent-cycling-243415>`__
+`GCP Console <https://console.cloud.google.com/functions/list>`__
 
 Click on a function name. From here you can:
 
@@ -98,12 +98,44 @@ Cloud Scheduler
 From here you can - view job details and logs - create, edit,
 pause/resume, and delete jobs
 
-See also:
-
 The auto-schedulers of all broker instances share the following logs:
 
 - `check-cue-response-cloudfnc <https://cloudlogging.app.goo.gl/525hswivBiZfZQEUA>`__
-- `cue-night-conductor-cloudfnc <https://cloudlogging.app.goo.gl/7Uz92PiZLFF5zfNd8>`__
+
+See also:
+
+- :doc:`../components/broker-schedule`
+
+Here are some useful shell commands:
+
+Example: Change the time than an uptime check runs
+
+.. code:: bash
+
+    survey=
+    testid=
+    jobname="${survey}-cue_night_conductor_START-${testid}"
+    schedule='0 2 * * *'  # UTC. unix-cron format
+    # https://cloud.google.com/scheduler/docs/configuring/cron-job-schedules
+
+    gcloud scheduler jobs update pubsub $jobname --schedule "${schedule}"
+
+Example: Pause/resume both uptime checks.
+
+.. code:: bash
+
+    survey=
+    testid=
+    startjob="${survey}-cue_night_conductor_START-${testid}"
+    endjob="${survey}-cue_night_conductor_END-${testid}"
+
+    # pause the jobs
+    gcloud scheduler jobs pause $startjob
+    gcloud scheduler jobs pause $endjob
+
+    # resume the jobs
+    gcloud scheduler jobs resume $startjob
+    gcloud scheduler jobs resume $endjob
 
 --------------
 
@@ -135,20 +167,45 @@ Compute Engine VMs
 
 `GCP Console <https://console.cloud.google.com/compute/instances>`__
 
-Click on the name of one of your VMs
-({survey}-night-conductor-{testid} or
-{survey}-consumer-{testid}). From here you can:
 
-- *start/stop* the instance
-- access the *logs*
-- view and edit the *metadata attributes*
-- view and edit *other configs*
-- click a button to ``ssh`` into the instance
-- view performance stats and live\* *monitoring charts*
+From here you can:
+
+- *schedule instances*
+- Click on the name of one of your VMs. From here you can:
+    - *start/stop* the instance
+    - access the *logs*
+    - view and edit the *metadata attributes*
+    - view and edit *other configs*
+    - click a button to ``ssh`` into the instance
+    - view performance stats and live\* *monitoring charts*
+
+See also:
+
+- :doc:`../components/broker-schedule`
 
 Here are some useful shell commands:
 
-General access:
+Manage schedules:
+
+.. code-block:: bash
+
+    # list schedules (and other resource policies)
+    gcloud compute resource-policies list
+
+    # example schedule name
+    SCHEDULE_NAME="ztf-night-conductor-schedule"
+
+    # view schedule details
+    gcloud compute resource-policies describe "${SCHEDULE_NAME}"
+
+The easiest way to update a schedule is to
+`delete the old schedule <https://cloud.google.com/compute/docs/instances/schedule-instance-start-stop#deleting_an_instance_schedule>`__,
+then
+`create a new schedule <https://cloud.google.com/compute/docs/instances/schedule-instance-start-stop#creating_an_instance_schedule>`__,
+then
+`attach the new schedule <https://cloud.google.com/compute/docs/instances/schedule-instance-start-stop#attaching_to_an_existing_VM>`__.
+
+Examples: Start, stop, ssh in:
 
 .. code:: bash
 
@@ -162,46 +219,29 @@ General access:
     # ssh in
     gcloud compute ssh --zone="$zone" "$vm_name"
 
-    # set metadata attributes
-    ATTRIBUTE1=value1
-    ATTRIBUTE2=value2
-    gcloud compute instances add-metadata --zone="$zone" "$vm_name" \
-          --metadata "ATTRIBUTE1=${ATTRIBUTE1},ATTRIBUTE2=${ATTRIBUTE2}"
-    # unset attributes
-    gcloud compute instances add-metadata --zone="$zone" "$vm_name" \
-          --metadata "ATTRIBUTE1=,ATTRIBUTE2="
+Example: Set consumer's Kafka and/or Pub/Sub topics
 
-.. _use-night-conductor-to-start-end-night:
+.. code-block:: bash
 
-Example: Use night-conductor to start/end the night (see also
-:doc:`../components/auto-scheduler`)
-
-.. code:: bash
-
+    # Example VM name:
     survey=ztf
-    testid=mytest
+    testid=mytestid
+    vm_name="${survey}-consumer-${testid}"
 
-    #--- Start the broker
-    NIGHT=START
-    KAFKA_TOPIC=NONE  # leave consumer VM off; e.g., when using consumer simulator
-    # KAFKA_TOPIC=ztf_yyyymmdd_programid1  # replace with a current topic to ingest
-    # set metadata attributes and start night-conductor
-    instancename="${survey}-night-conductor-${testid}"
-    zone=us-central1-a
-    gcloud compute instances add-metadata "$instancename" --zone="$zone" \
-            --metadata NIGHT="$NIGHT",KAFKA_TOPIC="$KAFKA_TOPIC"
-    gcloud compute instances start "$instancename" --zone "$zone"
-    # this triggers night conductor's startup script
+    # Example attributes:
+    KAFKA_TOPIC_FORCE=""                                # default, today's topic (UTC)
+    # KAFKA_TOPIC_FORCE="ztf_20220302_programid1"       # Kafka topic from Mar 2, 2022
+    PS_TOPIC_FORCE=""                                   # default alerts Pub/Sub topic
+    # PS_TOPIC_FORCE="my-alerts"                        # Pub/Sub topic named my-alerts
 
-    #--- Stop the broker
-    NIGHT=END
-    # set metadata attributes and start night-conductor
-    instancename="${survey}-night-conductor-${testid}"
-    zone=us-central1-a
-    gcloud compute instances add-metadata "$instancename" --zone="$zone" \
-          --metadata NIGHT="$NIGHT"
-    gcloud compute instances start "$instancename" --zone "$zone"
-    # this triggers night conductor's startup script
+    # Set the topics as metadata attributes:
+    metadata="KAFKA_TOPIC_FORCE=${KAFKA_TOPIC_FORCE},PS_TOPIC_FORCE=${PS_TOPIC_FORCE}"
+    gcloud compute instances add-metadata "$vm_name" \
+          --metadata="${metadata}"
+
+    # Unset the topic attributes
+    gcloud compute instances add-metadata --zone="$zone" "$vm_name" \
+          --metadata="KAFKA_TOPIC_FORCE=,PS_TOPIC_FORCE="
 
 Example: Set night-conductor's startup script
 

@@ -4,16 +4,28 @@
 GCP resources.
 """
 
+import datetime
+import json
+import os
 from concurrent.futures import TimeoutError
+from typing import TYPE_CHECKING, Callable, List, Optional, Union
+
 from google.cloud import bigquery, pubsub_v1, storage
 from google.cloud.logging_v2.logger import Logger
 from google.cloud.pubsub_v1.subscriber.futures import StreamingPullFuture
 from google.cloud.pubsub_v1.types import PubsubMessage, ReceivedMessage
-import json
-import pandas as pd
-from typing import Callable, List, Optional, Union
 
-pgb_project_id = 'ardent-cycling-243415'
+# load pandas only when necessary. it hogs memory on Cloud Functions.
+if TYPE_CHECKING:
+    import pandas as pd
+
+
+# get project id from environment variable, else default to production project
+# cloud functions use GCP_PROJECT
+if "GCP_PROJECT" in os.environ:
+    project_id_default = os.getenv("GCP_PROJECT")
+else:
+    project_id_default = os.getenv("GOOGLE_CLOUD_PROJECT", "ardent-cycling-243415")
 
 
 # --- Pub/Sub --- #
@@ -22,7 +34,7 @@ def publish_pubsub(
     message: Union[bytes, dict],
     project_id: Optional[str] = None,
     attrs: Optional[dict] = None,
-    publisher: Optional[pubsub_v1.PublisherClient] = None
+    publisher: Optional[pubsub_v1.PublisherClient] = None,
 ) -> str:
     """Publish messages to a Pub/Sub topic.
 
@@ -35,7 +47,7 @@ def publish_pubsub(
         message: The message to be published.
 
         project_id: GCP project ID for the project containing the topic.
-                    If None, the environment variable GOOGLE_CLOUD_PROJECT will be used.
+                    If None, the module's `project_id_default` will be used.
 
         attrs: Message attributes to be published.
 
@@ -51,7 +63,7 @@ def publish_pubsub(
         published message ID
     """
     if project_id is None:
-        project_id = pgb_project_id
+        project_id = project_id_default
     if publisher is None:
         publisher = pubsub_v1.PublisherClient()
     if attrs is None:
@@ -59,9 +71,9 @@ def publish_pubsub(
 
     # enforce bytes type for message
     if isinstance(message, dict):
-        message = json.dumps(message).encode('utf-8')
+        message = json.dumps(message).encode("utf-8")
     if not isinstance(message, bytes):
-        raise TypeError('`message` must be bytes or a dict.')
+        raise TypeError("`message` must be bytes or a dict.")
 
     topic_path = publisher.topic_path(project_id, topic_name)
 
@@ -90,7 +102,7 @@ def pull_pubsub(
         max_messages: The maximum number of messages to pull.
 
         project_id: GCP project ID for the project containing the subscription.
-                    If None, the module's `pgb_project_id` will be used.
+                    If None, the module's `project_id_default` will be used.
 
         msg_only: Whether to work with and return the message contents only
                   or the full packet.
@@ -108,7 +120,7 @@ def pull_pubsub(
         A list of messages
     """
     if project_id is None:
-        project_id = pgb_project_id
+        project_id = project_id_default
 
     # setup for pull
     subscriber = pubsub_v1.SubscriberClient()
@@ -122,11 +134,12 @@ def pull_pubsub(
     with subscriber:
 
         # pull
-        response = subscriber.pull(**request)
+        response = subscriber.pull(request)
 
         # unpack the messages
         message_list, ack_ids = [], []
         for received_message in response.received_messages:
+            success = True
 
             if msg_only:
                 # extract the message bytes and append
@@ -144,7 +157,7 @@ def pull_pubsub(
                     success = callback(received_message)
 
             # collect ack_id, if appropriate
-            if (callback is None) or (success):
+            if success:
                 ack_ids.append(received_message.ack_id)
 
         # acknowledge the messages so they will not be sent again
@@ -153,12 +166,11 @@ def pull_pubsub(
                 "subscription": subscription_path,
                 "ack_ids": ack_ids,
             }
-            subscriber.acknowledge(**ack_request)
+            subscriber.acknowledge(ack_request)
 
     if not return_count:
         return message_list
-    else:
-        return len(message_list)
+    return len(message_list)
 
 
 def streamingPull_pubsub(
@@ -182,7 +194,7 @@ def streamingPull_pubsub(
                   acknowledgement logic.
 
         project_id: GCP project ID for the project containing the subscription.
-                    If None, the environment variable GOOGLE_CLOUD_PROJECT will be used.
+                    If None, the module's `project_id_default` will be used.
 
         timeout: The number of seconds before the `subscribe` call times out and
                  closes the connection.
@@ -198,7 +210,7 @@ def streamingPull_pubsub(
         or timeout.
     """
     if project_id is None:
-        project_id = pgb_project_id
+        project_id = project_id_default
 
     if flow_control is None:
         flow_control = {}
@@ -224,8 +236,19 @@ def streamingPull_pubsub(
         return streaming_pull_future
 
 
+def purge_subscription(subscription):
+    """Purge all messages from the subscription."""
+    client = pubsub_v1.SubscriberClient()
+    sub = f"projects/{os.getenv('GOOGLE_CLOUD_PROJECT')}/subscriptions/{subscription}"
+    _ = client.seek(request=dict(subscription=sub, time=datetime.datetime.now()))
+
+
 # --- BigQuery --- #
-def insert_rows_bigquery(table_id: str, rows: List[dict]):
+def insert_rows_bigquery(
+    table_id: str,
+    rows: List[dict],
+    project_id: Optional[str] = None,
+):
     """Insert rows into a table using the streaming API.
 
     Args:
@@ -234,8 +257,13 @@ def insert_rows_bigquery(table_id: str, rows: List[dict]):
         rows:       Data to load in to the table. Keys must include all required
                     fields in the schema. Keys which do not correspond to a
                     field in the schema are ignored.
+        project_id: GCP project ID for the project containing the topic.
+                    If None, the module's `project_id_default` will be used.
     """
-    bq_client = bigquery.Client(project=pgb_project_id)
+    if project_id is None:
+        project_id = project_id_default
+
+    bq_client = bigquery.Client(project=project_id)
     table = bq_client.get_table(table_id)
     errors = bq_client.insert_rows(table, rows)
     return errors
@@ -243,7 +271,8 @@ def insert_rows_bigquery(table_id: str, rows: List[dict]):
 
 def load_dataframe_bigquery(
     table_id: str,
-    df: pd.DataFrame,
+    df: "pd.DataFrame",
+    project_id: Optional[str] = None,
     use_table_schema: bool = True,
     logger: Optional[Logger] = None,
 ):
@@ -254,12 +283,16 @@ def load_dataframe_bigquery(
             {dataset}.{table}. For example, 'ztf_alerts.alerts'.
         df: Data to load in to the table. If the  dataframe schema does not match the
             BigQuery table schema, must pass a valid `schema`.
+        project_id: GCP project ID for the project containing the topic.
+                    If None, the module's `project_id_default` will be used.
         use_table_schema: Conform the dataframe to the table schema by converting
                           dtypes and dropping extra columns.
         logger: If not None, messages will be sent to the logger. Else, print them.
     """
     # setup
-    bq_client = bigquery.Client(project=pgb_project_id)
+    if project_id is None:
+        project_id = project_id_default
+    bq_client = bigquery.Client(project=project_id)
     table = bq_client.get_table(table_id)
 
     if use_table_schema:
@@ -279,9 +312,9 @@ def load_dataframe_bigquery(
         my_df = my_df[bq_col_names]
         # tell the user what happened
         if len(dropped) > 0:
-            msg = f'Dropping columns not in the table schema: {dropped}'
+            msg = f"Dropping columns not in the table schema: {dropped}"
             if logger is not None:
-                logger.log_text(msg, severity='INFO')
+                logger.log_text(msg, severity="INFO")
             else:
                 print(msg)
 
@@ -299,7 +332,7 @@ def load_dataframe_bigquery(
         f"The following errors were generated: {job.errors}"
     )
     if logger is not None:
-        severity = 'DEBUG' if job.errors is not None else 'INFO'
+        severity = "DEBUG" if job.errors is not None else "INFO"
         logger.log_text(msg, severity=severity)
     else:
         print(msg)
@@ -322,16 +355,19 @@ def query_bigquery(
             Optional job config to send with the query.
 
     Example query:
-        ``
+
+    .. code-block:: python
+
         query = (
             f'SELECT * '
             f'FROM `{dataset_project_id}.{dataset}.{table}` '
             f'WHERE objectId={objectId} '
         )
-        ``
 
     Examples of working with the query_job:
-        ``
+
+    .. code-block:: python
+
         # Cast it to a DataFrame:
         query_job.to_dataframe()
 
@@ -339,10 +375,9 @@ def query_bigquery(
         for r, row in enumerate(query_job):
             # row values can be accessed by field name or index
             print(f"objectId={row[0]}, candid={row['candid']}")
-        ``
     """
     if project_id is None:
-        project_id = pgb_project_id
+        project_id = project_id_default
 
     bq_client = bigquery.Client(project=project_id)
     query_job = bq_client.query(query, job_config=job_config)
@@ -361,17 +396,17 @@ def cs_download_file(localdir: str, bucket_id: str, filename: Optional[str] = No
         filename:   Name or prefix of the file(s) in the bucket to download.
     """
     # connect to the bucket and get an iterator that finds blobs in the bucket
-    storage_client = storage.Client(pgb_project_id)
-    bucket_name = f'{pgb_project_id}-{bucket_id}'
-    print(f'Connecting to bucket {bucket_name}')
+    storage_client = storage.Client(project_id_default)
+    bucket_name = f"{project_id_default}-{bucket_id}"
+    print(f"Connecting to bucket {bucket_name}")
     bucket = storage_client.get_bucket(bucket_name)
     blobs = storage_client.list_blobs(bucket, prefix=filename)  # iterator
 
     # download the files
     for blob in blobs:
-        local_path = f'{localdir}/{blob.name}'
+        local_path = f"{localdir}/{blob.name}"
         blob.download_to_filename(local_path)
-        print(f'Downloaded {local_path}')
+        print(f"Downloaded {local_path}")
 
 
 def cs_upload_file(local_file: str, bucket_id: str, bucket_filename: Optional[str] = None):
@@ -385,15 +420,15 @@ def cs_upload_file(local_file: str, bucket_id: str, bucket_filename: Optional[st
                             bucket_filename = local_filename.
     """
     if bucket_filename is None:
-        bucket_filename = local_file.split('/')[-1]
+        bucket_filename = local_file.split("/")[-1]
 
     # connect to the bucket
-    storage_client = storage.Client(pgb_project_id)
-    bucket_name = f'{pgb_project_id}-{bucket_id}'
-    print(f'Connecting to bucket {bucket_name}')
+    storage_client = storage.Client(project_id_default)
+    bucket_name = f"{project_id_default}-{bucket_id}"
+    print(f"Connecting to bucket {bucket_name}")
     bucket = storage_client.get_bucket(bucket_name)
 
     # upload
     blob = bucket.blob(bucket_filename)
     blob.upload_from_filename(local_file)
-    print(f'Uploaded {local_file} as {bucket_filename}')
+    print(f"Uploaded {local_file} as {bucket_filename}")

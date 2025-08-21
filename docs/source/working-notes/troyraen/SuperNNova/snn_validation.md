@@ -1,4 +1,6 @@
-# SuperNNova validation: Classify known Ia's
+# docs/source/working-notes/troyraen/SuperNNova/snn_validation.md
+
+## SuperNNova validation: Classify known Ia's
 
 1. Download csv from TNS website. ([Search](https://www.wis-tns.org/search) for recent Ia's)
 2. Query database to see what SNN classified these as
@@ -45,7 +47,7 @@ plt.show(block=False)
 
 <img src="snn_results_20211017.png" alt="snn_results_20211017" width="600"/>
 
-### Classify known Ia - Original Test
+#### Classify known Ia - Original Test
 
 The docs indicate that "usually" class0 indicates a Ia and class1 indicates non-Ia,
 but this will depend on how the model was trained.

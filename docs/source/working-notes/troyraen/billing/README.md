@@ -1,4 +1,6 @@
-# billing: pitt-google-broker-billing
+# docs/source/working-notes/troyraen/billing/README.md
+
+## billing: pitt-google-broker-billing
 
 - [x] [Export Cloud Billing data to BigQuery](https://cloud.google.com/billing/docs/how-to/export-data-bigquery)
 - [x] Pull some data and create figures
@@ -16,7 +18,7 @@
     - ID: light-cycle-328823
 - Billing account ID: <obtain this from https://console.cloud.google.com/billing/projects>
 
-## Setup: Set environment variables
+### Setup: Set environment variables
 
 ```bash
 # project ids, used to create/manage service accounts, and make queries on the tables
@@ -54,7 +56,7 @@ gcloud components update
 gcloud components update --version 348.0.0
 ``` -->
 
-## Setup for queries and plotting
+### Setup for queries and plotting
 
 ```bash
 # navigate to this directory (replace with your path)
@@ -87,7 +89,7 @@ billing_project_id = os.getenv('GOOGLE_CLOUD_PROJECT', 'light-cycle-328823')
 prod_project_id = os.getenv('GOOGLE_CLOUD_PROJECT2', 'ardent-cycling-243415')
 ```
 
-## Query tables or load dataframes from files
+### Query tables or load dataframes from files
 
 ```python
 # load data from file
@@ -121,7 +123,7 @@ countdf = gcp_utils.query_bigquery(
 ldata = loaded_data(countdf, litebilldf, litebill_ispipelinesku)
 ```
 
-## Look at countdf
+### Look at countdf
 
 ```python
 countdf = countdf.set_index('publish_date').sort_index()
@@ -132,7 +134,7 @@ plt.show(block=False)
 
 ```
 
-## Live pipeline: Bar chart of average cost per sku per million alerts, colored by service
+### Live pipeline: Bar chart of average cost per sku per million alerts, colored by service
 
 ```python
 # keep rows where project and sku => live pipeline
@@ -177,7 +179,7 @@ figures.plot_cost_by_sku(costdf, save=save, cost=cost_per_mil, title=title)
 
 <img src="billing_per_sku_per_million_alerts_ingested.png" alt="billing_per_sku_per_million_alerts_ingested.png"/>
 
-## Not live pipeline: Bar chart of average cost per sku per day, colored by service
+### Not live pipeline: Bar chart of average cost per sku per day, colored by service
 
 ```python
 # keep rows where sku => ~(live pipeline)
@@ -200,7 +202,7 @@ figures.plot_cost_by_sku(costdf, cost=cost_per_day, save=save, title=title)
 
 <img src="billing_per_sku_per_day.png" alt="billing_per_sku_per_day.png"/>
 
-## Live pipeline, Cloud Run: Bar chart of average cost per sku per million alerts, colored by service
+### Live pipeline, Cloud Run: Bar chart of average cost per sku per million alerts, colored by service
 
 ```python
 # keep rows where project and sku => live pipeline and service is Cloud Run
@@ -232,7 +234,7 @@ figures.plot_cost_by_sku(costdf, save=save, cost='cost_per_million_alerts', titl
 
 <img src="billing_per_sku_per_million_alerts_cloud_run.png" alt="billing_per_sku_per_million_alerts_cloud_run.png"/>
 
-## Stacked (services) bar chart of cost vs date
+### Stacked (services) bar chart of cost vs date
 
 ```python
 mycostdf_bydateservice = litebilldf.groupby(['usage_date', 'service']).sum().reset_index()
@@ -258,7 +260,7 @@ plt.show(block=False)
 
 <img src="billing_per_day_and_service.png" alt="billing_per_day_and_service.png"/>
 
-## Bar chart of total cost per sku, colored by service
+### Bar chart of total cost per sku, colored by service
 
 ```python
 import datetime
@@ -277,7 +279,7 @@ figures.plot_cost_by_sku(costdf, save=None)
 
 <img src="billing_per_sku.png" alt="billing_per_sku.png"/>
 
-## Bar chart cost per day, (stack) services
+### Bar chart cost per day, (stack) services
 ```python
 # plot
 my_project = prod_project_id

@@ -37,25 +37,34 @@ Setup the Broker Instance
     # Setup a broker instance
     survey=ztf  # ztf or decat
     testid=mytest  # replace with your choice of testid
-    teardown=False
-    ./setup_broker.sh "$testid" "$teardown" "$survey"
+    teardown=False  # False to create resources
+    version="3.3"  # avro schema version of incoming alerts
+    use_authentication=false  # whether the consumer VM should use an authenticated connection
 
-See `What does setup_broker.sh do?`_
-for details.
+    # setup all GCP resources for a broker instance
+    ./setup_broker.sh "${testid}" "${teardown}" "${survey}" "${version}" "${use_authentication}"
 
-Upload Kafka Authentication Files
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+See :doc:`../broker-overview` for a description of ``survey``, ``testid``,
+``version`` (which gets transformed to a ``versiontag``), and ``use_authentication``.
+When the Avro schema changes, a new `alerts_{versiontag}` table and bucket need to be created,
+and the `versiontag` environment variable on all Cloud Functions needs to be updated.
+
+See `What does setup_broker.sh do?`_ for details about the script itself.
+
+Upload Kafka Authentication File
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Note: This is not necessary if using an unauthenticated connection.
 
 Note: Do this before the consumer VM finishes its install and shuts
 itself down. Else, you'll need to start it again (see
 :ref:`here <broker/run-a-broker-instance/view-resources:Compute Engine VMs>`).
 
-The consumer VM requires two **authorization files** to connect to the
-ZTF stream. *These must be obtained independently and uploaded to the VM
-manually, stored at the following locations:*
+The consumer VM requires a "keytab" authorization file in order to create an authenticated
+connection to the Kafka broker. *This must be obtained independently and uploaded to the VM
+manually, stored at the following location:*
 
-1. krb5.conf, at VM path /etc/krb5.conf
-2. pitt-reader.user.keytab, at VM path
+- pitt-reader.user.keytab, at VM path
    /home/broker/consumer/pitt-reader.user.keytab
 
 You can use the ``gcloud compute scp`` command for this:
@@ -64,9 +73,9 @@ You can use the ``gcloud compute scp`` command for this:
 
     survey=ztf  # use the same survey used in broker setup
     testid=mytest  # use the same testid used in broker setup
+    zone=us-central1-a  # use the VM's zone
 
-    gcloud compute scp krb5.conf "${survey}-consumer-${testid}:/etc/krb5.conf" --zone="$CE_ZONE"
-    gcloud compute scp pitt-reader.user.keytab "${survey}-consumer-${testid}:/home/broker/consumer/pitt-reader.user.keytab" --zone="$CE_ZONE"
+    gcloud compute scp pitt-reader.user.keytab "${survey}-consumer-${testid}:/home/broker/consumer/pitt-reader.user.keytab" --zone="${zone}"
 
 --------------
 
@@ -88,10 +97,11 @@ Resource name stubs are given below in brackets []. See :doc:`../broker-instance
 
 3. Create and configure the Compute Engine instances
    night-conductor] and consumer].
+   with start/stop schedules. Disable the schedules on testing brokers.
 
 4. Create Cloud Scheduler cron jobs cue_night_conductor_START]
-   and cue_night_conductor_END] to put night-conductor] on
-   an auto-schedule. Print the schedule and the code needed to change
+   and cue_night_conductor_END] to check that the VM's start/stop as expected.
+   Print the schedule and the code needed to change
    it. If this is a Testing instance, pause the jobs and print the code
    needed to resume them.
 
@@ -103,5 +113,4 @@ Resource name stubs are given below in brackets []. See :doc:`../broker-instance
    don't need a separate rule for testing resources. *You can ignore
    it.*
 
-7. Deploy Cloud Functions upload_bytes_to_bucket],
-   cue_night_conductor], and check_cue_response].
+7. Deploy Cloud Functions.

@@ -1,4 +1,6 @@
-# AllWISE: Cross match with the AllWISE catalog in BigQuery public datasets
+# docs/source/working-notes/troyraen/AllWISE/README.md
+
+## AllWISE: Cross match with the AllWISE catalog in BigQuery public datasets
 
 Outline:
 - [Create resources and deploy to Cloud Run](#create-resources-and-deploy-to-cloud-run)
@@ -17,7 +19,7 @@ External links:
 - [Instructions to create resources with pubsub trigger](https://cloud.google.com/run/docs/triggering/pubsub-push#command-line_1)
 
 
-## Create resources and deploy to Cloud Run
+### Create resources and deploy to Cloud Run
 
 Allow Pub/Sub to create authentication tokens in the project:
 
@@ -109,7 +111,7 @@ sub_path = subscriber.subscription_path(PROJECT_ID, subscription)
 subscriber.create_subscription(name=sub_path, topic=topic_path)
 ```
 
-## Work out the cross match
+### Work out the cross match
 
 ```python
 from google.cloud import bigquery
@@ -222,7 +224,7 @@ aw_dict = df.to_dict(orient='records')
 
 ```
 
-### Article: Querying the Stars with BigQuery GIS
+#### Article: Querying the Stars with BigQuery GIS
 
 https://cloud.google.com/blog/products/data-analytics/querying-the-stars-with-bigquery-gis
 
@@ -254,7 +256,7 @@ ArcSecondDistance(p1 GEOGRAPHY, p2 GEOGRAPHY, d FLOAT64)
 ArcSecondDistance(point, ST_GEOGPOINT(201.5, -2.6), 60)
 
 
-### How long does a query take?
+#### How long does a query take?
 
 Trying to see whether the AllWISE table indexes by some ID.
 There are (at least) 3 ID columns
@@ -300,7 +302,7 @@ for awcol, xmcol in coldict.items():
             SELECT {awcol}
             FROM `{project_id}.{dataset}.{table}`
             WHERE {awcol}='{df.loc[0,xmcol]}'
-        """        
+        """
     start = timeit.default_timer()
     resultdict[f'{awcol} (all cols)'] = query_job = gcp_utils.query_bigquery(query).to_dataframe()
     stop = timeit.default_timer()
@@ -320,7 +322,7 @@ for awcol, xmcol in coldict.items():
             SELECT {awcol}
             FROM `{project_id}.{dataset}.{table}`
             WHERE spt_ind=200102013 AND {awcol}='{df.loc[0,xmcol]}'
-        """        
+        """
     start = timeit.default_timer()
     resultdict[f'{awcol} (spt_ind)'] = query_job = gcp_utils.query_bigquery(query).to_dataframe()
     stop = timeit.default_timer()
@@ -328,7 +330,7 @@ for awcol, xmcol in coldict.items():
     print('Time: ', stop - start)
 ```
 
-## Copy AllWISE table and add HEALPix column
+### Copy AllWISE table and add HEALPix column
 
 - [x] copy table
 - [ ] add HEALPix
@@ -351,7 +353,7 @@ export GOOGLE_APPLICATION_CREDENTIALS="<your/path/to/servicecredentialsauthkey.j
 gcloud config set project "$project_id"
 ```
 
-### Copy table
+#### Copy table
 
 Uses the BigQuery transfer service.
 
@@ -383,7 +385,7 @@ bq query \
   'QUERY_STATEMENT'
 ```
 
-### Add HEALPix
+#### Add HEALPix
 
 Setup
 

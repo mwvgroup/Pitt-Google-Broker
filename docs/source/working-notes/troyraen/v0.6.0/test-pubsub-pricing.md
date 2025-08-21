@@ -1,6 +1,8 @@
-# Testing Pub/Sub tutorial from external account.
+# docs/source/working-notes/troyraen/v0.6.0/test-pubsub-pricing.md
 
-## Summary:
+## Testing Pub/Sub tutorial from external account.
+
+### Summary:
 
 Date of tests: 8/6/2021 (note there were no live ZTF streams Aug 5-7)
 
@@ -21,21 +23,21 @@ There is no way for this account to be charged.
 Billing is disabled and I have never created a billing account.
 I can't even see a billing report because I don't have a billing account.
 
-## Initial thoughts:
+### Initial thoughts:
 
 - Testing pricing, free tier, egress, msg delivery
 - What happens if you don't enable billing and reach the Free Tier limit?
 - Does "message delivery" mean delivered to the subscription or delivered to the user (on pull request)?
     - Note on [Pub/Sub pricing page](https://cloud.google.com/pubsub/pricing#pubsub) it says: "Storage of unacknowledged messages does not result in fees."
 
-## Outline:
+### Outline:
 
 - streamed ~300,000 messages to the subscription projects/my-pgb-project-3/subscriptions/test
 - setup a compute engine in Germany to pull the messages
     - compute engine is in pgb project since can't do VMs with free accounts. setup credentials to project my-pgb-project-3 following [v0.5.0/external-connection.md](../v0.5.0/external-connection.md)
 - pulled the messages from the test subscription and wrote a sampling of message sizes to file
 
-## Code to do it:
+### Code to do it:
 
 Use the stream-looper VM to publish the messages.
 
