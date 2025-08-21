@@ -8,8 +8,8 @@ testid="${1:-test}"
 teardown="${2:-False}"
 # name of the survey this broker instance will ingest
 survey="${3:-lsst}"
-schema_version="${4:-7.4}"
-versiontag=v$(echo "${schema_version}" | tr . _) # 7.4 -> v7_4
+schema_version="${4:-8.0}"
+versiontag=v$(echo "${schema_version}" | tr . _) # 8.0 -> v8_0
 region="${5:-us-central1}"
 zone="${region}-a"  # just use zone "a" instead of adding another script arg
 # get environment variables
