@@ -134,3 +134,7 @@ dmypy.json
 
 # Troy
 scratch.py
+
+# Terraform
+.terraform
+.terraform.lock.hcl
