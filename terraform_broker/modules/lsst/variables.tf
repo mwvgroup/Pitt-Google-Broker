@@ -1,4 +1,4 @@
-variable "schema_version" {
+variable "alerts_schema_version" {
   description = "BigQuery schema version to use."
   type = string
   default = "7.4"
