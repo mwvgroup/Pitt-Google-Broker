@@ -23,7 +23,7 @@ fi
 
 #--- GCP resources used in this script
 broker_bucket="${PROJECT_ID}-${survey}-broker_files"
-PS_TOPIC_DEFAULT="${survey}-alerts_raw"
+PS_TOPIC_DEFAULT="${survey}-alerts"
 # use test resources, if requested
 if [ "$testid" != "False" ]; then
     broker_bucket="${broker_bucket}-${testid}"
@@ -44,7 +44,7 @@ fi
 ) || exit
 
 #--- Set the topic names to the "FORCE" metadata attributes if exist, else defaults
-KAFKA_TOPIC_DEFAULT="alerts-simulated"
+KAFKA_TOPIC_DEFAULT="igwn.gwalert"
 KAFKA_TOPIC="${KAFKA_TOPIC_FORCE:-${KAFKA_TOPIC_DEFAULT}}"
 PS_TOPIC="${PS_TOPIC_FORCE:-${PS_TOPIC_DEFAULT}}"
 # set VM metadata, just for clarity and easy viewing
@@ -56,30 +56,32 @@ workingdir="${brokerdir}/${survey}"
 fout_run="${workingdir}/run-connector.out"
 fout_topics="${workingdir}/list.topics"
 
-#--- Set the connector's configs (Kafka password, project, and topic)
+#--- Set the connector's configs (client ID, client secret, project, and topics)
 (
-    cd "${workingdir}" || exit
+    cd "${workingdir}"
 
-    # define LSST-related parameters
-    kafka_password="${survey}-${PROJECT_ID}-kafka-password"
-    KAFKA_PASSWORD=$(gcloud secrets versions access latest --secret="${kafka_password}")
-    group_id="pittgoogle-idfint-kafka-pubsub-connector-${PROJECT_ID}"
+    # define LVK-related parameters
+    client_id="${survey}-${PROJECT_ID}-client-id"
+    client_secret="${survey}-${PROJECT_ID}-client-secret"
+    CLIENT_ID=$(gcloud secrets versions access latest --secret="${client_id}")
+    CLIENT_SECRET=$(gcloud secrets versions access latest --secret="${client_secret}")
+    group_id="pittgooglebroker"
     # use test resources, if requested
     if [ "$testid" != "False" ]; then
         group_id="${group_id}-${testid}"
     fi
 
     fconfig=admin.properties
-    sed -i "s/KAFKA_PASSWORD/${KAFKA_PASSWORD}/g" ${fconfig}
+    sed -i "s/CLIENT_ID/${CLIENT_ID}/g" ${fconfig}
+    sed -i "s/CLIENT_SECRET/${CLIENT_SECRET}/g" ${fconfig}
 
-    fconfig=psconnect-worker.properties
-    sed -i "s/KAFKA_PASSWORD/${KAFKA_PASSWORD}/g" ${fconfig}
-    sed -i "s/GROUP_ID/${group_id}/g" ${fconfig}
+    fconfig=psconnect-worker-authenticated.properties
+    sed -i "s/CLIENT_ID/${CLIENT_ID}/g" ${fconfig}
+    sed -i "s/CLIENT_SECRET/${CLIENT_SECRET}/g" ${fconfig} && sed -i "s/GROUP_ID/${group_id}/g" ${fconfig}
 
     fconfig=ps-connector.properties
     sed -i "s/PROJECT_ID/${PROJECT_ID}/g" ${fconfig}
-    sed -i "s/PS_TOPIC/${PS_TOPIC}/g" ${fconfig}
-    sed -i "s/KAFKA_TOPIC/${KAFKA_TOPIC}/g" ${fconfig}
+    sed -i "s/PS_TOPIC/${PS_TOPIC}/g" ${fconfig} && sed -i "s/KAFKA_TOPIC/${KAFKA_TOPIC}/g" ${fconfig}
 ) || exit
 
 #--- Check until alerts start streaming into the topic
@@ -88,7 +90,7 @@ while [ "${alerts_flowing}" = false ]
 do
     # get list of topics and dump to file
     /bin/kafka-topics \
-        --bootstrap-server usdf-alert-stream-dev.lsst.cloud:9094 \
+        --bootstrap-server kafka.gcn.nasa.gov:9092 \
         --list \
         --command-config "${workingdir}/admin.properties" \
         > "${fout_topics}"
@@ -104,6 +106,6 @@ done
 
 #--- Start the Kafka -> Pub/Sub connector, save stdout and stderr to file
 /bin/connect-standalone \
-    "${workingdir}/psconnect-worker.properties" \
+    "${workingdir}/psconnect-worker-authenticated.properties" \
     "${workingdir}/ps-connector.properties" \
     &>> "${fout_run}"

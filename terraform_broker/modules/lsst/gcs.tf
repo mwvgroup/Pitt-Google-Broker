@@ -8,7 +8,7 @@ resource "google_storage_bucket" "broker_bucket" {
 }
 
 resource "google_storage_bucket_object" "consumer_objects" {
-  name   = "consumer"
+  name   = "lsst"
   source = "consumer"
   bucket = google_storage_bucket.broker_bucket.name
 }

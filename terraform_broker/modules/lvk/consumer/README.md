@@ -1,20 +1,20 @@
-# Start the LSST consumer VM
+# Start the LIGO/Virgo/KAGRA (LVK) consumer VM
 
-See `Pitt-Google-Broker/broker/setup_broker/lsst/README.md` for setup instructions.
+See `broker/setup_broker/lvk/README.md` for setup instructions.
 
 To start the consumer VM:
 
 ```bash
-survey="lsst"
+survey="lvk"
 testid="mytest"
 consumerVM="${survey}-consumer-${testid}"
 zone="us-central1-a"
 
 # Set the VM metadata
-KAFKA_TOPIC="alerts-simulated"
-PS_TOPIC="${survey}-alerts_raw-${testid}"
-gcloud compute instances add-metadata "${consumerVM}" --zone "${zone}" \
-    --metadata="PS_TOPIC_FORCE=${PS_TOPIC},KAFKA_TOPIC_FORCE=${KAFKA_TOPIC}"
+KAFKA_TOPIC="enter Kafka topic"
+PS_TOPIC="${survey}-alerts-${testid}"
+gcloud compute instances add-metadata ${consumerVM} --zone=${zone} \
+      --metadata KAFKA_TOPIC=${KAFKA_TOPIC},PS_TOPIC=${PS_TOPIC}
 
 # Start the VM
 gcloud compute instances start ${consumerVM} --zone ${zone}
@@ -25,7 +25,7 @@ gcloud compute instances start ${consumerVM} --zone ${zone}
 To stop stop the consumer VM:
 
 ```bash
-survey="lsst"
+survey="lvk"
 testid="mytest"
 consumerVM="${survey}-consumer-${testid}"
 zone="us-central1-a"

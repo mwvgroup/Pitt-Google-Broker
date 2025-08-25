@@ -138,3 +138,6 @@ scratch.py
 # Terraform
 .terraform
 .terraform.lock.hcl
+
+# Temp files
+*+

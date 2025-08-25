@@ -1,3 +1,3 @@
-# LSST broker and storage
+# LVK sub-broker and storage
 
-The `lsst` module defines the LSST portion of the Pitt-Google Broker.
+The `lvk` module defines the LVK survey portion of the Pitt-Google Broker.

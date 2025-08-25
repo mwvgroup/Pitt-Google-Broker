@@ -1,7 +1,7 @@
 variable "alerts_schema_version" {
-  description = "BigQuery schema version to use for the LSST alerts table."
+  description = "BigQuery schema version to use for the LVK alerts table."
   type = string
-  default = "7.4"
+  default = "1.0"
   nullable = false
 }
 variable "project_id" {
