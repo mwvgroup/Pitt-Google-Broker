@@ -1,20 +1,20 @@
 # Pub/Sub configuration for LSST.
 
 resource "google_pubsub_topic" "raw_alerts" {
-  name = concat(flatten(["lsst-alerts_raw", var.prod ? "" : ["_", var.test_prefix]]))
+  name = "lsst-alerts_raw${local.dashed_test_suffix}"
 }
 resource "google_pubsub_topic" "alerts" {
-  name = concat(flatten(["lsst-alerts", var.prod ? "" : ["_", var.test_prefix]]))
+  name = "lsst-alerts${local.dashed_test_suffix}"
 }
 resource "google_pubsub_topic" "bq_import" {
-  name = concat(flatten(["lsst-bigquery-import-", var.prod ? "" : ["_", var.test_prefix]]))
+  name = "lsst-bigquery-import${local.dashed_test_suffix}"
 }
 resource "google_pubsub_topic" "bq_deadletter" {
-  name = concat(flatten(["lsst-bigquery-import-deadletter-", replace(var.schema_version, ".", "_"), var.prod ? "" : ["_", var.test_prefix]]))
+  name = "lsst-bigquery-import-deadletter${local.dashed_test_suffix}"
 }
 
 resource "google_pubsub_subscription" "alerts-reservoir" {
-  name = concat(flatten(["lsst-alerts-reservoir", var.prod ? "" : ["_", var.test_prefix]]))
+  name = "lsst-alerts-reservoir${local.dashed_test_suffix}"
   topic = google_pubsub_topic.alerts
 }
 resource "google_pubsub_subscription" "bq_deadletter" {
@@ -22,10 +22,10 @@ resource "google_pubsub_subscription" "bq_deadletter" {
   topic = google_pubsub_topic.bq_deadletter
 }
 resource "google_pubsub_subscription" "bq_import" {
-  name = concat(flatten(["lsst-bigquery-import-", replace(var.schema_version, ".", "_"), var.prod ? "" : ["_", var.test_prefix]]))
+  name = "lsst-bigquery-import${local.dashed_test_suffix}"
   topic = google_pubsub_topic.bq_import
   filter= <<EOF
-    attributes.schema_version = "'"${google_bigquery_dataset.alerts_dataset.labels.versiontag}"'"'
+    attributes.schema_version = "'"${google_bigquery_table.alerts_table.labels.versiontag}"'"'
   EOF
 
   bigquery_config {
@@ -33,7 +33,7 @@ resource "google_pubsub_subscription" "bq_import" {
     use_table_schema=true
   }
   dead_letter_policy {
-    topic = google_pubsub_topic.deadletter.id
+    dead_letter_topic = google_pubsub_topic.bq_deadletter.name
     max_delivery_attempts=5
   }
 }

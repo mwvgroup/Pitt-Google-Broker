@@ -1,5 +1,5 @@
 variable "alerts_schema_version" {
-  description = "BigQuery schema version to use."
+  description = "BigQuery schema version to use for the LSST alerts table."
   type = string
   default = "7.4"
   nullable = false
@@ -15,8 +15,8 @@ variable "prod" {
   default = false
   nullable = false
 }
-variable "test_prefix" {
-  description = "Prefix to use for non-production resources. Only used if prod is false."
+variable "test_suffix" {
+  description = "Suffix to use for non-production resources. Only used if prod is false."
   type = string
   default = "test"
   nullable = false
