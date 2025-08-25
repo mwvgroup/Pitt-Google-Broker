@@ -1,9 +1,15 @@
 resource "google_compute_instance" "consumer_vm" {
   name         = "lsst-consumer"
   machine_type = "n1-standard-1"
-  zone         = vars.zone
+  zone         = var.zone
 
-  metadata {
+  boot_disk {
+    initialize_params {
+      image = "family/debian-12"
+    }
+  }
+
+  metadata = {
     google-logging-enabled = true
     startup-script-url = join("/", [
       "gs:",
@@ -20,4 +26,8 @@ resource "google_compute_instance" "consumer_vm" {
   }
 
   tags = ["tcpport9094"]
+
+  network_interface {
+    network = "default"
+  }
 }
