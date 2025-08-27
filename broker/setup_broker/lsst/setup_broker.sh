@@ -143,7 +143,8 @@ manage_resources() {
             --dead-letter-topic="${ps_deadletter_topic}" \
             --max-delivery-attempts=5 \
             --dead-letter-topic-project="${PROJECT_ID}" \
-            --message-filter='attributes.schema_version = "'"${versiontag}"'"'
+            --message-filter='attributes.schema_version = "'"${versiontag}"'"' \
+            --message-transforms-file=templates/ps_lsst_healpix_smt.yaml
         # set IAM policies on public Pub/Sub resources
         if [ "$testid" = "False" ]; then
             user="allUsers"
