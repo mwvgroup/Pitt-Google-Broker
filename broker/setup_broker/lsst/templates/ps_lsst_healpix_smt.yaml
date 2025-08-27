@@ -1,0 +1,20 @@
+# https://cloud.google.com/pubsub/docs/smts/create-topic-smt#create
+- javascriptUdf:
+    code: >
+        function addHealpixToPayload(message, metadata) {
+          const data = JSON.parse(message.data);
+          const attrs = message.attributes || {};
+
+          const payload = {
+            data: data, // keep original data as a field
+            healpix9:  attrs.healpix9  || null,
+            healpix19: attrs.healpix19 || null,
+            healpix29: attrs.healpix29 || null
+          };
+
+        return {
+          data: JSON.stringify(payload),
+          attributes: message.attributes // preserve attributes
+          };
+        }
+    functionName: addHealpixToPayload
