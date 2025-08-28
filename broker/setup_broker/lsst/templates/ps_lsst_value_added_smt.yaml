@@ -6,7 +6,7 @@
           const alertLite = data["alert_lite"] || {};
           const valueAdded = data["value_added"] || {};
 
-          // Whitelist fields for diaObject
+          // Whitelist fields
           const diaObjectFields = ["diaObjectId"];
           const ssSourceFields = ["ssObjectId"];
           const diaSourceId = ["diaSourceId"];
