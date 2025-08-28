@@ -1,0 +1,44 @@
+# https://cloud.google.com/pubsub/docs/smts/create-topic-smt#create
+- javascriptUdf:
+    code: >
+        function reformatValueAddedAlert(message, metadata) {
+          const data = JSON.parse(message.data);
+          const alertLite = data["alert_lite"] || {};
+          const valueAdded = data["value_added"] || {};
+
+          // Whitelist fields for diaObject
+          const diaObjectFields = ["diaObjectId"];
+          const ssSourceFields = ["ssObjectId"];
+          const diaSourceId = ["diaSourceId"];
+
+          // Extract whitelisted fields
+          function extractFields(obj, fields) {
+            if (!obj) return obj;
+            const extracted = {};
+            for (const f of fields) {
+              if (obj.hasOwnProperty(f)) {
+                extracted[f] = obj[f];
+              }
+            }
+            return extracted;
+          }
+
+          const flattened = {};
+
+          // Extract diaSourceId, diaObjectId and ssObjectId
+          Object.assign(flattened, extractFields(alertLite["diaObject"], diaObjectFields));
+          Object.assign(flattened, extractFields(alertLite["ssSource"], ssSourceFields));
+          Object.assign(flattened, extractFields(alertLite, diaSourceId));
+
+          // Spread all fields from value_added into top-level
+          Object.assign(flattened, valueAdded);
+
+          // Replace fields with filtered versions
+          reformatValueAddedAlert["diaObject"] = extractFields(alertLite["diaObject"], diaObjectFields);
+          reformatValueAddedAlert["ssSource"] = extractFields(alertLite["ssSource"], ssSourceFields);
+
+          // Replace message data
+          message.data = JSON.stringify(flattened);
+          return message;
+        }
+    functionName: reformatValueAddedAlert
