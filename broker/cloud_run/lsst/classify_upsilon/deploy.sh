@@ -12,6 +12,7 @@ survey="${3:-lsst}"
 region="${4:-us-central1}"
 # get the environment variable
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT
+BASE_DIR=$(pwd)
 
 MODULE_NAME="upsilon"  # lower case required by cloud run
 ROUTE_RUN="/"  # url route that will trigger main.run()
@@ -62,7 +63,7 @@ else
         --dead-letter-topic="${ps_deadletter_topic}" \
         --max-delivery-attempts=5 \
         --dead-letter-topic-project="${PROJECT_ID}" \
-        --message-transforms-file=templates/ps_lsst_value_added_smt.yaml
+        --message-transforms-file=${BASE_DIR%%/cloud_run/*}/setup_broker/lsst/templates/ps_lsst_value_added_smt.yaml
     # set IAM policies on public Pub/Sub resources
     if [ "$testid" = "False" ]; then
         user="allUsers"
