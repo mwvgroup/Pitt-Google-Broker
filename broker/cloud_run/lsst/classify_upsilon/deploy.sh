@@ -61,7 +61,8 @@ else
         --drop-unknown-fields \
         --dead-letter-topic="${ps_deadletter_topic}" \
         --max-delivery-attempts=5 \
-        --dead-letter-topic-project="${PROJECT_ID}"
+        --dead-letter-topic-project="${PROJECT_ID}" \
+        --message-transforms-file=templates/ps_lsst_value_added_smt.yaml
     # set IAM policies on public Pub/Sub resources
     if [ "$testid" = "False" ]; then
         user="allUsers"
