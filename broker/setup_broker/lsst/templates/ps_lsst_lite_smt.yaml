@@ -46,7 +46,7 @@
           delete alertLite["cutoutScience"];
           delete alertLite["cutoutTemplate"];
 
-          // Keep observation_reason, target_name, prv_forced_sources, ssSource, and MPCORB unchanged
+          // Keep diaSourceId, observation_reason, target_name, prv_forced_sources, ssSource, and MPCORB unchanged
           data["alert_lite"] = alertLite;
           message.data = JSON.stringify(data);
           return message;
