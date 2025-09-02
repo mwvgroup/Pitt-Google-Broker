@@ -51,7 +51,7 @@ define_GCP_resources() {
 artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
 bq_dataset=$(define_GCP_resources "${survey}" "_")
 bq_table_alerts="alerts_${versiontag}"
-bq_table_supernnova="SuperNNova"
+bq_table_supernnova="supernnova"
 bq_table_upsilon="upsilon"
 bq_table_variability="variability"
 gcs_broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
