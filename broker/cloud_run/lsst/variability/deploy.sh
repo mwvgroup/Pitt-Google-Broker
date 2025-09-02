@@ -52,7 +52,8 @@ if [ "${teardown}" = "True" ]; then
         gcloud run services delete "${cr_module_name}" --region "${region}"
     fi
 else
-    echo "Configuring Pub/Sub resources..."
+    echo
+    echo "Configuring Pub/Sub resources for ${MODULE_NAME} module..."
     gcloud pubsub topics create "${ps_output_topic}"
     gcloud pubsub subscriptions create "${ps_bigquery_subscription}" \
         --topic="${ps_output_topic}" \
