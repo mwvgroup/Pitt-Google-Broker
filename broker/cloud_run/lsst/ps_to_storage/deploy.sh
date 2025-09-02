@@ -12,6 +12,7 @@ survey="${3:-lsst}"
 region="${4:-us-central1}"
 # get the environment variable
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT
+BASE_DIR=$(pwd)
 
 MODULE_NAME="alerts-to-storage"  # lower case required by cloud run
 ROUTE_RUN="/"  # url route that will trigger main.run()
