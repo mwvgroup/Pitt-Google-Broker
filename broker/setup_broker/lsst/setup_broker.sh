@@ -152,6 +152,12 @@ manage_resources() {
             gcloud pubsub topics add-iam-policy-binding "${ps_topic_alerts}" --member="${user}" --role="${roleid}"
             gcloud pubsub topics add-iam-policy-binding "${ps_topic_alerts_json}" --member="${user}" --role="${roleid}"
             gcloud pubsub topics add-iam-policy-binding "${ps_topic_alerts_lite}" --member="${user}" --role="${roleid}"
+            gcloud pubsub topics add-iam-policy-binding "${ps_deadletter_topic}" \
+                --member="serviceAccount:${service_account}" \
+                --role="roles/pubsub.publisher"
+            gcloud pubsub subscriptions add-iam-policy-binding "${ps_bigquery_subscription}" \
+                --member="serviceAccount:${service_account}" \
+                --role="roles/pubsub.subscriber"
         fi
 
         #--- Create Artifact Registry Repository

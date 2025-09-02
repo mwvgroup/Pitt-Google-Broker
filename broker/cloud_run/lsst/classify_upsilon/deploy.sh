@@ -11,8 +11,9 @@ teardown="${2:-False}"
 survey="${3:-lsst}"
 region="${4:-us-central1}"
 # get the environment variable
-PROJECT_ID=$GOOGLE_CLOUD_PROJECT
 BASE_DIR=$(pwd)
+PROJECT_ID=$GOOGLE_CLOUD_PROJECT
+PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format="value(projectNumber)")
 
 MODULE_NAME="upsilon"  # lower case required by cloud run
 ROUTE_RUN="/"  # url route that will trigger main.run()
@@ -37,6 +38,7 @@ ps_input_subscrip=$(define_GCP_resources "${survey}-upsilon") # pub/sub subscrip
 ps_output_topic=$(define_GCP_resources "${survey}-upsilon")
 ps_trigger_topic=$(define_GCP_resources "${survey}-lite")
 runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
+service_account="service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com"
 # topics and subscriptions involved in writing data to BigQuery
 ps_bigquery_subscription=$(define_GCP_resources "${survey}-${MODULE_NAME}-bigquery-import")
 ps_deadletter_topic=$(define_GCP_resources "${survey}-deadletter")
@@ -70,6 +72,7 @@ else
         user="allUsers"
         roleid="roles/pubsub.subscriber"
         gcloud pubsub topics add-iam-policy-binding "${ps_output_topic}" --member="${user}" --role="${roleid}"
+        gcloud pubsub subscriptions add-iam-policy-binding "${ps_bigquery_subscription}" --member="serviceAccount:${service_account}" --role="${roleid}"
     fi
 
     #--- Deploy Cloud Run
