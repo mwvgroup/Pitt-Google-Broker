@@ -148,7 +148,7 @@ manage_resources() {
         # set IAM policies on public Pub/Sub resources
         if [ "$testid" = "False" ]; then
             user="allUsers"
-            roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/userPublic"
+            roleid="roles/pubsub.subscriber"
             gcloud pubsub topics add-iam-policy-binding "${ps_topic_alerts}" --member="${user}" --role="${roleid}"
             gcloud pubsub topics add-iam-policy-binding "${ps_topic_alerts_json}" --member="${user}" --role="${roleid}"
             gcloud pubsub topics add-iam-policy-binding "${ps_topic_alerts_lite}" --member="${user}" --role="${roleid}"
