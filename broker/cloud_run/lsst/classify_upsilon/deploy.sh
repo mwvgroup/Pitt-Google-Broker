@@ -67,7 +67,7 @@ else
     # set IAM policies on public Pub/Sub resources
     if [ "$testid" = "False" ]; then
         user="allUsers"
-        roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/userPublic"
+        roleid="roles/pubsub.subscriber"
         gcloud pubsub topics add-iam-policy-binding "${ps_output_topic}" --member="${user}" --role="${roleid}"
     fi
 
