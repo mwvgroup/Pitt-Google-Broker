@@ -2050,5 +2050,11 @@
     "mode": "REQUIRED",
     "name": "healpix29",
     "type": "INTEGER"
+  },
+  {
+    "description": "The message's publish time in RFC 3339 format (YYYY-MM-DDTHH:mm:ssZ).",
+    "mode": "REQUIRED",
+    "name": "publish_time",
+    "type": "TIMESTAMP"
   }
 ]
