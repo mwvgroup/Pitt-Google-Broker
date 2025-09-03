@@ -4,7 +4,10 @@
         function reformatValueAddedAlert(message, metadata) {
           const data = JSON.parse(message.data);
           const alertLite = data["alert_lite"] || {};
-          const valueAdded = data["value_added"] || {};
+
+          // Find the value_added key
+          const valueAddedKey = Object.keys(data).find(k => k !== "alert_lite");
+          const valueAddedField = valueAddedKey ? (data[valueAddedKey] || {}) : {};
 
           // Whitelist fields
           const diaObjectFields = ["diaObjectId"];
@@ -31,11 +34,7 @@
           Object.assign(flattened, extractFields(alertLite, diaSourceId));
 
           // Spread all fields from value_added into top-level
-          Object.assign(flattened, valueAdded);
-
-          // Replace fields with filtered versions
-          reformatValueAddedAlert["diaObject"] = extractFields(alertLite["diaObject"], diaObjectFields);
-          reformatValueAddedAlert["ssSource"] = extractFields(alertLite["ssSource"], ssSourceFields);
+          Object.assign(flattened, valueAddedField);
 
           // Replace message data
           message.data = JSON.stringify(flattened);
