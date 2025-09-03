@@ -36,8 +36,13 @@
           // Spread all fields from value_added into top-level
           Object.assign(flattened, valueAddedField);
 
-          // Replace message data
-          message.data = JSON.stringify(flattened);
-          return message;
+          // Add top-level field
+          flattened.publish_time = metadata.publish_time;
+
+          // Return transformed message and preserve attributes
+          return {
+            data: JSON.stringify(flattened),
+            attributes: message.attributes
+          };
         }
     functionName: reformatValueAddedAlert

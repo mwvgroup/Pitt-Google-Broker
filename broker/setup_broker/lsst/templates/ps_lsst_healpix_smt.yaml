@@ -9,7 +9,8 @@
             ...data, // spread the original JSON fields into the root
             healpix9:  attrs.healpix9  ? Number(attrs.healpix9)  : null,
             healpix19: attrs.healpix19 ? Number(attrs.healpix19) : null,
-            healpix29: attrs.healpix29 ? Number(attrs.healpix29) : null
+            healpix29: attrs.healpix29 ? Number(attrs.healpix29) : null,
+            ingestion_time: metadata.publish_time
           };
 
           return {
