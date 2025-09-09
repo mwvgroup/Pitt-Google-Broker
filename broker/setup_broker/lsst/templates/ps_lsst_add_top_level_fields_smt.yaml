@@ -10,7 +10,7 @@
             healpix9:  attrs.healpix9  ? Number(attrs.healpix9)  : null,
             healpix19: attrs.healpix19 ? Number(attrs.healpix19) : null,
             healpix29: attrs.healpix29 ? Number(attrs.healpix29) : null,
-            publish_time: metadata.publish_time
+            kafkaPublishTimestamp: attrs["kafka.timestamp"] ? Number(attrs["kafka.timestamp"]) * 1000 : null
           };
 
           return {
