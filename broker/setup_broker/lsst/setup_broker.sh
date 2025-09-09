@@ -86,10 +86,10 @@ manage_resources() {
         else
             echo "${bq_dataset} already exists."
         fi
-        (cd templates && bq mk --table --clustering_fields=healpix9,healpix19,healpix29 --time_partitioning_field=publish_time --time_partitioning_type=DAY "${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}" "bq_${survey}_${bq_table_alerts}_schema.json") || exit 5
-        (cd templates && bq mk --table --time_partitioning_field=publish_time --time_partitioning_type=DAY "${PROJECT_ID}:${bq_dataset}.${bq_table_supernnova}" "bq_${survey}_${bq_table_supernnova}_schema.json") || exit 5
-        (cd templates && bq mk --table --time_partitioning_field=publish_time --time_partitioning_type=DAY "${PROJECT_ID}:${bq_dataset}.${bq_table_variability}" "bq_${survey}_${bq_table_variability}_schema.json") || exit 5
-        (cd templates && bq mk --table --time_partitioning_field=publish_time --time_partitioning_type=DAY "${PROJECT_ID}:${bq_dataset}.${bq_table_upsilon}" "bq_${survey}_${bq_table_upsilon}_schema.json") || exit 5
+        (cd templates && bq mk --table --clustering_fields=healpix9,healpix19,healpix29 --time_partitioning_field=kafkaPublishTimestamp --time_partitioning_type=DAY "${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}" "bq_${survey}_${bq_table_alerts}_schema.json") || exit 5
+        (cd templates && bq mk --table --time_partitioning_field=kafkaPublishTimestamp --time_partitioning_type=DAY "${PROJECT_ID}:${bq_dataset}.${bq_table_supernnova}" "bq_${survey}_${bq_table_supernnova}_schema.json") || exit 5
+        (cd templates && bq mk --table --time_partitioning_field=kafkaPublishTimestamp --time_partitioning_type=DAY "${PROJECT_ID}:${bq_dataset}.${bq_table_variability}" "bq_${survey}_${bq_table_variability}_schema.json") || exit 5
+        (cd templates && bq mk --table --time_partitioning_field=kafkaPublishTimestamp --time_partitioning_type=DAY "${PROJECT_ID}:${bq_dataset}.${bq_table_upsilon}" "bq_${survey}_${bq_table_upsilon}_schema.json") || exit 5
         bq update --description "Alert data from LSST. This table is an archive of the lsst-alerts Pub/Sub stream. It has the same schema as the original alert bytes, including nested and repeated fields." "${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}"
         bq update --description "Binary classification results from SuperNNova." "${PROJECT_ID}:${bq_dataset}.${bq_table_supernnova}"
 
