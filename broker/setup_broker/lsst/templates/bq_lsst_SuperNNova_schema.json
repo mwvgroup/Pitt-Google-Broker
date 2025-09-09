@@ -36,9 +36,9 @@
       "type": "INTEGER"
     },
     {
-      "description": "The message's publish time in RFC 3339 format (YYYY-MM-DDTHH:mm:ssZ).",
+      "description": "Kafka timestamp from originating LSST alert.",
       "mode": "REQUIRED",
-      "name": "publish_time",
+      "name": "kafkaPublishTimestamp",
       "type": "TIMESTAMP"
     }
 ]
