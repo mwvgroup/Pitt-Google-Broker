@@ -1,0 +1,44 @@
+[
+    {
+      "description": "Identifier of the triggering DiaSource.",
+      "mode": "REQUIRED",
+      "name": "diaSourceId",
+      "type": "INTEGER"
+    },
+    {
+      "description": "Unique identifier of this DiaObject.",
+      "mode": "NULLABLE",
+      "name": "diaObjectId",
+      "type": "INTEGER"
+    },
+    {
+      "description": "Unique identifier of the object.",
+      "mode": "NULLABLE",
+      "name": "ssObjectId",
+      "type": "INTEGER"
+    },
+    {
+      "description": "probability object is a type Ia supernova",
+      "mode": "NULLABLE",
+      "name": "prob_class0",
+      "type": "FLOAT"
+    },
+    {
+      "description": "probability object is non-Ia",
+      "mode": "NULLABLE",
+      "name": "prob_class1",
+      "type": "FLOAT"
+    },
+    {
+      "description": "predicted class; 0 = Ia, 1 = non-Ia",
+      "mode": "NULLABLE",
+      "name": "predicted_class",
+      "type": "INTEGER"
+    },
+    {
+      "description": "Kafka timestamp from originating LSST alert.",
+      "mode": "REQUIRED",
+      "name": "kafkaPublishTimestamp",
+      "type": "TIMESTAMP"
+    }
+]
