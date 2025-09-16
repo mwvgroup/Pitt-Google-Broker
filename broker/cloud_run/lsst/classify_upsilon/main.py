@@ -56,16 +56,20 @@ def run() -> tuple[str, int]:
     # extract the envelope from the request that triggered the endpoint
     # this contains a single Pub/Sub message with the alert to be processed
     envelope = flask.request.get_json()
+
+    # unpack the alert. raises a `BadRequest` if the envelope does not contain a valid message
     try:
         alert_lite = pittgoogle.Alert.from_cloud_run(envelope, "default")
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
-    alert_lite_df = _create_lite_dataframe(alert_lite.dict["alert_lite"])
-    upsilon_dict = _classify_with_upsilon(alert_lite_df)
+    # classify
+    upsilon_dict = _classify(alert_lite)
     has_min_detections_in_any_band = any(
         upsilon_dict.get(f"n_data_points_{band}_band") >= 80 for band in SURVEY_BANDS
     )
+
+    # publish
     TOPIC.publish(
         pittgoogle.Alert.from_dict(
             {"alert_lite": alert_lite.dict["alert_lite"], "upsilon": upsilon_dict},
@@ -92,8 +96,19 @@ def run() -> tuple[str, int]:
     return "", HTTP_204
 
 
-def _classify_with_upsilon(alert_lite_df: pd.DataFrame) -> dict:
+def _classify(alert_lite: pittgoogle.Alert) -> dict:
     upsilon_dict = {}
+
+    # check to see if the alert has a ssObjectId
+    if alert_lite.attributes["ssSource_ssObjectId"]:
+        for band in SURVEY_BANDS:
+            upsilon_dict[f"{band}_label"] = None
+            upsilon_dict[f"{band}_probability"] = None
+            upsilon_dict[f"{band}_flag"] = None
+        return upsilon_dict
+
+    alert_lite_df = _create_lite_dataframe(alert_lite.dict["alert_lite"])
+
     for band in SURVEY_BANDS:
         # ---Extract data
         filter_diaSources = alert_lite_df[alert_lite_df["band"] == band]
