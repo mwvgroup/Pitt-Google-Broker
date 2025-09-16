@@ -101,7 +101,7 @@ def _classify(alert_lite: pittgoogle.Alert) -> dict:
     """Classify the alert using SuperNNova."""
 
     # check to see if the alert has a ssObjectId
-    if alert_lite.attributes["ssSource_ssObjectId"]:
+    if alert_lite.attributes.get("ssSource_ssObjectId"):
         return {
             "prob_class0": None,
             "prob_class1": None,

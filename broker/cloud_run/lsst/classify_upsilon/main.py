@@ -99,7 +99,7 @@ def run() -> tuple[str, int]:
 def _classify(alert_lite: pittgoogle.Alert) -> dict:
     upsilon_dict = {}
     alert_lite_df = _create_lite_dataframe(alert_lite.dict["alert_lite"])
-    is_ssobject = bool(alert_lite.attributes["ssSource_ssObjectId"])
+    is_ssobject = bool(alert_lite.attributes.get("ssSource_ssObjectId"))
 
     for band in SURVEY_BANDS:
         # ---Extract data
