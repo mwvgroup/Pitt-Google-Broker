@@ -2014,5 +2014,23 @@
         "type": "FLOAT"
       }
     ]
+  },
+  {
+    "description": "HEALPix order 9 pixel index at the source’s right ascension (RA) and declination",
+    "mode": "REQUIRED",
+    "name": "healpix9",
+    "type": "INTEGER"
+  },
+  {
+    "description": "HEALPix order 19 pixel index at the source’s right ascension (RA) and declination",
+    "mode": "REQUIRED",
+    "name": "healpix19",
+    "type": "INTEGER"
+  },
+  {
+    "description": "HEALPix order 29 pixel index at the source’s right ascension (RA) and declination",
+    "mode": "REQUIRED",
+    "name": "healpix29",
+    "type": "INTEGER"
   }
 ]

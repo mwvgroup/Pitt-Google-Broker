@@ -1,64 +1,44 @@
 [
     {
-      "description": "Unique identifiers from the semantically compressed alert packet.",
-      "fields":[
-          {
-            "description": "diaSource",
-            "fields": [
-                {
-                  "description": "Unique identifier of this diaSource.",
-                  "mode": "REQUIRED",
-                  "name": "diaSourceId",
-                  "type": "INTEGER"
-                }
-            ],
-            "mode": "REQUIRED",
-            "name": "diaSource",
-            "type": "RECORD"
-          },
-          {
-            "description": "diaObject",
-            "fields": [
-                {
-                  "description": "Unique identifier of this diaObject.",
-                  "mode": "REQUIRED",
-                  "name": "diaObjectId",
-                  "type": "INTEGER"
-                }
-            ],
-            "mode": "REQUIRED",
-            "name": "diaObject",
-            "type": "RECORD"
-          }
-      ],
+      "description": "Identifier of the triggering DiaSource.",
       "mode": "REQUIRED",
-      "name": "alert_lite",
-      "type": "RECORD"
+      "name": "diaSourceId",
+      "type": "INTEGER"
     },
     {
-      "description": "Classification results using SuperNNova (Möller & de Boissière 2019).",
-      "fields": [
-          {
-            "description": "probability object is a type Ia supernova",
-            "mode": "NULLABLE",
-            "name": "prob_class0",
-            "type": "FLOAT"
-          },
-          {
-            "description": "probability object is non-Ia",
-            "mode": "NULLABLE",
-            "name": "prob_class1",
-            "type": "FLOAT"
-          },
-          {
-            "description": "predicted class; 0 = Ia, 1 = non-Ia",
-            "mode": "NULLABLE",
-            "name": "predicted_class",
-            "type": "INTEGER"
-          }
-      ],
+      "description": "Unique identifier of this DiaObject.",
+      "mode": "NULLABLE",
+      "name": "diaObjectId",
+      "type": "INTEGER"
+    },
+    {
+      "description": "Unique identifier of the object.",
+      "mode": "NULLABLE",
+      "name": "ssObjectId",
+      "type": "INTEGER"
+    },
+    {
+      "description": "probability object is a type Ia supernova",
+      "mode": "NULLABLE",
+      "name": "prob_class0",
+      "type": "FLOAT"
+    },
+    {
+      "description": "probability object is non-Ia",
+      "mode": "NULLABLE",
+      "name": "prob_class1",
+      "type": "FLOAT"
+    },
+    {
+      "description": "predicted class; 0 = Ia, 1 = non-Ia",
+      "mode": "NULLABLE",
+      "name": "predicted_class",
+      "type": "INTEGER"
+    },
+    {
+      "description": "Kafka timestamp from originating LSST alert.",
       "mode": "REQUIRED",
-      "name": "SuperNNova",
-      "type": "RECORD"
+      "name": "kafkaPublishTimestamp",
+      "type": "TIMESTAMP"
     }
 ]

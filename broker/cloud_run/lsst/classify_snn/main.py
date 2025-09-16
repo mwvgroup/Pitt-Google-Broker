@@ -47,7 +47,7 @@ HTTP_400 = 400  # HTTP code: Bad Request
 # GCP resources used in this module
 # pittgoogle will construct the full resource names from the module name, SURVEY, and TESTID
 TOPIC = pittgoogle.Topic.from_cloud(
-    "SuperNNova", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
+    "supernnova", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
 )
 
 
