@@ -5,7 +5,7 @@
 
 google-cloud-logging
 google-cloud-storage
-pittgoogle-client>=0.3.15
+pittgoogle-client>=0.3.18
 
 # for Cloud Run
 # https://cloud.google.com/run/docs/quickstarts/build-and-deploy/deploy-python-service
