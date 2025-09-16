@@ -99,6 +99,15 @@ def run():
 
 def _classify(alert_lite: pittgoogle.Alert) -> dict:
     """Classify the alert using SuperNNova."""
+
+    # check to see if the alert has a ssObjectId
+    if alert_lite.attributes["ssSource_ssObjectId"]:
+        return {
+            "prob_class0": None,
+            "prob_class1": None,
+            "predicted_class": None,
+        }
+
     # init
     snn_df = _format_for_classifier(alert_lite)
     device = "cpu"
