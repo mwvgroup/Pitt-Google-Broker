@@ -44,7 +44,7 @@ fi
 ) || exit
 
 #--- Set the topic names to the "FORCE" metadata attributes if exist, else defaults
-KAFKA_TOPIC_DEFAULT="alerts-simulated"
+KAFKA_TOPIC_DEFAULT="lsst-alerts-v9.0"
 KAFKA_TOPIC="${KAFKA_TOPIC_FORCE:-${KAFKA_TOPIC_DEFAULT}}"
 PS_TOPIC="${PS_TOPIC_FORCE:-${PS_TOPIC_DEFAULT}}"
 # set VM metadata, just for clarity and easy viewing
