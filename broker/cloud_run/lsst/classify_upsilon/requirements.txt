@@ -4,7 +4,7 @@
 # file (or packaged with the function) in the same directory as `main.py`
 
 google-cloud-logging
-pittgoogle-client>=0.3.15
+pittgoogle-client>=0.3.17
 upsilon
 # required by upsilon
 # https://github.com/dwkim78/upsilon?tab=readme-ov-file#1-dependency

@@ -11,7 +11,9 @@ teardown="${2:-False}"
 survey="${3:-lsst}"
 region="${4:-us-central1}"
 # get the environment variable
+BASE_DIR=$(pwd)
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT
+PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format="value(projectNumber)")
 
 MODULE_NAME="variability"  # lower case required by cloud run
 ROUTE_RUN="/"  # url route that will trigger main.run()
@@ -36,6 +38,7 @@ ps_input_subscrip=$(define_GCP_resources "${survey}-${MODULE_NAME}") # pub/sub s
 ps_output_topic=$(define_GCP_resources "${survey}-${MODULE_NAME}")
 ps_trigger_topic=$(define_GCP_resources "${survey}-lite")
 runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
+service_account="service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com"
 # topics and subscriptions involved in writing data to BigQuery
 ps_bigquery_subscription=$(define_GCP_resources "${survey}-${MODULE_NAME}-bigquery-import")
 ps_deadletter_topic=$(define_GCP_resources "${survey}-deadletter")
@@ -51,7 +54,8 @@ if [ "${teardown}" = "True" ]; then
         gcloud run services delete "${cr_module_name}" --region "${region}"
     fi
 else
-    echo "Configuring Pub/Sub resources..."
+    echo
+    echo "Configuring Pub/Sub resources for ${MODULE_NAME} module..."
     gcloud pubsub topics create "${ps_output_topic}"
     gcloud pubsub subscriptions create "${ps_bigquery_subscription}" \
         --topic="${ps_output_topic}" \
@@ -60,12 +64,14 @@ else
         --drop-unknown-fields \
         --dead-letter-topic="${ps_deadletter_topic}" \
         --max-delivery-attempts=5 \
-        --dead-letter-topic-project="${PROJECT_ID}"
+        --dead-letter-topic-project="${PROJECT_ID}" \
+        --message-transforms-file="${BASE_DIR%%/cloud_run/*}/setup_broker/lsst/templates/ps_lsst_flatten_schema_smt.yaml"
     # set IAM policies on public Pub/Sub resources
     if [ "$testid" = "False" ]; then
         user="allUsers"
-        roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/userPublic"
+        roleid="roles/pubsub.subscriber"
         gcloud pubsub topics add-iam-policy-binding "${ps_output_topic}" --member="${user}" --role="${roleid}"
+        gcloud pubsub subscriptions add-iam-policy-binding "${ps_bigquery_subscription}" --member="serviceAccount:${service_account}" --role="${roleid}"
     fi
 
     #--- Deploy Cloud Run service
