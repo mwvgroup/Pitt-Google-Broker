@@ -1,0 +1,3 @@
+include requirements.txt
+include requirements_pinned.txt
+include broker_utils/avro_schemas/*.avsc
