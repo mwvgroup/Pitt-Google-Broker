@@ -207,5 +207,11 @@
     "mode": "NULLABLE",
     "name": "external_coinc",
     "type": "RECORD"
+  },
+  {
+    "description": "Kafka timestamp from originating LVK alert.",
+    "mode": "REQUIRED",
+    "name": "kafkaPublishTimestamp",
+    "type": "TIMESTAMP"
   }
 ]
