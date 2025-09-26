@@ -106,5 +106,6 @@ def _create_file_metadata(alert: pittgoogle.Alert, event_id: str) -> dict:
     metadata["_".join(alert.get_key("sourceid"))] = alert.sourceid
     metadata["_".join(alert.get_key("ra"))] = alert.ra
     metadata["_".join(alert.get_key("dec"))] = alert.dec
+    metadata["kafka.timestamp"] = alert.attributes["kafka.timestamp"]
 
     return metadata

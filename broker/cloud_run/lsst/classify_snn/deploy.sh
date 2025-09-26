@@ -93,4 +93,7 @@ else
         --push-auth-service-account="${runinvoker_svcact}" \
         --dead-letter-topic="${ps_deadletter_topic}" \
         --max-delivery-attempts=5
+    gcloud pubsub subscriptions add-iam-policy-binding "${ps_input_subscrip}" \
+        --member="serviceAccount:${service_account}" \
+        --role="roles/pubsub.subscriber"
 fi

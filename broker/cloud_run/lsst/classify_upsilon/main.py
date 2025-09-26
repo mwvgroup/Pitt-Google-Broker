@@ -56,16 +56,20 @@ def run() -> tuple[str, int]:
     # extract the envelope from the request that triggered the endpoint
     # this contains a single Pub/Sub message with the alert to be processed
     envelope = flask.request.get_json()
+
+    # unpack the alert. raises a `BadRequest` if the envelope does not contain a valid message
     try:
         alert_lite = pittgoogle.Alert.from_cloud_run(envelope, "default")
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
-    alert_lite_df = _create_lite_dataframe(alert_lite.dict["alert_lite"])
-    upsilon_dict = _classify_with_upsilon(alert_lite_df)
+    # classify
+    upsilon_dict = _classify(alert_lite)
     has_min_detections_in_any_band = any(
         upsilon_dict.get(f"n_data_points_{band}_band") >= 80 for band in SURVEY_BANDS
     )
+
+    # publish
     TOPIC.publish(
         pittgoogle.Alert.from_dict(
             {"alert_lite": alert_lite.dict["alert_lite"], "upsilon": upsilon_dict},
@@ -92,17 +96,21 @@ def run() -> tuple[str, int]:
     return "", HTTP_204
 
 
-def _classify_with_upsilon(alert_lite_df: pd.DataFrame) -> dict:
+def _classify(alert_lite: pittgoogle.Alert) -> dict:
     upsilon_dict = {}
+    alert_lite_df = _create_lite_dataframe(alert_lite.dict["alert_lite"])
+    is_ssobject = bool(alert_lite.attributes.get("ssSource_ssObjectId"))
+
     for band in SURVEY_BANDS:
         # ---Extract data
         filter_diaSources = alert_lite_df[alert_lite_df["band"] == band]
         flux_gt_zero = filter_diaSources["psfFlux"].to_numpy() > 0
         upsilon_dict[f"n_data_points_{band}_band"] = flux_gt_zero.sum().item()
+        # skip classification if the object has a ssObjectId
         # skip band if no detections or too few valid data points.
         # to avoid scipy's leastsq error: ("input vector length N=7 must not exceed output length M"), we require
         # that flux_gt_zero.sum() > 7
-        if filter_diaSources.empty or flux_gt_zero.sum() <= 7:
+        if is_ssobject or (filter_diaSources.empty or flux_gt_zero.sum() <= 7):
             upsilon_dict[f"{band}_label"] = None
             upsilon_dict[f"{band}_probability"] = None
             upsilon_dict[f"{band}_flag"] = None
