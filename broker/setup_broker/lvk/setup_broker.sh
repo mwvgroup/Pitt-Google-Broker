@@ -82,7 +82,7 @@ manage_resources() {
         else
             echo "${bq_dataset} already exists."
         fi
-        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}" "bq_${survey}_${bq_table_alerts}_schema.json") || exit 5
+        (cd templates && bq mk --table --time_partitioning_field=kafkaPublishTimestamp --time_partitioning_type=DAY "${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}" "bq_${survey}_${bq_table_alerts}_schema.json") || exit 5
         bq update --description "LIGO/Virgo/KAGRA (LVK) alerts with schema version v${schema_version}. The data and schema are as produced by LVK except that skymaps are excluded. Skymaps can be retrieved from the Cloud Storage bucket ${gcs_alerts_bucket}." "${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}"
 
         #--- Create GCS bucket
@@ -122,12 +122,19 @@ manage_resources() {
             --drop-unknown-fields \
             --dead-letter-topic="${ps_deadletter_topic}" \
             --max-delivery-attempts=5 \
-            --dead-letter-topic-project="${PROJECT_ID}"
+            --dead-letter-topic-project="${PROJECT_ID}" \
+            --message-transforms-file=templates/ps_lvk_add_top_level_fields_smt.yaml
 
         # set IAM policies on resources
         user="allUsers"
-        roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/userPublic"
+        roleid="roles/pubsub.subscriber"
         gcloud pubsub topics add-iam-policy-binding "${ps_topic_alerts}" --member="${user}" --role="${roleid}"
+        gcloud pubsub topics add-iam-policy-binding "${ps_deadletter_topic}" \
+                --member="serviceAccount:${service_account}" \
+                --role="roles/pubsub.publisher"
+        gcloud pubsub subscriptions add-iam-policy-binding "${ps_bigquery_subscription}" \
+                --member="serviceAccount:${service_account}" \
+                --role="${roleid}"
 
         #--- Create Artifact Registry Repository
         echo
