@@ -1,49 +1,29 @@
 # https://cloud.google.com/pubsub/docs/smts/create-topic-smt#create
 - javascriptUdf:
     code: >
-        function reformatValueAddedAlert(message, metadata) {
-          const data = JSON.parse(message.data);
-          const alertLite = data["alert_lite"] || {};
-          const attrs = message.attributes || {};
+      function flattenValueAddedAlert(message, metadata) {
+        const attrs = message.attributes || {};
+        const data = JSON.parse(message.data);
 
-          // Find the value_added key
-          const valueAddedKey = Object.keys(data).find(k => k !== "alert_lite");
-          const valueAddedField = valueAddedKey ? (data[valueAddedKey] || {}) : {};
+        // Find and extract the value_added dictionary
+        const valueAddedKey = Object.keys(data).find(k => k !== "alert_lite");
+        const valueAddedData = valueAddedKey ? (data[valueAddedKey] || {}) : {};
 
-          // Whitelist fields
-          const diaObjectFields = ["diaObjectId"];
-          const ssSourceFields = ["ssObjectId"];
-          const diaSourceId = ["diaSourceId"];
+        // Build the final payload, starting with value_added fields
+        const payload = {
+          ...valueAddedData,
 
-          // Extract whitelisted fields
-          function extractFields(obj, fields) {
-            if (!obj) return obj;
-            const extracted = {};
-            for (const f of fields) {
-              if (obj.hasOwnProperty(f)) {
-                extracted[f] = obj[f];
-              }
-            }
-            return extracted;
-          }
+          // Use the attributes to add the remaining key-value pairs
+          diaSourceId: attrs.diaSource_diaSourceId ? attrs.diaSource_diaSourceId.toString() : null,
+          diaObjectId: attrs.diaObject_diaObjectId ? attrs.diaObject_diaObjectId.toString() : null,
+          ssObjectId: attrs.ssSource_ssObjectId ? attrs.ssSource_ssObjectId.toString() : null,
+          kafkaPublishTimestamp: attrs["kafka.timestamp"] ? attrs["kafka.timestamp"].toString() : null
+        };
 
-          const flattened = {};
-
-          // Extract diaSourceId, diaObjectId and ssObjectId
-          Object.assign(flattened, extractFields(alertLite["diaObject"], diaObjectFields));
-          Object.assign(flattened, extractFields(alertLite["ssSource"], ssSourceFields));
-          Object.assign(flattened, extractFields(alertLite, diaSourceId));
-
-          // Spread all fields from value_added into top-level
-          Object.assign(flattened, valueAddedField);
-
-          // Add top-level field
-          flattened.kafkaPublishTimestamp = attrs["kafka.timestamp"] ? Number(attrs["kafka.timestamp"]) * 1000 : null;
-
-          // Return transformed message and preserve attributes
-          return {
-            data: JSON.stringify(flattened),
-            attributes: message.attributes
-          };
-        }
-    functionName: reformatValueAddedAlert
+        // Return the flattened message
+        return {
+          data: JSON.stringify(payload),
+          attributes: message.attributes
+        };
+      }
+  functionName: flattenValueAddedAlert
