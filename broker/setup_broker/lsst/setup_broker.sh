@@ -218,14 +218,14 @@ echo "Configuring Cloud Run services..."
     ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}"
 
     #--- supernnova Cloud Run service
-    # cd .. && cd classify_snn
-    # ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}"
+    cd .. && cd classify_snn
+    ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}"
 
-    # #--- variability Cloud Run service
-    # cd .. && cd variability
-    # ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}"
+    #--- variability Cloud Run service
+    cd .. && cd variability
+    ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}"
 
-    # #--- upsilon Cloud Run service
-    # cd .. && cd classify_upsilon
-    # ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}"
+    #--- upsilon Cloud Run service
+    cd .. && cd classify_upsilon
+    ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}"
 ) || exit
