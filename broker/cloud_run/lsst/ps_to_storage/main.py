@@ -4,11 +4,11 @@
 """This module stores LSST alert data as an Avro file in Cloud Storage and publishes it to various Pub/Sub topics."""
 
 import os
+from typing import Any
 import flask
 import pittgoogle
 from google.cloud import logging, storage
 from google.cloud.exceptions import PreconditionFailed
-from typing import Any
 
 # [FIXME] Make this helpful or else delete it.
 # Connect the python logger to the google cloud logger.
@@ -174,8 +174,7 @@ def _process_field(original_value: Any, config: dict) -> Any:
 
     if config["is_list"]:
         return [_filter_dict(item, whitelisted_fields) for item in original_value or []]
-    else:
-        return _filter_dict(original_value, whitelisted_fields)
+    return _filter_dict(original_value, whitelisted_fields)
 
 
 def _filter_dict(alert_dict: dict, whitelisted_fields: set) -> dict:
