@@ -14,7 +14,7 @@
         if (attrs.healpix19) newFields.healpix19 = attrs.healpix19.toString();
         if (attrs.healpix29) newFields.healpix29 = attrs.healpix29.toString();
         if (attrs["kafka.timestamp"]) {
-          newFields.kafkaPublishTimestamp = attrs["kafka.timestamp"].toString();
+          newFields.kafkaPublishTimestamp = attrs["kafka.timestamp"] * 1000;
         }
 
         // Define the data as a set of key-value pairs to be added to the JSON payload
