@@ -17,7 +17,7 @@
           diaSourceId: attrs.diaSource_diaSourceId ? attrs.diaSource_diaSourceId.toString() : null,
           diaObjectId: attrs.diaObject_diaObjectId ? attrs.diaObject_diaObjectId.toString() : null,
           ssObjectId: attrs.ssSource_ssObjectId ? attrs.ssSource_ssObjectId.toString() : null,
-          kafkaPublishTimestamp: attrs["kafka.timestamp"] ? attrs["kafka.timestamp"].toString() : null
+          kafkaPublishTimestamp: attrs["kafka.timestamp"] ? attrs["kafka.timestamp"] * 1000 : null
         };
 
         // Return the flattened message
@@ -26,4 +26,4 @@
           attributes: message.attributes
         };
       }
-  functionName: flattenValueAddedAlert
+    functionName: flattenValueAddedAlert
