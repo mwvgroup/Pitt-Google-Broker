@@ -91,7 +91,9 @@ else
         --push-endpoint="${url}${ROUTE_RUN}" \
         --push-auth-service-account="${runinvoker_svcact}" \
         --dead-letter-topic="${ps_deadletter_topic}" \
-        --max-delivery-attempts=5
+        --max-delivery-attempts=5 \
+        --min-retry-delay=10 \
+        --max-retry-delay=600
     gcloud pubsub subscriptions add-iam-policy-binding "${ps_input_subscrip}" \
         --member="serviceAccount:${service_account}" \
         --role="roles/pubsub.subscriber"
