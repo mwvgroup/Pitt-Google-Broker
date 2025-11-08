@@ -123,7 +123,7 @@ manage_resources() {
             --dead-letter-topic="${ps_deadletter_topic}" \
             --max-delivery-attempts=5 \
             --dead-letter-topic-project="${PROJECT_ID}" \
-            --message-transforms-file=templates/ps_lvk_add_top_level_fields_smt.yaml
+            --message-transforms-file=templates/smt_add_top_level_fields.yaml
 
         # set IAM policies on resources
         if [ "$testid" = "False" ]; then
