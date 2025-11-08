@@ -13,6 +13,7 @@ region="${4:-us-central1}"
 versiontag="${5:-v1_0}"
 # get the environment variable
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT
+PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format="value(projectNumber)")
 
 MODULE_NAME="alerts-to-storage"  # lower case required by cloud run
 ROUTE_RUN="/"  # url route that will trigger main.run()
