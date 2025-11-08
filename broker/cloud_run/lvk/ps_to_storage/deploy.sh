@@ -37,6 +37,7 @@ ps_input_subscrip=$(define_GCP_resources "${survey}-alerts_raw") # pub/sub subsc
 ps_topic_alerts_in_bucket=$(define_GCP_resources "projects/${PROJECT_ID}/topics/${survey}-alerts_in_bucket")
 ps_trigger_topic=$(define_GCP_resources "${survey}-alerts_raw")
 runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
+service_account="service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com"
 
 if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources
@@ -56,7 +57,7 @@ if [ "${teardown}" = "True" ]; then
     fi
 else
     echo
-    echo "Creating gcs_alerts_bucket and setting permissions..."
+    echo "Creating gcs_alert_bucket, uploading files, and setting permissions..."
     if ! gsutil ls -b "gs://${gcs_alerts_bucket}" >/dev/null 2>&1; then
         #--- Create the bucket that will store the alerts
         gsutil mb -b on -l "${region}" "gs://${gcs_alerts_bucket}"
@@ -72,7 +73,6 @@ else
         echo "${gcs_alerts_bucket} already exists."
     fi
 
-    #--- Setup the Pub/Sub notifications on the JSON storage bucket
     echo
     echo "Configuring Pub/Sub notifications on GCS bucket..."
     trigger_event=OBJECT_FINALIZE
@@ -102,4 +102,7 @@ else
         --push-auth-service-account="${runinvoker_svcact}" \
         --dead-letter-topic="${ps_deadletter_topic}" \
         --max-delivery-attempts=5
+    gcloud pubsub subscriptions add-iam-policy-binding "${ps_input_subscrip}" \
+        --member="serviceAccount:${service_account}" \
+        --role="roles/pubsub.subscriber"
 fi
