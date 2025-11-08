@@ -58,8 +58,8 @@ ps_topic_alerts=$(define_GCP_resources "${survey}-alerts")
 ps_subscription_reservoir=$(define_GCP_resources "${survey}-alerts-reservoir")
 # topics and subscriptions involved in writing alert data to BigQuery
 ps_bigquery_subscription=$(define_GCP_resources "${survey}-bigquery-import-${versiontag}")
-ps_deadletter_topic=$(define_GCP_resources "${survey}-deadletter")
-ps_deadletter_subscription="${ps_deadletter_topic}"
+ps_deadletter_subscription=$(define_GCP_resources "${survey}-deadletter")
+ps_deadletter_topic="${ps_deadletter_subscription}"
 
 # function used to create (or delete) GCP resources
 manage_resources() {
@@ -126,15 +126,17 @@ manage_resources() {
             --message-transforms-file=templates/ps_lvk_add_top_level_fields_smt.yaml
 
         # set IAM policies on resources
-        user="allUsers"
-        roleid="roles/pubsub.subscriber"
-        gcloud pubsub topics add-iam-policy-binding "${ps_topic_alerts}" --member="${user}" --role="${roleid}"
-        gcloud pubsub topics add-iam-policy-binding "${ps_deadletter_topic}" \
+        if [ "$testid" = "False" ]; then
+            user="allUsers"
+            roleid="roles/pubsub.subscriber"
+            gcloud pubsub topics add-iam-policy-binding "${ps_topic_alerts}" --member="${user}" --role="${roleid}"
+            gcloud pubsub topics add-iam-policy-binding "${ps_deadletter_topic}" \
                 --member="serviceAccount:${service_account}" \
                 --role="roles/pubsub.publisher"
-        gcloud pubsub subscriptions add-iam-policy-binding "${ps_bigquery_subscription}" \
+            gcloud pubsub subscriptions add-iam-policy-binding "${ps_bigquery_subscription}" \
                 --member="serviceAccount:${service_account}" \
-                --role="${roleid}"
+                --role="roles/pubsub.subscriber"
+        fi
 
         #--- Create Artifact Registry Repository
         echo
