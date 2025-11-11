@@ -1,5 +1,11 @@
 [
     {
+    "description": "The schema version of the alert.",
+    "mode": "REQUIRED",
+    "name": "schema_version",
+    "type": "STRING"
+    },
+    {
         "name": "follow_up_event",
         "type": "STRING",
         "mode": "NULLABLE",
@@ -262,5 +268,11 @@
         "type": "STRING",
         "mode": "NULLABLE",
         "description": "Additional information about the event."
+    },
+    {
+    "description": "Kafka timestamp from originating Swift alert.",
+    "mode": "REQUIRED",
+    "name": "kafkaPublishTimestamp",
+    "type": "TIMESTAMP"
     }
 ]
