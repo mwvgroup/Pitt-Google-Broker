@@ -1,5 +1,11 @@
 [
   {
+    "description": "The schema version of the alert.",
+    "mode": "NULLABLE",
+    "name": "schema_version",
+    "type": "STRING"
+  },
+  {
     "description": "The type of alert.",
     "mode": "REQUIRED",
     "name": "alert_type",
@@ -201,5 +207,11 @@
     "mode": "NULLABLE",
     "name": "external_coinc",
     "type": "RECORD"
+  },
+  {
+    "description": "Kafka timestamp from originating LVK alert.",
+    "mode": "NULLABLE",
+    "name": "kafkaPublishTimestamp",
+    "type": "TIMESTAMP"
   }
 ]
