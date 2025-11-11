@@ -159,7 +159,7 @@ manage_resources() {
             gcloud pubsub topics delete "${ps_topic_alerts}"
             gcloud pubsub topics delete "${ps_topic_alerts_raw}"
             gcloud pubsub topics delete "${ps_deadletter_topic}"
-            gcloud pubsub subscriptions delete "${ps_subscription_alerts_reservoir}"
+            gcloud pubsub subscriptions delete "${ps_subscription_reservoir}"
             gcloud pubsub subscriptions delete "${ps_deadletter_subscription}"
             gcloud pubsub subscriptions delete "${ps_bigquery_subscription}"
             echo
