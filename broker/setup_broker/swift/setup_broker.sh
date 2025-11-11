@@ -53,13 +53,13 @@ bq_dataset=$(define_GCP_resources "${survey}" "_")
 bq_table_alerts="alerts_${versiontag}"
 gcs_alerts_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}_alerts")
 gcs_broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
-ps_subscription_alerts_reservoir=$(define_GCP_resources "${survey}-alerts-reservoir")
-ps_topic_alerts=$(define_GCP_resources "${survey}-alerts")
 ps_topic_alerts_raw=$(define_GCP_resources "${survey}-alerts_raw")
+ps_topic_alerts=$(define_GCP_resources "${survey}-alerts")
+ps_subscription_reservoir=$(define_GCP_resources "${survey}-alerts-reservoir")
 # topics and subscriptions involved in writing alert data to BigQuery
 ps_bigquery_subscription=$(define_GCP_resources "${survey}-bigquery-import-${versiontag}")
-ps_deadletter_topic=$(define_GCP_resources "${survey}-deadletter")
-ps_deadletter_subscription="${ps_deadletter_topic}"
+ps_deadletter_subscription=$(define_GCP_resources "${survey}-deadletter")
+ps_deadletter_topic="${ps_deadletter_subscription}"
 
 # function used to create (or delete) GCP resources
 manage_resources() {
@@ -76,11 +76,15 @@ manage_resources() {
         echo "Creating BigQuery dataset and table..."
         if ! bq ls "${PROJECT_ID}:${bq_dataset}" >/dev/null 2>&1; then
             bq --location="${region}" mk --dataset "${bq_dataset}"
+            # grant public access to the dataset; for more information, see:
+            # https://cloud.google.com/bigquery/docs/control-access-to-resources-iam#grant_access_to_a_dataset
+            (cd templates && bq update --source "bq_${survey}_policy.json" "${PROJECT_ID}:${bq_dataset}") || exit 5
         else
             echo "${bq_dataset} already exists."
         fi
-        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}" "bq_${survey}_${bq_table_alerts}_schema.json") || exit 5
+        (cd templates && bq mk --table --time_partitioning_field=kafkaPublishTimestamp --time_partitioning_type=DAY "${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}" "bq_${survey}_${bq_table_alerts}_schema.json") || exit 5
         bq update --description "Swift/BAT-GUANO alerts with schema version v${schema_version}. This table is an archive of the swift-alerts Pub/Sub stream. It has the same schema as the original alert bytes, including repeated fields. Original alerts can be retrieved from the Cloud Storage bucket ${gcs_alerts_bucket}." "${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}"
+
         #--- Create GCS bucket
         echo
         echo "Creating broker_bucket and uploading files..."
@@ -106,8 +110,11 @@ manage_resources() {
         gcloud pubsub topics create "${ps_topic_alerts}"
         gcloud pubsub topics create "${ps_topic_alerts_raw}"
         gcloud pubsub topics create "${ps_deadletter_topic}"
-        gcloud pubsub subscriptions create "${ps_deadletter_subscription}" --topic="${ps_deadletter_topic}"
-        gcloud pubsub subscriptions create "${ps_subscription_alerts_reservoir}" --topic="${ps_topic_alerts}"
+        gcloud pubsub subscriptions create "${ps_deadletter_subscription}" \
+            --topic="${ps_deadletter_topic}"
+        gcloud pubsub subscriptions create "${ps_subscription_reservoir}" \
+            --topic="${ps_topic_alerts}"
+        # create subscription to load alerts to BigQuery
         gcloud pubsub subscriptions create "${ps_bigquery_subscription}" \
             --topic="${ps_topic_alerts}" \
             --bigquery-table="${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}" \
@@ -115,16 +122,20 @@ manage_resources() {
             --drop-unknown-fields \
             --dead-letter-topic="${ps_deadletter_topic}" \
             --max-delivery-attempts=5 \
-            --dead-letter-topic-project="${PROJECT_ID}"
+            --dead-letter-topic-project="${PROJECT_ID}" \
+            --message-transforms-file=templates/smt_add_top_level_fields.yaml
+
         # set IAM policies on public Pub/Sub resources
         if [ "$testid" = "False" ]; then
             user="allUsers"
-            roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/userPublic"
+            roleid="roles/pubsub.subscriber"
             gcloud pubsub topics add-iam-policy-binding "${ps_topic_alerts}" --member="${user}" --role="${roleid}"
-            gcloud pubsub topics add-iam-policy-binding "${ps_topic_alerts_raw}" --member="${user}" --role="${roleid}"
-            # grant public access to the dataset; for more information, see:
-            # https://cloud.google.com/bigquery/docs/control-access-to-resources-iam#grant_access_to_a_dataset
-            (cd templates && bq update --source "bq_${survey}_policy.json" "${PROJECT_ID}:${bq_dataset}") || exit 5
+            gcloud pubsub topics add-iam-policy-binding "${ps_deadletter_topic}" \
+                --member="serviceAccount:${service_account}" \
+                --role="roles/pubsub.publisher"
+            gcloud pubsub subscriptions add-iam-policy-binding "${ps_bigquery_subscription}" \
+                --member="serviceAccount:${service_account}" \
+                --role="roles/pubsub.subscriber"
         fi
 
         #--- Create Artifact Registry Repository
@@ -133,12 +144,10 @@ manage_resources() {
         gcloud artifacts repositories create "${artifact_registry_repo}" --repository-format=docker \
             --location="${region}" --description="Docker repository for Cloud Run services" \
             --project="${PROJECT_ID}"
-
     else
         if [ "$environment_type" = "testing" ]; then
             # delete testing resources
             # Note: create_vm.sh will delete the VM instance
-            #--- Delete GCS bucket
             echo
             echo "Deleting broker_bucket..."
             o="GSUtil:parallel_process_count=1" # disable multiprocessing for Macs
