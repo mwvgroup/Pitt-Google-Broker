@@ -141,3 +141,7 @@ scratch.py
 
 # Temp files
 *+
+*~
+.#*
+*.elc
+\#*

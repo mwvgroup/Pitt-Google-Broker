@@ -1,17 +1,17 @@
-variable "survey" {
-  description = "Survey the broker is operating on."
-  type = object({
+variable "classifier" {
+  description = "The survey's model settings"
+  type = object ({
     name = string
-    alerts_schema_version = string
-    # Service accounts
-    publisher_sa = string
-    runner_sa = string
-    appengine_deployer_sa = string
-    consumer {
-      admin_properties_file = string
-    }
+    table_schema_file = string
   })
-  nullable = false
+}
+
+variable "broker" {
+  description = "How the classifier will plug in to the broker"
+  type = object({
+    dataset_id = string
+    pubsub_topic = string
+  })
 }
 
 variable "project" {
@@ -36,3 +36,4 @@ variable "environment" {
     test_suffix = string
   })
 }
+
