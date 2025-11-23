@@ -4,37 +4,26 @@ variable "alerts_schema_version" {
   default = "7.4"
   nullable = false
 }
-variable "project_id" {
-  description = "GCP project number for the broker."
-  type = string
-  nullable = false
+
+variable "project" {
+  description = "Project configuration settings"
+  type = object({
+    id = string
+    number = number
+    region = string
+    zone = string
+    # IAM settings
+    owners = list(string)
+    editors = list(string)
+    viewers = list(string)
+  })
 }
-variable "prod" {
-  description = "If true, set up for production. Otherwise, will be test."
-  type = bool
-  default = false
-  nullable = false
-}
-variable "test_suffix" {
-  description = "Suffix to use for non-production resources. Only used if prod is false."
-  type = string
-  default = "test"
-  nullable = false
-}
-variable "project_number" {
-  description = "GCP project number corresponding to project_id."
-  type = number
-  nullable = false
-}
-variable "region" {
-  description = "Region for GCP resources."
-  type = string
-  default = "us-central1"
-  nullable = false
-}
-variable "zone" {
-  description = "Zone for resources."
-  type = string
-  default = "us-central1-a"
-  nullable = false
+
+variable "environment" {
+  description = "Environment configuration (prod, testing, etc.)"
+  type = object({
+    prod = bool
+    # test_suffix is ignored if prod is true.
+    test_suffix = string
+  })
 }

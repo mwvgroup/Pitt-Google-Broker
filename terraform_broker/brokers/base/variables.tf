@@ -7,6 +7,9 @@ variable "survey" {
     publisher_sa = string
     runner_sa = string
     appengine_deployer_sa = string
+    consumer {
+      admin_properties_file = string
+    }
   })
   nullable = false
 }
