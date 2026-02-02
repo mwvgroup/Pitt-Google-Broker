@@ -180,9 +180,7 @@ def _stetson_J(fluxes: np.ndarray, errors: np.ndarray) -> float:
     return np.mean(np.sign(p_k) * np.sqrt(np.fabs(p_k)))
 
 
-def _stetson_mean(
-    values: np.ndarray, errors: np.ndarray, mean=None, alpha=2.0, beta=2.0, n_iter=20, tol=1e-6
-) -> float:
+def _stetson_mean(values: np.ndarray, errors: np.ndarray, mean=None) -> float:
     """Adapted from:
     https://github.com/lsst/meas_base/blob/013ef565331c896a3fd73aefec294de42bc66371/python/lsst/meas/base/diaCalculationPlugins.py#L1309
 
@@ -217,6 +215,11 @@ def _stetson_mean(
     .. [1] Stetson, P. B., "On the Automatic Determination of Light-Curve Parameters for Cepheid Variables", PASP, 108,
     851S, 1996
     """
+    # define constants
+    alpha = 2.0
+    beta = 2.0
+    n_iter = 20
+    tol = 1e-6
 
     n_points = len(values)
     n_factor = np.sqrt(n_points / (n_points - 1))
