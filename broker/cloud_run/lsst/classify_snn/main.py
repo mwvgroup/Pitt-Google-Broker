@@ -128,43 +128,51 @@ def _classify(alert_lite: pittgoogle.Alert) -> dict:
 
 def _format_for_classifier(alert_lite: pittgoogle.Alert) -> pd.DataFrame:
     """Create a DataFrame for input to SuperNNova."""
+
     alert_lite_dict = alert_lite.dict["alert_lite"]
-    alert_df = _create_dataframe(alert_lite_dict)
-    snn_df = pd.DataFrame(
-        data={
-            # select a subset of columns and rename them for SuperNNova
-            # get_key returns the name that the survey uses for a given field
-            # for the full mapping, see alert.schema.map
-            "SNID": [alert_lite_dict["diaObject"]["diaObjectId"]] * len(alert_df.index),
-            "FLT": alert_df["band"],
-            "MJD": alert_df["midpointMjdTai"],
-            "FLUXCAL": alert_df["psfFlux"],
-            "FLUXCALERR": alert_df["psfFluxErr"],
-        },
-        index=alert_df.index,
+    # create DataFrame from alert_lite_dict containing the columns SuperNNova expects
+    filtered_df = _create_dataframe(alert_lite_dict)
+    filtered_df = filtered_df.rename(
+        columns={
+            "band": "FLT",
+            "midpointMjdTai": "MJD",
+            "psfFlux": "FLUXCAL",
+            "psfFluxErr": "FLUXCALERR",
+        }
     )
+    filtered_df["SNID"] = alert_lite_dict["diaObject"]["diaObjectId"]
+    filtered_df = filtered_df[["SNID", "FLT", "MJD", "FLUXCAL", "FLUXCALERR"]]
 
-    return snn_df
+    return filtered_df
 
 
-def _create_dataframe(alert_dict: dict) -> "pd.DataFrame":
-    """Return a pandas DataFrame containing the source detections."""
+def _create_dataframe(alert_lite_dict: dict) -> pd.DataFrame:
+    """Create a DataFrame object from the alert lite dictionary."""
 
-    # sources and previous sources are expected to have the same fields
-    sources_df = pd.DataFrame(
-        [alert_dict.get("diaSource")] + (alert_dict.get("prvDiaSources") or [])
-    )
-    # sources and forced sources may have different fields
-    forced_df = pd.DataFrame(alert_dict.get("prvDiaForcedSources") or [])
+    required_cols = [
+        "band",
+        "midpointMjdTai",
+        "psfFlux",
+        "psfFluxErr",
+    ]  # columns required by SuperNNova
 
-    # use nullable integer data type to avoid converting ints to floats
-    # for columns in one dataframe but not the other
-    sources_ints = [c for c, v in sources_df.dtypes.items() if v == int]
-    sources_df = sources_df.astype(
-        {c: "Int64" for c in set(sources_ints) - set(forced_df.columns)}
-    )
-    forced_ints = [c for c, v in forced_df.dtypes.items() if v == int]
-    forced_df = forced_df.astype({c: "Int64" for c in set(forced_ints) - set(sources_df.columns)})
-    _dataframe = pd.concat([sources_df, forced_df], ignore_index=True)
+    # extract fields and create filtered DataFrames
+    sources = [alert_lite_dict.get("diaSource")] + (alert_lite_dict.get("prvDiaSources") or [])
+    forced_sources = alert_lite_dict.get("prvDiaForcedSources") or []
+    sources_df = pd.DataFrame(filter_columns(sources, required_cols))
+    forced_df = pd.DataFrame(filter_columns(forced_sources, required_cols))
 
-    return _dataframe
+    # concatenate diaSource, prvDiaSources, and prvDiaForcedSources into a single DataFrame
+    df = pd.concat([sources_df, forced_df], ignore_index=True)
+
+    return df
+
+
+def filter_columns(field_list, required_cols):
+    """Extract only relevant columns if they exist."""
+
+    return [
+        {k: field.get(k) for k in required_cols if k in field}
+        for field in field_list
+        if field is not None
+    ]
