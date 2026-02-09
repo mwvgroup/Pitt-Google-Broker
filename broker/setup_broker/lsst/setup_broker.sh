@@ -8,7 +8,7 @@ testid="${1:-test}"
 teardown="${2:-False}"
 # name of the survey this broker instance will ingest
 survey="${3:-lsst}"
-schema_version="${4:-9.0}"
+schema_version="${4:-10.0}"
 versiontag=v$(echo "${schema_version}" | tr . _) # 9.0 -> v9_0
 region="${5:-us-central1}"
 zone="${region}-a"  # just use zone "a" instead of adding another script arg

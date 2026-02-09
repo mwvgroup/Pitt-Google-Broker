@@ -8,14 +8,14 @@ testid="${1:-test}"
 # "True" tearsdown/deletes resources, else setup
 teardown="${2:-False}"
 # name of the survey this broker instance will ingest
-survey="${3:-lsst}"
+survey="${3:-lvk}"
 region="${4:-us-central1}"
+versiontag="${5:-v1_0}"
 # get the environment variable
-BASE_DIR=$(pwd)
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT
 PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format="value(projectNumber)")
 
-MODULE_NAME="variability"  # lower case required by cloud run
+MODULE_NAME="alerts-to-storage"  # lower case required by cloud run
 ROUTE_RUN="/"  # url route that will trigger main.run()
 
 define_GCP_resources() {
@@ -31,56 +31,67 @@ define_GCP_resources() {
 
 #--- GCP resources used in this script
 artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
-bq_dataset=$(define_GCP_resources "${survey}" "_")
-bq_table="variability"
 cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}")  # lower case required by cloud run
-ps_input_subscrip=$(define_GCP_resources "${survey}-${MODULE_NAME}") # pub/sub subscription used to trigger cloud run module
-ps_output_topic=$(define_GCP_resources "${survey}-${MODULE_NAME}")
-ps_trigger_topic=$(define_GCP_resources "${survey}-lite")
+gcs_alerts_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}_alerts")
+ps_deadletter_topic=$(define_GCP_resources "${survey}-deadletter")
+ps_input_subscrip=$(define_GCP_resources "${survey}-alerts_raw") # pub/sub subscription used to trigger cloud run module
+ps_topic_alerts_in_bucket=$(define_GCP_resources "projects/${PROJECT_ID}/topics/${survey}-alerts_in_bucket")
+ps_trigger_topic=$(define_GCP_resources "${survey}-alerts_raw")
 runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
 service_account="service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com"
-# topics and subscriptions involved in writing data to BigQuery
-ps_bigquery_subscription=$(define_GCP_resources "${survey}-${MODULE_NAME}-bigquery-import")
-ps_deadletter_topic=$(define_GCP_resources "${survey}-deadletter")
 
 if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources
     if [ "${testid}" != "False" ]; then
         echo
         echo "Deleting resources for ${MODULE_NAME} module..."
-        gcloud pubsub topics delete "${ps_output_topic}"
-        gcloud pubsub subscriptions delete "${ps_bigquery_subscription}"
+        gsutil rm -r "gs://${gcs_alerts_bucket}"
         gcloud pubsub subscriptions delete "${ps_input_subscrip}"
+        gcloud pubsub topics delete "${ps_topic_alerts_in_bucket}"
         gcloud run services delete "${cr_module_name}" --region "${region}"
+    else
+        echo 'ERROR: No testid supplied.'
+        echo 'To avoid accidents, this script will not delete production resources.'
+        echo 'If that is your intention, you must delete them manually.'
+        echo 'Otherwise, please supply a testid.'
+        exit 1
     fi
 else
     echo
-    echo "Configuring Pub/Sub resources for ${MODULE_NAME} module..."
-    gcloud pubsub topics create "${ps_output_topic}"
-    gcloud pubsub subscriptions create "${ps_bigquery_subscription}" \
-        --topic="${ps_output_topic}" \
-        --bigquery-table="${PROJECT_ID}:${bq_dataset}.${bq_table}" \
-        --use-table-schema \
-        --drop-unknown-fields \
-        --dead-letter-topic="${ps_deadletter_topic}" \
-        --max-delivery-attempts=5 \
-        --dead-letter-topic-project="${PROJECT_ID}" \
-        --message-transforms-file="${BASE_DIR%%/cloud_run/*}/setup_broker/lsst/templates/ps_lsst_flatten_schema_smt.yaml"
-    # set IAM policies on public Pub/Sub resources
-    if [ "$testid" = "False" ]; then
-        user="allUsers"
-        roleid="roles/pubsub.subscriber"
-        gcloud pubsub topics add-iam-policy-binding "${ps_output_topic}" --member="${user}" --role="${roleid}"
-        gcloud pubsub subscriptions add-iam-policy-binding "${ps_bigquery_subscription}" --member="serviceAccount:${service_account}" --role="${roleid}"
+    echo "Creating gcs_alert_bucket, uploading files, and setting permissions..."
+    if ! gsutil ls -b "gs://${gcs_alerts_bucket}" >/dev/null 2>&1; then
+        #--- Create the bucket that will store the alerts
+        gsutil mb -b on -l "${region}" "gs://${gcs_alerts_bucket}"
+        gsutil uniformbucketlevelaccess set on "gs://${gcs_alerts_bucket}"
+        gsutil requesterpays set on "gs://${gcs_alerts_bucket}"
+        # set IAM policies on public GCP resources
+        if [ "$testid" = "False" ]; then
+            gcloud storage buckets add-iam-policy-binding "gs://${gcs_alerts_bucket}" \
+                --member="allUsers" \
+                --role="roles/storage.objectViewer"
+        fi
+    else
+        echo "${gcs_alerts_bucket} already exists."
     fi
+
+    echo
+    echo "Configuring Pub/Sub notifications on GCS bucket..."
+    trigger_event=OBJECT_FINALIZE
+    format=json  # json or none; if json, file metadata sent in message body
+    gsutil notification create \
+        -t "$ps_topic_alerts_in_bucket" \
+        -e "$trigger_event" \
+        -f "$format" \
+        "gs://${gcs_alerts_bucket}"
 
     #--- Deploy Cloud Run service
     echo
     echo "Creating container image for ${MODULE_NAME} module and deploying to Cloud Run..."
-    moduledir="."  # deploys what's in our current directory
+    moduledir="."  # assumes deploying what's in our current directory
     config="${moduledir}/cloudbuild.yaml"
+    # deploy the service and capture the endpoint's URL
     url=$(gcloud builds submit --config="${config}" \
-        --substitutions="_SURVEY=${survey},_TESTID=${testid},_MODULE_NAME=${cr_module_name},_REPOSITORY=${artifact_registry_repo}" \
+        --substitutions="_SURVEY=${survey},_TESTID=${testid},_MODULE_NAME=${cr_module_name},_REPOSITORY=${artifact_registry_repo},_VERSIONTAG=${versiontag}" \
         "${moduledir}" | sed -n 's/^Step #2: Service URL: \(.*\)$/\1/p')
     echo
     echo "Creating trigger subscription for ${MODULE_NAME} Cloud Run service..."
