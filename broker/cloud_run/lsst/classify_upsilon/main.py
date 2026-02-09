@@ -98,7 +98,7 @@ def run() -> tuple[str, int]:
 
 def _classify(alert_lite: pittgoogle.Alert) -> dict:
     upsilon_dict = {}
-    alert_lite_df = _create_lite_dataframe(alert_lite.dict["alert_lite"])
+    alert_lite_df = _create_dataframe(alert_lite.dict["alert_lite"])
     is_ssobject = bool(alert_lite.attributes.get("ssSource_ssObjectId"))
 
     for band in SURVEY_BANDS:
@@ -133,27 +133,36 @@ def _classify(alert_lite: pittgoogle.Alert) -> dict:
     return upsilon_dict
 
 
-def _create_lite_dataframe(alert_dict: dict) -> pd.DataFrame:
-    """Return a pandas DataFrame containing the source detections."""
+def _create_dataframe(alert_lite_dict: dict) -> pd.DataFrame:
+    """Create a DataFrame object from the alert lite dictionary."""
 
-    # sources and previous sources are expected to have the same fields
-    sources_df = pd.DataFrame(
-        [alert_dict.get("diaSource")] + (alert_dict.get("prvDiaSources") or [])
-    )
-    # sources and forced sources may have different fields
-    forced_df = pd.DataFrame(alert_dict.get("prvDiaForcedSources") or [])
+    required_cols = [
+        "band",
+        "midpointMjdTai",
+        "psfFlux",
+        "psfFluxErr",
+    ]  # columns required by SuperNNova
 
-    # use nullable integer data type to avoid converting ints to floats
-    # for columns in one dataframe but not the other
-    sources_ints = [c for c, v in sources_df.dtypes.items() if v == int]
-    sources_df = sources_df.astype(
-        {c: "Int64" for c in set(sources_ints) - set(forced_df.columns)}
-    )
-    forced_ints = [c for c, v in forced_df.dtypes.items() if v == int]
-    forced_df = forced_df.astype({c: "Int64" for c in set(forced_ints) - set(sources_df.columns)})
+    # extract fields and create filtered DataFrames
+    sources = [alert_lite_dict.get("diaSource")] + (alert_lite_dict.get("prvDiaSources") or [])
+    forced_sources = alert_lite_dict.get("prvDiaForcedSources") or []
+    sources_df = pd.DataFrame(filter_columns(sources, required_cols))
+    forced_df = pd.DataFrame(filter_columns(forced_sources, required_cols))
 
-    _dataframe = pd.concat([sources_df, forced_df], ignore_index=True)
-    return _dataframe
+    # concatenate diaSource, prvDiaSources, and prvDiaForcedSources into a single DataFrame
+    df = pd.concat([sources_df, forced_df], ignore_index=True)
+
+    return df
+
+
+def filter_columns(field_list, required_cols):
+    """Extract only relevant columns if they exist."""
+
+    return [
+        {k: field.get(k) for k in required_cols if k in field}
+        for field in field_list
+        if field is not None
+    ]
 
 
 def _convert_flux_to_mag(flux: np.ndarray) -> np.ndarray:
