@@ -13,7 +13,7 @@ region="${4:-us-central1}"
 # get the environment variable
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT
 
-MODULE_NAME="vitune"  # lower case required by cloud run
+MODULE_NAME="autotune"  # lower case required by cloud run
 ROUTE_RUN="/"  # url route that will trigger main.run()
 
 define_GCP_resources() {
@@ -30,10 +30,10 @@ define_GCP_resources() {
 #--- GCP resources used in this script
 artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
 bq_dataset=$(define_GCP_resources "${survey}" "_")
-bq_table="vitune"
+bq_table="autotune"
 cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}")  # lower case required by cloud run
-ps_input_subscrip=$(define_GCP_resources "${survey}-vitune") # pub/sub subscription used to trigger cloud run module
-ps_output_topic=$(define_GCP_resources "${survey}-vitune")
+ps_input_subscrip=$(define_GCP_resources "${survey}-autotune") # pub/sub subscription used to trigger cloud run module
+ps_output_topic=$(define_GCP_resources "${survey}-autotune")
 ps_trigger_topic=$(define_GCP_resources "${survey}-lite")
 runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
 # topics and subscriptions involved in writing data to BigQuery
