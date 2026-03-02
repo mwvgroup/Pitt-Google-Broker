@@ -66,7 +66,7 @@ else
         --dead-letter-topic="${ps_deadletter_topic}" \
         --max-delivery-attempts=5 \
         --dead-letter-topic-project="${PROJECT_ID}" \
-        --message-transforms-file="${BASE_DIR%%/cloud_run/*}/setup_broker/lsst/templates/smt_flatten_schema.yaml"
+        --message-transforms-file="${BASE_DIR%%/cloud_run/*}/setup_broker/lsst/templates/ps_smt_flatten_schema.yaml"
     # set IAM policies on public Pub/Sub resources
     if [ "$testid" = "False" ]; then
         user="allUsers"
