@@ -1,6 +1,6 @@
 [
     {
-      "description": "Identifier of the triggering DiaSource.",
+      "description": "Unique identifier of this DiaSource.",
       "mode": "REQUIRED",
       "name": "diaSourceId",
       "type": "INTEGER"
