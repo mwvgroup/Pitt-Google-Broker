@@ -33,6 +33,7 @@ LITE_FIELDS_CONFIG = {
     "diaSource": {
         "fields": {
             "diaSourceId",
+            "visit",
             "midpointMjdTai",
             "ra",
             "raErr",
@@ -47,6 +48,7 @@ LITE_FIELDS_CONFIG = {
     "prvDiaSources": {
         "fields": {
             "diaSourceId",
+            "visit",
             "midpointMjdTai",
             "ra",
             "raErr",
@@ -168,7 +170,7 @@ def _create_lite_alert(alert: pittgoogle.Alert) -> pittgoogle.Alert:
     )
 
 
-def _process_field(original_value: Any, config: dict) -> Any:
+def _process_field(original_value: dict | list[dict] | None, config: dict) -> dict | list[dict]:
     """Filters a dictionary or a list of dictionaries based on the provided configuration."""
     whitelisted_fields = config["fields"]
 
