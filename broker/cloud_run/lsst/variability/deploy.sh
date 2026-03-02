@@ -65,7 +65,7 @@ else
         --dead-letter-topic="${ps_deadletter_topic}" \
         --max-delivery-attempts=5 \
         --dead-letter-topic-project="${PROJECT_ID}" \
-        --message-transforms-file="${BASE_DIR%%/cloud_run/*}/setup_broker/lsst/templates/ps_lsst_flatten_schema_smt.yaml"
+        --message-transforms-file="${BASE_DIR%%/cloud_run/*}/setup_broker/lsst/templates/ps_smt_flatten_schema.yaml"
     # set IAM policies on public Pub/Sub resources
     if [ "$testid" = "False" ]; then
         user="allUsers"
@@ -91,7 +91,9 @@ else
         --push-endpoint="${url}${ROUTE_RUN}" \
         --push-auth-service-account="${runinvoker_svcact}" \
         --dead-letter-topic="${ps_deadletter_topic}" \
-        --max-delivery-attempts=5
+        --max-delivery-attempts=5 \
+        --min-retry-delay=10 \
+        --max-retry-delay=600
     gcloud pubsub subscriptions add-iam-policy-binding "${ps_input_subscrip}" \
         --member="serviceAccount:${service_account}" \
         --role="roles/pubsub.subscriber"

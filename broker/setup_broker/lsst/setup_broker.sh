@@ -128,8 +128,7 @@ manage_resources() {
         gcloud pubsub topics create "${ps_topic_alerts_raw}"
         gcloud pubsub topics create "${ps_topic_alerts}"
         gcloud pubsub topics create "${ps_topic_alerts_json}"
-        gcloud pubsub topics create "${ps_topic_alerts_lite}" \
-            --message-transforms-file=templates/ps_lsst_lite_smt.yaml
+        gcloud pubsub topics create "${ps_topic_alerts_lite}"
         gcloud pubsub topics create "${ps_deadletter_topic}"
         gcloud pubsub subscriptions create "${ps_deadletter_subscription}" \
             --topic="${ps_deadletter_topic}"
@@ -144,7 +143,7 @@ manage_resources() {
             --max-delivery-attempts=5 \
             --dead-letter-topic-project="${PROJECT_ID}" \
             --message-filter='attributes.schema_version = "'"${versiontag}"'"' \
-            --message-transforms-file=templates/ps_lsst_add_top_level_fields_smt.yaml
+            --message-transforms-file=templates/ps_smt_add_top_level_fields.yaml
         # set IAM policies on public Pub/Sub resources
         if [ "$testid" = "False" ]; then
             user="allUsers"
