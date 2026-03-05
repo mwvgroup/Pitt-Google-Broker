@@ -29,7 +29,6 @@ ROUTE_RUN = "/"  # HTTP route that will trigger run(). Must match deploy.sh
 # Variables for outgoing data
 HTTP_204 = 204  # HTTP code: Success
 HTTP_400 = 400  # HTTP code: Bad Request
-module_version = {"module_version": "v0.1"}
 
 # GCP resources used in this module
 TOPIC = pittgoogle.Topic.from_cloud("lensing", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID)
@@ -77,10 +76,9 @@ def run():
         pittgoogle.Alert.from_dict(
             {
                 "alert_lite": alert_lite.dict["alert_lite"],
-                "strong_lensing": {
+                "lensing": {
                     **flux_ratio,
                     **is_lensed_sn_candidate,
-                    **module_version,
                 },
             },
             attributes={**alert_lite.attributes, **pg_variable},

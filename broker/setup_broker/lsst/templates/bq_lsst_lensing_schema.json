@@ -40,11 +40,5 @@
       "mode": "REQUIRED",
       "name": "kafkaPublishTimestamp",
       "type": "TIMESTAMP"
-    },
-    {
-      "description": "Module version.",
-      "mode": "NULLABLE",
-      "name": "module_version",
-      "type": "STRING"
     }
 ]
