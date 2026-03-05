@@ -4,7 +4,6 @@
 """This module produces "value-added" lite alerts that flags strongly lensed supernova candidates."""
 
 import os
-from typing import Dict
 import numpy as np
 import pandas as pd
 import flask
@@ -121,7 +120,7 @@ def create_dataframe(alert_lite_dict: dict) -> pd.DataFrame:
     # concatenate diaSource, prvDiaSources, and prvDiaForcedSources into a single DataFrame
     df = pd.concat([sources_df, forced_df], ignore_index=True)
 
-    return df
+    return df.sort_values("midpointMjdTai", ascending=False)
 
 
 def compute_flux_ratio(alert_df, flux_based_extendedness_cutoff=10**1):
@@ -131,7 +130,6 @@ def compute_flux_ratio(alert_df, flux_based_extendedness_cutoff=10**1):
     """
 
     # calculate the ratio of aperture flux to PSF flux for the diaSource
-    alert_df = alert_df.sort_values("midpointMjdTai", ascending=False)
     flux_ratio = alert_df["apFlux"].iloc[0] / alert_df["psfFlux"].iloc[0]
 
     # require at least two detections of the diaObject in a single band
@@ -162,9 +160,9 @@ def check_supernova_color_magnitude_criteria(
     def convert_flux_to_mag(psfFlux):
         return -2.5 * np.log10(psfFlux) + 31.4
 
-    # extract and sort the 'r' and 'i' band photometry if it exists
-    r_band_photometry = alert_df[alert_df["band"] == "r"].sort_values("midpointMjdTai")
-    i_band_photometry = alert_df[alert_df["band"] == "i"].sort_values("midpointMjdTai")
+    # extract the 'r' and 'i' band photometry if it exists
+    r_band_photometry = alert_df[alert_df["band"] == "r"]
+    i_band_photometry = alert_df[alert_df["band"] == "i"]
     if r_band_photometry.empty or i_band_photometry.empty:
         # observations in one of the two required bands does not exist
         return not_a_candidate
