@@ -30,7 +30,7 @@
       "type": "BOOLEAN"
     },
     {
-      "description": "The diaSource is a strongly lensed supernova candidate.",
+      "description": "The diaSource is a strongly lensed supernova candidate based on color.",
       "mode": "NULLABLE",
       "name": "lensed_sn_candidate",
       "type": "BOOLEAN"
@@ -40,5 +40,11 @@
       "mode": "REQUIRED",
       "name": "kafkaPublishTimestamp",
       "type": "TIMESTAMP"
+    },
+    {
+      "description": "Module version.",
+      "mode": "NULLABLE",
+      "name": "module_version",
+      "type": "STRING"
     }
 ]

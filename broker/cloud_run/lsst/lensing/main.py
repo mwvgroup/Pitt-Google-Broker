@@ -30,6 +30,7 @@ ROUTE_RUN = "/"  # HTTP route that will trigger run(). Must match deploy.sh
 # Variables for outgoing data
 HTTP_204 = 204  # HTTP code: Success
 HTTP_400 = 400  # HTTP code: Bad Request
+module_version = {"module_version": "v0.1"}
 
 # GCP resources used in this module
 TOPIC = pittgoogle.Topic.from_cloud("lensing", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID)
@@ -66,6 +67,8 @@ def run():
     flux_ratio = compute_flux_ratio(alert_lite_df)
     is_lensed_sn_candidate = check_supernova_color_magnitude_criteria(alert_lite_df)
 
+    pg_variable = {"pg_lensed_sn_candidate": False}
+
     if flux_ratio.get("extended_object_candidate", False) and is_lensed_sn_candidate.get(
         "lensed_sn_candidate", False
     ):
@@ -75,7 +78,11 @@ def run():
         pittgoogle.Alert.from_dict(
             {
                 "alert_lite": alert_lite.dict["alert_lite"],
-                "strong_lensing": {**flux_ratio, **is_lensed_sn_candidate},
+                "strong_lensing": {
+                    **flux_ratio,
+                    **is_lensed_sn_candidate,
+                    **module_version,
+                },
             },
             attributes={**alert_lite.attributes, **pg_variable},
             schema_name="default",
