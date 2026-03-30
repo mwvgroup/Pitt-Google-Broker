@@ -190,12 +190,12 @@ def compute_flux_ratio(
     if qualifying_extended_bands < 2:
         return {
             "flux_ratio": float(alert_df["flux_ratio"].iloc[0]),
-            "extended_candidate": False,
+            "extended_object_candidate": False,
         }
 
     return {
         "flux_ratio": float(alert_df["flux_ratio"].iloc[0]),
-        "extended_candidate": True,
+        "extended_object_candidate": True,
     }
 
 
