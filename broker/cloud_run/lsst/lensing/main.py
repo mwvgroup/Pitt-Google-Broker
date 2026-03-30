@@ -251,8 +251,8 @@ def check_supernova_color_magnitude_criteria(
 
     # create a time-aligned DataFrame of paired r/i observations for the diaObject
     matched = pd.merge_asof(
-        r_band_photometry,
-        i_band_photometry,
+        r_band_photometry.sort_values("midpointMjdTai"),
+        i_band_photometry.sort_values("midpointMjdTai"),
         on="midpointMjdTai",
         direction="nearest",
         tolerance=max_time_diff,
