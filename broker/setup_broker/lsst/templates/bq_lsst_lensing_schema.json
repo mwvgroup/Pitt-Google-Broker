@@ -26,7 +26,7 @@
     {
       "description": "The diaSource is an extended-object candidate.",
       "mode": "NULLABLE",
-      "name": "extended_object_candidate",
+      "name": "extended_candidate",
       "type": "BOOLEAN"
     },
     {
