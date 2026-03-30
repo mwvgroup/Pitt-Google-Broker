@@ -59,14 +59,13 @@ def run():
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
+    # create the alert lite DataFrame and apply selection criteria
     alert_lite_df = create_dataframe(alert_lite.dict["alert_lite"])
-
-    # apply selection criteria to the alert
     flux_ratio = compute_flux_ratio(alert_lite_df)
     is_lensed_sn_candidate = check_supernova_color_magnitude_criteria(alert_lite_df)
 
+    # assign value to outgoing pittgoogle Pub/Sub message attribute
     pg_variable = {"pg_lensed_sn_candidate": False}
-
     if flux_ratio.get("extended_object_candidate", False) and is_lensed_sn_candidate.get(
         "lensed_sn_candidate", False
     ):
@@ -90,7 +89,21 @@ def run():
 
 
 def create_dataframe(alert_lite_dict: dict) -> pd.DataFrame:
-    """Create a DataFrame object from the alert lite dictionary."""
+    """Create a DataFrame object from the alert lite dictionary.
+
+    Parameters
+    ----------
+    alert_lite_dict : dict
+        Dictionary representation of an alert lite packet, expected to contain keys: diaSource, prvDiaSources, and
+        prvDiaForcedSources.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame containing columns: band, midpointMjdTai, psfFlux, apFlux, and visit, sorted by midpointMjdTai in
+        descending order. Rows are drawn from the diaSource, prvDiaSources, and prvDiaForcedSources fields of the
+        alert lite packet.
+    """
 
     required_cols = [
         "band",
@@ -100,8 +113,21 @@ def create_dataframe(alert_lite_dict: dict) -> pd.DataFrame:
         "visit",
     ]
 
-    def filter_columns(field_list, required_cols):
-        """Extract only relevant columns if they exist."""
+    def filter_columns(field_list: list[dict], required_cols: list[str]) -> list[dict]:
+        """Extract only relevant columns if they exist.
+
+        Parameters
+        ----------
+        field_list : list[dict]
+            List of diaSource or diaForcedSource dictionaries to filter.
+        required_cols : list[str]
+            Column names to retain from each dictionary.
+
+        Returns
+        -------
+        list[dict]
+            List of dictionaries containing only the keys present in required_cols, with None entries removed.
+        """
 
         return [
             {k: field.get(k) for k in required_cols if k in field}
@@ -116,41 +142,99 @@ def create_dataframe(alert_lite_dict: dict) -> pd.DataFrame:
     forced_df = pd.DataFrame(filter_columns(forced_sources, required_cols))
 
     # concatenate diaSource, prvDiaSources, and prvDiaForcedSources into a single DataFrame
-    df = pd.concat([sources_df, forced_df], ignore_index=True)
+    df = pd.concat([sources_df, forced_df], ignore_index=True).sort_values(
+        "midpointMjdTai", ascending=False
+    )
 
-    return df.sort_values("midpointMjdTai", ascending=False)
+    return df
 
 
-def compute_flux_ratio(alert_df, flux_based_extendedness_cutoff=10**1):
+def compute_flux_ratio(
+    alert_df: pd.DataFrame,
+    flux_based_extendedness_cutoff: float = 10**1,
+) -> dict[str, float | bool]:
+    """Calculate the ratio of aperture flux to PSF flux for a given diaSource and flag it as an extended candidate
+    if the ratio exceeds a cutoff value in at least two visits across at least two distinct bands.
+
+    Parameters
+    ----------
+    alert_df : pd.DataFrame
+        DataFrame containing diaSource and associated previous source detections, with columns apFlux, psfFlux, band,
+        and visit.
+    flux_based_extendedness_cutoff : float, optional
+        Minimum flux ratio (aperture / PSF) required to flag a detection as extended. Defaults to 10.
+
+    Returns
+    -------
+    dict[str, float | bool]
+        Dictionary with keys:
+
+        - flux_ratio (float): Aperture-to-PSF flux ratio for the most recent diaSource.
+        - extended_candidate (bool): True if at least two bands each contain at least two visits where the flux ratio
+          exceeds flux_based_extendedness_cutoff
     """
-    Calculates the ratio of aperture flux to PSF flux for a given diaSource. Flags the diaSource as an extended
-    candidate when this ratio exceeds a specified cutoff value.
-    """
 
-    # calculate the ratio of aperture flux to PSF flux for the diaSource
-    flux_ratio = alert_df["apFlux"].iloc[0] / alert_df["psfFlux"].iloc[0]
+    # calculate the ratio of aperture flux to PSF flux for the diaObject and flag if it is an extended candidate
+    alert_df["flux_ratio"] = alert_df["apFlux"] / alert_df["psfFlux"]
+    alert_df["extended_candidate"] = alert_df["flux_ratio"] > flux_based_extendedness_cutoff
 
-    # require at least two detections of the diaObject in a single band
-    visit_counts = alert_df.groupby("band")["visit"].nunique().reset_index(name="n_visits")
-    if not (visit_counts["n_visits"] > 2).any():
+    # require at least two detections satisfying the extendedness threshold in two distinct bands
+    extended_visit_counts = (
+        alert_df[alert_df["extended_candidate"]]
+        .groupby("band")["visit"]
+        .nunique()
+        .reset_index(name="n_extended_detections")
+    )
+    qualifying_extended_bands = (extended_visit_counts["n_extended_detections"] >= 2).sum()
+
+    if qualifying_extended_bands < 2:
         return {
-            "flux_ratio": float(flux_ratio),
-            "extended_object_candidate": False,
+            "flux_ratio": float(alert_df["flux_ratio"].iloc[0]),
+            "extended_candidate": False,
         }
 
     return {
-        "flux_ratio": float(flux_ratio),
-        "extended_object_candidate": bool(flux_ratio > flux_based_extendedness_cutoff),
+        "flux_ratio": float(alert_df["flux_ratio"].iloc[0]),
+        "extended_candidate": True,
     }
 
 
 def check_supernova_color_magnitude_criteria(
-    alert_df, max_time_diff=3.0, tolerance=0.1, min_matches=3
-):
-    """
-    Flags a diaObject as a lensed supernovae candidate if at least 3 r/i band pairs observed within 3 days satisfy:
-        r-i = 0                    if i < 21.0158
-        r-i = 0.52*i - 10.96       otherwise
+    alert_df: pd.DataFrame,
+    max_time_diff: float = 3.0,
+    tolerance: float = 0.1,
+    min_matches: int = 3,
+) -> dict[str, bool]:
+    """Flag a diaObject as a lensed supernova candidate based on r/i color-magnitude criteria.
+
+    Evaluates paired r- and i-band observations taken within a maximum time separation.
+    A diaObject is flagged as a candidate if at least min_matches pairs satisfy:
+
+    - r - i = 0              if i < 21.0158
+    - r - i = 0.52*i - 10.96 otherwise
+
+    Parameters
+    ----------
+    alert_df : pd.DataFrame
+        DataFrame containing diaSource and associated previous source detections, with columns band, midpointMjdTai,
+        and psfFlux.
+    max_time_diff : float, optional
+        Maximum allowed time separation in days between r- and i-band observations to be considered a matched pair.
+        Defaults to 3.0.
+    tolerance : float, optional
+        Allowed deviation in magnitudes from the expected color-magnitude relation for a pair to be counted as a match.
+        Defaults to 0.1.
+    min_matches : int, optional
+        Minimum number of r/i pairs that must satisfy the color-magnitude criteria for the diaObject to be flagged as
+        a lensed supernova candidate. Defaults to 3.
+
+    Returns
+    -------
+    dict[str, bool]
+        Dictionary with key:
+
+        - lensed_sn_candidate (bool): True if at least min_matches r/i pairs satisfy the color-magnitude criteria
+          within max_time_diff days of each other.
     """
 
     not_a_candidate = {"lensed_sn_candidate": False}
@@ -159,8 +243,8 @@ def check_supernova_color_magnitude_criteria(
         return -2.5 * np.log10(psfFlux) + 31.4
 
     # extract the 'r' and 'i' band photometry if it exists
-    r_band_photometry = alert_df[alert_df["band"] == "r"].sort_values("midpointMjdTai")
-    i_band_photometry = alert_df[alert_df["band"] == "i"].sort_values("midpointMjdTai")
+    r_band_photometry = alert_df[alert_df["band"] == "r"]
+    i_band_photometry = alert_df[alert_df["band"] == "i"]
     if r_band_photometry.empty or i_band_photometry.empty:
         # observations in one of the two required bands does not exist
         return not_a_candidate
@@ -187,6 +271,6 @@ def check_supernova_color_magnitude_criteria(
     # determine the number of pairs that meet the following color-magnitude criteria
     color_obs = r_mag - i_mag
     color_expected = np.where(i_mag < 21.0158, 0.0, 0.52 * i_mag - 10.96)
-    n_matches = (np.abs(color_obs - color_expected) < tolerance).sum()
+    n_matches = ((color_obs - color_expected) > tolerance).sum()
 
     return {"lensed_sn_candidate": True if n_matches >= min_matches else False}
