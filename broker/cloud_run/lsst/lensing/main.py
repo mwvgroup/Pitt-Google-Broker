@@ -243,8 +243,8 @@ def check_supernova_color_magnitude_criteria(
         return -2.5 * np.log10(psfFlux) + 31.4
 
     # extract the 'r' and 'i' band photometry if it exists
-    r_band_photometry = alert_df[(alert_df["band"] == "r") and (alert_df["psfFlux"] > 0)]
-    i_band_photometry = alert_df[(alert_df["band"] == "i") and (alert_df["psfFlux"] > 0)]
+    r_band_photometry = alert_df[(alert_df["band"] == "r") & (alert_df["psfFlux"] > 0)]
+    i_band_photometry = alert_df[(alert_df["band"] == "i") & (alert_df["psfFlux"] > 0)]
     if r_band_photometry.empty or i_band_photometry.empty:
         # observations in one of the two required bands with psfFlux > 0 does not exist
         return not_a_candidate
