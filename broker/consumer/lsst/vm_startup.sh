@@ -63,7 +63,7 @@ fout_topics="${workingdir}/list.topics"
     # define LSST-related parameters
     kafka_password="${survey}-${PROJECT_ID}-kafka-password"
     KAFKA_PASSWORD=$(gcloud secrets versions access latest --secret="${kafka_password}")
-    group_id="pittgoogle-idfint-kafka-pubsub-connector-${PROJECT_ID}"
+    group_id="pittgoogle-usdf-kafka-pubsub-connector-${PROJECT_ID}"
     # use test resources, if requested
     if [ "$testid" != "False" ]; then
         group_id="${group_id}-${testid}"
