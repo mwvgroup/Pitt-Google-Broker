@@ -63,7 +63,7 @@ fout_topics="${workingdir}/list.topics"
     # define LSST-related parameters
     kafka_password="${survey}-${PROJECT_ID}-kafka-password"
     KAFKA_PASSWORD=$(gcloud secrets versions access latest --secret="${kafka_password}")
-    group_id="pittgoogle-idfint-kafka-pubsub-connector-${PROJECT_ID}"
+    group_id="pittgoogle-usdf-kafka-pubsub-connector-${PROJECT_ID}"
     # use test resources, if requested
     if [ "$testid" != "False" ]; then
         group_id="${group_id}-${testid}"
@@ -88,7 +88,7 @@ while [ "${alerts_flowing}" = false ]
 do
     # get list of topics and dump to file
     /bin/kafka-topics \
-        --bootstrap-server usdf-alert-stream-dev.lsst.cloud:9094 \
+        --bootstrap-server rubin-alert-stream-bootstrap.slac.stanford.edu:9094 \
         --list \
         --command-config "${workingdir}/admin.properties" \
         > "${fout_topics}"
