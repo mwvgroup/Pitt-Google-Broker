@@ -8,8 +8,8 @@ testid="${1:-test}"
 teardown="${2:-False}"
 # name of the survey this broker instance will ingest
 survey="${3:-lsst}"
-schema_version="${4:-10.0}"
-versiontag=v$(echo "${schema_version}" | tr . _) # 9.0 -> v9_0
+schema_version="${4:-11.0}"
+versiontag=v$(echo "${schema_version}" | tr . _) # 11.0 -> v11_0
 region="${5:-us-central1}"
 zone="${region}-a"  # just use zone "a" instead of adding another script arg
 # get environment variables
@@ -51,6 +51,7 @@ define_GCP_resources() {
 artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
 bq_dataset=$(define_GCP_resources "${survey}" "_")
 bq_table_alerts="alerts_${versiontag}"
+bq_table_lensing="lensing"
 bq_table_supernnova="supernnova"
 bq_table_upsilon="upsilon"
 bq_table_variability="variability"
@@ -87,6 +88,7 @@ manage_resources() {
             echo "${bq_dataset} already exists."
         fi
         (cd templates && bq mk --table --clustering_fields=healpix9,healpix19,healpix29 --time_partitioning_field=kafkaPublishTimestamp --time_partitioning_type=DAY "${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}" "bq_${survey}_${bq_table_alerts}_schema.json") || exit 5
+        (cd templates && bq mk --table --time_partitioning_field=kafkaPublishTimestamp --time_partitioning_type=DAY "${PROJECT_ID}:${bq_dataset}.${bq_table_lensing}" "bq_${survey}_${bq_table_lensing}_schema.json") || exit 5
         (cd templates && bq mk --table --time_partitioning_field=kafkaPublishTimestamp --time_partitioning_type=DAY "${PROJECT_ID}:${bq_dataset}.${bq_table_supernnova}" "bq_${survey}_${bq_table_supernnova}_schema.json") || exit 5
         (cd templates && bq mk --table --time_partitioning_field=kafkaPublishTimestamp --time_partitioning_type=DAY "${PROJECT_ID}:${bq_dataset}.${bq_table_variability}" "bq_${survey}_${bq_table_variability}_schema.json") || exit 5
         (cd templates && bq mk --table --time_partitioning_field=kafkaPublishTimestamp --time_partitioning_type=DAY "${PROJECT_ID}:${bq_dataset}.${bq_table_upsilon}" "bq_${survey}_${bq_table_upsilon}_schema.json") || exit 5
@@ -215,6 +217,10 @@ echo "Configuring Cloud Run services..."
 
     #--- alerts-to-storage Cloud Run service
     cd ps_to_storage
+    ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}"
+
+    #--- lensing Cloud Run service
+    cd .. && cd lensing
     ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}"
 
     #--- supernnova Cloud Run service
