@@ -1,0 +1,80 @@
+[
+    {
+      "description": "Unique identifier of this DiaSource.",
+      "mode": "REQUIRED",
+      "name": "diaSourceId",
+      "type": "INTEGER"
+    },
+    {
+      "description": "Unique identifier of this DiaObject.",
+      "mode": "NULLABLE",
+      "name": "diaObjectId",
+      "type": "INTEGER"
+    },
+    {
+      "description": "Unique identifier of the object.",
+      "mode": "NULLABLE",
+      "name": "ssObjectId",
+      "type": "INTEGER"
+    },
+    {
+      "description": "Gaia source ID of the closest source from Gaia DR3 enriched_vari_classifier catalog, irrespective of magnitude (if it exists within 90 arcsec [arcsec]).",
+      "mode": "NULLABLE",
+      "name": "closest_gaia_source",
+      "type": "INTEGER"
+    },
+    {
+      "description": "Class of closest source from Gaia DR3 enriched_vari_classifier catalog; if exists within 90 arcsec [arcsec].",
+      "mode": "NULLABLE",
+      "name": "closest_gaia_source_class",
+      "type": "STRING"
+    },
+    {
+      "description": "Distance to closest source from Gaia DR3 enriched_vari_classifier catalog; if exists within 90 arcsec [arcsec].",
+      "mode": "NULLABLE",
+      "name": "separation_to_closest_gaia_source",
+      "type": "FLOAT"
+    },
+    {
+      "description": "Gaia source ID of the second closest source from Gaia DR3 enriched_vari_classifier catalog, irrespective of magnitude (if it exists within 90 arcsec [arcsec]).",
+      "mode": "NULLABLE",
+      "name": "second_closest_gaia_source",
+      "type": "INTEGER"
+    },
+    {
+      "description": "Class of the second closest source from Gaia DR3 enriched_vari_classifier catalog; if exists within 90 arcsec [arcsec].",
+      "mode": "NULLABLE",
+      "name": "second_closest_gaia_source_class",
+      "type": "STRING"
+    },
+    {
+      "description": "Distance to the second closest source from Gaia DR3 enriched_vari_classifier catalog; if exists within 90 arcsec [arcsec].",
+      "mode": "NULLABLE",
+      "name": "separation_to_second_closest_gaia_source",
+      "type": "FLOAT"
+    },
+    {
+      "description": "Gaia source ID of the third closest source from Gaia DR3 enriched_vari_classifier catalog, irrespective of magnitude (if it exists within 90 arcsec [arcsec]).",
+      "mode": "NULLABLE",
+      "name": "third_closest_gaia_source",
+      "type": "INTEGER"
+    },
+    {
+      "description": "Class of the third closest source from Gaia DR3 enriched_vari_classifier catalog; if exists within 90 arcsec [arcsec].",
+      "mode": "NULLABLE",
+      "name": "third_closest_gaia_source_class",
+      "type": "STRING"
+    },
+    {
+      "description": "Distance to the third closest source from Gaia DR3 enriched_vari_classifier catalog; if exists within 90 arcsec [arcsec].",
+      "mode": "NULLABLE",
+      "name": "separation_to_third_closest_gaia_source",
+      "type": "FLOAT"
+    },
+    {
+      "description": "Kafka timestamp from originating LSST alert.",
+      "mode": "REQUIRED",
+      "name": "kafkaPublishTimestamp",
+      "type": "TIMESTAMP"
+    }
+]
