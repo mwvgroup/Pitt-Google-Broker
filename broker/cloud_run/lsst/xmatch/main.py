@@ -5,13 +5,13 @@
 
 import os
 from typing import Dict
+from pathlib import Path
 import numpy as np
 import flask
 import pittgoogle
 import hpgeom
 import pyarrow.parquet as pq
 import astropy.units as u
-from pathlib import Path
 from astropy.coordinates import SkyCoord
 from google.cloud import logging
 
@@ -27,7 +27,7 @@ TESTID = os.getenv("TESTID")
 SURVEY = os.getenv("SURVEY")
 
 # module variables
-parquet_dir_name = "gaia_catalog"
+parquet_dir_name = "gaia_dr3"
 parquet_file_name = "enriched_vari_classifier.parquet"
 ENRICHED_VARI_CLASSIFIER_FILE_PATH = (
     Path(__file__).resolve().parent / parquet_dir_name / parquet_file_name
