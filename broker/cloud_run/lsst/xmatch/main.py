@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-"""This module produces "value-added" lite alerts containing J indices on the DIA point source fluxes."""
+"""This module produces "value-added" lite alerts containing xmatch results of the diaSource against the Gaia DR3
+enriched_vari_classifier catalog."""
 
 import os
-from typing import Dict
 from pathlib import Path
 import numpy as np
 import flask
@@ -50,8 +50,9 @@ app = flask.Flask(__name__)
 
 @app.route(ROUTE_RUN, methods=["POST"])
 def run():
-    """Produces a value-added alert stream (${survey}-variability) containing StetsonJ statistics on the DIA point
-    source fluxes. Messages in this stream retain fields from the original alert-lite packet.
+    """Produces a value-added alert stream (${survey}-xmatch) containing xmatch results of the diaSource
+    against Gaia DR3 enriched_vari_classifier catalog. Messages in this stream retain fields from the original
+    alert-lite packet.
 
     This module is intended to be deployed as a Cloud Run service. It will operate as an HTTP endpoint
     triggered by Pub/Sub messages. This function will be called once for every message sent to this route.
@@ -72,7 +73,7 @@ def run():
         return str(exc), HTTP_400
 
     # xmatch Gaia DR3 enriched_vari_classifier catalog
-    xmatch_results = xmatch_gaia(alert_lite.ra, alert_lite.dec)
+    xmatch_results = xmatch_gaia(alert_lite.dict["ra"], alert_lite.dict["dec"])
 
     # determine three closest Gaia objects (if they exist)
     closest_gaia_sources = find_closest_gaia_sources(
@@ -91,7 +92,26 @@ def run():
 
 
 def xmatch_gaia(diasource_ra: float, diasource_dec: float, radius_arcsec: float = 90.0):
-    """Crossmatch a diaSource position against the Gaia DR3 enriched_vari_classifier catalog."""
+    """Crossmatch a diaSource sky position against the Gaia DR3 enriched_vari_classifier catalog.
+
+    Identifies HEALPix pixels at order 19 that overlap a cone of ``radius_arcsec`` centered on the given coordinates,
+    then reads matching rows from the local Parquet file using a HEALPix filter for efficiency.
+
+    Parameters
+    ----------
+    diasource_ra : float
+        Right ascension of the diaSource in decimal degrees (ICRS).
+    diasource_dec : float
+        Declination of the diaSource in decimal degrees (ICRS).
+    radius_arcsec : float, optional
+        Search cone radius in arcseconds. Default is 90.0.
+
+    Returns
+    -------
+    pyarrow.Table
+        Table of matching Gaia sources with columns: ``source_id``, ``ra``, ``ra_error``, ``dec``, ``dec_error``, and
+        ``best_class_name``. May be empty if no sources fall within the cone.
+    """
     nside19 = hpgeom.order_to_nside(19)
     cone = hpgeom.query_circle(
         nside19, diasource_ra, diasource_dec, radius_arcsec / 3600, inclusive=True
@@ -105,7 +125,29 @@ def xmatch_gaia(diasource_ra: float, diasource_dec: float, radius_arcsec: float 
 
 
 def find_closest_gaia_sources(diasource_ra: float, diasource_dec: float, xmatch_results) -> dict:
-    """Return up to 3 closest Gaia sources to the diaSource position, sorted by separation."""
+    """Identify up to three closest Gaia sources to a diaSource position.
+
+    Computes on-sky angular separations between the diaSource and every source in ``xmatch_results``, sorts by
+    separation, and returns metadata for the nearest three. Values are ``None`` when fewer than three Gaia sources are
+    available.
+
+    Parameters
+    ----------
+    diasource_ra : float
+        Right ascension of the diaSource in decimal degrees (ICRS).
+    diasource_dec : float
+        Declination of the diaSource in decimal degrees (ICRS).
+    xmatch_results : pyarrow.Table
+        Candidate Gaia sources returned by :func:`xmatch_gaia`. Expected columns: ``source_id``, ``ra``, ``dec``, and
+        ``best_class_name``.
+
+    Returns
+    -------
+    dict
+        Dictionary with nine keys following the pattern ``{ordinal}_gaia_source``, ``{ordinal}_gaia_source_class``, and
+        ``separation_to_{ordinal}_gaia_source`` for ordinals ``closest``, ``second_closest``, and ``third_closest``.
+        Separations are in arcseconds. Any entry beyond the number of matched sources is set to ``None``.
+    """
 
     result = {}
     ORDINALS = ["closest", "second_closest", "third_closest"]
