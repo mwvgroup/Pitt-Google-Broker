@@ -73,12 +73,12 @@ def run():
         return str(exc), HTTP_400
 
     # xmatch Gaia DR3 enriched_vari_classifier catalog
-    xmatch_results = xmatch_gaia(alert_lite.dict["ra"], alert_lite.dict["dec"])
+    ra = alert_lite.dict["alert_lite"]["diaSource"]["ra"]
+    dec = alert_lite.dict["alert_lite"]["diaSource"]["dec"]
+    xmatch_results = xmatch_gaia(ra, dec)
 
     # determine three closest Gaia objects (if they exist)
-    closest_gaia_sources = find_closest_gaia_sources(
-        alert_lite.dict["ra"], alert_lite.dict["dec"], xmatch_results
-    )
+    closest_gaia_sources = find_closest_gaia_sources(ra, dec, xmatch_results)
 
     TOPIC.publish(
         pittgoogle.Alert.from_dict(
