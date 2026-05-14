@@ -30,6 +30,12 @@
       "type": "STRING"
     },
     {
+      "description": "Class score of closest source from Gaia DR3 enriched_vari_classifier catalog; if exists within 90 arcsec [arcsec].",
+      "mode": "NULLABLE",
+      "name": "closest_gaia_source_class_score",
+      "type": "FLOAT"
+    },
+    {
       "description": "Distance to closest source from Gaia DR3 enriched_vari_classifier catalog; if exists within 90 arcsec [arcsec].",
       "mode": "NULLABLE",
       "name": "separation_to_closest_gaia_source",
@@ -48,6 +54,12 @@
       "type": "STRING"
     },
     {
+      "description": "Class score of second closest source from Gaia DR3 enriched_vari_classifier catalog; if exists within 90 arcsec [arcsec].",
+      "mode": "NULLABLE",
+      "name": "second_closest_gaia_source_class_score",
+      "type": "FLOAT"
+    },
+    {
       "description": "Distance to the second closest source from Gaia DR3 enriched_vari_classifier catalog; if exists within 90 arcsec [arcsec].",
       "mode": "NULLABLE",
       "name": "separation_to_second_closest_gaia_source",
@@ -64,6 +76,12 @@
       "mode": "NULLABLE",
       "name": "third_closest_gaia_source_class",
       "type": "STRING"
+    },
+    {
+      "description": "Class score of closest source from Gaia DR3 enriched_vari_classifier catalog; if exists within 90 arcsec [arcsec].",
+      "mode": "NULLABLE",
+      "name": "third_closest_gaia_source_class_score",
+      "type": "FLOAT"
     },
     {
       "description": "Distance to the third closest source from Gaia DR3 enriched_vari_classifier catalog; if exists within 90 arcsec [arcsec].",

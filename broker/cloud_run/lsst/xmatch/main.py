@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 
 """This module produces "value-added" lite alerts containing xmatch results of the diaSource against the Gaia DR3
-enriched_vari_classifier catalog."""
+vari_classifier catalog."""
 
 import os
 from pathlib import Path
@@ -51,7 +51,7 @@ app = flask.Flask(__name__)
 @app.route(ROUTE_RUN, methods=["POST"])
 def run():
     """Produces a value-added alert stream (${survey}-xmatch) containing xmatch results of the diaSource
-    against Gaia DR3 enriched_vari_classifier catalog. Messages in this stream retain fields from the original
+    against Gaia DR3 vari_classifier catalog. Messages in this stream retain fields from the original
     alert-lite packet.
 
     This module is intended to be deployed as a Cloud Run service. It will operate as an HTTP endpoint
@@ -92,7 +92,7 @@ def run():
 
 
 def xmatch_gaia(diasource_ra: float, diasource_dec: float, radius_arcsec: float = 90.0):
-    """Crossmatch a diaSource sky position against the Gaia DR3 enriched_vari_classifier catalog.
+    """Crossmatch a diaSource sky position against the Gaia DR3 vari_classifier catalog.
 
     Identifies HEALPix pixels at order 19 that overlap a cone of ``radius_arcsec`` centered on the given coordinates,
     then reads matching rows from the local Parquet file using a HEALPix filter for efficiency.
@@ -155,6 +155,7 @@ def find_closest_gaia_sources(diasource_ra: float, diasource_dec: float, xmatch_
     for ordinal in ORDINALS:
         result[f"{ordinal}_gaia_source"] = None
         result[f"{ordinal}_gaia_source_class"] = None
+        result[f"{ordinal}_gaia_source_class_score"] = None
         result[f"separation_to_{ordinal}_gaia_source"] = None
 
     if len(xmatch_results) == 0:
@@ -175,6 +176,7 @@ def find_closest_gaia_sources(diasource_ra: float, diasource_dec: float, xmatch_
     for i, ordinal in enumerate(ORDINALS[: len(sorted_idx)]):
         result[f"{ordinal}_gaia_source"] = int(subset["source_id"][i])
         result[f"{ordinal}_gaia_source_class"] = subset["best_class_name"][i]
+        result[f"{ordinal}_gaia_source_class_score"] = subset["best_class_score"][i]
         result[f"separation_to_{ordinal}_gaia_source"] = float(sorted_separations[i])
 
     return result
