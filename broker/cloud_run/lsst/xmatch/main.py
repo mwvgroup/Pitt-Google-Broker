@@ -6,9 +6,13 @@
 import os
 from typing import Dict
 import numpy as np
-import pandas as pd
 import flask
 import pittgoogle
+import hpgeom
+import pyarrow.parquet as pq
+import astropy.units as u
+from pathlib import Path
+from astropy.coordinates import SkyCoord
 from google.cloud import logging
 
 # [FIXME] Make this helpful or else delete it.
@@ -22,6 +26,13 @@ PROJECT_ID = os.getenv("GCP_PROJECT")
 TESTID = os.getenv("TESTID")
 SURVEY = os.getenv("SURVEY")
 
+# module variables
+parquet_dir_name = "gaia_catalog"
+parquet_file_name = "enriched_vari_classifier.parquet"
+ENRICHED_VARI_CLASSIFIER_FILE_PATH = (
+    Path(__file__).resolve().parent / parquet_dir_name / parquet_file_name
+)
+
 # Variables for incoming data
 # A url route is used in setup.sh when the trigger subscription is created.
 # It is possible to define multiple routes in a single module and trigger them using different subscriptions.
@@ -32,9 +43,7 @@ HTTP_204 = 204  # HTTP code: Success
 HTTP_400 = 400  # HTTP code: Bad Request
 
 # GCP resources used in this module
-TOPIC = pittgoogle.Topic.from_cloud(
-    "variability", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
-)
+TOPIC = pittgoogle.Topic.from_cloud("xmatch", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID)
 
 app = flask.Flask(__name__)
 
@@ -62,21 +71,18 @@ def run():
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
-    j_dict = _classify(alert_lite)
-    pg_variable = {"pg_variable": "unlikely"}
+    # xmatch Gaia DR3 enriched_vari_classifier catalog
+    xmatch_results = xmatch_gaia(alert_lite.ra, alert_lite.dec)
 
-    for band in ["g", "r", "u"]:
-        if (
-            j_dict.get(f"n_detections_{band}_band", 0) >= 30
-            and j_dict.get(f"{band}_psfFluxStetsonJ", 0) > 20
-        ):
-            pg_variable = {"pg_variable": "likely"}
-            break
+    # determine three closest Gaia objects (if they exist)
+    closest_gaia_sources = find_closest_gaia_sources(
+        alert_lite.dict["ra"], alert_lite.dict["dec"], xmatch_results
+    )
 
     TOPIC.publish(
         pittgoogle.Alert.from_dict(
-            {"alert_lite": alert_lite.dict["alert_lite"], "variability": j_dict},
-            attributes={**alert_lite.attributes, **pg_variable},
+            {"alert_lite": alert_lite.dict["alert_lite"], "xmatch_gaia": closest_gaia_sources},
+            attributes={**alert_lite.attributes},
             schema_name="default",
         )
     )
@@ -84,155 +90,49 @@ def run():
     return "", HTTP_204
 
 
-def _classify(alert_lite: pittgoogle.Alert) -> Dict:
-    """Adapted from:
-    https://github.com/lsst/meas_base/blob/e5cf12406b54a6312b9d6fa23fbd132cd7999387/python/lsst/meas/base/diaCalculationPlugins.py#L904
+def xmatch_gaia(diasource_ra: float, diasource_dec: float, radius_arcsec: float = 90.0):
+    """Crossmatch a diaSource position against the Gaia DR3 enriched_vari_classifier catalog."""
+    nside19 = hpgeom.order_to_nside(19)
+    cone = hpgeom.query_circle(
+        nside19, diasource_ra, diasource_dec, radius_arcsec / 3600, inclusive=True
+    )
 
-    Compute the StetsonJ statistics on the DIA point source fluxes for each band.
-    """
-
-    alert_df = _create_dataframe(alert_lite.dict["alert_lite"])
-    bands = alert_df["band"].unique()
-    outgoing_dict = {}
-
-    # filter diaSource(s) in alert_df based on the filter(s) used
-    for band in bands:
-        filter_diaSources = alert_df[alert_df["band"] == band]
-        tmp_df = filter_diaSources[
-            ~np.logical_or(
-                np.isnan(filter_diaSources["psfFlux"]),
-                np.isnan(filter_diaSources["psfFluxErr"]),
-            )
-        ]
-
-        if len(tmp_df) < 2:
-            outgoing_dict[f"n_detections_{band}_band"] = len(tmp_df)
-            outgoing_dict[f"{band}_psfFluxStetsonJ"] = np.nan
-            continue
-
-        fluxes = tmp_df["psfFlux"].to_numpy()
-        errors = tmp_df["psfFluxErr"].to_numpy()
-        outgoing_dict[f"n_detections_{band}_band"] = len(tmp_df)
-        outgoing_dict[f"{band}_psfFluxStetsonJ"] = _stetson_J(fluxes, errors)
-
-    return outgoing_dict
+    return pq.read_table(
+        ENRICHED_VARI_CLASSIFIER_FILE_PATH,
+        filters=[("healpix19", "in", cone)],
+        columns=["source_id", "ra", "ra_error", "dec", "dec_error", "best_class_name"],
+    )
 
 
-def _create_dataframe(alert_lite_dict: dict) -> pd.DataFrame:
-    """Create a DataFrame object from the alert lite dictionary."""
+def find_closest_gaia_sources(diasource_ra: float, diasource_dec: float, xmatch_results) -> dict:
+    """Return up to 3 closest Gaia sources to the diaSource position, sorted by separation."""
 
-    required_cols = [
-        "band",
-        "psfFlux",
-        "psfFluxErr",
-    ]  # columns required by to compute J index
+    result = {}
+    ORDINALS = ["closest", "second_closest", "third_closest"]
 
-    # extract fields and create filtered DataFrames
-    sources = [alert_lite_dict.get("diaSource")] + (alert_lite_dict.get("prvDiaSources") or [])
-    forced_sources = alert_lite_dict.get("prvDiaForcedSources") or []
-    sources_df = pd.DataFrame(filter_columns(sources, required_cols))
-    forced_df = pd.DataFrame(filter_columns(forced_sources, required_cols))
+    for ordinal in ORDINALS:
+        result[f"{ordinal}_gaia_source"] = None
+        result[f"{ordinal}_gaia_source_class"] = None
+        result[f"separation_to_{ordinal}_gaia_source"] = None
 
-    # concatenate diaSource, prvDiaSources, and prvDiaForcedSources into a single DataFrame
-    df = pd.concat([sources_df, forced_df], ignore_index=True)
+    if len(xmatch_results) == 0:
+        return result
 
-    return df
+    diasource_coord = SkyCoord(diasource_ra * u.deg, diasource_dec * u.deg, frame="icrs")
+    gaia_coords = SkyCoord(
+        xmatch_results["ra"].to_pylist() * u.deg,
+        xmatch_results["dec"].to_pylist() * u.deg,
+        frame="icrs",
+    )
+    separations = diasource_coord.separation(gaia_coords).arcsec
 
+    sorted_idx = np.argsort(separations)[:3]
+    subset = xmatch_results.take(sorted_idx).to_pydict()
+    sorted_separations = separations[sorted_idx].tolist()
 
-def filter_columns(field_list, required_cols):
-    """Extract only relevant columns if they exist."""
+    for i, ordinal in enumerate(ORDINALS[: len(sorted_idx)]):
+        result[f"{ordinal}_gaia_source"] = int(subset["source_id"][i])
+        result[f"{ordinal}_gaia_source_class"] = subset["best_class_name"][i]
+        result[f"separation_to_{ordinal}_gaia_source"] = float(sorted_separations[i])
 
-    return [
-        {k: field.get(k) for k in required_cols if k in field}
-        for field in field_list
-        if field is not None
-    ]
-
-
-def _stetson_J(fluxes: np.ndarray, errors: np.ndarray) -> float:
-    """Adapted from:
-    https://github.com/lsst/meas_base/blob/013ef565331c896a3fd73aefec294de42bc66371/python/lsst/meas/base/diaCalculationPlugins.py#L1279
-
-    Compute the single band StetsonJ statistic.
-
-    Parameters
-    ----------
-    fluxes : `numpy.ndarray` (N,)
-        Calibrated lightcurve flux values.
-    errors : `numpy.ndarray` (N,)
-        Errors on the calibrated lightcurve fluxes.
-
-    Returns
-    -------
-    stetsonJ : `float`
-        stetsonJ statistic for the input fluxes and errors.
-
-    References
-    ----------
-    .. [1] Stetson, P. B., "On the Automatic Determination of Light-Curve Parameters for Cepheid Variables", PASP, 108,
-    851S, 1996
-    """
-    n_points = len(fluxes)
-    flux_mean = _stetson_mean(fluxes, errors)
-    delta_val = np.sqrt(n_points / (n_points - 1)) * (fluxes - flux_mean) / errors
-    p_k = delta_val**2 - 1
-
-    return np.mean(np.sign(p_k) * np.sqrt(np.fabs(p_k)))
-
-
-def _stetson_mean(values: np.ndarray, errors: np.ndarray, mean=None) -> float:
-    """Adapted from:
-    https://github.com/lsst/meas_base/blob/013ef565331c896a3fd73aefec294de42bc66371/python/lsst/meas/base/diaCalculationPlugins.py#L1309
-
-    Compute the stetson mean of the fluxes which down-weights outliers. Weighted biased on an error weighted difference
-    scaled by a constant (1/``a``) and raised to the power beta. Higher betas more harshly penalize outliers and ``a``
-    sets the number of sigma where a weighted difference of 1 occurs.
-
-    Parameters
-    ----------
-    values : `numpy.dnarray`, (N,)
-        Input values to compute the mean of.
-    errors : `numpy.ndarray`, (N,)
-        Errors on the input values.
-    mean : `float`
-        Starting mean value or None.
-    alpha : `float`
-        Scalar down-weighting of the fractional difference. lower->more clipping. (Default value is 2.)
-    beta : `float`
-        Power law slope of the used to down-weight outliers. higher->more clipping. (Default value is 2.)
-    n_iter : `int`
-        Number of iterations of clipping.
-    tol : `float`
-        Fractional and absolute tolerance goal on the change in the mean before exiting early. (Default value is 1e-6)
-
-    Returns
-    -------
-    mean : `float`
-        Weighted stetson mean result.
-
-    References
-    ----------
-    .. [1] Stetson, P. B., "On the Automatic Determination of Light-Curve Parameters for Cepheid Variables", PASP, 108,
-    851S, 1996
-    """
-    # define constants
-    alpha = 2.0
-    beta = 2.0
-    n_iter = 20
-    tol = 1e-6
-
-    n_points = len(values)
-    n_factor = np.sqrt(n_points / (n_points - 1))
-    inv_var = 1 / errors**2
-    if mean is None:
-        mean = np.average(values, weights=inv_var)
-
-    for _ in range(n_iter):
-        chi = np.fabs(n_factor * (values - mean) / errors)
-        tmp_mean = np.average(values, weights=inv_var / (1 + (chi / alpha) ** beta))
-        diff = np.fabs(tmp_mean - mean)
-        mean = tmp_mean
-        if diff / mean < tol and diff < tol:
-            break
-
-    return mean
+    return result
