@@ -9,7 +9,6 @@ pittgoogle-client>=0.3.22
 
 # for Cloud Run
 # https://cloud.google.com/run/docs/quickstarts/build-and-deploy/deploy-python-service
-# pinned following quickstart example. [TODO] consider un-pinning
-Flask==3.0.3
-gunicorn==23.0.0
-Werkzeug==3.0.6
+Flask
+gunicorn
+Werkzeug
