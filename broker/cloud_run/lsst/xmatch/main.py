@@ -120,7 +120,7 @@ def xmatch_gaia(diasource_ra: float, diasource_dec: float, radius_arcsec: float 
     return pq.read_table(
         ENRICHED_VARI_CLASSIFIER_FILE_PATH,
         filters=[("healpix19", "in", cone)],
-        columns=["source_id", "ra", "ra_error", "dec", "dec_error", "best_class_name"],
+        columns=["source_id", "ra", "dec", "best_class_name", "best_class_score"],
     )
 
 
