@@ -11,7 +11,6 @@ import flask
 import pittgoogle
 import hpgeom
 import pyarrow as pa
-import pyarrow as pa
 from pyarrow import compute as pc, parquet as pq
 import astropy.units as u
 from astropy.coordinates import SkyCoord
