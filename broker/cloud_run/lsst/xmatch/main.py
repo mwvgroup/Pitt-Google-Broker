@@ -11,11 +11,11 @@ import flask
 import pittgoogle
 import hpgeom
 import pyarrow as pa
-import pyarrow.parquet as pq
+import pyarrow as pa
+from pyarrow import compute as pc, parquet as pq
 import astropy.units as u
 from astropy.coordinates import SkyCoord
 from google.cloud import logging
-import pyarrow.compute as pc
 
 # [FIXME] Make this helpful or else delete it.
 # Connect the python logger to the google cloud logger.
