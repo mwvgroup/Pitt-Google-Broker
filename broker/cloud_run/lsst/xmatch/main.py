@@ -10,10 +10,12 @@ import numpy as np
 import flask
 import pittgoogle
 import hpgeom
+import pyarrow as pa
 import pyarrow.parquet as pq
 import astropy.units as u
 from astropy.coordinates import SkyCoord
 from google.cloud import logging
+import pyarrow.compute as pc
 
 # [FIXME] Make this helpful or else delete it.
 # Connect the python logger to the google cloud logger.
@@ -27,10 +29,15 @@ TESTID = os.getenv("TESTID")
 SURVEY = os.getenv("SURVEY")
 
 # module variables
+nside19 = hpgeom.order_to_nside(19)
 parquet_dir_name = "gaia_dr3"
 parquet_file_name = "enriched_vari_classifier.parquet"
 ENRICHED_VARI_CLASSIFIER_FILE_PATH = (
     Path(__file__).resolve().parent / parquet_dir_name / parquet_file_name
+)
+_GAIA_TABLE = pq.read_table(
+    ENRICHED_VARI_CLASSIFIER_FILE_PATH,
+    columns=["source_id", "ra", "dec", "healpix19", "best_class_name", "best_class_score"],
 )
 
 # Variables for incoming data
@@ -109,18 +116,20 @@ def xmatch_gaia(diasource_ra: float, diasource_dec: float, radius_arcsec: float 
     Returns
     -------
     pyarrow.Table
-        Table of matching Gaia sources with columns: ``source_id``, ``ra``, ``ra_error``, ``dec``, ``dec_error``, and
-        ``best_class_name``. May be empty if no sources fall within the cone.
+        Table of matching Gaia sources with columns: ``source_id``, ``ra``, ``dec``, ``best_class_name``, and
+        ``best_class_score``. May be empty if no sources fall within the cone.
     """
-    nside19 = hpgeom.order_to_nside(19)
-    cone = hpgeom.query_circle(
-        nside19, diasource_ra, diasource_dec, radius_arcsec / 3600, inclusive=True
-    )
 
-    return pq.read_table(
-        ENRICHED_VARI_CLASSIFIER_FILE_PATH,
-        filters=[("healpix19", "in", cone)],
-        columns=["source_id", "ra", "dec", "best_class_name", "best_class_score"],
+    cone = set(
+        hpgeom.query_circle(
+            nside19, diasource_ra, diasource_dec, radius_arcsec / 3600, inclusive=True
+        )
+    )
+    # perform xmatch and return results
+    mask = pc.is_in(_GAIA_TABLE["healpix19"], value_set=pa.array(list(cone)))
+
+    return _GAIA_TABLE.filter(mask).select(
+        ["source_id", "ra", "dec", "best_class_name", "best_class_score"]
     )
 
 
@@ -161,6 +170,7 @@ def find_closest_gaia_sources(diasource_ra: float, diasource_dec: float, xmatch_
     if len(xmatch_results) == 0:
         return result
 
+    # instatiate positions and determine separations between sources
     diasource_coord = SkyCoord(diasource_ra * u.deg, diasource_dec * u.deg, frame="icrs")
     gaia_coords = SkyCoord(
         xmatch_results["ra"].to_pylist() * u.deg,
@@ -169,7 +179,16 @@ def find_closest_gaia_sources(diasource_ra: float, diasource_dec: float, xmatch_
     )
     separations = diasource_coord.separation(gaia_coords).arcsec
 
-    sorted_idx = np.argsort(separations)[:3]
+    # sort results
+    num_closest = min(
+        3, len(separations)
+    )  # determine the number of closest sources; max returned by module is 3
+    top_k_unsorted_indices = np.argpartition(separations, range(num_closest))[
+        :num_closest
+    ]  #  partially sort the array so that the k smallest values are in the first k positions
+    sorted_idx = top_k_unsorted_indices[
+        np.argsort(separations[top_k_unsorted_indices])
+    ]  # sort the unordered subset by their separation values
     subset = xmatch_results.take(sorted_idx).to_pydict()
     sorted_separations = separations[sorted_idx].tolist()
 
