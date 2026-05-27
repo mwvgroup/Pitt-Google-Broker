@@ -51,6 +51,7 @@ define_GCP_resources() {
 artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
 bq_dataset=$(define_GCP_resources "${survey}" "_")
 bq_table_alerts="alerts_${versiontag}"
+bq_table_xmatch="xmatch"
 bq_table_lensing="lensing"
 bq_table_supernnova="supernnova"
 bq_table_upsilon="upsilon"
@@ -88,6 +89,7 @@ manage_resources() {
             echo "${bq_dataset} already exists."
         fi
         (cd templates && bq mk --table --clustering_fields=healpix9,healpix19,healpix29 --time_partitioning_field=kafkaPublishTimestamp --time_partitioning_type=DAY "${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}" "bq_${survey}_${bq_table_alerts}_schema.json") || exit 5
+        (cd templates && bq mk --table --time_partitioning_field=kafkaPublishTimestamp --time_partitioning_type=DAY "${PROJECT_ID}:${bq_dataset}.${bq_table_xmatch}" "bq_${survey}_${bq_table_xmatch}_schema.json") || exit 5
         (cd templates && bq mk --table --time_partitioning_field=kafkaPublishTimestamp --time_partitioning_type=DAY "${PROJECT_ID}:${bq_dataset}.${bq_table_lensing}" "bq_${survey}_${bq_table_lensing}_schema.json") || exit 5
         (cd templates && bq mk --table --time_partitioning_field=kafkaPublishTimestamp --time_partitioning_type=DAY "${PROJECT_ID}:${bq_dataset}.${bq_table_supernnova}" "bq_${survey}_${bq_table_supernnova}_schema.json") || exit 5
         (cd templates && bq mk --table --time_partitioning_field=kafkaPublishTimestamp --time_partitioning_type=DAY "${PROJECT_ID}:${bq_dataset}.${bq_table_variability}" "bq_${survey}_${bq_table_variability}_schema.json") || exit 5
@@ -217,6 +219,10 @@ echo "Configuring Cloud Run services..."
 
     #--- alerts-to-storage Cloud Run service
     cd ps_to_storage
+    ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}"
+
+    #--- xmatch Cloud Run service
+    cd .. && cd xmatch
     ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}"
 
     #--- lensing Cloud Run service
