@@ -12,6 +12,7 @@ survey="${3:-lsst}"
 region="${4:-us-central1}"
 # get the environment variable
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT
+PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format="value(projectNumber)")
 
 MODULE_NAME="alerts-to-storage"  # lower case required by cloud run
 ROUTE_RUN="/"  # url route that will trigger main.run()
@@ -36,7 +37,7 @@ ps_input_subscrip=$(define_GCP_resources "${survey}-alerts_raw") # pub/sub subsc
 ps_topic_avro=$(define_GCP_resources "projects/${PROJECT_ID}/topics/${survey}-alert_avros")
 ps_trigger_topic=$(define_GCP_resources "${survey}-alerts_raw")
 runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
-
+service_account="service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com"
 if [ "${teardown}" = "True" ]; then
     # ensure that we do not teardown production resources
     if [ "${testid}" != "False" ]; then
@@ -91,4 +92,7 @@ else
         --push-auth-service-account="${runinvoker_svcact}" \
         --dead-letter-topic="${ps_deadletter_topic}" \
         --max-delivery-attempts=5
+    gcloud pubsub subscriptions add-iam-policy-binding "${ps_input_subscrip}" \
+        --member="serviceAccount:${service_account}" \
+        --role="roles/pubsub.subscriber"
 fi

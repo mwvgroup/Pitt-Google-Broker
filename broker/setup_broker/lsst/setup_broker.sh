@@ -8,8 +8,8 @@ testid="${1:-test}"
 teardown="${2:-False}"
 # name of the survey this broker instance will ingest
 survey="${3:-lsst}"
-schema_version="${4:-7.4}"
-versiontag=v$(echo "${schema_version}" | tr . _) # 7.4 -> v7_4
+schema_version="${4:-11.0}"
+versiontag=v$(echo "${schema_version}" | tr . _) # 11.0 -> v11_0
 region="${5:-us-central1}"
 zone="${region}-a"  # just use zone "a" instead of adding another script arg
 # get environment variables
@@ -51,7 +51,9 @@ define_GCP_resources() {
 artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
 bq_dataset=$(define_GCP_resources "${survey}" "_")
 bq_table_alerts="alerts_${versiontag}"
-bq_table_supernnova="SuperNNova"
+bq_table_xmatch="xmatch"
+bq_table_lensing="lensing"
+bq_table_supernnova="supernnova"
 bq_table_upsilon="upsilon"
 bq_table_variability="variability"
 gcs_broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
@@ -86,10 +88,12 @@ manage_resources() {
         else
             echo "${bq_dataset} already exists."
         fi
-        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}" "bq_${survey}_${bq_table_alerts}_schema.json") || exit 5
-        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${bq_table_supernnova}" "bq_${survey}_${bq_table_supernnova}_schema.json") || exit 5
-        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${bq_table_variability}" "bq_${survey}_${bq_table_variability}_schema.json") || exit 5
-        (cd templates && bq mk --table "${PROJECT_ID}:${bq_dataset}.${bq_table_upsilon}" "bq_${survey}_${bq_table_upsilon}_schema.json") || exit 5
+        (cd templates && bq mk --table --clustering_fields=healpix9,healpix19,healpix29 --time_partitioning_field=kafkaPublishTimestamp --time_partitioning_type=DAY "${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}" "bq_${survey}_${bq_table_alerts}_schema.json") || exit 5
+        (cd templates && bq mk --table --time_partitioning_field=kafkaPublishTimestamp --time_partitioning_type=DAY "${PROJECT_ID}:${bq_dataset}.${bq_table_xmatch}" "bq_${survey}_${bq_table_xmatch}_schema.json") || exit 5
+        (cd templates && bq mk --table --time_partitioning_field=kafkaPublishTimestamp --time_partitioning_type=DAY "${PROJECT_ID}:${bq_dataset}.${bq_table_lensing}" "bq_${survey}_${bq_table_lensing}_schema.json") || exit 5
+        (cd templates && bq mk --table --time_partitioning_field=kafkaPublishTimestamp --time_partitioning_type=DAY "${PROJECT_ID}:${bq_dataset}.${bq_table_supernnova}" "bq_${survey}_${bq_table_supernnova}_schema.json") || exit 5
+        (cd templates && bq mk --table --time_partitioning_field=kafkaPublishTimestamp --time_partitioning_type=DAY "${PROJECT_ID}:${bq_dataset}.${bq_table_variability}" "bq_${survey}_${bq_table_variability}_schema.json") || exit 5
+        (cd templates && bq mk --table --time_partitioning_field=kafkaPublishTimestamp --time_partitioning_type=DAY "${PROJECT_ID}:${bq_dataset}.${bq_table_upsilon}" "bq_${survey}_${bq_table_upsilon}_schema.json") || exit 5
         bq update --description "Alert data from LSST. This table is an archive of the lsst-alerts Pub/Sub stream. It has the same schema as the original alert bytes, including nested and repeated fields." "${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}"
         bq update --description "Binary classification results from SuperNNova." "${PROJECT_ID}:${bq_dataset}.${bq_table_supernnova}"
 
@@ -128,8 +132,7 @@ manage_resources() {
         gcloud pubsub topics create "${ps_topic_alerts_raw}"
         gcloud pubsub topics create "${ps_topic_alerts}"
         gcloud pubsub topics create "${ps_topic_alerts_json}"
-        gcloud pubsub topics create "${ps_topic_alerts_lite}" \
-            --message-transforms-file=templates/ps_lsst_lite_smt.yaml
+        gcloud pubsub topics create "${ps_topic_alerts_lite}"
         gcloud pubsub topics create "${ps_deadletter_topic}"
         gcloud pubsub subscriptions create "${ps_deadletter_subscription}" \
             --topic="${ps_deadletter_topic}"
@@ -143,14 +146,21 @@ manage_resources() {
             --dead-letter-topic="${ps_deadletter_topic}" \
             --max-delivery-attempts=5 \
             --dead-letter-topic-project="${PROJECT_ID}" \
-            --message-filter='attributes.schema_version = "'"${versiontag}"'"'
+            --message-filter='attributes.schema_version = "'"${versiontag}"'"' \
+            --message-transforms-file=templates/ps_smt_add_top_level_fields.yaml
         # set IAM policies on public Pub/Sub resources
         if [ "$testid" = "False" ]; then
             user="allUsers"
-            roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/userPublic"
+            roleid="roles/pubsub.subscriber"
             gcloud pubsub topics add-iam-policy-binding "${ps_topic_alerts}" --member="${user}" --role="${roleid}"
             gcloud pubsub topics add-iam-policy-binding "${ps_topic_alerts_json}" --member="${user}" --role="${roleid}"
             gcloud pubsub topics add-iam-policy-binding "${ps_topic_alerts_lite}" --member="${user}" --role="${roleid}"
+            gcloud pubsub topics add-iam-policy-binding "${ps_deadletter_topic}" \
+                --member="serviceAccount:${service_account}" \
+                --role="roles/pubsub.publisher"
+            gcloud pubsub subscriptions add-iam-policy-binding "${ps_bigquery_subscription}" \
+                --member="serviceAccount:${service_account}" \
+                --role="roles/pubsub.subscriber"
         fi
 
         #--- Create Artifact Registry Repository
@@ -209,6 +219,14 @@ echo "Configuring Cloud Run services..."
 
     #--- alerts-to-storage Cloud Run service
     cd ps_to_storage
+    ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}"
+
+    #--- xmatch Cloud Run service
+    cd .. && cd xmatch
+    ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}"
+
+    #--- lensing Cloud Run service
+    cd .. && cd lensing
     ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}"
 
     #--- supernnova Cloud Run service

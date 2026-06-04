@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-"""This module stores LSST alert data as an Avro file in Cloud Storage."""
+"""This module stores LSST alert data as an Avro file in Cloud Storage and publishes it to various Pub/Sub topics."""
 
 import os
+from typing import Any
 import flask
 import pittgoogle
 from google.cloud import logging, storage
@@ -28,6 +29,55 @@ ROUTE_RUN = "/"  # HTTP route that will trigger run(). Must match deploy.sh
 # Variables for outgoing data
 HTTP_204 = 204  # HTTP code: Success
 HTTP_400 = 400  # HTTP code: Bad Request
+LITE_FIELDS_CONFIG = {
+    "diaSource": {
+        "fields": {
+            "diaSourceId",
+            "visit",
+            "midpointMjdTai",
+            "ra",
+            "raErr",
+            "dec",
+            "decErr",
+            "psfFlux",
+            "psfFluxErr",
+            "band",
+            "apFlux",
+        },
+        "is_list": False,
+    },
+    "prvDiaSources": {
+        "fields": {
+            "diaSourceId",
+            "visit",
+            "midpointMjdTai",
+            "ra",
+            "raErr",
+            "dec",
+            "decErr",
+            "psfFlux",
+            "psfFluxErr",
+            "band",
+            "apFlux",
+        },
+        "is_list": True,
+    },
+    "diaObject": {
+        "fields": {
+            "diaObjectId",
+            "lastDiaSourceMjdTai",
+            "firstDiaSourceMjdTai",
+            "nDiaSources",
+            "u_psfFluxErrMean",
+            "g_psfFluxErrMean",
+            "r_psfFluxErrMean",
+            "i_psfFluxErrMean",
+            "z_psfFluxErrMean",
+            "y_psfFluxErrMean",
+        },
+        "is_list": False,
+    },
+}
 
 # GCP resources used in this module
 TOPIC_ALERTS = pittgoogle.Topic.from_cloud(
@@ -88,12 +138,8 @@ def run():
     TOPIC_ALERTS.publish(alert)
     # publish the same alert as JSON. Data will be coerced to valid JSON by pittgoogle.
     TOPIC_ALERTS_JSON.publish(alert, serializer="json")
-    # add top-level key for lite stream
-    alert_lite = pittgoogle.Alert.from_dict(
-        payload={"alert_lite": alert.dict},
-        attributes={**alert.attributes},
-    )
-    TOPIC_LITE.publish(alert_lite, serializer="json")
+    # publish a lite version of the alert as JSON
+    TOPIC_LITE.publish(_create_lite_alert(alert), serializer="json")
 
     return "", HTTP_204
 
@@ -106,5 +152,36 @@ def _create_file_metadata(alert: pittgoogle.Alert, event_id: str) -> dict:
     metadata["_".join(alert.get_key("sourceid"))] = alert.sourceid
     metadata["_".join(alert.get_key("ra"))] = alert.ra
     metadata["_".join(alert.get_key("dec"))] = alert.dec
+    metadata["kafka.timestamp"] = alert.attributes["kafka.timestamp"]
 
     return metadata
+
+
+def _create_lite_alert(alert: pittgoogle.Alert) -> pittgoogle.Alert:
+    """Creates a lite Alert object by filtering nested fields from the original Alert dictionary."""
+
+    alert_lite_dict = alert.drop_cutouts()
+    for key, config in LITE_FIELDS_CONFIG.items():
+        if key in alert_lite_dict:
+            # replace the original nested object with its filtered version
+            alert_lite_dict[key] = _process_field(alert_lite_dict.get(key), config)
+
+    return pittgoogle.Alert.from_dict(
+        payload={"alert_lite": alert_lite_dict},
+        attributes={**alert.attributes},
+    )
+
+
+def _process_field(original_value: dict | list[dict] | None, config: dict) -> dict | list[dict]:
+    """Filters a dictionary or a list of dictionaries based on the provided configuration."""
+    whitelisted_fields = config["fields"]
+
+    if config["is_list"]:
+        return [_filter_dict(item, whitelisted_fields) for item in original_value or []]
+    return _filter_dict(original_value, whitelisted_fields)
+
+
+def _filter_dict(alert_dict: dict, whitelisted_fields: set) -> dict:
+    """Creates a new dictionary containing only the keys specified in whitelisted_fields."""
+
+    return {k: v for k, v in (alert_dict or {}).items() if k in whitelisted_fields}

@@ -18,22 +18,22 @@
       "type": "INTEGER"
     },
     {
-      "description": "probability object is a type Ia supernova",
+      "description": "The ratio of aperture flux (apFlux) to PSF flux (psfFlux) for the diaSource.",
       "mode": "NULLABLE",
-      "name": "prob_class0",
+      "name": "flux_ratio",
       "type": "FLOAT"
     },
     {
-      "description": "probability object is non-Ia",
+      "description": "The diaSource is an extended-object candidate.",
       "mode": "NULLABLE",
-      "name": "prob_class1",
-      "type": "FLOAT"
+      "name": "extended_object_candidate",
+      "type": "BOOLEAN"
     },
     {
-      "description": "predicted class; 0 = Ia, 1 = non-Ia",
+      "description": "The diaSource is a strongly lensed supernova candidate based on color.",
       "mode": "NULLABLE",
-      "name": "predicted_class",
-      "type": "INTEGER"
+      "name": "lensed_sn_candidate",
+      "type": "BOOLEAN"
     },
     {
       "description": "Kafka timestamp from originating LSST alert.",
