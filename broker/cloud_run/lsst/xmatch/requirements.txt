@@ -4,7 +4,7 @@
 # file (or packaged with the function) in the same directory as `main.py`
 
 google-cloud-logging
-pittgoogle-client>=0.3.22
+pittgoogle-client>=0.3.23
 astropy
 hpgeom
 pyarrow
