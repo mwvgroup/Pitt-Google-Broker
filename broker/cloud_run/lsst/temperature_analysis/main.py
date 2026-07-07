@@ -94,8 +94,8 @@ def run():
     sourceList = _create_dataframe(alert_lite.dict['alert_lite'])
 
     temperature = {
-        'differenceFit': _calculateFitTemp(sourceList.rename(columns={'psfFlux': 'flux', 'psfFluxErr': 'fluxErr'}), ebv, window),
-        'scienceFit': _calculateFitTemp(sourceList.rename(columns={'scienceFlux': 'flux', 'scienceFluxErr': 'fluxErr'}), ebv, window)
+        'differenceFit': _calculateFitTemp(sourceList.rename(columns={'psfFlux': 'flux', 'psfFluxErr': 'fluxErr'}), ebv),
+        'scienceFit': _calculateFitTemp(sourceList.rename(columns={'scienceFlux': 'flux', 'scienceFluxErr': 'fluxErr'}), ebv)
     }
 
     TOPIC.publish(
@@ -114,20 +114,21 @@ def run():
 def _create_dataframe(alert_lite_dict: dict) -> pd.DataFrame:
     """Create a DataFrame object from the alert lite dictionary."""
 
+    # order matters
     required_cols = [
-        'midpointMjdTai'
-        'band',
         'psfFlux',
         'psfFluxErr',
         'scienceFlux',
         'scienceFluxErr',
+        'midpointMjdTai',
+        'band'
     ]
 
     # extract fields and create filtered DataFrames
     # combined current source with previous sources and forced sources
     sources = list(heapq.merge([alert_lite_dict.get('diaSource')] + (alert_lite_dict.get('prvDiaSources') or []),
-                                alert_lite_dict.get('prvDiaForcedSources') or []),
-                                key = lambda source: source['midpointMjdTai'])
+                                alert_lite_dict.get('prvDiaForcedSources') or [],
+                                key = lambda source: source['midpointMjdTai']))
     sources_df = pd.DataFrame(_filter_columns(sources, required_cols))
 
     return sources_df
