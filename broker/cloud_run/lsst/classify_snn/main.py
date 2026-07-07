@@ -29,9 +29,9 @@ SURVEY = os.getenv("SURVEY")
 MODULE_VERSION = 0.1
 
 # classifier variables
-model_dir_name = "ZTF_DMAM_V19_NoC_SNIa_vs_CC_forFink"
+model_dir_name = "LSST_V01_SNIa_vs_NONSNIa_forPittGoogle"
 model_file_name = (
-    "vanilla_S_0_CLF_2_R_none_photometry_DF_1.0_N_global_lstm_32x2_0.05_128_True_mean.pt"
+    "vanilla_S_0_CLF_2_R_none_photometry_DF_1.0_N_cosmo_lstm_32x2_0.05_128_True_mean.pt"
 )
 MODEL_PATH = Path(__file__).resolve().parent / model_dir_name / model_file_name
 
