@@ -5,6 +5,9 @@
 
 google-cloud-logging
 pittgoogle-client>=0.3.23
+astropy
+hpgeom
+pyarrow
 
 # for Cloud Run
 # https://cloud.google.com/run/docs/quickstarts/build-and-deploy/deploy-python-service

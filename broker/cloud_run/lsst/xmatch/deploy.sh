@@ -1,6 +1,6 @@
 #! /bin/bash
 # Deploys or deletes broker Cloud Run service
-# This script will not delete a Cloud Run service that is in production
+# This script will not delete Cloud Run services that are in production
 
 # "False" uses production resources
 # any other string will be appended to the names of all resources
@@ -15,7 +15,7 @@ BASE_DIR=$(pwd)
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT
 PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format="value(projectNumber)")
 
-MODULE_NAME="supernnova"  # lower case required by cloud run
+MODULE_NAME="xmatch"  # lower case required by cloud run
 ROUTE_RUN="/"  # url route that will trigger main.run()
 
 define_GCP_resources() {
@@ -32,7 +32,7 @@ define_GCP_resources() {
 #--- GCP resources used in this script
 artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
 bq_dataset=$(define_GCP_resources "${survey}" "_")
-bq_table="${MODULE_NAME}"
+bq_table="xmatch"
 cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}")  # lower case required by cloud run
 ps_input_subscrip=$(define_GCP_resources "${survey}-${MODULE_NAME}") # pub/sub subscription used to trigger cloud run module
 ps_output_topic=$(define_GCP_resources "${survey}-${MODULE_NAME}")
@@ -81,9 +81,8 @@ else
     config="${moduledir}/cloudbuild.yaml"
     url=$(gcloud builds submit --config="${config}" \
         --substitutions="_SURVEY=${survey},_TESTID=${testid},_MODULE_NAME=${cr_module_name},_REPOSITORY=${artifact_registry_repo}" \
-        --region="${region}" \
         "${moduledir}" | sed -n 's/^Step #2: Service URL: \(.*\)$/\1/p')
-    gcloud run services update "${cr_module_name}" --memory 1G --region "${region}" --concurrency 60
+    gcloud run services update "${cr_module_name}" --memory 2G --region "${region}" --concurrency 30
     echo
     echo "Creating trigger subscription for ${MODULE_NAME} Cloud Run service..."
     gcloud pubsub subscriptions create "${ps_input_subscrip}" \
