@@ -93,6 +93,13 @@ def run():
 
     sourceList = _create_dataframe(alert_lite.dict['alert_lite'])
 
+    # select only the last window days
+    maxMJD = alert_lite.dict['alert_lite'].get('diaSource').get('midpointMjdTai')
+    sourceList = sourceList[
+        sourceList['midpointMjdTai'] >=
+        maxMJD - window]
+    sourceList.reset_index(drop=True, inplace=True)
+
     temperature = {
         'differenceFit': _calculateFitTemp(sourceList.rename(columns={'psfFlux': 'flux', 'psfFluxErr': 'fluxErr'}), ebv),
         'scienceFit': _calculateFitTemp(sourceList.rename(columns={'scienceFlux': 'flux', 'scienceFluxErr': 'fluxErr'}), ebv)
@@ -114,7 +121,6 @@ def run():
 def _create_dataframe(alert_lite_dict: dict) -> pd.DataFrame:
     """Create a DataFrame object from the alert lite dictionary."""
 
-    # order matters
     required_cols = [
         'psfFlux',
         'psfFluxErr',
@@ -126,7 +132,7 @@ def _create_dataframe(alert_lite_dict: dict) -> pd.DataFrame:
 
     # extract fields and create filtered DataFrames
     # combined current source with previous sources and forced sources
-    sources = list(heapq.merge([alert_lite_dict.get('diaSource')] + (alert_lite_dict.get('prvDiaSources') or []),
+    sources = list(heapq.merge((alert_lite_dict.get('prvDiaSources') + [alert_lite_dict.get('diaSource')] or []),
                                 alert_lite_dict.get('prvDiaForcedSources') or [],
                                 key = lambda source: source['midpointMjdTai']))
     sources_df = pd.DataFrame(_filter_columns(sources, required_cols))
@@ -158,6 +164,9 @@ def _calculateFitTemp(sourceList, ebv):
 
     if len(bands) >= 3:
         output = _runFit(flux, fluxErr, bands)
+    else:
+        output = {'temp': np.nan, 'tempErr': np.nan, 'scale': np.nan, 'scaleErr': np.nan,
+              'wavelengths': [], 'fluxs': [], 'fluxErrs': []}
 
     return output
 
@@ -188,7 +197,7 @@ def _weightedMean3Sigma(fluxs, fluxErrs, sqrtAvgCount):
     return np.ma.average(maskedFluxs, weights=np.pow(fluxErrs, -2)), error
 
 def _runFit(flux, fluxErr, bands):
-    output = {'temp': [], 'tempErr': [], 'scale': [], 'scaleErr': [],
+    output = {'temp': np.nan, 'tempErr': np.nan, 'scale': np.nan, 'scaleErr': np.nan,
               'wavelengths': [], 'fluxs': [], 'fluxErrs': []}
     
     fluxMean = []
@@ -209,28 +218,30 @@ def _runFit(flux, fluxErr, bands):
     try:
         # fit the black body curve and record the results in addition to the points used in the fit
         fit = curve_fit(_scaledBlackbody, wavelength, fluxMean, [10, 1], bounds=([0, -np.inf], [1000, np.inf]), sigma=fluxStd, absolute_sigma=True)
-        output['temp'].append(fit[0][0])
-        output['scale'].append(fit[0][1])
+        output['temp'] = fit[0][0]
+        output['scale'] = fit[0][1]
         
         error = np.sqrt(np.diag(fit[1]))
-        output['tempErr'].append(error[0])
-        output['scaleErr'].append(error[1])
+        output['tempErr'] = error[0]
+        output['scaleErr'] = error[1]
 
-        output['wavelengths'].append(wavelength)
-        output['fluxs'].append(fluxMean)
-        output['fluxErrs'].append(fluxStd)
+        output['wavelengths'] = wavelength
+        output['fluxs'] = fluxMean
+        output['fluxErrs'] = fluxStd
     except:
         # Store nans so that the plotting function still plots the points but skips plotting the line.
         # This is important both so that the points that could not be fitted can be observed and
         # so that the legends line up for both the science and difference versions of the plots.
-        output['temp'].append(np.nan)
-        output['scale'].append(np.nan)
+        output['temp'] = np.nan
+        output['scale'] = np.nan
         
-        output['tempErr'].append(np.nan)
-        output['scaleErr'].append(np.nan)
+        output['tempErr'] = np.nan
+        output['scaleErr'] = np.nan
+
+        output['wavelengths'] = wavelength
+        output['fluxs'] = fluxMean
+        output['fluxErrs'] = fluxStd
         
-        output['wavelengths'].append(wavelength)
-        output['fluxs'].append(fluxMean)
-        output['fluxErrs'].append(fluxStd)
+    return output
         
     return output
