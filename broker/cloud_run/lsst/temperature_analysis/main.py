@@ -81,7 +81,6 @@ def run():
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
-    window = 3
     ra = alert_lite.dict['alert_lite'].get('diaSource').get('ra')
     dec = alert_lite.dict['alert_lite'].get('diaSource').get('dec')
     c = SkyCoord(ra, dec, unit="deg", frame='icrs')
@@ -95,9 +94,9 @@ def run():
 
     # select only the last window days
     maxMJD = alert_lite.dict['alert_lite'].get('diaSource').get('midpointMjdTai')
-    sourceList = sourceList[
-        sourceList['midpointMjdTai'] >=
-        maxMJD - window]
+    window = 3
+    minMJD = maxMJD - window
+    sourceList = sourceList[sourceList['midpointMjdTai'] >= minMJD]
     sourceList.reset_index(drop=True, inplace=True)
 
     temperature = {
