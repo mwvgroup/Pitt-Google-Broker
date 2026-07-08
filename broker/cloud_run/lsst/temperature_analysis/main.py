@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-"""This module produces "value-added" lite alerts containing J indices on the DIA point source fluxes."""
+"""This module produces "value-added" lite alerts containing temperature on the DIA point source fluxes and science fluxes."""
 
 import os
 from typing import Dict
@@ -60,8 +60,8 @@ EXTCOEF   = {'u': 4.145, 'g': 3.237, 'r': 2.273, 'i': 1.684, 'z': 1.323, 'y': 1.
 
 @app.route(ROUTE_RUN, methods=["POST"])
 def run():
-    """Produces a value-added alert stream (${survey}-variability) containing StetsonJ statistics on the DIA point
-    source fluxes. Messages in this stream retain fields from the original alert-lite packet.
+    """Produces a value-added alert stream (${survey}-temperature). Messages in this stream retain fields
+    from the original alert-lite packet.
 
     This module is intended to be deployed as a Cloud Run service. It will operate as an HTTP endpoint
     triggered by Pub/Sub messages. This function will be called once for every message sent to this route.
