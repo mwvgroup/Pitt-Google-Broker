@@ -108,9 +108,11 @@ def run():
     TOPIC.publish(
         pittgoogle.Alert.from_dict(
             {'alert_lite': alert_lite.dict['alert_lite'],
-             'difference_temperature': temperature['differenceFit'],
-             'science_temperature': temperature['scienceFit']},
-            attributes={**alert_lite.attributes},
+             'difference_temperature': temperature['differenceFit']['temp'],
+             'difference_temperature_error': temperature['differenceFit']['tempErr'],
+             'science_temperature': temperature['scienceFit']['temp'],
+             'science_temperature_error': temperature['scienceFit']['tempErr']},
+            attributes={**alert_lite.attributes, **temperature['differenceFit'],  **temperature['scienceFit']},
             schema_name="default",
         )
     )
