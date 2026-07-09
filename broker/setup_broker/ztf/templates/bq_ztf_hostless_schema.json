@@ -1,0 +1,42 @@
+[
+    {
+      "description": "Unique identifiers from the semantically compressed alert packet.",
+      "fields": [
+          {
+            "description": "Object identifier or name.",
+            "mode": "REQUIRED",
+            "name": "objectId",
+            "type": "STRING"
+          },
+          {
+            "description": "Candidate ID from operations DB.",
+            "mode": "REQUIRED",
+            "name": "candid",
+            "type": "INTEGER"
+          }
+      ],
+      "mode": "REQUIRED",
+      "name": "alert_lite",
+      "type": "RECORD"
+    },
+    {
+      "description": "Results from Pitt-Google's hostless transient detection pipeline.",
+      "fields": [
+          {
+            "description": "Whether the candidate is likely to be an extragalactic transient.",
+            "mode": "REQUIRED",
+            "name": "likely_extragalactic_transient",
+            "type": "INTEGER"
+          },
+          {
+            "description": "Whether the candidate is likely to be a hostless transient.",
+            "mode": "REQUIRED",
+            "name": "likely_hostless_transient",
+            "type": "INTEGER"
+          }
+      ],
+      "mode": "REQUIRED",
+      "name": "hostless",
+      "type": "RECORD"
+    }
+]
