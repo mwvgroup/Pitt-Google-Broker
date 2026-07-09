@@ -1,0 +1,132 @@
+#!/usr/bin/env python3
+# -*- coding: UTF-8 -*-
+"""Classify an alert using SCONE (Qu et al. 2021).
+
+This code is intended to be containerized and deployed to Google Cloud Run.
+Once deployed, individual alerts in the "trigger" stream will be delivered to the container as HTTP requests.
+"""
+
+import os
+from pathlib import Path
+import flask  # Manage the HTTP request containing the alert
+import pittgoogle  # Manipulate the alert and interact with cloud resources
+
+import google.cloud.logging
+from astropy.table import Table
+
+from model_utils import SconeClassifier
+from base import CreateHeatmaps
+
+# [FIXME] Make this helpful or else delete it.
+# Connect the python logger to the google cloud logger.
+# By default, this captures INFO level and above.
+# pittgoogle uses the python logger.
+# We don't currently use the python logger directly in this script, but we could.
+google.cloud.logging.Client().setup_logging()
+
+# These environment variables are defined when running the deploy.sh script.
+PROJECT_ID = os.getenv("GCP_PROJECT")
+TESTID = os.getenv("TESTID")
+SURVEY = os.getenv("SURVEY")
+
+# provenance variables
+MODULE_NAME = "SCONE"
+MODULE_VERSION = 0.1
+
+# classifier variables
+model_dir_name = "./"
+model_file_name = "temp_model"
+MODEL_PATH = Path(__file__).resolve().parent / model_dir_name / model_file_name
+
+# Variables for incoming data
+# A url route is used in setup.sh when the trigger subscription is created.
+# It is possible to define multiple routes in a single module and trigger them using different subscriptions.
+ROUTE_RUN = "/"  # HTTP route that will trigger run(). Must match setup.sh
+
+# Variables for outgoing data
+HTTP_204 = 204  # HTTP code: Success
+HTTP_400 = 400  # HTTP code: Bad Request
+
+# GCP resources used in this module
+# pittgoogle will construct the full resource names from the MODULE_NAME, SURVEY, and TESTID
+TOPIC = pittgoogle.Topic.from_cloud(
+    MODULE_NAME, survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
+)
+
+app = flask.Flask(__name__)
+
+
+@app.route(ROUTE_RUN, methods=["POST"])
+def run():
+    """Classify the alert; publish and store results.
+
+    This module is intended to be deployed as a Cloud Run service. It will operate as an HTTP endpoint
+    triggered by Pub/Sub messages. This function will be called once for every message sent to this route.
+    It should accept the incoming HTTP request and return a response.
+
+    Returns
+    -------
+    response : tuple(str, int)
+        Tuple containing the response body (string) and HTTP status code (int). Flask will convert the
+        tuple into a proper HTTP response. Note that the response is a status message for the web server
+        and should not contain the classification results.
+    """
+    # extract the envelope from the request that triggered the endpoint
+    # this contains a single Pub/Sub message with the alert to be processed
+    envelope = flask.request.get_json()
+
+    # unpack the alert. raises a `BadRequest` if the envelope does not contain a valid message
+    try:
+        alert_lite = pittgoogle.Alert.from_cloud_run(envelope, "default")
+    except pittgoogle.exceptions.BadRequest as exc:
+        return str(exc), HTTP_400
+
+    metadata = {
+        'mwebv': 1, # milkyway extinction parameter
+        'survey': 'LSST',
+        'wavelength_bins': 32,
+        'mjd_bins': 180
+    }
+
+    # create heatmap and classify
+    input_data = _format_for_classifier(alert_lite)
+    heatmap = CreateHeatmaps(metadata, input_data).create_heatmaps()
+    scone_classification = SconeClassifier(heatmap, MODEL_PATH)
+
+    # publish
+    outpt_dict = {
+        "prob": scone_classification,
+        "predicted_class": round(scone_classification),
+    }
+
+    TOPIC.publish(
+        pittgoogle.Alert.from_dict(
+            payload={"alert_lite": alert_lite.dict['alert_lite'], "SCONE": outpt_dict},
+            attributes={
+                **alert_lite.attributes,
+                "pg_scone_class": outpt_dict["predicted_class"],
+            },
+            schema_name="default",
+        )
+    )
+
+    return "", HTTP_204
+
+
+def _format_for_classifier(alert: pittgoogle.Alert) -> Table:
+    """Create a Table for input to SCONE."""
+    # select a subset of columns and rename them for SCONE  
+    # get_key returns the name that the survey uses for a given field  
+    # for the full mapping, see alert.schema.map  
+    
+    alert_dict = alert.dict['alert_lite']
+    
+    source_dict = [alert_dict['diaSource']] + alert_dict['prvDiaSources'] + alert_dict['prvDiaForcedSources']
+
+    # rename columns and select the ones we need 
+    keys = [('midpointMjdTai',alert.get_key('mjd')), ('psfFlux',alert.get_key('flux')), ('psfFluxErr',alert.get_key('flux_err')), ('band','passband')]
+    source_subset_dict = [None] * len(source_dict)
+    for i in range(len(source_dict)):
+        source_subset_dict[i] = {key[1]: source_dict[i][key[0]] for key in keys}
+    
+    return Table(rows=source_subset_dict, names=(alert.get_key('mjd'), alert.get_key('flux'), alert.get_key('flux_err'), 'passband'))
