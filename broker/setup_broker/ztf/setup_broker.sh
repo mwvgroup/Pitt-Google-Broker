@@ -54,6 +54,8 @@ artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
 bq_dataset=$(define_GCP_resources "${survey}" "_")
 bq_dataset_value_added=$(define_GCP_resources "${survey}_value_added" "_")
 broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
+ps_subscription_alerts_lite=$(define_GCP_resources "${survey}-lite-counter")
+ps_topic_alerts_lite=$(define_GCP_resources "${survey}-lite")
 # topics and subscriptions involved in writing alert data to BigQuery
 ps_deadletter_subscription=$(define_GCP_resources "${survey}-deadletter")
 ps_deadletter_topic="${ps_deadletter_subscription}"
@@ -81,12 +83,16 @@ manage_resources() {
         python3 setup_gcp.py --survey="$survey" --testid="$testid" --confirmed --region="${region}" --versiontag="${versiontag}"
         # the following resources are not created/deleted by setup_gcp.py
         # will eventually migrate away from using setup_gcp.py altogether
+        gcloud pubsub topics create "${ps_topic_alerts_lite}" \
+            --message-transforms-file=templates/ps_ztf_lite_smt.yaml
         gcloud pubsub topics create "${topic_bigquery_import}"
         gcloud pubsub topics create "${ps_deadletter_topic}"
         gcloud pubsub subscriptions create "${ps_deadletter_subscription}" --topic="${ps_deadletter_topic}"
         # in order to create BigQuery subscriptions, ensure that the following service account:
         # service-<project number>@gcp-sa-pubsub.iam.gserviceaccount.com" has the
         # bigquery.dataEditor role for each table
+        gcloud pubsub subscriptions create "${ps_subscription_alerts_lite}" \
+            --topic="${ps_topic_alerts_lite}"
         gcloud pubsub subscriptions create "${subscription_bigquery_import}" \
             --topic="${topic_bigquery_import}" \
             --bigquery-table="${PROJECT_ID}:${bq_dataset}.${alerts_table}" \
@@ -95,6 +101,12 @@ manage_resources() {
             --dead-letter-topic="${ps_deadletter_topic}" \
             --max-delivery-attempts=5 \
             --dead-letter-topic-project="${PROJECT_ID}"
+        # set IAM policies on public Pub/Sub resources
+        if [ "$testid" = "False" ]; then
+            user="allUsers"
+            roleid="projects/${GOOGLE_CLOUD_PROJECT}/roles/userPublic"
+            gcloud pubsub topics add-iam-policy-binding "${ps_topic_alerts_lite}" --member="${user}" --role="${roleid}"
+        fi
         # assign required permissions to the Pub/Sub service account
         # this allows dead-lettered messages to be forwarded from the BigQuery subscription to the dead letter topic
         # and it allows dead-lettered messages to be published to the dead letter topic.
@@ -118,6 +130,7 @@ manage_resources() {
             # delete testing resources
             bq rm -r -f "${PROJECT_ID}:${bq_dataset_value_added}"
             python3 setup_gcp.py --survey="$survey" --testid="$testid" --teardown --confirmed --versiontag="${versiontag}"
+            gcloud pubsub topics delete "${ps_topic_alerts_lite}"
             gcloud pubsub topics delete "${topic_bigquery_import}"
             gcloud pubsub topics delete "${ps_deadletter_topic}"
             gcloud pubsub subscriptions delete "${ps_deadletter_subscription}"
@@ -189,27 +202,23 @@ echo "Configuring Cloud Functions..."
     #--- navigate to the Cloud Run Functions directory for ZTF
     cd .. && cd .. && cd cloud_functions && cd ztf
 
-    #--- alerts-lite cloud function
-    cd lite
-    ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
-
     #--- Pub/Sub -> Cloud Storage Avro cloud function
-    cd .. && cd ps_to_gcs
+    cd ps_to_gcs
     ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag" "$region"
 
     #--- BigQuery storage cloud function
     cd .. && cd store_BigQuery
     ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
 
-    #--- tag alerts cloud function
-    cd .. && cd tag
-    ./deploy.sh "$testid" "$teardown" "$survey" "$versiontag"
-
     # navigate to the Cloud Run directory for ZTF
     cd .. && cd .. && cd .. && cd cloud_run && cd ztf
 
+    #--- tag alerts cloud function
+    cd tag
+    ./deploy.sh "$testid" "$teardown" "$survey" "$region"
+
     #--- variability Cloud Run service
-    cd variability
+    cd .. && cd variability
     ./deploy.sh "$testid" "$teardown" "$survey" "$region"
 
     #--- upsilon Cloud Run service

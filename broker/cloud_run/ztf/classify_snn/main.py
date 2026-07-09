@@ -5,7 +5,7 @@
 
 import os
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, Dict
 
 import flask
 import google.cloud.logging
@@ -76,12 +76,13 @@ def run():
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
-    snn_dict = _classify(alert_lite)
+    alert_lite_dict = alert_lite.dict["alert_lite"]
+    snn_dict = _classify(alert_lite_dict)
 
     # announce to Pub/Sub
     TOPIC.publish(
         pittgoogle.Alert.from_dict(
-            payload={"alert_lite": alert_lite.dict, "SuperNNova": snn_dict},
+            payload={"alert_lite": alert_lite_dict, "SuperNNova": snn_dict},
             attributes={
                 **alert_lite.attributes,
                 "pg_supernnova_class": snn_dict["predicted_class"],
@@ -94,8 +95,8 @@ def run():
     TABLE_SUPERNNOVA.insert_rows(
         [
             {
-                "objectId": alert_lite.dict["alertIds"]["objectId"],
-                "candid": alert_lite.dict["alertIds"]["sourceId"],
+                "objectId": alert_lite_dict["objectId"],
+                "candid": alert_lite_dict["candid"],
                 **snn_dict,
             }
         ]
@@ -103,8 +104,8 @@ def run():
     TABLE_CLASSIFICATIONS.insert_rows(
         [
             {
-                "objectId": alert_lite.dict["alertIds"]["objectId"],
-                "candid": alert_lite.dict["alertIds"]["sourceId"],
+                "objectId": alert_lite_dict["objectId"],
+                "candid": alert_lite_dict["candid"],
                 "classifier": "purity",
                 "classifier_version": CLASSIFIER_VERSION,
                 "class": snn_dict["predicted_class"],
@@ -116,9 +117,9 @@ def run():
     return "", HTTP_204
 
 
-def _classify(alert_lite: pittgoogle.Alert) -> dict:
+def _classify(alert_lite_dict: Dict) -> Dict:
     """Classify the alert using SuperNNova."""
-    snn_df = _format_for_snn(alert_lite)
+    snn_df = _format_for_snn(alert_lite_dict)
     device = "cpu"
 
     # classify
@@ -135,20 +136,21 @@ def _classify(alert_lite: pittgoogle.Alert) -> dict:
     return snn_dict
 
 
-def _format_for_snn(alert_lite: pittgoogle.Alert) -> pd.DataFrame:
+def _format_for_snn(alert_lite_dict: Dict) -> pd.DataFrame:
     """Create a DataFrame for input to SuperNNova."""
-    alert_lite_dict = alert_lite.dict
-    alert_df = _create_dataframe(alert_lite_dict)
+    alert_df = pd.DataFrame(
+        [alert_lite_dict.get("candidate")] + (alert_lite_dict.get("prv_candidates") or [])
+    )
     fluxcal, fluxcalerr = mag_to_flux(
-        alert_df["mag"],
-        alert_df["magzp"],
-        alert_df["magerr"],
+        alert_df["magpsf"],
+        alert_df["magzpsci"],
+        alert_df["sigmapsf"],
     )
 
     snn_df = pd.DataFrame(
         data={
-            "SNID": [alert_lite.dict["alertIds"]["objectId"]] * len(alert_df.index),
-            "FLT": alert_df["filter"].map(pittgoogle.utils.ztf_fid_names()),
+            "SNID": [alert_lite_dict["objectId"]] * len(alert_df.index),
+            "FLT": alert_df["fid"].map(pittgoogle.utils.ztf_fid_names()),
             "MJD": jd_to_mjd(alert_df["jd"].loc[0]),
             "FLUXCAL": fluxcal,
             "FLUXCALERR": fluxcalerr,
@@ -156,20 +158,6 @@ def _format_for_snn(alert_lite: pittgoogle.Alert) -> pd.DataFrame:
         index=alert_df.index,
     )
     return snn_df
-
-
-def _create_dataframe(alert_dict: dict) -> "pd.DataFrame":
-    """Return a pandas DataFrame containing the source detections."""
-
-    # sources and previous sources are expected to have the same fields
-    sources_df = pd.DataFrame([alert_dict.get("source")] + (alert_dict.get("prvSources") or []))
-
-    # use nullable integer data type to avoid converting ints to floats
-    # for columns in one dataframe but not the other
-    sources_ints = [c for c, v in sources_df.dtypes.items() if v == int]
-    _dataframe = sources_df.astype({c: "Int64" for c in sources_ints})
-
-    return _dataframe
 
 
 def mag_to_flux(mag: float, zeropoint: float, magerr: float) -> Tuple[float, float]:
