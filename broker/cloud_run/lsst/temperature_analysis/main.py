@@ -55,7 +55,7 @@ WL = {'u': 0.3724, 'g': 0.4807, 'r': 0.6221, 'i': 0.7559, 'z': 0.8680, 'y': 0.97
 # These colour corrections are from Table 6 of 
 # Schlafly and Finkbeiner https://iopscience.iop.org/article/10.1088/0004-637X/737/2/103 with RV=3.1
 # Multiplier for EBV for magnitude correction
-EXTCOEF   = {'u': 4.145, 'g': 3.237, 'r': 2.273, 'i': 1.684, 'z': 1.323, 'y': 1.088}
+EXTCOEF = {'u': 4.145, 'g': 3.237, 'r': 2.273, 'i': 1.684, 'z': 1.323, 'y': 1.088}
 
 
 @app.route(ROUTE_RUN, methods=["POST"])
@@ -242,7 +242,5 @@ def _runFit(flux, fluxErr, bands):
         output['wavelengths'] = wavelength
         output['fluxs'] = fluxMean
         output['fluxErrs'] = fluxStd
-        
-    return output
         
     return output

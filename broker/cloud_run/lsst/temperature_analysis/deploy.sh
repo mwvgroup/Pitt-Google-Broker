@@ -15,7 +15,7 @@ BASE_DIR=$(pwd)
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT
 PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format="value(projectNumber)")
 
-MODULE_NAME="variability"  # lower case required by cloud run
+MODULE_NAME="temperature_analysis"  # lower case required by cloud run
 ROUTE_RUN="/"  # url route that will trigger main.run()
 
 define_GCP_resources() {
@@ -32,7 +32,7 @@ define_GCP_resources() {
 #--- GCP resources used in this script
 artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
 bq_dataset=$(define_GCP_resources "${survey}" "_")
-bq_table="variability"
+bq_table="temperature"
 cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}")  # lower case required by cloud run
 ps_input_subscrip=$(define_GCP_resources "${survey}-${MODULE_NAME}") # pub/sub subscription used to trigger cloud run module
 ps_output_topic=$(define_GCP_resources "${survey}-${MODULE_NAME}")
