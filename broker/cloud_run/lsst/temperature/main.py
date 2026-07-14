@@ -167,7 +167,7 @@ def _calculateFitTemp(sourceList, ebv):
         output = _runFit(flux, fluxErr, bands)
     else:
         output = {'temp': np.nan, 'tempErr': np.nan, 'scale': np.nan, 'scaleErr': np.nan,
-              'wavelengths': [], 'fluxs': [], 'fluxErrs': []}
+              'wavelengths': [], 'fluxes': [], 'fluxErrs': []}
 
     return output
 
@@ -181,25 +181,25 @@ def _scaledBlackbody(wl, T, scale):
 def _dustFlux(flux, band, ebv):
     return flux*np.power(10, ebv*EXTCOEF[band]/2.5)
 
-def _weightedMean3Sigma(fluxs, fluxErrs, sqrtAvgCount):
+def _weightedMean3Sigma(fluxes, fluxErrs, sqrtAvgCount):
     # get the masked list
-    maskedFluxs = sigma_clip(fluxs, sigma=3, cenfunc='median')
+    maskedFluxes = sigma_clip(fluxes, sigma=3, cenfunc='median')
 
-    if maskedFluxs.count() == 0:
+    if maskedFluxes.count() == 0:
         return None, None
     
     # an error based on the std and how many points are returned
-    error = np.ma.std(maskedFluxs) * (sqrtAvgCount/np.sqrt(maskedFluxs.count()))
+    error = np.ma.std(maskedFluxes) * (sqrtAvgCount/np.sqrt(maskedFluxes.count()))
 
-    # if std = 0 for example if maskedFluxs only has one element or if all elements are the same
+    # if std = 0 for example if maskedFluxes only has one element or if all elements are the same
     # use the fluxErrs instead to keep the fit function happy
-    error = error if error > 0 else np.average(list(compress(fluxErrs, ~maskedFluxs.mask))) * sqrtAvgCount
+    error = error if error > 0 else np.average(list(compress(fluxErrs, ~maskedFluxes.mask))) * sqrtAvgCount
 
-    return np.ma.average(maskedFluxs, weights=np.pow(fluxErrs, -2)), error
+    return np.ma.average(maskedFluxes, weights=np.pow(fluxErrs, -2)), error
 
 def _runFit(flux, fluxErr, bands):
     output = {'temp': np.nan, 'tempErr': np.nan, 'scale': np.nan, 'scaleErr': np.nan,
-              'wavelengths': [], 'fluxs': [], 'fluxErrs': []}
+              'wavelengths': [], 'fluxes': [], 'fluxErrs': []}
     
     fluxMean = []
     fluxStd = []
@@ -227,7 +227,7 @@ def _runFit(flux, fluxErr, bands):
         output['scaleErr'] = error[1]
 
         output['wavelengths'] = wavelength
-        output['fluxs'] = fluxMean
+        output['fluxes'] = fluxMean
         output['fluxErrs'] = fluxStd
     except:
         # Store nans so that the plotting function still plots the points but skips plotting the line.
@@ -240,7 +240,7 @@ def _runFit(flux, fluxErr, bands):
         output['scaleErr'] = np.nan
 
         output['wavelengths'] = wavelength
-        output['fluxs'] = fluxMean
+        output['fluxes'] = fluxMean
         output['fluxErrs'] = fluxStd
         
     return output
