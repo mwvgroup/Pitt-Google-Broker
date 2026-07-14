@@ -44,7 +44,7 @@ HTTP_400 = 400  # HTTP code: Bad Request
 
 # GCP resources used in this module
 TOPIC = pittgoogle.Topic.from_cloud(
-    "temperature_analysis", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
+    "temperature", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
 )
 
 app = flask.Flask(__name__)

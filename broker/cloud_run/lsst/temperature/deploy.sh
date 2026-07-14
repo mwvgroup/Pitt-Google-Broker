@@ -15,7 +15,7 @@ BASE_DIR=$(pwd)
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT
 PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format="value(projectNumber)")
 
-MODULE_NAME="temperature_analysis"  # lower case required by cloud run
+MODULE_NAME="temperature"  # lower case required by cloud run
 ROUTE_RUN="/"  # url route that will trigger main.run()
 
 define_GCP_resources() {
