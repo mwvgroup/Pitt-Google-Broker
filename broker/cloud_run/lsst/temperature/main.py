@@ -12,9 +12,9 @@ import pittgoogle
 from google.cloud import logging
 
 import heapq
-import mwdust
+# import mwdust
 # Initialize the 2D SFD dust map
-sfdMap = mwdust.SFD(filter='E(B-V)')
+# sfdMap = mwdust.SFD(filter='E(B-V)')
 from astropy.coordinates import SkyCoord
 from astropy.stats import sigma_clip
 # from astropy.time import Time
@@ -88,29 +88,32 @@ def run():
     # The third argument is a distance
     # It seems to have no affect since SFD is 2D not 3D but it is a required field
     # I pass a large distance (100 kpc) in case it matters at some locations
-    ebv = sfdMap(c.galactic.l.deg, c.galactic.b.deg, 100)[0]
+    # ebv = sfdMap(c.galactic.l.deg, c.galactic.b.deg, 100)[0]
+    ebv = 0
 
     sourceList = _create_dataframe(alert_lite.dict['alert_lite'])
 
     # select only the last window days
     maxMJD = alert_lite.dict['alert_lite'].get('diaSource').get('midpointMjdTai')
-    window = 3
+    window = 30
     minMJD = maxMJD - window
     sourceList = sourceList[sourceList['midpointMjdTai'] >= minMJD]
     sourceList.reset_index(drop=True, inplace=True)
 
+    difOutputKeys = ['difTemp', 'difTempErr', 'difScale', 'difScaleErr', 'difWavelengths', 'difFluxes', 'difFluxErrs']
+    sciOutputKeys = ['sciTemp', 'sciTempErr', 'sciScale', 'sciScaleErr', 'sciWavelengths', 'sciFluxes', 'sciFluxErrs']
+
     temperature = {
-        'differenceFit': _calculateFitTemp(sourceList.rename(columns={'psfFlux': 'flux', 'psfFluxErr': 'fluxErr'}), ebv),
-        'scienceFit': _calculateFitTemp(sourceList.rename(columns={'scienceFlux': 'flux', 'scienceFluxErr': 'fluxErr'}), ebv)
+        'differenceFit': dict(zip(difOutputKeys, _calculateFitTemp(sourceList.rename(columns={'psfFlux': 'flux', 'psfFluxErr': 'fluxErr'}), ebv).values())),
+        'scienceFit': dict(zip(sciOutputKeys, _calculateFitTemp(sourceList.rename(columns={'scienceFlux': 'flux', 'scienceFluxErr': 'fluxErr'}), ebv).values()))
     }
 
     TOPIC.publish(
         pittgoogle.Alert.from_dict(
             {'alert_lite': alert_lite.dict['alert_lite'],
-             'difference_temperature': temperature['differenceFit']['temp'],
-             'difference_temperature_error': temperature['differenceFit']['tempErr'],
-             'science_temperature': temperature['scienceFit']['temp'],
-             'science_temperature_error': temperature['scienceFit']['tempErr']},
+             **temperature['differenceFit'],
+             **temperature['scienceFit']
+             },
             attributes={**alert_lite.attributes, **temperature['differenceFit'],  **temperature['scienceFit']},
             schema_name="default",
         )
@@ -219,28 +222,25 @@ def _runFit(flux, fluxErr, bands):
     try:
         # fit the black body curve and record the results in addition to the points used in the fit
         fit = curve_fit(_scaledBlackbody, wavelength, fluxMean, [10, 1], bounds=([0, -np.inf], [1000, np.inf]), sigma=fluxStd, absolute_sigma=True)
-        output['temp'] = fit[0][0]
-        output['scale'] = fit[0][1]
+        output['temp'] = float(fit[0][0])
+        output['scale'] = float(fit[0][1])
         
         error = np.sqrt(np.diag(fit[1]))
-        output['tempErr'] = error[0]
-        output['scaleErr'] = error[1]
+        output['tempErr'] = float(error[0])
+        output['scaleErr'] = float(error[1])
 
         output['wavelengths'] = wavelength
-        output['fluxes'] = fluxMean
-        output['fluxErrs'] = fluxStd
+        output['fluxes'] = [float(x) for x in fluxMean]
+        output['fluxErrs'] = [float(x) for x in fluxStd]
     except:
-        # Store nans so that the plotting function still plots the points but skips plotting the line.
-        # This is important both so that the points that could not be fitted can be observed and
-        # so that the legends line up for both the science and difference versions of the plots.
-        output['temp'] = np.nan
-        output['scale'] = np.nan
+        output['temp'] = None
+        output['scale'] = None
         
-        output['tempErr'] = np.nan
-        output['scaleErr'] = np.nan
+        output['tempErr'] = None
+        output['scaleErr'] = None
 
         output['wavelengths'] = wavelength
-        output['fluxes'] = fluxMean
-        output['fluxErrs'] = fluxStd
+        output['fluxes'] = [float(x) for x in fluxMean]
+        output['fluxErrs'] = [float(x) for x in fluxStd]
         
     return output

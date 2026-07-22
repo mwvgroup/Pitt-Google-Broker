@@ -43,19 +43,19 @@
     },
     {
       "description": "Wavelengths used for difference temperature fit.",
-      "mode": "NULLABLE",
+      "mode": "REPEATED",
       "name": "difWavelengths",
       "type": "FLOAT"
     },
     {
       "description": "Fluxes used for difference temperature fit.",
-      "mode": "NULLABLE",
+      "mode": "REPEATED",
       "name": "difFluxes",
       "type": "FLOAT"
     },
     {
       "description": "Flux errors used for difference temperature fit.",
-      "mode": "NULLABLE",
+      "mode": "REPEATED",
       "name": "difFluxErrs",
       "type": "FLOAT"
     },
@@ -85,19 +85,19 @@
     },
     {
       "description": "Wavelengths used for science temperature fit.",
-      "mode": "NULLABLE",
+      "mode": "REPEATED",
       "name": "sciWavelengths",
       "type": "FLOAT"
     },
     {
       "description": "Fluxes used for science temperature fit.",
-      "mode": "NULLABLE",
+      "mode": "REPEATED",
       "name": "sciFluxes",
       "type": "FLOAT"
     },
     {
       "description": "Flux errors used for science temperature fit.",
-      "mode": "NULLABLE",
+      "mode": "REPEATED",
       "name": "sciFluxErrs",
       "type": "FLOAT"
     },

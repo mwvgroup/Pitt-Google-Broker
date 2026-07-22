@@ -12,3 +12,9 @@ pittgoogle-client>=0.3.22
 Flask
 gunicorn
 Werkzeug
+
+python-heapq
+mwdust
+astropy
+more-itertools
+scipy
