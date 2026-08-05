@@ -4,23 +4,21 @@
 """This module produces "value-added" lite alerts containing temperature on the DIA point source fluxes and science fluxes."""
 
 import os
-from typing import Dict
+from itertools import compress
+import heapq
+
 import numpy as np
 import pandas as pd
 import flask
 import pittgoogle
 from google.cloud import logging
 
-import heapq
+from astropy.stats import sigma_clip
+from scipy.optimize import curve_fit
 # import mwdust
 # Initialize the 2D SFD dust map
 # sfdMap = mwdust.SFD(filter='E(B-V)')
-from astropy.coordinates import SkyCoord
-from astropy.stats import sigma_clip
-# from astropy.time import Time
-from itertools import compress
-# from itertools import repeat
-from scipy.optimize import curve_fit
+# from astropy.coordinates import SkyCoord
 
 # [FIXME] Make this helpful or else delete it.
 # Connect the python logger to the google cloud logger.
@@ -81,9 +79,9 @@ def run():
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
-    ra = alert_lite.dict['alert_lite'].get('diaSource').get('ra')
-    dec = alert_lite.dict['alert_lite'].get('diaSource').get('dec')
-    c = SkyCoord(ra, dec, unit="deg", frame='icrs')
+    # ra = alert_lite.dict['alert_lite'].get('diaSource').get('ra')
+    # dec = alert_lite.dict['alert_lite'].get('diaSource').get('dec')
+    # c = SkyCoord(ra, dec, unit="deg", frame='icrs')
 
     # The third argument is a distance
     # It seems to have no affect since SFD is 2D not 3D but it is a required field
@@ -215,7 +213,7 @@ def _runFit(flux, fluxErr, bands):
     for band in flux:
         if len(flux[band]) > 0:
             fMean, fStd = _weightedMean3Sigma(flux[band], fluxErr[band], sqrtAvgCount)
-            if fMean != None:
+            if fMean is not None:
                 fluxMean.append(fMean)
                 fluxStd.append(fStd)
                 wavelength.append(WL[band])
@@ -232,7 +230,7 @@ def _runFit(flux, fluxErr, bands):
         output['wavelengths'] = wavelength
         output['fluxes'] = [float(x) for x in fluxMean]
         output['fluxErrs'] = [float(x) for x in fluxStd]
-    except:
+    except Exception:
         output['temp'] = None
         output['scale'] = None
         
