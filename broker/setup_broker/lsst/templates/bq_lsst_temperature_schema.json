@@ -1,0 +1,110 @@
+[
+    {
+      "description": "Unique identifier of this DiaSource.",
+      "mode": "REQUIRED",
+      "name": "diaSourceId",
+      "type": "INTEGER"
+    },
+    {
+      "description": "Unique identifier of this DiaObject.",
+      "mode": "NULLABLE",
+      "name": "diaObjectId",
+      "type": "INTEGER"
+    },
+    {
+      "description": "Unique identifier of the object.",
+      "mode": "NULLABLE",
+      "name": "ssObjectId",
+      "type": "INTEGER"
+    },
+    {
+      "description": "Calculated temperature from difference flux.",
+      "mode": "NULLABLE",
+      "name": "difTemp",
+      "type": "FLOAT"
+    },
+    {
+      "description": "Calculated temperature error from difference flux.",
+      "mode": "NULLABLE",
+      "name": "difTempErr",
+      "type": "FLOAT"
+    },
+    {
+      "description": "Scale from difference temperature fit.",
+      "mode": "NULLABLE",
+      "name": "difScale",
+      "type": "FLOAT"
+    },
+    {
+      "description": "Scale error from difference temperature fit.",
+      "mode": "NULLABLE",
+      "name": "difScaleErr",
+      "type": "FLOAT"
+    },
+    {
+      "description": "Wavelengths used for difference temperature fit.",
+      "mode": "REPEATED",
+      "name": "difWavelengths",
+      "type": "FLOAT"
+    },
+    {
+      "description": "Fluxes used for difference temperature fit.",
+      "mode": "REPEATED",
+      "name": "difFluxes",
+      "type": "FLOAT"
+    },
+    {
+      "description": "Flux errors used for difference temperature fit.",
+      "mode": "REPEATED",
+      "name": "difFluxErrs",
+      "type": "FLOAT"
+    },
+    {
+      "description": "Calculated temperature from science flux.",
+      "mode": "NULLABLE",
+      "name": "sciTemp",
+      "type": "FLOAT"
+    },
+    {
+      "description": "Calculated temperature error from science flux.",
+      "mode": "NULLABLE",
+      "name": "sciTempErr",
+      "type": "FLOAT"
+    },
+    {
+      "description": "Scale from science temperature fit.",
+      "mode": "NULLABLE",
+      "name": "sciScale",
+      "type": "FLOAT"
+    },
+    {
+      "description": "Scale error from science temperature fit.",
+      "mode": "NULLABLE",
+      "name": "sciScaleErr",
+      "type": "FLOAT"
+    },
+    {
+      "description": "Wavelengths used for science temperature fit.",
+      "mode": "REPEATED",
+      "name": "sciWavelengths",
+      "type": "FLOAT"
+    },
+    {
+      "description": "Fluxes used for science temperature fit.",
+      "mode": "REPEATED",
+      "name": "sciFluxes",
+      "type": "FLOAT"
+    },
+    {
+      "description": "Flux errors used for science temperature fit.",
+      "mode": "REPEATED",
+      "name": "sciFluxErrs",
+      "type": "FLOAT"
+    },
+    {
+      "description": "Kafka timestamp from originating LSST alert.",
+      "mode": "REQUIRED",
+      "name": "kafkaPublishTimestamp",
+      "type": "TIMESTAMP"
+    }
+]

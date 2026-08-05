@@ -56,6 +56,7 @@ bq_table_lensing="lensing"
 bq_table_supernnova="supernnova"
 bq_table_upsilon="upsilon"
 bq_table_variability="variability"
+bq_table_temperature="temperature"
 gcs_broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
 ps_subscription_reservoir=$(define_GCP_resources "${survey}-alerts-reservoir")
 ps_topic_alerts_raw=$(define_GCP_resources "${survey}-alerts_raw")
@@ -94,6 +95,7 @@ manage_resources() {
         (cd templates && bq mk --table --time_partitioning_field=kafkaPublishTimestamp --time_partitioning_type=DAY "${PROJECT_ID}:${bq_dataset}.${bq_table_supernnova}" "bq_${survey}_${bq_table_supernnova}_schema.json") || exit 5
         (cd templates && bq mk --table --time_partitioning_field=kafkaPublishTimestamp --time_partitioning_type=DAY "${PROJECT_ID}:${bq_dataset}.${bq_table_variability}" "bq_${survey}_${bq_table_variability}_schema.json") || exit 5
         (cd templates && bq mk --table --time_partitioning_field=kafkaPublishTimestamp --time_partitioning_type=DAY "${PROJECT_ID}:${bq_dataset}.${bq_table_upsilon}" "bq_${survey}_${bq_table_upsilon}_schema.json") || exit 5
+        (cd templates && bq mk --table --time_partitioning_field=kafkaPublishTimestamp --time_partitioning_type=DAY "${PROJECT_ID}:${bq_dataset}.${bq_table_temperature}" "bq_${survey}_${bq_table_temperature}_schema.json") || exit 5
         bq update --description "Alert data from LSST. This table is an archive of the lsst-alerts Pub/Sub stream. It has the same schema as the original alert bytes, including nested and repeated fields." "${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}"
         bq update --description "Binary classification results from SuperNNova." "${PROJECT_ID}:${bq_dataset}.${bq_table_supernnova}"
 
@@ -239,5 +241,9 @@ echo "Configuring Cloud Run services..."
 
     #--- upsilon Cloud Run service
     cd .. && cd classify_upsilon
+    ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}"
+
+    #--- temperature Cloud Run service
+    cd .. && cd temperature
     ./deploy.sh "${testid}" "${teardown}" "${survey}" "${region}"
 ) || exit
