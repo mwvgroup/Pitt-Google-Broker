@@ -1,0 +1,44 @@
+[
+    {
+      "description": "Unique identifier of this DiaSource.",
+      "mode": "REQUIRED",
+      "name": "diaSourceId",
+      "type": "INTEGER"
+    },
+    {
+      "description": "Unique identifier of this DiaObject.",
+      "mode": "NULLABLE",
+      "name": "diaObjectId",
+      "type": "INTEGER"
+    },
+    {
+      "description": "Unique identifier of the object.",
+      "mode": "NULLABLE",
+      "name": "ssObjectId",
+      "type": "INTEGER"
+    },
+    {
+      "description": "The ratio of aperture flux (apFlux) to PSF flux (psfFlux) for the diaSource.",
+      "mode": "NULLABLE",
+      "name": "flux_ratio",
+      "type": "FLOAT"
+    },
+    {
+      "description": "The diaSource is an extended-object candidate.",
+      "mode": "NULLABLE",
+      "name": "extended_object_candidate",
+      "type": "BOOLEAN"
+    },
+    {
+      "description": "The diaSource is a strongly lensed supernova candidate based on color.",
+      "mode": "NULLABLE",
+      "name": "lensed_sn_candidate",
+      "type": "BOOLEAN"
+    },
+    {
+      "description": "Kafka timestamp from originating LSST alert.",
+      "mode": "REQUIRED",
+      "name": "kafkaPublishTimestamp",
+      "type": "TIMESTAMP"
+    }
+]
