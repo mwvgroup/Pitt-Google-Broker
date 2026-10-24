@@ -8,7 +8,7 @@ testid="${1:-test}"
 teardown="${2:-False}"
 # name of the survey this broker instance will ingest
 survey="${3:-desirt}"
-schema_version="${4:-1.0}"
+schema_version="${4:-0.2}"
 versiontag=v$(echo "${schema_version}" | tr . _) # 1.0 -> v1_0
 region="${5:-us-central1}"
 zone="${region}-a"  # just use zone "a" instead of adding another script arg
@@ -122,8 +122,6 @@ manage_resources() {
         gcloud pubsub topics create "${ps_deadletter_topic}"
         gcloud pubsub subscriptions create "${ps_deadletter_subscription}" \
             --topic="${ps_deadletter_topic}"
-        gcloud pubsub subscriptions create "${ps_subscription_reservoir}" \
-            --topic="${ps_topic_alerts}"
         gcloud pubsub subscriptions create "${ps_bigquery_subscription}" \
             --topic="${ps_topic_alerts_json}" \
             --bigquery-table="${PROJECT_ID}:${bq_dataset}.${bq_table_alerts}" \
@@ -166,8 +164,6 @@ manage_resources() {
             gcloud pubsub topics delete "${ps_topic_alerts}"
             gcloud pubsub topics delete "${ps_topic_alerts_json}"
             gcloud pubsub topics delete "${ps_deadletter_topic}"
-            gcloud pubsub topics delete "${ps_topic_alerts_lite}"
-            gcloud pubsub subscriptions delete "${ps_subscription_reservoir}"
             gcloud pubsub subscriptions delete "${ps_deadletter_subscription}"
             gcloud pubsub subscriptions delete "${ps_bigquery_subscription}"
             gcloud artifacts repositories delete "${artifact_registry_repo}" --location="${region}"
@@ -200,7 +196,7 @@ echo
 echo "Configuring Cloud Run services..."
 (
     # navigate to the Cloud Run directory for LSST
-    cd .. && cd .. && cd cloud_run && cd lsst
+    cd .. && cd .. && cd cloud_run && cd desirt
 
     #--- alerts-to-storage Cloud Run service
     cd ps_to_storage
