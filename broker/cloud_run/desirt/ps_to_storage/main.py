@@ -4,7 +4,6 @@
 """This module stores DESIRT alert data as an Avro file in Cloud Storage and publishes it to various Pub/Sub topics."""
 
 import os
-from typing import Any
 import flask
 import pittgoogle
 from google.cloud import logging, storage
