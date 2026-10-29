@@ -66,7 +66,7 @@ def run():
     # this contains a single Pub/Sub message with the alert to be processed
     envelope = flask.request.get_json()
     try:
-        alert = pittgoogle.Alert.from_cloud_run(envelope, "lsst")
+        alert = pittgoogle.Alert.from_cloud_run(envelope, "desirt")
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
