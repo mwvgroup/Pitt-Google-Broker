@@ -51,7 +51,6 @@ define_GCP_resources() {
 artifact_registry_repo=$(define_GCP_resources "${survey}-cloud-run-services")
 bq_dataset=$(define_GCP_resources "${survey}" "_")
 bq_table_alerts="alerts_${versiontag}"
-gcs_alerts_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}_alerts")
 gcs_broker_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}-broker_files")
 ps_topic_alerts_raw=$(define_GCP_resources "${survey}-alerts_raw")
 ps_topic_alerts=$(define_GCP_resources "${survey}-alerts")
