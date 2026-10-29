@@ -60,8 +60,12 @@ fout_topics="${workingdir}/list.topics"
 (
     cd "${workingdir}"
 
-    # define IceCube-related parameters
+    # set the API endpoint to the regional host
     region="us-central1"
+    gcloud config set api_endpoint_overrides/secretmanager \
+        "https://secretmanager.${region}.rep.googleapis.com/"
+
+    # define IceCube-related parameters
     client_id="${survey}-${PROJECT_ID}-client-id"
     client_secret="${survey}-${PROJECT_ID}-client-secret"
     CLIENT_ID=$(gcloud secrets versions access latest --secret="${client_id}" --project="${PROJECT_ID}" --location="${region}")
