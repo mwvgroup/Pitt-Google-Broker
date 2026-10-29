@@ -29,9 +29,9 @@ SURVEY = os.getenv("SURVEY")
 MODULE_VERSION = 0.1
 
 # classifier variables
-model_dir_name = "ZTF_DMAM_V19_NoC_SNIa_vs_CC_forFink"
+model_dir_name = "LSST_V01_SNIa_vs_NONSNIa_forPittGoogle"
 model_file_name = (
-    "vanilla_S_0_CLF_2_R_none_photometry_DF_1.0_N_global_lstm_32x2_0.05_128_True_mean.pt"
+    "vanilla_S_0_CLF_2_R_none_photometry_DF_1.0_N_global_lstm_32x2_0.05_128_True_mean_C.pt"
 )
 MODEL_PATH = Path(__file__).resolve().parent / model_dir_name / model_file_name
 
@@ -47,7 +47,7 @@ HTTP_400 = 400  # HTTP code: Bad Request
 # GCP resources used in this module
 # pittgoogle will construct the full resource names from the module name, SURVEY, and TESTID
 TOPIC = pittgoogle.Topic.from_cloud(
-    "supernnova", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
+    "alerts_raw", survey=SURVEY, testid=TESTID, projectid=PROJECT_ID
 )
 
 
