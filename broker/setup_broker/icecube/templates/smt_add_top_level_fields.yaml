@@ -1,0 +1,36 @@
+# https://cloud.google.com/pubsub/docs/smts/create-topic-smt#create
+- javascriptUdf:
+    code: >
+      function addTopLevelFields(message, metadata) {
+        const attrs = message.attributes || {};
+        const dataStr = message.data.toString();
+
+        // Create an empty object to hold the new fields we want to inject into the JSON payload
+        const newFields = {};
+
+        // Extract the following attributes and add them to newFields
+        // We avoid casting fields as JavaScript numbers to prevent precision loss
+        if (attrs["kafka.timestamp"]) {
+          newFields.kafkaPublishTimestamp = attrs["kafka.timestamp"] * 1000;
+        }
+
+        // Define the data as a set of key-value pairs to be added to the JSON payload
+        const newPairs = Object.entries(newFields)
+          .map(([k, v]) => `"${k}":${v}`);
+
+        if (newPairs.length === 0) {
+          // No new fields; return the original message
+          return message;
+        }
+
+        // Inject the new fields into the JSON payload
+        const newData = dataStr.endsWith("}")
+          ? dataStr.slice(0, -1) + "," + newPairs.join(",") + "}"
+          : dataStr;
+
+        return {
+          data: newData,
+          attributes: attrs
+        };
+      }
+    functionName: addTopLevelFields
