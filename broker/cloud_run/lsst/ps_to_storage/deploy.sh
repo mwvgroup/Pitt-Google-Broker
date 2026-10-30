@@ -34,8 +34,6 @@ cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}")  # lower case 
 gcs_avro_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}_alerts")
 ps_deadletter_topic=$(define_GCP_resources "${survey}-deadletter")
 ps_input_subscrip=$(define_GCP_resources "${survey}-alerts_raw") # pub/sub subscription used to trigger cloud run module
-ps_subscription_avro=$(define_GCP_resources "${survey}-alert_avros-counter")
-ps_topic_avro=$(define_GCP_resources "projects/${PROJECT_ID}/topics/${survey}-alert_avros")
 ps_trigger_topic=$(define_GCP_resources "${survey}-alerts_raw")
 runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
 service_account="service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com"
@@ -63,17 +61,6 @@ else
     else
         echo "${gcs_avro_bucket} already exists."
     fi
-
-    echo
-    echo "Configuring Pub/Sub notifications on GCS bucket..."
-    trigger_event=OBJECT_FINALIZE
-    format=json  # json or none; if json, file metadata sent in message body
-    gsutil notification create \
-        -t "$ps_topic_avro" \
-        -e "$trigger_event" \
-        -f "$format" \
-        "gs://${gcs_avro_bucket}"
-    gcloud pubsub subscriptions create "${ps_subscription_avro}" --topic="${ps_topic_avro}"
 
     #--- Deploy Cloud Run service
     echo
