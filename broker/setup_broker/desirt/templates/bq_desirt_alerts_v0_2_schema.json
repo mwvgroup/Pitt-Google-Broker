@@ -1,0 +1,356 @@
+[
+  {
+    "description": "Schema version of this packet.",
+    "mode": "REQUIRED",
+    "name": "schemavsn",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "REQUIRED",
+    "name": "publisher",
+    "type": "STRING"
+  },
+  {
+    "description": "Persistent object id: every detection within 1 arcsec of the object's mean position shares it, across nights. Kafka message key.",
+    "mode": "REQUIRED",
+    "name": "objectId",
+    "type": "STRING"
+  },
+  {
+    "description": "Unique id of THIS detection (DB alert_num). Unique across the survey.",
+    "mode": "REQUIRED",
+    "name": "candid",
+    "type": "INTEGER"
+  },
+  {
+    "description": "Pipeline name of this detection (<expname>-<idx>-<skycode>); the 0.1.0 objectId.",
+    "mode": "REQUIRED",
+    "name": "sourceId",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "REQUIRED",
+    "name": "candidate",
+    "type": "RECORD",
+    "fields": [
+      {
+        "description": "",
+        "mode": "REQUIRED",
+        "name": "mjd",
+        "type": "FLOAT"
+      },
+      {
+        "description": "",
+        "mode": "REQUIRED",
+        "name": "forcediffimflux",
+        "type": "FLOAT"
+      },
+      {
+        "description": "",
+        "mode": "REQUIRED",
+        "name": "forcediffimfluxunc",
+        "type": "FLOAT"
+      },
+      {
+        "description": "",
+        "mode": "REQUIRED",
+        "name": "forcediffimmag",
+        "type": "FLOAT"
+      },
+      {
+        "description": "",
+        "mode": "REQUIRED",
+        "name": "forcediffimmagunc",
+        "type": "FLOAT"
+      },
+      {
+        "description": "",
+        "mode": "REQUIRED",
+        "name": "band",
+        "type": "STRING"
+      },
+      {
+        "description": "5-sigma limiting mag of the difference image (CCD); NaN if unknown.",
+        "mode": "REQUIRED",
+        "name": "diffmaglim",
+        "type": "FLOAT"
+      },
+      {
+        "description": "",
+        "mode": "REQUIRED",
+        "name": "isdiffpos",
+        "type": "INTEGER"
+      },
+      {
+        "description": "",
+        "mode": "REQUIRED",
+        "name": "ra",
+        "type": "FLOAT"
+      },
+      {
+        "description": "",
+        "mode": "REQUIRED",
+        "name": "dec",
+        "type": "FLOAT"
+      },
+      {
+        "description": "nJy (AB zp 31.4)",
+        "mode": "REQUIRED",
+        "name": "psfFlux",
+        "type": "FLOAT"
+      },
+      {
+        "description": "nJy",
+        "mode": "REQUIRED",
+        "name": "psfFluxErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "",
+        "mode": "NULLABLE",
+        "name": "reliability",
+        "type": "FLOAT"
+      },
+      {
+        "description": "",
+        "mode": "REQUIRED",
+        "name": "expname",
+        "type": "STRING"
+      },
+      {
+        "description": "DECam CCD (e.g. N4).",
+        "mode": "REQUIRED",
+        "name": "detpos",
+        "type": "STRING"
+      },
+      {
+        "description": "Detections of objectId up to and including this one, ALL time (not limited to the prvCandidates window).",
+        "mode": "REQUIRED",
+        "name": "ndethist",
+        "type": "INTEGER"
+      },
+      {
+        "description": "MJD of the first detection of objectId, all time.",
+        "mode": "NULLABLE",
+        "name": "mjdstarthist",
+        "type": "FLOAT"
+      }
+    ]
+  },
+  {
+    "description": "Earlier detections of the same objectId with mjd in [mjd - 30 d, mjd), oldest first. null if there are none.",
+    "mode": "REPEATED",
+    "name": "prvCandidates",
+    "type": "RECORD",
+    "fields": [
+      {
+        "description": "",
+        "mode": "REQUIRED",
+        "name": "candid",
+        "type": "INTEGER"
+      },
+      {
+        "description": "",
+        "mode": "REQUIRED",
+        "name": "sourceId",
+        "type": "STRING"
+      },
+      {
+        "description": "",
+        "mode": "REQUIRED",
+        "name": "expname",
+        "type": "STRING"
+      },
+      {
+        "description": "",
+        "mode": "REQUIRED",
+        "name": "detpos",
+        "type": "STRING"
+      },
+      {
+        "description": "",
+        "mode": "REQUIRED",
+        "name": "mjd",
+        "type": "FLOAT"
+      },
+      {
+        "description": "",
+        "mode": "REQUIRED",
+        "name": "forcediffimflux",
+        "type": "FLOAT"
+      },
+      {
+        "description": "",
+        "mode": "REQUIRED",
+        "name": "forcediffimfluxunc",
+        "type": "FLOAT"
+      },
+      {
+        "description": "",
+        "mode": "REQUIRED",
+        "name": "forcediffimmag",
+        "type": "FLOAT"
+      },
+      {
+        "description": "",
+        "mode": "REQUIRED",
+        "name": "forcediffimmagunc",
+        "type": "FLOAT"
+      },
+      {
+        "description": "",
+        "mode": "REQUIRED",
+        "name": "band",
+        "type": "STRING"
+      },
+      {
+        "description": "",
+        "mode": "NULLABLE",
+        "name": "diffmaglim",
+        "type": "FLOAT"
+      },
+      {
+        "description": "",
+        "mode": "REQUIRED",
+        "name": "isdiffpos",
+        "type": "INTEGER"
+      },
+      {
+        "description": "",
+        "mode": "REQUIRED",
+        "name": "ra",
+        "type": "FLOAT"
+      },
+      {
+        "description": "",
+        "mode": "REQUIRED",
+        "name": "dec",
+        "type": "FLOAT"
+      },
+      {
+        "description": "",
+        "mode": "REQUIRED",
+        "name": "psfFlux",
+        "type": "FLOAT"
+      },
+      {
+        "description": "",
+        "mode": "REQUIRED",
+        "name": "psfFluxErr",
+        "type": "FLOAT"
+      },
+      {
+        "description": "",
+        "mode": "NULLABLE",
+        "name": "reliability",
+        "type": "FLOAT"
+      }
+    ]
+  },
+  {
+    "description": "RESERVED, always null in 0.2.x. Will hold one row per earlier exposure/CCD covering the position (limits, then forced photometry).",
+    "mode": "REPEATED",
+    "name": "fp_hists",
+    "type": "RECORD",
+    "fields": [
+      {
+        "description": "",
+        "mode": "REQUIRED",
+        "name": "mjd",
+        "type": "FLOAT"
+      },
+      {
+        "description": "",
+        "mode": "REQUIRED",
+        "name": "expname",
+        "type": "STRING"
+      },
+      {
+        "description": "",
+        "mode": "REQUIRED",
+        "name": "detpos",
+        "type": "STRING"
+      },
+      {
+        "description": "",
+        "mode": "REQUIRED",
+        "name": "band",
+        "type": "STRING"
+      },
+      {
+        "description": "",
+        "mode": "NULLABLE",
+        "name": "diffmaglim",
+        "type": "FLOAT"
+      },
+      {
+        "description": "",
+        "mode": "NULLABLE",
+        "name": "forcediffimflux",
+        "type": "FLOAT"
+      },
+      {
+        "description": "",
+        "mode": "NULLABLE",
+        "name": "forcediffimfluxunc",
+        "type": "FLOAT"
+      },
+      {
+        "description": "",
+        "mode": "NULLABLE",
+        "name": "psfFlux",
+        "type": "FLOAT"
+      },
+      {
+        "description": "",
+        "mode": "NULLABLE",
+        "name": "psfFluxErr",
+        "type": "FLOAT"
+      }
+    ]
+  },
+  {
+    "description": "",
+    "mode": "REQUIRED",
+    "name": "cutoutScience",
+    "type": "BYTES"
+  },
+  {
+    "description": "",
+    "mode": "REQUIRED",
+    "name": "cutoutTemplate",
+    "type": "BYTES"
+  },
+  {
+    "description": "",
+    "mode": "REQUIRED",
+    "name": "cutoutDifference",
+    "type": "BYTES"
+  },
+{
+    "description": "HEALPix order 9 pixel index at the source’s right ascension (RA) and declination",
+    "mode": "REQUIRED",
+    "name": "healpix9",
+    "type": "INTEGER"
+  },
+  {
+    "description": "HEALPix order 19 pixel index at the source’s right ascension (RA) and declination",
+    "mode": "REQUIRED",
+    "name": "healpix19",
+    "type": "INTEGER"
+  },
+  {
+    "description": "HEALPix order 29 pixel index at the source’s right ascension (RA) and declination",
+    "mode": "REQUIRED",
+    "name": "healpix29",
+    "type": "INTEGER"
+  },
+  {
+    "description": "Kafka timestamp from originating LSST alert.",
+    "mode": "REQUIRED",
+    "name": "kafkaPublishTimestamp",
+    "type": "TIMESTAMP"
+  }
+]

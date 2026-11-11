@@ -1,0 +1,29 @@
+# https://cloud.google.com/pubsub/docs/smts/create-topic-smt#create
+- javascriptUdf:
+    code: >
+      function flattenValueAddedAlert(message, metadata) {
+        const attrs = message.attributes || {};
+        const data = JSON.parse(message.data);
+
+        // Find and extract the value_added dictionary
+        const valueAddedKey = Object.keys(data).find(k => k !== "alert_lite");
+        const valueAddedData = valueAddedKey ? (data[valueAddedKey] || {}) : {};
+
+        // Build the final payload, starting with value_added fields
+        const payload = {
+          ...valueAddedData,
+
+          // Use the attributes to add the remaining key-value pairs
+          diaSourceId: attrs.diaSource_diaSourceId ? attrs.diaSource_diaSourceId.toString() : null,
+          diaObjectId: attrs.diaObject_diaObjectId ? attrs.diaObject_diaObjectId.toString() : null,
+          ssObjectId: attrs.ssSource_ssObjectId ? attrs.ssSource_ssObjectId.toString() : null,
+          kafkaPublishTimestamp: attrs["kafka.timestamp"] ? attrs["kafka.timestamp"] * 1000 : null
+        };
+
+        // Return the flattened message
+        return {
+          data: JSON.stringify(payload),
+          attributes: message.attributes
+        };
+      }
+    functionName: flattenValueAddedAlert
