@@ -4,10 +4,9 @@
 # file (or packaged with the function) in the same directory as `main.py`
 
 google-cloud-logging
-pittgoogle-client>=0.3.23
+pittgoogle-client>=0.3.25
 astropy
-hpgeom
-pyarrow
+hats
 
 # for Cloud Run
 # https://cloud.google.com/run/docs/quickstarts/build-and-deploy/deploy-python-service
