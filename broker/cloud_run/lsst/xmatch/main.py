@@ -125,16 +125,12 @@ def run():
 
 
 def filter_gaia_catalog(ra: float, dec: float) -> pd.DataFrame:
-    """Retrieve candidate Gaia DR3 sources near a sky position from the HATS catalog.
+    """Retrieve Gaia DR3 sources near a sky position from the publicly available HATS catalog.
 
-    Selects the HEALPix partitions of the Gaia DR3 HATS catalog that overlap a 5 arcsecond cone around the given
-    position, reads the ``GAIA_READ_COLUMNS`` columns from each of those partitions, and concatenates them into a
-    single table with a fresh index.
-
-    Note that the cone selection operates at the partition level only. The returned table contains every source in the
-    overlapping partitions, not only those within 5 arcseconds of the position, so it will typically include many
-    sources outside the cone. Use :func:`xmatch` to rank the candidates by exact angular separation and apply the
-    final cutoff radius.
+    Selects the HEALPix pixels of the Gaia DR3 Source Catalog that overlap a 5 arcsecond cone around the given
+    position, reads the ``GAIA_READ_COLUMNS`` columns from each of those pixels, and concatenates them into a
+    single table. Note that the cone selection operates at the pixel level only. The returned table contains every
+    source in the overlapping pixels, not only those within 5 arcseconds of the position.
 
     Parameters
     ----------
@@ -173,10 +169,10 @@ def xmatch(ra: float, dec: float, filtered_gaia_dr3_catalog: pd.DataFrame) -> di
     """Identify up to three Gaia sources within 5 arcseconds of a DIA source position.
 
     Computes on-sky angular separations between a DIA source and every object in ``filtered_gaia_dr3_catalog``, keeps
-    the three closest, and discards any of those that are not closer than ``MAX_SEPARATION_ARCSEC``. For each remaining
-    source, returns the Gaia ``source_id``, the separation, and the catalog columns listed in ``GAIA_OUTPUT_COLUMNS``.
-    Sources are ordered by increasing separation. Values are ``None`` when fewer than three Gaia sources fall within
-    the cutoff radius, or when Gaia has no value for a given column.
+    the three closest, and discards any of those that are not closer than 5 arcseconds. For each remaining source,
+    the function returns the Gaia ``source_id``, the separation, and the catalog columns listed in
+    ``GAIA_OUTPUT_COLUMNS``. Sources are ordered by increasing separation. Values are ``None`` when fewer than three
+    Gaia sources fall within the cutoff radius, or when Gaia has no value for a given column.
 
     Parameters
     ----------
