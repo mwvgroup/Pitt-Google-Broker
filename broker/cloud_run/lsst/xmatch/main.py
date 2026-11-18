@@ -245,31 +245,38 @@ def xmatch(ra: float, dec: float, filtered_gaia_dr3_catalog: pd.DataFrame) -> di
         Individual column entries are also ``None`` when Gaia has no value for them.
     """
 
+    # check if ``filtered_gaia_dr3_catalog`` is empty
     if filtered_gaia_dr3_catalog.empty:
-        candidates = filtered_gaia_dr3_catalog
-        candidate_separations = np.array([])
-    else:
-        # instatiate coordinates
-        dia_source_coord = SkyCoord(ra * u.deg, dec * u.deg, frame="icrs")
-        gaia_coords = SkyCoord(
-            filtered_gaia_dr3_catalog["ra"].to_numpy(dtype="float64") * u.deg,
-            filtered_gaia_dr3_catalog["dec"].to_numpy(dtype="float64") * u.deg,
-            frame="icrs",
-        )
+        return {
+            f"{ordinal}_gaia_source": {
+                "source_id": None,
+                "separation": None,
+                **{col: None for col in GAIA_OUTPUT_COLUMNS},
+            }
+            for ordinal in ORDINALS
+        }
 
-        # calculate the angular separation between each Gaia object and the DIA source
-        angular_separations = dia_source_coord.separation(gaia_coords).arcsec
+    # instatiate coordinates
+    dia_source_coord = SkyCoord(ra * u.deg, dec * u.deg, frame="icrs")
+    gaia_coords = SkyCoord(
+        filtered_gaia_dr3_catalog["ra"].to_numpy(dtype="float64") * u.deg,
+        filtered_gaia_dr3_catalog["dec"].to_numpy(dtype="float64") * u.deg,
+        frame="icrs",
+    )
 
-        # identify the indices of the 3 closest Gaia objects
-        sorted_idx = np.argsort(angular_separations)[: len(ORDINALS)]  # sorted in ascending order
+    # calculate the angular separation between each Gaia object and the DIA source
+    angular_separations = dia_source_coord.separation(gaia_coords).arcsec
 
-        # enforce a cutoff radius of 5 arcseconds
-        n_within_cutoff = sum(angular_separations[sorted_idx] < MAX_SEPARATION_ARCSEC)
-        candidate_idx = sorted_idx[:n_within_cutoff]
-        candidate_separations = angular_separations[candidate_idx]
+    # identify the indices of the 3 closest Gaia objects
+    sorted_idx = np.argsort(angular_separations)[: len(ORDINALS)]  # sorted in ascending order
 
-        # select the catalog rows for the Gaia objects that passed the cutoff
-        candidates = filtered_gaia_dr3_catalog.iloc[candidate_idx]
+    # enforce a cutoff radius of 5 arcseconds
+    n_within_cutoff = sum(angular_separations[sorted_idx] < MAX_SEPARATION_ARCSEC)
+    candidate_idx = sorted_idx[:n_within_cutoff]
+    candidate_separations = angular_separations[candidate_idx]
+
+    # select the catalog rows for the Gaia objects that passed the cutoff
+    candidates = filtered_gaia_dr3_catalog.iloc[candidate_idx]
 
     # convert the selected rows into a list of dicts (one per source, keyed by column name) with
     # missing values as None rather than NaN, so they are serialized as proper nulls downstream
