@@ -8,6 +8,7 @@ pittgoogle-client>=0.3.25
 astropy
 hats
 s3fs
+hpgeom
 
 # for Cloud Run
 # https://cloud.google.com/run/docs/quickstarts/build-and-deploy/deploy-python-service
