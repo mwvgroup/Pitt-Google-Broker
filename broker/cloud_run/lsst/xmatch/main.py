@@ -115,14 +115,17 @@ def run():
             {"alert_lite": alert_lite.dict["alert_lite"], "xmatch_gaia": xmatch_results},
             attributes={
                 **alert_lite.attributes,
-                "closest_gaia_source_separation": str(
-                    xmatch_results["closest_gaia_source_separation"]
+                "pg_closest_gaia_source_id": str(
+                    xmatch_results["closest_gaia_source"]["source_id"]
                 ),
-                "pg_closest_gaia_source_phot_variable_flag": xmatch_results[
-                    "closest_gaia_source_phot_variable_flag"
-                ],
-                "closest_gaia_source_classprob_dsc_combmod_star": str(
-                    xmatch_results["closest_gaia_source_classprob_dsc_combmod_star"]
+                "pg_closest_gaia_source_separation": str(
+                    xmatch_results["closest_gaia_source"]["separation"]
+                ),
+                "pg_closest_gaia_source_phot_variable_flag": str(
+                    xmatch_results["closest_gaia_source"]["phot_variable_flag"]
+                ),
+                "pg_closest_gaia_source_classprob_dsc_combmod_star": str(
+                    xmatch_results["closest_gaia_source"]["classprob_dsc_combmod_star"]
                 ),
             },
             schema_name="default",
