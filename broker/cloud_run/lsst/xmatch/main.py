@@ -14,9 +14,9 @@ import hpgeom
 import astropy.units as u
 import pyarrow.fs as pafs
 import pyarrow.parquet as pq
-from hats.io import paths
 from astropy.coordinates import SkyCoord
-
+from hats.io import paths
+from hats.pixel_math import HealpixPixel
 from google.cloud import logging
 
 # [FIXME] Make this helpful or else delete it.
@@ -288,9 +288,34 @@ def xmatch(ra: float, dec: float, filtered_gaia_dr3_catalog: pd.DataFrame) -> di
     return result
 
 
-def read_partition(partition, filters):
+def read_partition(partition: HealpixPixel, filters: list[list[tuple]]) -> pd.DataFrame:
+    """Read the rows of one Gaia DR3 HATS partition that match a parquet row filter.
+
+    Builds the S3 path of the partition's parquet file from the HATS catalog and reads it with the native
+    ``pyarrow`` S3 filesystem (``S3FS``) instead of ``fsspec``/``s3fs``. The ``s3fs`` path runs all I/O on a single
+    shared event-loop thread, so concurrent requests in a multi-threaded gunicorn worker queue behind it. The
+    ``pyarrow`` client uses its own C++ I/O thread pool, so concurrent reads run in parallel.
+
+    Only the columns in ``GAIA_READ_COLUMNS`` are read, and the row filter is applied by ``pyarrow`` at read time.
+
+    Parameters
+    ----------
+    partition : hats.pixel_math.HealpixPixel
+        The catalog partition to read, as returned by ``get_healpix_pixels()`` on a filtered HATS catalog.
+    filters : list[list[tuple]]
+        Parquet row filter in disjunctive normal form. As built by :func:`filter_gaia_catalog`, each group selects
+        one HEALPix pixel using bounds on the ``_healpix_29`` column.
+
+    Returns
+    -------
+    pandas.DataFrame
+        The matching rows, with one column for each entry in ``GAIA_READ_COLUMNS``. The frame may be empty.
+        Columns use NumPy-backed dtypes (e.g., ``float32``, ``float64``), unlike ``hats``' own reader, which
+        returns Arrow-backed dtypes. The values are identical.
+    """
+
     path = str(paths.pixel_catalog_file(GAIA_DR3_CATALOG.catalog_base_dir, partition))
-    path = path.removeprefix("s3://")
+    path = path.removeprefix("s3://")  # pyarrow expects "bucket/key" with no scheme
     return pq.read_table(
         path, columns=GAIA_READ_COLUMNS, filters=filters, filesystem=S3FS
     ).to_pandas()
