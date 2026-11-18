@@ -1,0 +1,15 @@
+# If you have trouble with astropy, jinja2, MarkupSafe, and/or soft_unicode
+# Try using a Conda environment with Python 3.7 e.g.,
+# $ conda create -n pgb python=3.7
+astropy
+fastavro
+# google-api-core
+google-cloud-bigquery
+google-cloud-logging
+google-cloud-storage>=1.38
+google-cloud-pubsub
+numpy
+pandas
+PyYAML>=5.3
+six>=1.15  # bigquery requires
+typing
