@@ -10,6 +10,7 @@ import pandas as pd
 import flask
 import pittgoogle
 import hats
+import hpgeom
 import astropy.units as u
 from astropy.coordinates import SkyCoord
 
@@ -27,7 +28,9 @@ TESTID = os.getenv("TESTID")
 SURVEY = os.getenv("SURVEY")
 
 # module variables
-gaia_dr3_catalog = hats.read_hats("s3://stpubdata/gaia/gaia_dr3/public/hats").main_catalog
+GAIA_DR3_CATALOG = hats.read_hats(
+    "s3://stpubdata/gaia/gaia_dr3/public/hats/gaia", single_catalog=True
+)
 GAIA_READ_COLUMNS = [
     "source_id",
     "ra",
@@ -50,8 +53,13 @@ GAIA_READ_COLUMNS = [
 GAIA_OUTPUT_COLUMNS = [
     column for column in GAIA_READ_COLUMNS if column not in ("source_id", "ra", "dec")
 ]
-ORDINALS = ["closest", "second_closest", "third_closest"]
+HEALPIX_ORDER = 15  # used to build a parquet row filter
+BIT_SHIFT = 2 * (
+    29 - HEALPIX_ORDER
+)  # bits between an order-{HEALPIX_ORDER} index and an order-29 index (i.e., SHIFT = 28 for HEALPIX_ORDER = 15)
+NSIDE = hpgeom.order_to_nside(HEALPIX_ORDER)  # 2**ORDER
 MAX_SEPARATION_ARCSEC = 5
+ORDINALS = ["closest", "second_closest", "third_closest"]
 
 # Variables for incoming data
 # A url route is used in setup.sh when the trigger subscription is created.
@@ -127,10 +135,18 @@ def run():
 def filter_gaia_catalog(ra: float, dec: float) -> pd.DataFrame:
     """Retrieve Gaia DR3 sources near a sky position from the publicly available HATS catalog.
 
-    Selects the HEALPix pixels of the Gaia DR3 Source Catalog that overlap a 5 arcsecond cone around the given
-    position, reads the ``GAIA_READ_COLUMNS`` columns from each of those pixels, and concatenates them into a
-    single table. Note that the cone selection operates at the pixel level only. The returned table contains every
-    source in the overlapping pixels, not only those within 5 arcseconds of the position.
+    Reads only the rows of the Gaia DR3 Source Catalog that lie in the HEALPix pixels touched by a cone of radius
+    ``MAX_SEPARATION_ARCSEC`` around the given position. The selection happens in two stages:
+
+    1. Partition selection (metadata only): ``filter_by_cone`` keeps the catalog partitions (HATS files)
+       that overlap the cone. No data is read at this stage.
+    2. Row selection (at read time): within each of those partitions, a parquet filter on the ``_healpix_29``
+       column keeps only the rows inside the pixels of order ``ORDER`` that overlap the cone. Since
+       an order-``ORDER`` pixel is slightly larger than the cone, the result is a superset of the cone.
+
+    Note that the returned table is NOT limited to sources within ``MAX_SEPARATION_ARCSEC`` of the position. It
+    contains every source in the overlapping order-``ORDER`` pixels.
+    The exact angular separation cut is applied downstream in :func:`xmatch`.
 
     Parameters
     ----------
@@ -142,35 +158,56 @@ def filter_gaia_catalog(ra: float, dec: float) -> pd.DataFrame:
     Returns
     -------
     pandas.DataFrame
-        Candidate Gaia sources from all overlapping partitions, with one column for each entry in
-        ``GAIA_READ_COLUMNS``: ``source_id``, ``ra``, ``dec``, ``pm``, ``pmra``, ``pmra_error``, ``pmdec``,
-        ``pmdec_error``, ``parallax``, ``parallax_over_error``, ``phot_variable_flag``,
-        ``classprob_dsc_combmod_quasar``, ``classprob_dsc_combmod_galaxy``, ``classprob_dsc_combmod_star``,
-        ``phot_g_mean_mag``, ``phot_g_mean_flux_over_error``, and ``bp_rp``.
+        Candidate Gaia sources, with one column for each entry in ``GAIA_READ_COLUMNS``: ``source_id``,
+        ``ra``, ``dec``, ``pm``, ``pmra``, ``pmra_error``, ``pmdec``, ``pmdec_error``, ``parallax``,
+        ``parallax_over_error``, ``phot_variable_flag``, ``classprob_dsc_combmod_quasar``,
+        ``classprob_dsc_combmod_galaxy``, ``classprob_dsc_combmod_star``, ``phot_g_mean_mag``,
+        ``phot_g_mean_flux_over_error``, and ``bp_rp``. The table may be empty if no sources fall in the
+        selected pixels.
+
+    Raises
+    ------
+    ValueError
+        If no catalog partitions overlap the cone, because ``pd.concat`` cannot concatenate an empty list.
     """
 
-    # filter catalog
-    radius_arcseconds = 5.0
-    filtered_catalog = gaia_dr3_catalog.filter_by_cone(ra, dec, radius_arcseconds)
+    # select the catalog partitions that overlap a ``MAX_SEPARATION_ARCSEC`` cone
+    filtered_catalog = GAIA_DR3_CATALOG.filter_by_cone(ra, dec, MAX_SEPARATION_ARCSEC)
 
+    # identify the HEALPix pixels that overlap the cone
+    cone_pixels = hpgeom.query_circle(NSIDE, ra, dec, MAX_SEPARATION_ARCSEC / 3600, inclusive=True)
+
+    # build a parquet row filter from the pixels in ``cone_pixels``
+    # a catalog entry is in pixel ``p`` if:
+    # p * 2**BIT_SHIFT <= _healpix_29 < (p + 1) * 2**BIT_SHIFT
+    # this is because every index in ``_healpix_29`` starts with the index of the ``HEALPIX_ORDER`` containing it,
+    # followed by ``BIT_SHIFT`` bits for the position within that pixel
+    filters = [
+        [
+            ("_healpix_29", ">=", int(pixel) * 2**BIT_SHIFT),
+            ("_healpix_29", "<", (int(pixel) + 1) * 2**BIT_SHIFT),
+        ]
+        for pixel in cone_pixels
+    ]
+
+    # read the matching rows from each overlapping partition and combine them into a single table
     return pd.concat(
         [
             filtered_catalog.read_pixel_to_pandas(
-                pixel,
-                columns=GAIA_READ_COLUMNS,
+                partition, columns=GAIA_READ_COLUMNS, filters=filters
             )
-            for pixel in filtered_catalog.get_healpix_pixels()
+            for partition in filtered_catalog.get_healpix_pixels()
         ],
         ignore_index=True,
     )
 
 
 def xmatch(ra: float, dec: float, filtered_gaia_dr3_catalog: pd.DataFrame) -> dict:
-    """Identify up to three Gaia sources within 5 arcseconds of a DIA source position.
+    """Identify up to three Gaia sources within ``MAX_SEPARATION_ARCSEC`` of a DIA source position.
 
-    Computes on-sky angular separations between a DIA source and every object in ``filtered_gaia_dr3_catalog``, keeps
-    the three closest, and discards any of those that are not closer than 5 arcseconds. For each remaining source,
-    the function returns the Gaia ``source_id``, the separation, and the catalog columns listed in
+    Computes on-sky angular separations between a DIA source and every object in ``filtered_gaia_dr3_catalog``,
+    keeps the three closest, and discards any of those that are not closer than ``MAX_SEPARATION_ARCSEC``. For each
+    remaining source, the function returns the Gaia ``source_id``, the separation, and the catalog columns listed in
     ``GAIA_OUTPUT_COLUMNS``. Sources are ordered by increasing separation. Values are ``None`` when fewer than three
     Gaia sources fall within the cutoff radius, or when Gaia has no value for a given column.
 
@@ -181,58 +218,63 @@ def xmatch(ra: float, dec: float, filtered_gaia_dr3_catalog: pd.DataFrame) -> di
     dec : float
         Declination of the DIA source in decimal degrees (ICRS).
     filtered_gaia_dr3_catalog : pandas.DataFrame
-        Candidate Gaia sources, as returned by :func:`filter_gaia_catalog`. Must be non-empty and contain the columns
-        in ``GAIA_READ_COLUMNS``.
+        Candidate Gaia sources, as returned by :func:`filter_gaia_catalog`. This is a superset of the sources
+        within the cutoff radius (every source in the order-``HEALPIX_ORDER`` pixels touched by the cone), so
+        the exact separation cut is applied here. May be empty or contain fewer than three rows. Must contain
+        the columns in ``GAIA_READ_COLUMNS``.
 
     Returns
     -------
     dict
-        For each ordinal in ``ORDINALS`` (``closest``, ``second_closest`` and ``third_closest``):
+        Three top-level keys, one per ordinal in ``ORDINALS``: ``closest_gaia_source``, ``second_closest_gaia_source``
+        and ``third_closest_gaia_source``. Each maps to a dict with:
 
-        - ``{ordinal}_gaia_source``: Gaia DR3 ``source_id``
-        - ``{ordinal}_gaia_source_separation``: angular separation in arcseconds
-        - ``{ordinal}_gaia_source_{column}`` for each column in ``GAIA_OUTPUT_COLUMNS``
+        - ``source_id``: Gaia DR3 ``source_id``
+        - ``separation``: angular separation from the DIA source in arcseconds
+        - one entry for each column in ``GAIA_OUTPUT_COLUMNS``
 
-        Every entry for an ordinal is ``None`` if there is no source for that rank within ``MAX_SEPARATION_ARCSEC``.
-        Individual column entries are also ``None`` when Gaia has no value for them. If no sources are within the
-        cutoff radius, all entries are ``None``.
+        Every field of a record is ``None`` if there is no source for that rank within ``MAX_SEPARATION_ARCSEC``.
+        Individual column entries are also ``None`` when Gaia has no value for them.
     """
 
-    # instatiate coordinates
-    dia_source_coord = SkyCoord(ra * u.deg, dec * u.deg, frame="icrs")
-    gaia_coords = SkyCoord(
-        filtered_gaia_dr3_catalog["ra"].to_numpy(dtype="float64") * u.deg,
-        filtered_gaia_dr3_catalog["dec"].to_numpy(dtype="float64") * u.deg,
-        frame="icrs",
-    )
+    if filtered_gaia_dr3_catalog.empty:
+        candidates = filtered_gaia_dr3_catalog
+        candidate_separations = np.array([])
+    else:
+        # instatiate coordinates
+        dia_source_coord = SkyCoord(ra * u.deg, dec * u.deg, frame="icrs")
+        gaia_coords = SkyCoord(
+            filtered_gaia_dr3_catalog["ra"].to_numpy(dtype="float64") * u.deg,
+            filtered_gaia_dr3_catalog["dec"].to_numpy(dtype="float64") * u.deg,
+            frame="icrs",
+        )
 
-    # calculate the angular separation between each Gaia object and the DIA source
-    angular_separations = dia_source_coord.separation(gaia_coords).arcsec
+        # calculate the angular separation between each Gaia object and the DIA source
+        angular_separations = dia_source_coord.separation(gaia_coords).arcsec
 
-    # identify the indices of the 3 closest Gaia objects
-    sorted_idx = np.argpartition(angular_separations, range(3))[:3]  # sorted in ascending order
+        # identify the indices of the 3 closest Gaia objects
+        sorted_idx = np.argsort(angular_separations)[: len(ORDINALS)]  # sorted in ascending order
 
-    # enforce a cutoff radius of 5 arcseconds
-    n_within_cutoff = sum(angular_separations[sorted_idx] < MAX_SEPARATION_ARCSEC)
-    candidate_idx = sorted_idx[:n_within_cutoff]
-    candidate_separations = angular_separations[candidate_idx]
+        # enforce a cutoff radius of 5 arcseconds
+        n_within_cutoff = sum(angular_separations[sorted_idx] < MAX_SEPARATION_ARCSEC)
+        candidate_idx = sorted_idx[:n_within_cutoff]
+        candidate_separations = angular_separations[candidate_idx]
 
-    # select the catalog rows for the Gaia objects that passed the cutoff
-    candidates = filtered_gaia_dr3_catalog.iloc[candidate_idx]
+        # select the catalog rows for the Gaia objects that passed the cutoff
+        candidates = filtered_gaia_dr3_catalog.iloc[candidate_idx]
 
-    # convert the selected rows into a list of dicts (one per source, keyed by column name) with
-    # missing values as None rather than NaN, so they are serialized as proper nulls downstream
-    rows = candidates.astype(object).where(candidates.notna(), None).to_dict("records")
+        # convert the selected rows into a list of dicts (one per source, keyed by column name) with
+        # missing values as None rather than NaN, so they are serialized as proper nulls downstream
+        rows = candidates.astype(object).where(candidates.notna(), None).to_dict("records")
 
     # format output
     result = {}
     for idx, ordinal in enumerate(ORDINALS):
-        prefix = f"{ordinal}_gaia_source"
         has_match = idx < len(rows)
-
-        result[prefix] = int(rows[idx]["source_id"]) if has_match else None
-        result[f"{prefix}_separation"] = float(candidate_separations[idx]) if has_match else None
-        for col in GAIA_OUTPUT_COLUMNS:
-            result[f"{prefix}_{col}"] = rows[idx][col] if has_match else None
+        result[f"{ordinal}_gaia_source"] = {
+            "source_id": int(rows[idx]["source_id"]) if has_match else None,
+            "separation": float(candidate_separations[idx]) if has_match else None,
+            **{col: rows[idx][col] if has_match else None for col in GAIA_OUTPUT_COLUMNS},
+        }
 
     return result
