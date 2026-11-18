@@ -1,0 +1,91 @@
+[
+    {
+      "description": "Unique identifiers from the semantically compressed alert packet.",
+      "fields":[
+          {
+            "description": "diaSource",
+            "fields": [
+                {
+                  "description": "Unique identifier of this diaSource.",
+                  "mode": "REQUIRED",
+                  "name": "diaSourceId",
+                  "type": "INTEGER"
+                }
+            ],
+            "mode": "REQUIRED",
+            "name": "diaSource",
+            "type": "RECORD"
+          },
+          {
+            "description": "diaObject",
+            "fields": [
+                {
+                  "description": "Unique identifier of this diaObject.",
+                  "mode": "REQUIRED",
+                  "name": "diaObjectId",
+                  "type": "INTEGER"
+                }
+            ],
+            "mode": "REQUIRED",
+            "name": "diaObject",
+            "type": "RECORD"
+          }
+      ],
+      "mode": "REQUIRED",
+      "name": "alert_lite",
+      "type": "RECORD"
+    },
+    {
+      "description": "Classification results using ORACLE (Shah et al. 2025).",
+      "fields": [
+          {
+            "description": "probability of each class",
+            "mode": "NULLABLE",
+            "name": "output",
+            "type": "DICT"
+          },
+
+          {
+            "description": "predicted level 1 class",
+            "mode": "NULLABLE",
+            "name": "predicted_level_1",
+            "type": "STRING"
+          },
+          {
+            "description": "probability object is predicted level 1 class",
+            "mode": "NULLABLE",
+            "name": "predicted_level_1_prob",
+            "type": "FLOAT"
+          },
+
+          {
+            "description": "predicted level 2 class",
+            "mode": "NULLABLE",
+            "name": "predicted_level_2",
+            "type": "STRING"
+          },
+          {
+            "description": "probability object is predicted level 2 class",
+            "mode": "NULLABLE",
+            "name": "predicted_level_2_prob",
+            "type": "FLOAT"
+          },
+
+          {
+            "description": "predicted leaf class",
+            "mode": "NULLABLE",
+            "name": "predicted_leaf",
+            "type": "STRING"
+          },
+          {
+            "description": "probability object is predicted leaf class",
+            "mode": "NULLABLE",
+            "name": "predicted_leaf_prob",
+            "type": "FLOAT"
+          }
+      ],
+      "mode": "REQUIRED",
+      "name": "ORACLE",
+      "type": "RECORD"
+    }
+]
