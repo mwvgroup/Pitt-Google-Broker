@@ -34,7 +34,6 @@ cr_module_name=$(define_GCP_resources "${survey}-${MODULE_NAME}")  # lower case 
 gcs_avro_bucket=$(define_GCP_resources "${PROJECT_ID}-${survey}_alerts")
 ps_deadletter_topic=$(define_GCP_resources "${survey}-deadletter")
 ps_input_subscrip=$(define_GCP_resources "${survey}-alerts_raw") # pub/sub subscription used to trigger cloud run module
-ps_subscription_avro=$(define_GCP_resources "${survey}-alert_avros-counter")
 ps_topic_avro=$(define_GCP_resources "projects/${PROJECT_ID}/topics/${survey}-alert_avros")
 ps_trigger_topic=$(define_GCP_resources "${survey}-alerts_raw")
 runinvoker_svcact="cloud-run-invoker@${PROJECT_ID}.iam.gserviceaccount.com"

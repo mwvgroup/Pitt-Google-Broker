@@ -76,6 +76,51 @@
        --machine-type "${vmtype}"
    ```
 
+### LSST Stream
+
+This section documents commands used to start a stream looper for LSST alerts.
+
+```sh
+# ssh into existing stream-looper VM.
+# Option 1: Go to the VM's page on GCP Console and click "SSH" button
+# Option 2: From terminal, do:
+gcloud compute ssh stream-looper
+
+# Start a new screen.
+screen -S lsst-stream-looper
+# Note:
+# To detach from the screen: "Ctrl+a" then "d".
+# To reattach: `screen -r lsst-stream-looper`.
+# Only the user that started the screen can reattach to it.
+
+cd /home/consumer_sim
+
+# Create the topic. We assume the subscription already exists.
+project_id="ardent-cycling-243415"
+topic="lsst-loop"
+gcloud pubsub topics create "${topic}"
+# Make the topic public.
+user="allUsers"
+roleid="projects/${project_id}/roles/userPublic"
+gcloud pubsub topics add-iam-policy-binding "${topic}" --member="${user}" --role="${roleid}"
+# Note: Got PERMISSION_DENIED (accessed VM from Console SSH). Workaround:
+#   Went to GCP Console, navigate to the topic, click SHOW INFO PANEL, click ADD PRINCIPAL,
+#   set principal = allUsers and role = pubsub topics attachSubscription.
+
+python3
+```
+
+```python
+from streaming_stream_looper import StreamLooper
+
+topic = "lsst-loop"  # Must be same as above.
+subscrip = "lsst-alerts-reservoir"
+
+# Note: The script currently on the VM has Project ID hardcoded to "ardent-cycling-243415".
+# Not changing that now because ztf looper is also using the script.
+StreamLooper(topic, subscrip).run_looper()
+```
+
 ### ZTF Stream
 
 Set a startup script to execute the python file in a background thread:
