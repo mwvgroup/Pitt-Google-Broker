@@ -9,6 +9,7 @@ astropy
 hats
 s3fs
 hpgeom
+pyarrow
 
 # for Cloud Run
 # https://cloud.google.com/run/docs/quickstarts/build-and-deploy/deploy-python-service
