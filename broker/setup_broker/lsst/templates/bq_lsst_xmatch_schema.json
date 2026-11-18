@@ -1,314 +1,98 @@
 [
-    {
-      "description": "Unique identifier of this DiaSource.",
-      "mode": "REQUIRED",
-      "name": "diaSourceId",
-      "type": "INTEGER"
-    },
-    {
-      "description": "Unique identifier of this DiaObject.",
-      "mode": "NULLABLE",
-      "name": "diaObjectId",
-      "type": "INTEGER"
-    },
-    {
-      "description": "Unique identifier of the object.",
-      "mode": "NULLABLE",
-      "name": "ssObjectId",
-      "type": "INTEGER"
-    },
-    {
-      "description": "Gaia DR3 source_id of the closest Gaia DR3 source to the DiaSource, irrespective of magnitude. Null if no Gaia source lies within 5 arcsec of the DiaSource position.",
-      "mode": "NULLABLE",
-      "name": "closest_gaia_source",
-      "type": "INTEGER"
-    },
-    {
-      "description": "Angular separation between the DiaSource and the closest Gaia DR3 source [arcsec]. Always less than 5 arcsec; null if no such source exists.",
-      "mode": "NULLABLE",
-      "name": "closest_gaia_source_separation",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Total proper motion of the closest Gaia DR3 source [mas/yr]. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "closest_gaia_source_pm",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Proper motion in right ascension of the closest Gaia DR3 source; includes the cos(dec) factor [mas/yr]. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "closest_gaia_source_pmra",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Standard error of the proper motion in right ascension of the closest Gaia DR3 source [mas/yr]. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "closest_gaia_source_pmra_error",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Proper motion in declination of the closest Gaia DR3 source [mas/yr]. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "closest_gaia_source_pmdec",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Standard error of the proper motion in declination of the closest Gaia DR3 source [mas/yr]. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "closest_gaia_source_pmdec_error",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Parallax of the closest Gaia DR3 source [mas]. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "closest_gaia_source_parallax",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Parallax divided by its standard error for the closest Gaia DR3 source (signal-to-noise of the parallax; unitless). Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "closest_gaia_source_parallax_over_error",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Gaia photometric variability flag of the closest Gaia DR3 source (NOT_AVAILABLE, CONSTANT or VARIABLE). Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "closest_gaia_source_phot_variable_flag",
-      "type": "STRING"
-    },
-    {
-      "description": "Gaia DSC-Combmod probability (0 to 1) that the closest Gaia DR3 source is a quasar. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "closest_gaia_source_classprob_dsc_combmod_quasar",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Gaia DSC-Combmod probability (0 to 1) that the closest Gaia DR3 source is a galaxy. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "closest_gaia_source_classprob_dsc_combmod_galaxy",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Gaia DSC-Combmod probability (0 to 1) that the closest Gaia DR3 source is a star. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "closest_gaia_source_classprob_dsc_combmod_star",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Mean G-band magnitude of the closest Gaia DR3 source [mag]. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "closest_gaia_source_phot_g_mean_mag",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Mean G-band flux divided by its error for the closest Gaia DR3 source (unitless). Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "closest_gaia_source_phot_g_mean_flux_over_error",
-      "type": "FLOAT"
-    },
-    {
-      "description": "BP - RP color of the closest Gaia DR3 source [mag]. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "closest_gaia_source_bp_rp",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Gaia DR3 source_id of the second closest Gaia DR3 source to the DiaSource, irrespective of magnitude. Null if no Gaia source lies within 5 arcsec of the DiaSource position.",
-      "mode": "NULLABLE",
-      "name": "second_closest_gaia_source",
-      "type": "INTEGER"
-    },
-    {
-      "description": "Angular separation between the DiaSource and the second closest Gaia DR3 source [arcsec]. Always less than 5 arcsec; null if no such source exists.",
-      "mode": "NULLABLE",
-      "name": "second_closest_gaia_source_separation",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Total proper motion of the second closest Gaia DR3 source [mas/yr]. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "second_closest_gaia_source_pm",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Proper motion in right ascension of the second closest Gaia DR3 source; includes the cos(dec) factor [mas/yr]. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "second_closest_gaia_source_pmra",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Standard error of the proper motion in right ascension of the second closest Gaia DR3 source [mas/yr]. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "second_closest_gaia_source_pmra_error",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Proper motion in declination of the second closest Gaia DR3 source [mas/yr]. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "second_closest_gaia_source_pmdec",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Standard error of the proper motion in declination of the second closest Gaia DR3 source [mas/yr]. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "second_closest_gaia_source_pmdec_error",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Parallax of the second closest Gaia DR3 source [mas]. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "second_closest_gaia_source_parallax",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Parallax divided by its standard error for the second closest Gaia DR3 source (signal-to-noise of the parallax; unitless). Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "second_closest_gaia_source_parallax_over_error",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Gaia photometric variability flag of the second closest Gaia DR3 source (NOT_AVAILABLE, CONSTANT or VARIABLE). Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "second_closest_gaia_source_phot_variable_flag",
-      "type": "STRING"
-    },
-    {
-      "description": "Gaia DSC-Combmod probability (0 to 1) that the second closest Gaia DR3 source is a quasar. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "second_closest_gaia_source_classprob_dsc_combmod_quasar",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Gaia DSC-Combmod probability (0 to 1) that the second closest Gaia DR3 source is a galaxy. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "second_closest_gaia_source_classprob_dsc_combmod_galaxy",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Gaia DSC-Combmod probability (0 to 1) that the second closest Gaia DR3 source is a star. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "second_closest_gaia_source_classprob_dsc_combmod_star",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Mean G-band magnitude of the second closest Gaia DR3 source [mag]. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "second_closest_gaia_source_phot_g_mean_mag",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Mean G-band flux divided by its error for the second closest Gaia DR3 source (unitless). Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "second_closest_gaia_source_phot_g_mean_flux_over_error",
-      "type": "FLOAT"
-    },
-    {
-      "description": "BP - RP color of the second closest Gaia DR3 source [mag]. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "second_closest_gaia_source_bp_rp",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Gaia DR3 source_id of the third closest Gaia DR3 source to the DiaSource, irrespective of magnitude. Null if no Gaia source lies within 5 arcsec of the DiaSource position.",
-      "mode": "NULLABLE",
-      "name": "third_closest_gaia_source",
-      "type": "INTEGER"
-    },
-    {
-      "description": "Angular separation between the DiaSource and the third closest Gaia DR3 source [arcsec]. Always less than 5 arcsec; null if no such source exists.",
-      "mode": "NULLABLE",
-      "name": "third_closest_gaia_source_separation",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Total proper motion of the third closest Gaia DR3 source [mas/yr]. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "third_closest_gaia_source_pm",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Proper motion in right ascension of the third closest Gaia DR3 source; includes the cos(dec) factor [mas/yr]. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "third_closest_gaia_source_pmra",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Standard error of the proper motion in right ascension of the third closest Gaia DR3 source [mas/yr]. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "third_closest_gaia_source_pmra_error",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Proper motion in declination of the third closest Gaia DR3 source [mas/yr]. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "third_closest_gaia_source_pmdec",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Standard error of the proper motion in declination of the third closest Gaia DR3 source [mas/yr]. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "third_closest_gaia_source_pmdec_error",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Parallax of the third closest Gaia DR3 source [mas]. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "third_closest_gaia_source_parallax",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Parallax divided by its standard error for the third closest Gaia DR3 source (signal-to-noise of the parallax; unitless). Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "third_closest_gaia_source_parallax_over_error",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Gaia photometric variability flag of the third closest Gaia DR3 source (NOT_AVAILABLE, CONSTANT or VARIABLE). Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "third_closest_gaia_source_phot_variable_flag",
-      "type": "STRING"
-    },
-    {
-      "description": "Gaia DSC-Combmod probability (0 to 1) that the third closest Gaia DR3 source is a quasar. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "third_closest_gaia_source_classprob_dsc_combmod_quasar",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Gaia DSC-Combmod probability (0 to 1) that the third closest Gaia DR3 source is a galaxy. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "third_closest_gaia_source_classprob_dsc_combmod_galaxy",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Gaia DSC-Combmod probability (0 to 1) that the third closest Gaia DR3 source is a star. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "third_closest_gaia_source_classprob_dsc_combmod_star",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Mean G-band magnitude of the third closest Gaia DR3 source [mag]. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "third_closest_gaia_source_phot_g_mean_mag",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Mean G-band flux divided by its error for the third closest Gaia DR3 source (unitless). Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "third_closest_gaia_source_phot_g_mean_flux_over_error",
-      "type": "FLOAT"
-    },
-    {
-      "description": "BP - RP color of the third closest Gaia DR3 source [mag]. Null if no Gaia source exists at this rank within 5 arcsec of the DiaSource, or if Gaia has no value.",
-      "mode": "NULLABLE",
-      "name": "third_closest_gaia_source_bp_rp",
-      "type": "FLOAT"
-    },
-    {
-      "description": "Kafka timestamp from originating LSST alert.",
-      "mode": "REQUIRED",
-      "name": "kafkaPublishTimestamp",
-      "type": "TIMESTAMP"
-    }
+  {
+    "description": "Unique identifier of this DiaSource.",
+    "mode": "REQUIRED",
+    "name": "diaSourceId",
+    "type": "INTEGER"
+  },
+  {
+    "description": "Unique identifier of this DiaObject.",
+    "mode": "NULLABLE",
+    "name": "diaObjectId",
+    "type": "INTEGER"
+  },
+  {
+    "description": "Unique identifier of the object.",
+    "mode": "NULLABLE",
+    "name": "ssObjectId",
+    "type": "INTEGER"
+  },
+  {
+    "description": "The closest Gaia DR3 source to the DiaSource, irrespective of magnitude, within 5 arcsec.",
+    "mode": "NULLABLE",
+    "name": "closest_gaia_source",
+    "type": "RECORD",
+    "fields": [
+      {"description": "Gaia DR3 source_id.", "mode": "NULLABLE", "name": "source_id", "type": "INTEGER"},
+      {"description": "Angular separation between the DiaSource and this Gaia DR3 source [arcsec]. Always less than 5 arcsec; null if no such source exists.", "mode": "NULLABLE", "name": "separation", "type": "FLOAT"},
+      {"description": "Total proper motion [mas/yr].", "mode": "NULLABLE", "name": "pm", "type": "FLOAT"},
+      {"description": "Proper motion in right ascension; includes the cos(dec) factor [mas/yr].", "mode": "NULLABLE", "name": "pmra", "type": "FLOAT"},
+      {"description": "Standard error of the proper motion in right ascension [mas/yr].", "mode": "NULLABLE", "name": "pmra_error", "type": "FLOAT"},
+      {"description": "Proper motion in declination [mas/yr].", "mode": "NULLABLE", "name": "pmdec", "type": "FLOAT"},
+      {"description": "Standard error of the proper motion in declination [mas/yr].", "mode": "NULLABLE", "name": "pmdec_error", "type": "FLOAT"},
+      {"description": "Parallax [mas].", "mode": "NULLABLE", "name": "parallax", "type": "FLOAT"},
+      {"description": "Parallax divided by its standard error (signal-to-noise of the parallax; unitless).", "mode": "NULLABLE", "name": "parallax_over_error", "type": "FLOAT"},
+      {"description": "Gaia photometric variability flag (NOT_AVAILABLE, CONSTANT or VARIABLE).", "mode": "NULLABLE", "name": "phot_variable_flag", "type": "STRING"},
+      {"description": "Gaia DSC-Combmod probability (0 to 1) that the source is a quasar.", "mode": "NULLABLE", "name": "classprob_dsc_combmod_quasar", "type": "FLOAT"},
+      {"description": "Gaia DSC-Combmod probability (0 to 1) that the source is a galaxy.", "mode": "NULLABLE", "name": "classprob_dsc_combmod_galaxy", "type": "FLOAT"},
+      {"description": "Gaia DSC-Combmod probability (0 to 1) that the source is a star.", "mode": "NULLABLE", "name": "classprob_dsc_combmod_star", "type": "FLOAT"},
+      {"description": "Mean G-band magnitude [mag].", "mode": "NULLABLE", "name": "phot_g_mean_mag", "type": "FLOAT"},
+      {"description": "Mean G-band flux divided by its error (unitless).", "mode": "NULLABLE", "name": "phot_g_mean_flux_over_error", "type": "FLOAT"},
+      {"description": "BP - RP color [mag].", "mode": "NULLABLE", "name": "bp_rp", "type": "FLOAT"}
+    ]
+  },
+  {
+    "description": "The second closest Gaia DR3 source to the DiaSource, irrespective of magnitude, within 5 arcsec.",
+    "mode": "NULLABLE",
+    "name": "second_closest_gaia_source",
+    "type": "RECORD",
+    "fields": [
+      {"description": "Gaia DR3 source_id.", "mode": "NULLABLE", "name": "source_id", "type": "INTEGER"},
+      {"description": "Angular separation between the DiaSource and this Gaia DR3 source [arcsec]. Always less than 5 arcsec; null if no such source exists.", "mode": "NULLABLE", "name": "separation", "type": "FLOAT"},
+      {"description": "Total proper motion [mas/yr].", "mode": "NULLABLE", "name": "pm", "type": "FLOAT"},
+      {"description": "Proper motion in right ascension; includes the cos(dec) factor [mas/yr].", "mode": "NULLABLE", "name": "pmra", "type": "FLOAT"},
+      {"description": "Standard error of the proper motion in right ascension [mas/yr].", "mode": "NULLABLE", "name": "pmra_error", "type": "FLOAT"},
+      {"description": "Proper motion in declination [mas/yr].", "mode": "NULLABLE", "name": "pmdec", "type": "FLOAT"},
+      {"description": "Standard error of the proper motion in declination [mas/yr].", "mode": "NULLABLE", "name": "pmdec_error", "type": "FLOAT"},
+      {"description": "Parallax [mas].", "mode": "NULLABLE", "name": "parallax", "type": "FLOAT"},
+      {"description": "Parallax divided by its standard error (signal-to-noise of the parallax; unitless).", "mode": "NULLABLE", "name": "parallax_over_error", "type": "FLOAT"},
+      {"description": "Gaia photometric variability flag (NOT_AVAILABLE, CONSTANT or VARIABLE).", "mode": "NULLABLE", "name": "phot_variable_flag", "type": "STRING"},
+      {"description": "Gaia DSC-Combmod probability (0 to 1) that the source is a quasar.", "mode": "NULLABLE", "name": "classprob_dsc_combmod_quasar", "type": "FLOAT"},
+      {"description": "Gaia DSC-Combmod probability (0 to 1) that the source is a galaxy.", "mode": "NULLABLE", "name": "classprob_dsc_combmod_galaxy", "type": "FLOAT"},
+      {"description": "Gaia DSC-Combmod probability (0 to 1) that the source is a star.", "mode": "NULLABLE", "name": "classprob_dsc_combmod_star", "type": "FLOAT"},
+      {"description": "Mean G-band magnitude [mag].", "mode": "NULLABLE", "name": "phot_g_mean_mag", "type": "FLOAT"},
+      {"description": "Mean G-band flux divided by its error (unitless).", "mode": "NULLABLE", "name": "phot_g_mean_flux_over_error", "type": "FLOAT"},
+      {"description": "BP - RP color [mag].", "mode": "NULLABLE", "name": "bp_rp", "type": "FLOAT"}
+    ]
+  },
+  {
+    "description": "The third closest Gaia DR3 source to the DiaSource, irrespective of magnitude, within 5 arcsec.",
+    "mode": "NULLABLE",
+    "name": "third_closest_gaia_source",
+    "type": "RECORD",
+    "fields": [
+      {"description": "Gaia DR3 source_id.", "mode": "NULLABLE", "name": "source_id", "type": "INTEGER"},
+      {"description": "Angular separation between the DiaSource and this Gaia DR3 source [arcsec]. Always less than 5 arcsec; null if no such source exists.", "mode": "NULLABLE", "name": "separation", "type": "FLOAT"},
+      {"description": "Total proper motion [mas/yr].", "mode": "NULLABLE", "name": "pm", "type": "FLOAT"},
+      {"description": "Proper motion in right ascension; includes the cos(dec) factor [mas/yr].", "mode": "NULLABLE", "name": "pmra", "type": "FLOAT"},
+      {"description": "Standard error of the proper motion in right ascension [mas/yr].", "mode": "NULLABLE", "name": "pmra_error", "type": "FLOAT"},
+      {"description": "Proper motion in declination [mas/yr].", "mode": "NULLABLE", "name": "pmdec", "type": "FLOAT"},
+      {"description": "Standard error of the proper motion in declination [mas/yr].", "mode": "NULLABLE", "name": "pmdec_error", "type": "FLOAT"},
+      {"description": "Parallax [mas].", "mode": "NULLABLE", "name": "parallax", "type": "FLOAT"},
+      {"description": "Parallax divided by its standard error (signal-to-noise of the parallax; unitless).", "mode": "NULLABLE", "name": "parallax_over_error", "type": "FLOAT"},
+      {"description": "Gaia photometric variability flag (NOT_AVAILABLE, CONSTANT or VARIABLE).", "mode": "NULLABLE", "name": "phot_variable_flag", "type": "STRING"},
+      {"description": "Gaia DSC-Combmod probability (0 to 1) that the source is a quasar.", "mode": "NULLABLE", "name": "classprob_dsc_combmod_quasar", "type": "FLOAT"},
+      {"description": "Gaia DSC-Combmod probability (0 to 1) that the source is a galaxy.", "mode": "NULLABLE", "name": "classprob_dsc_combmod_galaxy", "type": "FLOAT"},
+      {"description": "Gaia DSC-Combmod probability (0 to 1) that the source is a star.", "mode": "NULLABLE", "name": "classprob_dsc_combmod_star", "type": "FLOAT"},
+      {"description": "Mean G-band magnitude [mag].", "mode": "NULLABLE", "name": "phot_g_mean_mag", "type": "FLOAT"},
+      {"description": "Mean G-band flux divided by its error (unitless).", "mode": "NULLABLE", "name": "phot_g_mean_flux_over_error", "type": "FLOAT"},
+      {"description": "BP - RP color [mag].", "mode": "NULLABLE", "name": "bp_rp", "type": "FLOAT"}
+    ]
+  },
+  {
+    "description": "Kafka timestamp from originating LSST alert.",
+    "mode": "REQUIRED",
+    "name": "kafkaPublishTimestamp",
+    "type": "TIMESTAMP"
+  }
 ]
