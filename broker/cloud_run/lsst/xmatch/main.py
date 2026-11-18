@@ -12,6 +12,9 @@ import pittgoogle
 import hats
 import hpgeom
 import astropy.units as u
+import pyarrow.fs as pafs
+import pyarrow.parquet as pq
+from hats.io import paths
 from astropy.coordinates import SkyCoord
 
 from google.cloud import logging
@@ -60,6 +63,10 @@ BIT_SHIFT = 2 * (
 NSIDE = hpgeom.order_to_nside(HEALPIX_ORDER)  # 2**ORDER
 MAX_SEPARATION_ARCSEC = 5
 ORDINALS = ["closest", "second_closest", "third_closest"]
+S3FS = pafs.S3FileSystem(
+    anonymous=True,
+    region="us-east-1",
+)
 
 # Variables for incoming data
 # A url route is used in setup.sh when the trigger subscription is created.
@@ -196,9 +203,7 @@ def filter_gaia_catalog(ra: float, dec: float) -> pd.DataFrame:
     # read the matching rows from each overlapping partition and combine them into a single table
     return pd.concat(
         [
-            filtered_catalog.read_pixel_to_pandas(
-                partition, columns=GAIA_READ_COLUMNS, filters=filters
-            )
+            read_partition(partition, filters)
             for partition in filtered_catalog.get_healpix_pixels()
         ],
         ignore_index=True,
@@ -281,3 +286,11 @@ def xmatch(ra: float, dec: float, filtered_gaia_dr3_catalog: pd.DataFrame) -> di
         }
 
     return result
+
+
+def read_partition(partition, filters):
+    path = str(paths.pixel_catalog_file(GAIA_DR3_CATALOG.catalog_base_dir, partition))
+    path = path.removeprefix("s3://")
+    return pq.read_table(
+        path, columns=GAIA_READ_COLUMNS, filters=filters, filesystem=S3FS
+    ).to_pandas()
