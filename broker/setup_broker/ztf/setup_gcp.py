@@ -156,9 +156,6 @@ def _resources(service, survey="ztf", testid="test", versiontag="v3_3"):
                 f"{survey}-alerts-counter",
                 f"{survey}-alerts-reservoir",
             ],
-            f"{survey}-lite": [
-                f"{survey}-lite-counter",
-            ],
             f"{survey}-tagged": [
                 f"{survey}-tagged-counter",
             ],

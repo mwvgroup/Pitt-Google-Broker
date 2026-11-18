@@ -62,7 +62,8 @@ def run():
     except pittgoogle.exceptions.BadRequest as exc:
         return str(exc), HTTP_400
 
-    stetsonj_stats = _calculate_stetsonJ_statistics(alert_lite)
+    alert_lite_dict = alert_lite.dict["alert_lite"]
+    stetsonj_stats = _calculate_stetsonJ_statistics(alert_lite_dict)
     pg_variable = {"pg_variable": "unlikely"}
 
     for band in ["g", "r"]:
@@ -75,7 +76,7 @@ def run():
 
     TOPIC.publish(
         pittgoogle.Alert.from_dict(
-            {"alert_lite": alert_lite.dict, "variability": stetsonj_stats},
+            {"alert_lite": alert_lite_dict, "variability": stetsonj_stats},
             attributes={**alert_lite.attributes, **pg_variable},
             schema_name="default",
         )
@@ -84,27 +85,28 @@ def run():
     return "", HTTP_204
 
 
-def _calculate_stetsonJ_statistics(alert_lite: pittgoogle.Alert) -> Dict:
+def _calculate_stetsonJ_statistics(alert_lite_dict: Dict) -> Dict:
     """Adapted from:
     https://github.com/lsst/meas_base/blob/e5cf12406b54a6312b9d6fa23fbd132cd7999387/python/lsst/meas/base/diaCalculationPlugins.py#L904
 
     Compute the StetsonJ statistics on the DIA point source fluxes for each band.
     """
-    alert_lite_dict = alert_lite.dict
-    alert_df = _create_dataframe(alert_lite_dict)
-    bands = alert_df["filter"].map(pittgoogle.utils.ztf_fid_names()).unique()
+    alert_lite_df = pd.DataFrame(
+        [alert_lite_dict.get("candidate")] + (alert_lite_dict.get("prv_candidates") or [])
+    )
+    bands = alert_lite_df["fid"].map(pittgoogle.utils.ztf_fid_names()).unique()
     outgoing_dict = {}
 
     # filter diaSource(s) in alert_df based on the filter(s) used
     for band in bands:
-        filter_diaSources = alert_df[
-            alert_df["filter"].map(pittgoogle.utils.ztf_fid_names()) == band
+        filter_diaSources = alert_lite_df[
+            alert_lite_df["fid"].map(pittgoogle.utils.ztf_fid_names()) == band
         ]
         tmp_df = filter_diaSources[
             ~np.logical_or(
-                np.isnan(filter_diaSources["mag"]),
-                np.isnan(filter_diaSources["magerr"]),
-                np.isnan(filter_diaSources["magzp"]),
+                np.isnan(filter_diaSources["magpsf"]),
+                np.isnan(filter_diaSources["sigmapsf"]),
+                np.isnan(filter_diaSources["magzpsci"]),
             )
         ]
 
@@ -114,28 +116,14 @@ def _calculate_stetsonJ_statistics(alert_lite: pittgoogle.Alert) -> Dict:
             continue
 
         fluxes, errors = _mag_to_flux(
-            tmp_df["mag"],
-            tmp_df["magzp"],
-            tmp_df["magerr"],
+            tmp_df["magpsf"],
+            tmp_df["magzpsci"],
+            tmp_df["sigmapsf"],
         )
         outgoing_dict[f"n_detections_{band}_band"] = len(tmp_df)
         outgoing_dict[f"{band}_psfFluxStetsonJ"] = _stetson_J(fluxes.to_numpy(), errors.to_numpy())
 
     return outgoing_dict
-
-
-def _create_dataframe(alert_dict: dict) -> pd.DataFrame:
-    """Return a pandas DataFrame containing the source detections."""
-
-    # sources and previous sources are expected to have the same fields
-    sources_df = pd.DataFrame([alert_dict.get("source")] + (alert_dict.get("prvSources") or []))
-
-    # use nullable integer data type to avoid converting ints to floats
-    # for columns in one dataframe but not the other
-    sources_ints = [c for c, v in sources_df.dtypes.items() if v == int]
-    _dataframe = sources_df.astype({c: "Int64" for c in sources_ints})
-
-    return _dataframe
 
 
 def _mag_to_flux(mag: float, zeropoint: float, magerr: float) -> Tuple[float, float]:

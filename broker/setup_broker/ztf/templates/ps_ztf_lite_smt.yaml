@@ -1,0 +1,57 @@
+# https://cloud.google.com/pubsub/docs/smts/create-topic-smt#create
+- javascriptUdf:
+    code: >
+        function create_lite_alert(message, metadata) {
+          const data = JSON.parse(message.data);
+          const alertLite = data["alert_lite"];
+
+          // Whitelist fields for candidate
+          const candidateFields = [
+            "jd", "fid", "diffmaglim", "candid", "isdiffpos", "ra", "dec", "magpsf", "sigmapsf",
+            "magdiff", "fwhm", "elong", "nbad", "rb", "magzpsci", "magzpsciunc", "drb",
+            "ssdistnr", "ssmagnr", "sgscore1", "distpsnr1", "objectidps1", "objectidps2",
+            "sgscore2", "distpsnr2", "objectidps3", "sgscore3", "distpsnr3"
+          ];
+
+          // Whitelist fields for prv_candidates
+          const prvCandidateFields = [
+            "jd", "fid", "diffmaglim", "candid", "isdiffpos", "ra", "dec", "magpsf", "sigmapsf",
+            "magdiff", "fwhm", "elong", "nbad", "rb", "magzpsci", "magzpsciunc"
+          ];
+
+          // Filter fields
+          function filterFields(obj, fields) {
+            if (!obj) return obj;
+            const filtered = {};
+            for (const f of fields) {
+              if (obj.hasOwnProperty(f)) {
+                filtered[f] = obj[f];
+              }
+            }
+            return filtered;
+          }
+
+          // Filter lists of objects
+          function filterList(list, fields) {
+            if (!Array.isArray(list)) return list;
+            return list.map(item => filterFields(item, fields));
+          }
+
+          // Replace alertLite fields with filtered versions
+          alertLite["candidate"] = filterFields(alertLite["candidate"], candidateFields);
+          alertLite["prv_candidates"] = filterList(alertLite["prv_candidates"], candidateFields);
+
+          // Remove fields
+          delete alertLite["schemavsn"];
+          delete alertLite["publisher"];
+          delete alertLite["fp_hist"];
+          delete alertLite["cutoutDifference"];
+          delete alertLite["cutoutScience"];
+          delete alertLite["cutoutTemplate"];
+
+          // Keep objectId and candid fields unchanged
+          data["alert_lite"] = alertLite;
+          message.data = JSON.stringify(data);
+          return message;
+        }
+    functionName: create_lite_alert
