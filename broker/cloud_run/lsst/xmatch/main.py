@@ -263,9 +263,9 @@ def xmatch(ra: float, dec: float, filtered_gaia_dr3_catalog: pd.DataFrame) -> di
         # select the catalog rows for the Gaia objects that passed the cutoff
         candidates = filtered_gaia_dr3_catalog.iloc[candidate_idx]
 
-        # convert the selected rows into a list of dicts (one per source, keyed by column name) with
-        # missing values as None rather than NaN, so they are serialized as proper nulls downstream
-        rows = candidates.astype(object).where(candidates.notna(), None).to_dict("records")
+    # convert the selected rows into a list of dicts (one per source, keyed by column name) with
+    # missing values as None rather than NaN, so they are serialized as proper nulls downstream
+    rows = candidates.astype(object).where(candidates.notna(), None).to_dict("records")
 
     # format output
     result = {}
