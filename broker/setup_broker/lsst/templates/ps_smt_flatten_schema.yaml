@@ -3,7 +3,16 @@
     code: >
       function flattenValueAddedAlert(message, metadata) {
         const attrs = message.attributes || {};
-        const data = JSON.parse(message.data);
+
+        // Treat large integers as strings
+        const safeText = message.data.replace(
+          /("(?:[^"\\]|\\.)*")|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g,
+          (m, str, num) => {
+            if (str) return str;
+            return /^-?\d{16,}$/.test(num) ? `"${num}"` : num;
+          }
+        );
+        const data = JSON.parse(safeText);
 
         // Find and extract the value_added dictionary
         const valueAddedKey = Object.keys(data).find(k => k !== "alert_lite");
